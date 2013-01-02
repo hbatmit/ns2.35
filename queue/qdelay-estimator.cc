@@ -1,5 +1,6 @@
 #include "qdelay-estimator.hh"
 #include <assert.h>
+#include <stdio.h>
 
 QdelayEstimator::QdelayEstimator( const std::queue<Packet> & pkts, uint64_t service_time) :
 	_pkts( pkts),
@@ -27,6 +28,7 @@ std::vector<uint64_t> QdelayEstimator::estimate_delays( uint64_t current_tick )
 		current_delay = std::max( (int64_t) (current_delay + _service_time - inter_arrival_time), (int64_t) 0 );
 		assert( current_delay >= 0 );
 		_delays.push_back( current_delay );
+		previous_pkt = current_pkt ;
 		}
 
 	/* return delays */
