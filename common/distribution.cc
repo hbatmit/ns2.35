@@ -2,7 +2,7 @@
 #include<algorithm>
 
 Distribution::Distribution( std::vector<uint64_t> value_vector ) :
-	_pmf( std::vector<std::tuple<uint64_t,double>>() )
+	_pmf( std::vector<std::tuple<uint64_t,double>>( value_vector.size() ) )
 {
 	/* Append probability masses and write into new vector */
 	std::transform( value_vector.begin(), value_vector.end(), _pmf.begin(), [&] (uint64_t x) { return std::tuple<uint64_t,double>( x, 1.0/value_vector.size() ); } );
@@ -56,4 +56,13 @@ Distribution Distribution::compose( Distribution & other )
 	            { return std::get<0>(x) < std::get<0>(y); } );
 
 	return Distribution( merged_pmf );
+}
+
+void Distribution::print( void )
+{
+	fprintf( stderr, "Begin dist :\n");
+	std::for_each( _pmf.begin(), _pmf.end(),
+	               [&] ( const std::tuple<uint64_t,double> x )
+	               { fprintf( stderr, "(%lu,%f) ", std::get<0>(x), std::get<1>(x) );});
+	fprintf( stderr, "\n End dist\n");
 }

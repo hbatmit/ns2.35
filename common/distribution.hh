@@ -19,6 +19,8 @@ public :
 	Distribution compose( Distribution & other );
 	
 	uint32_t get_size() { return _pmf.size(); }
+	
+	void print( void ) ;
 };
 
 #endif
