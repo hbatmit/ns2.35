@@ -15,7 +15,7 @@ std::vector<uint64_t> QdelayEstimator::estimate_delays( uint64_t current_tick )
 	/* Base case(W_0) in Lindley's recurrence */
 	Packet hol_pkt = _pkts.front();
 	_pkts.pop();
-	int64_t current_delay = current_tick - hol_pkt._tick + 0;
+	int64_t current_delay = current_tick - hol_pkt._tick + _service_time;
 	_delays.push_back( current_delay );
 	Packet previous_pkt = hol_pkt;
 	fprintf( stderr, "Lindley : seqnum %lu delay %ld\n", hol_pkt._seq_num, current_delay);
