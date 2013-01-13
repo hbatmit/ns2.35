@@ -7,3 +7,4 @@ set egress_latency     1ms
 set bottleneck_bw      10Mb
 set bottleneck_latency 1ms
 set bottleneck_qdisc   DRR
+set duration           100

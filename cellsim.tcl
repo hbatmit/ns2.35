@@ -66,7 +66,6 @@ for { set i 0 } { $i < $num_clients } { incr i } {
   $client_cbr($i) set rate_   $rate
   $client_cbr($i) set random_     0
   $ns at 0.0 "$client_cbr($i) start"
-  $ns at 100.0 "$client_cbr($i) stop "
 }
 
 # Create traffic receivers on server
@@ -94,5 +93,5 @@ $q quantum 1000
 $q buckets 2
 
 # Run simulation
+$ns at $duration "finish $ns $trace_file"
 $ns run
-finish $ns $trace_file
