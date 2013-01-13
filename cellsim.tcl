@@ -59,14 +59,14 @@ for { set i 0 } { $i < $num_clients } { incr i } {
   $client_cbr($i) attach-agent $client_udp($i)
 
   # Set packetSize_ and related parameters.
-  $client_cbr($i) set packetSize_ 250
-  set interval [ expr $i + 1 ]
-  append interval "ms"
-  puts $interval
-  $client_cbr($i) set interval_   $interval
-  $client_cbr($i) set random_     1
+  $client_cbr($i) set packetSize_ 1000
+  set rate [ expr ( $i + 1 ) * 5 ]
+  append rate "Mb"
+  puts $rate
+  $client_cbr($i) set rate_   $rate
+  $client_cbr($i) set random_     0
   $ns at 0.0 "$client_cbr($i) start"
-  $ns at 5.0 "$client_cbr($i) stop "
+  $ns at 100.0 "$client_cbr($i) stop "
 }
 
 # Create traffic receivers on server
@@ -90,8 +90,8 @@ Simulator instproc get-link { node1 node2 } {
 set l [$ns get-link $left_router $right_router]
 set q [$l queue]
 $q blimit 25000
-$q quantum 250
-$q buckets 5
+$q quantum 1000
+$q buckets 2
 
 # Run simulation
 $ns run
