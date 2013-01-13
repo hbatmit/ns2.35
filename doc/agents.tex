@@ -1,0 +1,1065 @@
+\%
+% personal commentary:
+%        handlers and how they are used are confusing
+%        Connector::send is needed, but so is just send()... confusing
+%        default handler in Connector::recv is confusing
+%        this is a DRAFT DRAFT DRAFT
+%        - KFALL
+%
+\chapter{Agents}
+\label{sec:agents}
+
+Agents represent endpoints where network-layer
+packets are constructed or consumed, and are used in the implementation
+of protocols at various layers.
+%Generally, a user wishing to create a new
+%source or sink for network-layer packets
+%will create a class derived from {\tt Agent}.
+The \clsref{Agent}{../ns-2/agent.h} has an implementation partly in
+OTcl and partly in C++.
+The C++ implementation is contained in \nsf{agent.cc} and
+\nsf{agent.h}, and the OTcl support is in
+\nsf{tcl/lib/ns-agent.tcl}.
+
+\section{Agent state}
+\label{sec:agentstate}
+
+The C++ \clsref{Agent}{../ns-2/agent.h} includes enough internal state
+to assign various fields to a simulated packet before
+it is sent.
+This state includes the following:
+
+\begin{tabularx}{\linewidth}{rX}
+\code{addr\_} & node address of myself (source address in packets) \\
+\code{dst\_} & where I am sending packets to \\
+\code{size\_} & packet size in bytes (placed into the common packet header) \\
+\code{type\_} & type of packet (in the common header, see packet.h) \\
+\code{fid\_} & the IP flow identifier (formerly {\em class} in ns-1) \\
+\code{prio\_} & the IP priority field \\
+\code{flags\_} & packet flags (similar to ns-1) \\
+\code{defttl\_} & default IP ttl value \\
+\end{tabularx}
+
+These variables may be modified by any class derived from \code{Agent},
+although not all of them may be needed by any particular agent.
+
+\section{Agent methods}
+\label{sec:agentmethods}
+
+The \clsref{Agent}{../ns-2/agent.h} supports packet generation and reception.
+The following member functions are implemented by the C++ Agent class, and are
+generally {\em not} over-ridden by derived classes:
+
+\begin{tabularx}{\linewidth}{rX}
+\fcn[]{Packet* allocpkt} & allocate new packet and assign its fields \\
+\fcn[int]{Packet* allocpkt} & allocate new packet with a data payload of n bytes and assign its fields \\
+\end{tabularx}
+
+The following member functions are also defined by the class Agent,
+but {\em are} intended to be over-ridden by classes deriving from Agent:
+
+\begin{tabularx}{\linewidth}{rX}
+  \fcn[timeout number]{void timeout} & subclass-specific time out method \\
+  \fcn[Packet*, Handler*]{void recv} & receiving agent main receive path \\
+\end{tabularx}
+
+The \fcn[]{allocpkt} method is used by derived classes
+to create packets to send.
+The function fills in the following fields
+\href{in the common packet header}{Section}{chap:pformat}:
+{\tt uid, ptype, size}, and the following fields in the IP header:
+{\tt src, dst, flowid, prio, ttl}.
+It also zero-fills in the following fields of the Flags header:
+{\tt ecn, pri, usr1, usr2}.
+Any packet header information not included in these lists must
+be must be handled in the classes derived from \code{Agent}.
+
+The \fcn[]{recv} method is the main entry point for an
+Agent which receives packets, and
+is invoked by upstream nodes when sending a packet.
+In most cases, Agents make no use of the second argument (the handler
+defined by upstream nodes).
+
+\section{Protocol Agents}
+\label{sec:protoagents}
+
+There are several agents supported in the simulator.
+These are their names in OTcl:
+
+\begin{longtable}{rl}
+  TCP & a ``Tahoe'' TCP sender (cwnd = 1 on any loss)   \\
+  TCP/Reno & a ``Reno'' TCP sender  (with fast recovery)        \\
+  TCP/Newreno & a modified Reno TCP sender (changes fast recovery)      \\
+  TCP/Sack1 & a SACK TCP sender \\
+  TCP/Fack & a ``forward'' SACK sender TCP      \\
+  TCP/FullTcp & a more full-functioned TCP with 2-way traffic   \\
+  TCP/Vegas & a ``Vegas'' TCP sender    \\
+  TCP/Vegas/RBP & a Vegas TCP with ``rate based pacing''        \\
+  TCP/Vegas/RBP & a Reno TCP with ``rate based pacing'' \\
+  TCP/Asym & an experimental Tahoe TCP for asymmetric links     \\
+  TCP/Reno/Asym & an experimental Reno TCP for asymmetric links \\
+  TCP/Newreno/Asym & an experimental Newreno TCP for asymmetric links   \\
+  TCPSink & a Reno or Tahoe TCP receiver (not used for FullTcp) \\
+  TCPSink/DelAck & a TCP delayed-ACK receiver   \\
+  TCPSink/Asym & an experimental  TCP sink for asymmetric links \\
+  TCPSink/Sack1 & a SACK TCP receiver   \\
+  TCPSink/Sack1/DelAck & a delayed-ACK SACK TCP receiver        \\
+        \\
+  UDP & a basic UDP agent\\
+	\\
+  RTP & an RTP sender and receiver  \\
+  RTCP & an RTCP sender and receiver    \\
+        \\
+  LossMonitor & a packet sink which checks for losses   \\
+        \\
+  IVS/Source & an IVS source    \\
+  IVS/Receiver & an IVS receiver        \\
+        \\
+  CtrMcast/Encap & a ``centralised multicast'' encapsulator     \\
+  CtrMcast/Decap & a ``centralised multicast'' de-encapsulator  \\
+  Message & a protocol to carry textual messages        \\
+  Message/Prune & processes multicast routing prune messages    \\
+        \\
+  SRM & an SRM agent with non-adaptive timers   \\
+  SRM/Adaptive & an SRM agent with adaptive timers      \\
+        \\
+  Tap & interfaces the simulator to a live network      \\
+        \\
+  Null & a degenerate agent which discards packets      \\
+        \\
+  rtProto/DV & distance-vector routing protocol agent   \\
+\end{longtable}
+
+Agents are used in the implementation of protocols at various layers.
+Thus, for some transport protocols (e.g.~UDP) the distribution
+of packet sizes and/or inter-departure times
+may be dictated by some separate
+object representing the demands of an application.  To this end, agents
+expose an application programming interface (API) to the application.
+For agents used in the implementation of lower-layer protocols
+(e.g. routing agents), size and departure timing is generally dictated
+by the agent's own processing of protocol messages.
+
+\section{OTcl Linkage}
+\label{sec:agentotcl}
+
+Agents may be created within OTcl and an agent's internal
+state can be modified by use of Tcl's \code{set} function and
+any Tcl functions an Agent (or its base classes) implements.
+Note that some of an Agent's internal state may exist
+only within OTcl, and is thus is not directly accessible from C++.
+
+\subsection{Creating and Manipulating Agents}
+\label{sec:agentcreateotcl}
+
+The following example illustrates the creation and modification
+of an Agent in OTcl:
+\begin{program}
+        set newtcp [new Agent/TCP] \; create new object (and C++ shadow object);
+        $newtcp set window_ 20 \; sets the tcp agent's window to 20;
+        $newtcp target $dest \; target is implemented in Connector class;
+        $newtcp set portID_ 1 \; exists only in OTcl, not in C++;
+\end{program}
+
+\subsection{Default Values}
+\label{sec:agentdefaults}
+
+Default values for member variables, those visible in OTcl only and those
+linked between OTcl and C++ with \code{bind} are initialized
+in the \nsf{tcl/lib/ns-default.tcl} file.  For example,
+\code{Agent} is initialized as follows:
+\begin{program}
+        Agent set fid_ 0
+        Agent set prio_ 0
+        Agent set addr_ 0
+        Agent set dst_ 0
+        Agent set flags_ 0
+\end{program}
+
+Generally these initializations are placed in the OTcl namespace
+before any objects of these types are created.
+Thus, when an \code{Agent} object
+is created, the calls to \code{bind}
+in the objects' constructors will causes the corresponding member variables
+to be set to these specified defaults.
+
+\subsection{OTcl Methods}
+\label{sec:agentmethodsotcl}
+
+The instance procedures defined for the OTcl \code{Agent} class are
+currently found in \nsf{tcl/lib/ns-agent.tcl}.
+They are as follows:
+\begin{tabularx}{\linewidth}{rX}
+\code{port} & the agent's port identifier \\
+\code{dst-port} & the destination's port identifier \\
+\code{attach-source \tup{stype}} & create and attach a Source object to an agent \\
+\end{tabularx}
+
+\section{Examples: Tcp, TCP Sink Agents}
+\label{sec:agentexample}
+
+The \clsref{TCP}{../ns-2/tcp.h} represents a simplified TCP sender.
+It sends data to a \code{TCPSink} agent and processes its acknowledgments.
+It has a separate object associated with it which represents
+an application's demand.
+By looking at the \clsref{TCPAgent}{../ns-2/tcp.h} and
+ \clsref{TCPSinkAgent}{../ns-2/tcp-sink.h},
+we may see how relatively complex agents are constructed.
+An example from the Tahoe TCP agent \code{TCPAgent} is also given
+to illustrate the use of timers.
+
+\subsection{Creating the Agent}
+\label{sec:createtcpsimple}
+
+The following OTcl code fragment creates a \code{TCP} agent
+and sets it up:
+\begin{program}
+        set tcp [new Agent/TCP]         \; create sender agent;
+        $tcp set fid_ 2                 \; set IP-layer flow ID;
+        set sink [new Agent/TCPSink]    \; create receiver agent;
+        $ns attach-agent $n0 $tcp       \; put sender on node $n0;
+        $ns attach-agent $n3 $sink      \; put receiver on node $n3;
+        $ns connect $tcp $sink          \; establish TCP connection;
+        set ftp [new Application/FTP]        \; create an FTP source "application";
+        $ftp attach-agent $tcp            \; associate FTP with the TCP sender;
+        $ns at 1.2 "$ftp start"  \;arrange for FTP to start at time 1.2 sec;
+\end{program}
+The OTcl instruction \code{new Agent/TCP} results in the
+creation of a C++ \code{TcpAgent} class object.
+Its constructor first invokes the constructor of the
+\code{Agent} base class and then performs its own bindings.
+These two constructors appear as follows:
+\begin{program}
+{\rm The TcpSimpleAgent constructor (\nsf{tcp.cc}):}
+
+        TcpAgent::TcpAgent() : Agent(PT_TCP), rtt_active_(0), rtt_seq_(-1),
+                        rtx_timer_(this), delsnd_timer_(this)
+        \{
+                bind("window_", &wnd_);
+                bind("windowInit_", &wnd_init_);
+                bind("windowOption_", &wnd_option_);
+                bind("windowConstant_", &wnd_const_);
+                \ldots
+                bind("off_ip_", &off_ip_);
+                bind("off_tcp_", &off_tcp_);
+                \ldots
+        \}
+
+{\rm The Agent constructor (\nsf{agent.cc}):}
+
+        Agent::Agent(int pkttype) : 
+                addr_(-1), dst_(-1), size_(0), type_(pkttype), fid_(-1),
+                prio_(-1), flags_(0)
+        \{
+                memset(pending_, 0, sizeof(pending_)); \* timers */
+                // {\cf this is really an IP agent, so set up}
+                // {\cf for generating the appropriate IP fields\ldots}
+                bind("addr_", (int*)&addr_);
+                bind("dst_", (int*)&dst_);
+                bind("fid_", (int*)&fid_);
+                bind("prio_", (int*)&prio_);
+                bind("flags_", (int*)&flags_);
+                \ldots
+        \}
+\end{program}
+These code fragments illustrate the common case where an agent's
+constructor passes a packet type identifier to the \code{Agent}
+constructor.
+The values for the various packet types are
+\href{used by the packet tracing facility}{Section}{sec:traceptype}
+and are defined in \nsf{trace.h}.
+The variables which are bound in the \code{TcpAgent} constructor
+are ordinary instance/member variables for the class
+with the exception of the special integer values \code{off_tcp_}
+and \code{off_ip_}.
+These are needed in order to access a TCP header and IP header, respectively.
+\href{Additional details are in the section on packet headers}{Section}{sec:ppackethdr}.
+
+Note that the \code{TcpAgent} constructor contains initializations for
+two timers, \code{rtx_timer_} and \code{delsnd_timer_}.
+
+\code{TimerHandler} 
+objects are initialized by providing a pointer (the \code{this} pointer) to
+the relevant agent.
+
+\subsection{Starting the Agent}
+\label{sec:starttcp}
+
+The \code{TcpAgent} agent is started in the example when its
+FTP source receives the \code{start} directive at time 1.2.
+The \code{start} operation is an instance procedure defined on the
+\href{class Application/FTP}{Section}{sec:simapps}.
+It is defined in \nsf{tcl/lib/ns-source.tcl} as follows:
+\begin{program}
+        Application/FTP instproc start \{\} \{
+                [$self agent] send -1
+        \}
+\end{program}
+In this case, \code{agent} refers to our simple TCP agent and
+\code{send -1} is analogous to sending an arbitrarily large file.
+
+The call to \code{send} eventually results in the simple TCP sender
+generating packets.
+The following function \code{output} performs this:
+\begin{program}
+        void TcpAgent::output(int seqno, int reason)
+        \{
+                Packet* p = allocpkt();
+                hdr_tcp *tcph = (hdr_tcp*)p->access(off_tcp_);
+                double now = Scheduler::instance().clock();
+                tcph->seqno() = seqno;
+                tcph->ts() = now;
+                tcph->reason() = reason;
+                Connector::send(p, 0);
+                \ldots
+                if (!(rtx_timer_.status() == TIMER_PENDING))
+                        /* {\cf No timer pending.  Schedule one.} */
+                        set_rtx_timer();
+        \}
+\end{program}
+Here we see an illustration of the use of the \fcn[]{Agent::allocpkt} method.
+This output routine first allocates a new packet
+(with its common and IP headers already filled in), but then must fill
+in the appropriate TCP-layer header fields.
+To find the TCP header in a packet 
+(\href{assuming it has been enabled}{Section}{sec:packethdrmgr})
+the \code{off_tcp_} must be properly initialized,
+as illustrated in the constructor.
+The packet \fcn[]{access} method returns a pointer to the TCP header,
+its sequence number and time stamp fields are filled in,
+and the \fcn[]{send} method of the class Connector is called
+to send the packet downstream one hop.
+Note that the C++ \code{::} scoping operator is used here to avoid
+calling \fcn[]{TcpSimpleAgent::send} (which is also defined).
+The check for a pending timer uses the timer method \fcn[]{status} which
+is defined in the base class TimerHandler.
+It is used here to set a retransmission timer if one is not already set
+(a TCP sender only sets one timer per window of packets on each connection).
+
+\subsection{Processing Input at Receiver}
+\label{sec:tcpsink}
+
+Many of the TCP agents can be used with the
+\clsref{TCPSink}{../ns-2/tcp-sink.h} as the peer.
+This class defines the \fcn[]{recv} and \fcn[]{ack} methods as follows:
+\begin{program}
+        void TcpSink::recv(Packet* pkt, Handler*)
+        \{
+                hdr_tcp *th = (hdr_tcp*)pkt->access(off_tcp_);
+                acker_->update(th->seqno());
+                ack(pkt);
+                Packet::free(pkt);
+        \}
+
+        void TcpSink::ack(Packet* opkt)
+        \{
+                Packet* npkt = allocpkt();
+        
+                hdr_tcp *otcp = (hdr_tcp*)opkt->access(off_tcp_);
+                hdr_tcp *ntcp = (hdr_tcp*)npkt->access(off_tcp_);
+                ntcp->seqno() = acker_->Seqno();
+                ntcp->ts() = otcp->ts();
+        
+                hdr_ip* oip = (hdr_ip*)opkt->access(off_ip_);
+                hdr_ip* nip = (hdr_ip*)npkt->access(off_ip_);
+                nip->flowid() = oip->flowid();
+        
+                hdr_flags* of = (hdr_flags*)opkt->access(off_flags_);
+                hdr_flags* nf = (hdr_flags*)npkt->access(off_flags_);
+                nf->ecn_ = of->ecn_;
+        
+                acker_->append_ack((hdr_cmn*)npkt->access(off_cmn_),
+                                   ntcp, otcp->seqno());
+                send(npkt, 0);
+        \}
+\end{program}
+The \fcn[]{recv} method overrides the \fcn[]{Agent::recv} method
+(which merely discards the received packet).
+It updates some internal state with the sequence number of the
+received packet (and therefore requires the \code{off_tcp_} variable
+to be properly initialized.
+It then generates an acknowledgment for the received packet.
+The \fcn[]{ack} method makes liberal use of access to packet header
+fields including separate accesses to the TCP header, IP header,
+Flags header, and common header.
+The call to \fcn[]{send} invokes the \fcn[]{Connector::send} method.
+
+\subsection{Processing Responses at the Sender}
+\label{sec:tcpsimpleack}
+
+Once the simple TCP's peer receives data and generates an ACK, the
+sender must (usually) process the ACK.
+In the \code{TcpAgent} agent, this is done as follows:
+\begin{program}
+        /*
+         * {\cf main reception path - should only see acks, otherwise the}
+         * {\cf network connections are misconfigured}
+         */
+        void TcpAgent::recv(Packet *pkt, Handler*)
+        \{
+                hdr_tcp *tcph = (hdr_tcp*)pkt->access(off_tcp_);
+                hdr_ip* iph = (hdr_ip*)pkt->access(off_ip_);
+                ...
+                if (((hdr_flags*)pkt->access(off_flags_))->ecn_)
+                        quench(1);
+                if (tcph->seqno() > last_ack_) \{
+                        newack(pkt);
+                        opencwnd();
+                \} else if (tcph->seqno() == last_ack_) \{
+                        if (++dupacks_ == NUMDUPACKS) \{
+                                \ldots
+                        \}
+                \}
+                Packet::free(pkt);
+                send(0, 0, maxburst_);
+       \}
+\end{program}
+This routine is invoked when an ACK arrives at the sender.
+In this case, once the information in the ACK is processed (by \code{newack})
+the packet is no longer needed and is returned to the packet memory
+allocator.
+In addition, the receipt of the ACK indicates the possibility of sending
+additional data, so the \fcn[]{TcpSimpleAgent::send} method is
+invoked which attempts to send more data if the TCP window allows.
+
+\subsection{Implementing Timers}
+\label{sec:tcptimer}
+
+As described in 
+\href{the following chapter}{Chapter}{chap:timers}, specific
+timer classes must be derived from an abstract base
+\clsref{TimerHandler}{../ns-2/timer-handler.h}
+defined in \nsf{timer-handler.h}.  Instances of these
+subclasses can then be used as various agent timers.
+An agent may wish to override the \fcn[]{Agent::timeout} method
+(which does nothing).
+In the case of the Tahoe TCP agent, two timers are used:
+a delayed send timer \code{delsnd_timer_} 
+and a retransmission timer \code{rtx_timer_}.
+\href{We describe the retransmission timer in TCP}{Section}{sec:timerexample}
+as an example of timer usage.  
+
+\section{Creating a New Agent}
+\label{sec:createagent}
+
+To create a new agent, one has to do the following:
+\begin{enumerate}\itemsep0pt
+        \item \href{decide its inheritance structure}{Section}{sec:pingexample},
+                and create the appropriate class definitions,
+        \item \href{define the \fcn[]{recv} and \fcn[]{timeout} methods}{%
+                Section}{sec:agents:exmethods},
+        \item define any necessary timer classes,
+        \item \href{define OTcl linkage functions}{Section}{sec:agents:exlinkage},
+        \item \href{write the necessary OTcl code to access the agent}{Section}{sec:agents:exotclcode}.
+\end{enumerate}
+
+The action required to create and agent can be illustrated
+by means of a very simple example.
+Suppose we wish to construct an agent which performs
+the ICMP ECHO REQUEST/REPLY (or ``ping'') operations.
+
+\subsection{Example: A ``ping'' requestor (Inheritance Structure)}
+\label{sec:pingexample}
+
+Deciding on the inheritance structure is a matter of personal choice, but is
+likely to be related to the layer at which the agent will operate
+and its assumptions on lower layer functionality.
+The simplest type of Agent, connectionless datagram-oriented transport, is
+the \code{Agent/UDP} base class.  Traffic generators can easily be connected
+to UDP Agents.
+For protocols wishing to use a connection-oriented stream transport
+(like TCP), the various TCP Agents could be used.
+Finally, if a new transport or ``sub-transport'' protocol
+is to be developed, using \code{Agent}
+as the base class would likely be the best choice.
+In our example, we'll use Agent as the base class, given that
+we are constructing an agent logically belonging to the IP layer
+(or just above it).
+
+We may use the following class definitions:
+\begin{program}
+        class ECHO_Timer;
+ 
+        class ECHO_Agent : public Agent \{
+         public:
+                ECHO_Agent();
+                int command(int argc, const char*const* argv);
+         protected:
+                void timeout(int);
+                void sendit();
+                double interval_;
+                ECHO_Timer echo_timer_;
+        \};
+
+        class ECHO_Timer : public TimerHandler \{
+        public:
+                ECHO_Timer(ECHO_Agent *a) : TimerHandler() \{ a_ = a; \}
+        protected:
+                virtual void expire(Event *e);
+                ECHO_Agent *a_;
+        \}; 
+\end{program}
+
+\subsection{The \texttt{recv}() and \texttt{timeout}() Methods}
+\label{sec:agents:exmethods}
+
+The \fcn[]{recv} method is not defined here, as this agent
+represents a request function and will generally not be receiving
+events or packets\footnote{This is perhaps unrealistically simple.
+An ICMP ECHO REQUEST agent would likely wish to process
+ECHO REPLY messages.}.
+By not defining the \fcn[]{recv} method, the base class version
+of \fcn[]{recv} (\ie, \fcn[]{Connector::recv}) is used.
+The \fcn[]{timeout} method is used to periodically send request packets.
+The following \fcn[]{timeout} method is used, along with a helper
+method, \fcn[]{sendit}:
+\begin{program}
+        void ECHO_Agent::timeout(int)
+        \{
+                sendit();
+                echo_timer_.resched(interval_);
+        \}
+
+        void ECHO_Agent::sendit()
+        \{
+                Packet* p = allocpkt();
+                ECHOHeader *eh = ECHOHeader::access(p->bits());
+                eh->timestamp() = Scheduler::instance().clock();
+                send(p, 0);     // {\cf Connector::send()}
+        \}
+
+        void ECHO_Timer::expire(Event *e)
+        \{
+                a_->timeout(0);
+        \}
+\end{program}
+The \fcn[]{timeout} method simply arranges for \fcn[]{sendit} to be
+executed every \code{interval_} seconds.
+The \fcn[]{sendit} method creates a new packet with most of its
+header fields already set up by \fcn[]{allocpkt}.
+The packet is only lacks the current time stamp. 
+The call to \fcn[]{access} provides for a structured interface to the
+packet header fields, and is used to set the timestamp field.
+Note that this agent uses its own special header (``ECHOHeader'').
+The 
+\href{creation and use of packet headers is described in
+later chapter}{Chapter}{chap:pformat};
+to send the packet to the next downstream node, \fcn[]{Connector::send}
+is invoked without a handler.
+
+\subsection{Linking the ``ping'' Agent with OTcl}
+\label{sec:agents:exlinkage}
+
+We have the 
+\href{methods and mechanisms for establishing OTcl Linkage earlier}{%
+        Chapter}{chap:otcl:intro}.
+This section is a brief review of the essential features of that
+earlier chapter, and describes the minimum functionality required to 
+create the ping agent.
+
+There are three items we must handle to properly link our agent
+with Otcl.
+First we need to establish a mapping between the OTcl name
+for our class and the actual object created when an
+instantiation of the class is requested in OTcl.
+This is done as follows:
+\begin{program}
+        static class ECHOClass : public TclClass \{
+        public:
+                ECHOClass() : TclClass("Agent/ECHO") \{\}
+                TclObject* create(int argc, const char*const* argv) \{
+                        return (new ECHO_Agent());
+                \}
+        \} class_echo;
+\end{program}
+Here, a {\em static} object ``class\_echo'' is created. It's constructor
+(executed immediately when the simulator is executed) places the class name
+``Agent/ECHO'' into the OTcl name space.
+The mixing of case is by convention;
+recall from Section~\ref{sec:TclClass} in the earlier chapters that
+the ``/'' character is a hierarchy delimiter for the interpreted hierarchy.
+The definition of the \fcn[]{create} method specifies how a C++
+shadow object should be created when
+the OTcl interpreter is instructed to create an
+object of class ``Agent/ECHO''.  In this case, a dynamically-allocated
+object is returned.  This is the normal way new C++ shadow objects
+are created.
+% Note that arguments could have been passed to our constructor
+% via OTcl through the conventional \code{argc/argv} pairs of the
+% \fcn[]{create} method, although this is rare.
+
+Once we have the object creation set up, we will want to link
+C++ member variables with corresponding variables in the OTcl
+nname space, so that accesses to OTcl variables are actually
+backed by member variables in C++.
+Assume we would like OTcl to be able to adjust the sending
+interval and the packet size.
+This is accomplished in the class's constructor:
+\begin{program}
+        ECHO_Agent::ECHO_Agent() : Agent(PT_ECHO)
+        \{
+                bind_time("interval_", &interval_);
+                bind("packetSize_", &size_);
+        \}
+\end{program}
+Here, the C++ variables \code{interval_} and \code{size_} are
+linked to the OTcl instance variables \code{interval_} and
+\code{packetSize_}, respectively.
+Any read or modify operation to the Otcl variables will result
+in a corresponding access to the underlying C++ variables.
+The \href{details of the \fcn[]{bind} methods are described elsewhere}{%
+        Section}{sec:VarBinds}.
+The defined constant \code{PT_ECHO} is passed to the \fcn[]{Agent}
+constuctor so that the \fcn[]{Agent::allocpkt} method may set
+the \href{packet type field used by the trace support}{%
+        Section}{sec:traceptype}.
+In this case, \code{PT_ECHO} 
+\href{represents a new packet type and must be defined in \nsf{trace.h}}{%
+        Section}{sec:traceformat}.
+
+Once object creation and variable binding is set up, we may
+want to \href{create methods implemented in C++ but which can
+be invoked from OTcl}{Section}{sec:Commands}.
+These are often control functions that initiate, terminate or
+modify behavior.
+In our present example, we may wish to be able to start the
+ping query agent from OTcl using a ``start'' directive.
+This may be implemented as follows:
+\begin{program}
+        int ECHO_Agent::command(int argc, const char*const* argv)
+        \{
+                if (argc == 2) \{
+                        if (strcmp(argv[1], "start") == 0) \{
+                                timeout(0);
+                                return (TCL_OK);
+                        \}
+                \}
+                return (Agent::command(argc, argv));
+        \}
+\end{program}
+Here, the \fcn[]{start} method available to OTcl simply calls
+the C++ member function \fcn[]{timeout} which initiates the
+first packet generation and schedules the next.
+Note this class is so simple it does not even include a
+way to be stopped.
+
+\subsection{Using the agent through OTcl}
+\label{sec:agents:exotclcode}
+
+The agent we have created will have to be instantiated and attached
+to a node.
+Note that a node and simulator object is assumed to have
+already been created.
+% (Section \ref{tcllink} describes how this is done).
+The following OTcl code performs these functions:
+\begin{program}
+        set echoagent [new Agent/ECHO]
+        $simulator attach-agent $node $echoagent
+\end{program}
+To set the interval and packet size, and start packet generation,
+the following OTcl code is executed:
+\begin{program}
+        $echoagent set dst_ $dest
+        $echoagent set fid_ 0
+        $echoagent set prio_ 0
+        $echoagent set flags_ 0
+        $echoagent set interval_ 1.5
+        $echoagent set packetSize_ 1024
+        $echoagent start
+\end{program}
+This will cause our agent to generate one 1024-byte packet destined for
+node \code{$dest} every 1.5 seconds.
+
+\section{The Agent API}
+\label{sec:agents:api}
+
+Simulated applications may be implemented on top of protocol agents.  Chapter
+\ref{chap:applications} describes the API used by applications to  access the 
+services provided by the protocol agent.
+
+
+\section{Different agent objects}
+\label{sec:agentobjects}
+Class Agent forms the base class from which different types of objects
+like Nullobject, TCP etc are derived. The methods for Agent class are
+described in the next section. Configuration parameters for:
+\begin{description}
+\item[fid\_] Flowid.
+\item[prio\_] Priority. 
+\item[agent\_addr\_] Address of this agent. 
+\item[agent\_port\_] Port adress of this agent. 
+\item[dst\_addr\_ ] Destination address for the agent.
+\item[dst\_port\_] Destination port address for the agent.
+\item[flags\_]
+\item[ttl\_] TTL defaults to 32.
+\end{description}
+There are no state variables specific to the generic agent class. Other
+objects derived from Agent are given below:
+
+\begin{description}
+
+\item[Null Objects]
+Null objects are a subclass of agent objects that implement a traffic
+sink. They inherit all of the generic agent object functionality. There
+are no methods specific to this object. The state variables are:
+\begin{itemize}
+\item sport\_
+\item dport\_
+\end{itemize}
+
+\item[LossMonitor Objects]
+LossMonitor objects are a subclass of agent objects that implement a
+traffic sink which also maintains some statistics about the received data
+e.g., number of bytes received, number of packets lost etc. They inherit
+all of the generic agent object functionality. 
+
+\code{$lossmonitor clear}\\
+Resets the expected sequence number to -1. 
+
+State Variables are:
+\begin{description}
+\item[nlost\_] Number of packets lost. 
+
+\item[npkts\_] Number of packets received. 
+
+\item[bytes\_] Number of bytes received. 
+
+\item[lastPktTime\_] Time at which the last packet was received. 
+
+\item[expected\_] The expected sequence number of the next packet. 
+\end{description}
+
+\item[TCP objects]
+TCP objects are a subclass of agent objects that implement the BSD Tahoe
+TCP transport protocol as described in paper: "Fall, K., and Floyd, S.
+Comparisons of Tahoe, Reno, and Sack TCP. December 1995." URL ftp://
+ftp.ee.lbl.gov/papers/sacks.ps.Z. They inherit
+all of the generic agent functionality. Configuration Parameters are:
+\begin{description}
+
+\item[window\_] The upper bound on the advertised window for the TCP
+connection. 
+
+\item[maxcwnd\_]
+The upper bound on the congestion window for the TCP connection. Set to
+zero to ignore. (This is the default.) 
+
+\item[windowInit\_]
+The initial size of the congestion window on slow-start. 
+
+\item[windowOption\_]
+The algorithm to use for managing the congestion window. 
+
+\item[windowThresh\_]
+Gain constant to exponential averaging filter used to compute awnd (see
+below). For investigations of different window-increase algorithms. 
+
+\item[overhead\_]
+The range of a uniform random variable used to delay each output packet.
+The idea is to insert random delays at the source in order to avoid phase
+effects, when desired [see Floyd, S., and Jacobson, V. On Traffic Phase
+Effects in Packet-Switched Gateways. Internetworking: Research and
+Experience, V.3 N.3, September 1992. pp. 115-156 ]. This has only been
+implemented for the Tahoe ("tcp") version of tcp, not for tcp-reno. This
+is not intended to be a realistic model of CPU processing overhead. 
+
+\item[ecn\_] Set to true to use explicit congestion notification in
+addition to packet drops to signal congestion. This allows a Fast
+Retransmit after a quench() due to an ECN (explicit congestion
+notification) bit. 
+
+\item[packetSize\_]
+The size in bytes to use for all packets from this source. 
+
+\item[tcpTick\_]
+The TCP clock granularity for measuring roundtrip times. Note that it is
+set by default to the non-standard value of 100ms. 
+
+\item[bugFix\_]
+Set to true to remove a bug when multiple fast retransmits are allowed for
+packets dropped in a single window of data. 
+
+\item[maxburst\_]
+Set to zero to ignore. Otherwise, the maximum number of packets that the
+source can send in response to a single incoming ACK. 
+
+\item[slow\_start\_restart\_]
+Set to 1 to slow-start after the connection goes idle. On by default. 
+
+\item[syn\_]
+Set to false to disable modeling the initial SYN/SYNACK exchange. On by default.
+Note: if this is set to false and the DelAck sink is used, it's advisable to also disable the sink's ``SYN\_immediate\_ack\_'' flag.
+\end{description}
+
+Defined Constants are:
+\begin{description}
+\item[MWS] The Maximum Window Size in packets for a TCP connection. MWS
+determines the size of an array in tcp-sink.cc. The default for MWS is
+1024 packets. For Tahoe TCP, the "window" parameter, representing the
+receiver's advertised window, should be less than MWS-1. For Reno TCP, the
+"window" parameter should be less than (MWS-1)/2. 
+\end{description}
+
+State Variables are:
+\begin{description}
+
+\item[dupacks\_]
+Number of duplicate acks seen since any new data was acknowledged. 
+
+\item[seqno\_]
+Highest sequence number for data from data source to TCP. 
+
+\item[t\_seqno\_]
+Current transmit sequence number. 
+
+\item[ack\_] Highest acknowledgment seen from receiver. cwnd\_
+Current value of the congestion window. 
+
+\item[awnd\_]
+Current value of a low-pass filtered version of the congestion window. For
+investigations of different window-increase algorithms. 
+
+\item[ssthresh\_]
+Current value of the slow-start threshold. 
+
+\item[rtt\_] Round-trip time estimate. 
+
+\item[srtt\_]
+Smoothed round-trip time estimate. 
+
+\item[rttvar\_]
+Round-trip time mean deviation estimate. 
+
+\item[backoff\_]
+Round-trip time exponential backoff constant. 
+\end{description}
+
+\item[TCP/Reno Objects]
+TCP/Reno objects are a subclass of TCP objects that implement the Reno TCP
+transport protocol described in paper: "Fall, K., and Floyd, S.
+Comparisons of Tahoe, Reno, and Sack TCP. December 1995." URL ftp://
+ftp.ee.lbl.gov/papers/sacks.ps.Z. There are no methods,
+configuration parameters or state variables specific to this object. 
+
+\item[TCP/Newreno Objects]
+TCP/Newreno objects are a subclass of TCP objects that implement a
+modified version of the BSD Reno TCP transport protocol. 
+There are no methods or state variables specific to this object. 
+
+Configuration Parameters are:
+\begin{description}
+
+\item[newreno\_changes\_]
+Set to zero for the default New Reno described in "Fall, K., and Floyd, S.
+Comparisons of Tahoe, Reno, and Sack TCP. December 1995". Set to 1 for
+additional New Reno algorithms [see Hoe, J., Improving the Start-up
+Behavior of a Congestion Control Scheme for TCP. in SIGCOMM 96, August
+1996, pp. 270-280. URL 
+http://www.acm.org/sigcomm/sigcomm96/papers/hoe.html.]; this includes the
+estimation of the ssthresh parameter during slow-start. 
+\end{description}
+
+
+\item[TCP/Vegas Objects]
+There are no methods or configuration parameters specific to this
+object. State variables are:
+\begin{itemize}
+\item v\_alpha\_
+\item v\_beta\_
+\item v\_gamma\_
+\item v\_rtt\_
+\end{itemize}
+
+
+\item[TCP/Sack1 Objects]
+TCP/Sack1 objects are a subclass of TCP objects that implement the BSD
+Reno TCP transport protocol with Selective Acknowledgement Extensions
+described in "Fall, K., and Floyd, S. Comparisons of Tahoe, Reno, and
+Sack TCP. December 1995". URL ftp:// ftp.ee.lbl.gov/papers/sacks.ps.Z. 
+They inherit all of the TCP object functionality. There are no methods,
+configuration parameters or state variables specific to this object. 
+
+
+\item[TCP/FACK Objects]
+TCP/Fack objects are a subclass of TCP objects that implement the BSD Reno
+TCP transport protocol with Forward Acknowledgement congestion control. 
+They inherit all of the TCP object functionality. There are no methods or
+state variables specific to this object. 
+
+Configuration Parameters are:
+\begin{description}
+\item[ss-div4]
+Overdamping algorithm. Divides ssthresh by 4 (instead of 2) if congestion
+is detected within 1/2 RTT of slow-start. (1=Enable, 0=Disable) 
+
+\item[rampdown]
+Rampdown data smoothing algorithm. Slowly reduces congestion window rather
+than instantly halving it. (1=Enable, 0=Disable) 
+\end{description}
+
+
+\item[TCP/FULLTCP Objects]
+This section has not yet been added here. The implementation
+and the configuration parameters are described in paper: "Fall, K.,
+Floyd, S., and Henderson, T., Ns Simulator Tests for Reno FullTCP.
+July, 1997." URL ftp://ftp.ee.lbl.gov/papers/fulltcp.ps. 
+
+
+\item[TCPSINK Objects]
+TCPSink objects are a subclass of agent objects that implement a receiver
+for TCP packets. The simulator only implements "one-way" TCP connections,
+where the TCP source sends data packets and the TCP sink sends ACK
+packets. TCPSink objects inherit all of the generic agent functionality.
+There are no methods or state variables specific to the TCPSink object. 
+Configuration Parameters are
+\begin{description}
+\item[packetSize\_]
+The size in bytes to use for all acknowledgment packets. 
+
+\item[maxSackBlocks\_]
+The maximum number of blocks of data that can be acknowledged in a SACK
+option. For a receiver that is also using the time stamp option [RFC
+1323], the SACK option specified in RFC 2018 has room to include three
+SACK blocks. This is only used by the TCPSink/Sack1 subclass. This value
+may not be increased within any particular TCPSink object after that
+object has been allocated. (Once a TCPSink object has been allocated, the
+value of this parameter may be decreased but not increased). 
+\end{description}
+
+
+\item[TCPSINK/DELACK Objects]
+DelAck objects are a subclass of TCPSink that implement a delayed-ACK
+receiver for TCP packets. They inherit all of the TCPSink object
+functionality. There are no methods or state variables specific to the
+DelAck object. 
+Configuration Parameters are:
+\begin{description}
+\item[interval\_]
+The amount of time to delay before generating an acknowledgment for a
+single packet. If another packet arrives before this time expires,
+generate an acknowledgment immediately. 
+
+\item[RFC2581\_immediate\_ack\_]
+A boolean flag. If true, conforms to RFC2581 (section 4.2) and only delays
+the ACK if we know we're not doing recovery, i.e. not gap-filling.
+Otherwise all ACKs are delayed. The default value is true.
+
+\item[SYN\_immediate\_ack\_]
+A boolean flag. If true, the first packet in sequence (seqno == 0) is
+always ACKed immediately. This simulates the behavior of the FullTCP
+agent, which ACKs a SYN immediately. The default value is true.
+See also the ``syn\_'' flag of the one-way TcpAgent.
+\end{description}
+
+
+\item[TCPSINK/SACK1 Objects]
+TCPSink/Sack1 objects are a subclass of TCPSink that implement a SACK
+receiver for TCP packets. They inherit all of the TCPSink object
+functionality. There are no methods, configuration parameters or state
+variables specific to this object. 
+
+
+\item[TCPSINK/SACK1/DELACK Objects]
+TCPSink/Sack1/DelAck objects are a subclass of TCPSink/Sack1 that
+implement a delayed-SACK receiver for TCP packets. They inherit all of the
+TCPSink/Sack1 object functionality. There are no methods or state
+variables specific to this object. 
+Configuration Parameters are:
+\begin{description}
+
+\item[interval\_]
+The amount of time to delay before generating an acknowledgment for a
+single packet. If another packet arrives before this time expires,
+generate an acknowledgment immediately. 
+\end{description}
+\end{description}
+
+
+
+\section{Commands at a glance}
+\label{sec:agentscommand}
+
+Following are the agent related commands used in simulation scripts:
+\begin{flushleft}
+\code{ns_ attach-agent <node> <agent>}\\
+This command attaches the <agent> to the <node>. We assume here that the
+<agent> has already been created. An agent is typically created by
+\code{set agent [new Agent/AgentType]}
+where Agent/AgentType defines the class definiton of the specified agent
+type.
+
+
+\code{$agent port}\\
+This returns the port number to which the agent is attached.
+
+
+\code{$agent dst-port}\\
+This returns the port number of the destination.
+When any connection is setup between 2 nodes, each agent stores the 
+destination port in its instance variable called \code{dst_port_}.
+
+
+\code{$agent attach-app <s_type>}\\
+This commands attaches an application of type \code{<s_type>} to the agent.
+A handle to the application object is returned. Also note that the application
+type must be defined as a packet type in packet.h.
+
+
+\code{$agent attach-source <s_type>}\\
+This used to be the procedure to attach source of type \code{<s_type>} to
+the agent. But this is obsolete now. Use attach-app (described above)
+instead.
+
+
+\code{$agent attach-tbf <tbf>}\\
+Attaches a token bucket filter (tbf) to the agent.
+
+
+\code{$ns_ connect <src> <dst>}\\
+Sets up a connection between the src and dst agents. 
+
+
+\code{$ns_ create-connection <srctype> <src> <dsttype> <dst> <pktclass>}\\
+This sets up a complete connection between two agents. First creates a source
+of type <srctype> and binds it to <src>. Then creates a destination of type
+<dsttype> and binds it to <dst>. Finally connects the src and dst agents and
+returns a handle to the source agent.
+
+
+\code{$ns_ create-connection-list <srctype> <src> <dsttype> <dst> <pktclass>}\\
+This command is exactly similar to create-connection described above. But
+instead of returning only the source-agent, this returns a list of source and
+destination agents.
+
+
+Internal procedures:
+
+\code{$ns_ simplex-connect <src> <dst>}\\
+This is an internal method that actually sets up an unidirectional connection
+between the <src> agent and <dst> agent. It simply sets the destination address
+and destination port of the <src> as <dst>'s agent-address and agent-port.
+The "connect" described above calls this method twice to set up a bi-directional
+connection between the src and dst.
+
+
+\code{$agent set <args>}\\
+This is an internal procedure used to inform users of the backward compatibility
+issues resulting from the upgrade to 32-bit addressing space currently used
+in \ns.
+
+\code{$agent attach-trace <file>}\\
+This attaches the <file> to the agent to allow nam-tracing of the agent
+events.
+
+
+In addition to the agent related procedures described here, there are additional
+methods that support different type of agents like Agent/Null, Agent/TCP,
+Agent/CBR, Agent/TORA, Agent/mcast etc. These additional methods along
+with the procedures described here can be found in \ns/tcl/lib/(ns-agent.tcl,
+ns-lib.tcl, ns-mip.tcl, ns-mobilenode.tcl, ns-namsupp.tcl, ns-queue.tcl,
+ns-route.tcl, ns-sat.tcl, ns-source.tcl). They are also described in the
+previous section.
+
+\end{flushleft} 
+
+\endinput

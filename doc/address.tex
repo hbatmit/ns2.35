@@ -1,0 +1,152 @@
+\chapter{The (Revised) Addressing Structure in NS}
+\label{chap:Address}
+
+This chapter describes the internals of the revised addressing format
+implemented in \ns. The chapter consists of five sections. We
+describe the APIs that can be used for allocating bits to the ns addressing
+structure. The address space can be thought
+of a contiguous field of {\em n} bits, where n may vary as per the
+address requirement of the simulation. Typically, however, n is not varied
+and is held at 31 bits.  The default value of {\em n} is
+31 (as defined by {\em DEFADDRSIZE\_}). The maximum value of {\em n} is
+set to 31 (defined as {\em MAXADDRSIZE\_}). These default and maximum 
+address sizes are defined in \nsf{/tcl/lib/ns-default.tcl}.
+
+ns addresses exist in both OTcl and C++ realms.  In Tcl, everything is
+a string, while C++ has strongly typed integers.  Tcl handling of integers,
+especially 32 bit and larger integers, is inconsistent across versions, and
+behavior of 32 bit addresses is inconsistent across 32- and 64-bit 
+machine architectures.  When addresses cross the boundary between OTcl and
+C++, they are cast to a signed integer.  Therefore, we avoid these 
+incompatibilities by fixing the maximum address size at 31 bits.  
+Prior to ns-2.35 (when
+this maximum was established), the maximum was 32 bits, but users are now
+advised to avoid changing the default and maximum from 31 bits.
+
+The address space consists of 2 parts, the node-id and the port-id.
+31 bits are allocated for the node-id, and 31 bits are allocated for the 
+port-id or
+the identification of the agent attached to the node. Of the node-id
+bits, 1 bit (the most-significant-bit) is assigned for multicast. 
+Additionally, the address space may
+also be set in hierarchical format, consisting of multiple levels of
+addressing hierarchy. 
+We shall be describing the APIs for setting address structure in
+different formats as described above as well as expanding the address
+space. 
+The procedures and functions described in this chapter can be found in
+\nsf{tcl/lib/ns-address.tcl, address.cc and address.h}.
+
+\section{The Default Address Format}
+\label{sec:defaultFormat}
+
+The default settings allocates 31 lower bits for port-id, 1 higher bit
+for mcast and the rest 30 higher bits for node-id. The procedure to set
+the address format in default mode is called during initialisation of
+the simulator as:
+
+\begin{program}
+{\cf # The preamble}
+set ns [new Simulator]                  \; initialise the simulation;
+\end{program}
+
+It can also be called explicitly set as:
+\begin{program}
+\$ns set-address-format def
+\end{program}
+
+Note that this is the default and users do not typically need to configure
+an address format.
+
+\section{The Hierarchical Address Format}
+\label{sec:hierFormat}
+
+There are two options for setting an address to hierarchical format, the
+default and the specified.
+
+\subsection{Default Hierarchical Setting}
+\label{sec:def-hier}
+The default hierarchical node-id consists of 3 levels with (9 11 11) bits
+in the three levels. The hierarchical configuration may be invoked as
+follows: 
+
+\$ns set-address-format hierarchical
+
+\begin{quote}
+This sets :
+
+* 31 bits for port-id, 
+* 31 bits for node-id assigned in 
+  - 3 levels of hierarchy 
+  - (9 11 11) bits for the three levels. 
+  - or (8 11 11) if multicast is enabled. 
+\end{quote}
+
+\subsection{Specific Hierarchical Setting}
+\label{sec:sp-hier}
+The second option allows a hierarchical address to be set with specified
+number of levels with number of bits assigned for each level. The API
+would be as the following:
+
+\$ns set-address-format hierarchical <\#n hierarchy levels> <\#bits for
+level1> <\#bits for level 2> ....<\#bits for nth level> 
+
+
+An example configuration would be:
+
+\$ns set-address-format hierarchical 2 8 15 
+
+where 2 levels of hierarchy is specified, assigning 8 bits for the 1st
+level and 15 bits for the second.
+
+
+\section{Errors in setting address format}
+\label{sec:err-add}
+
+Errors are returned for both {\em set-address-format} and
+{\em expand-port-field-bits} primitives in the following cases:
+\begin{quote}
+* if number of bits specified is less than 0.
+* if bit positions clash (contiguous number of requested free bits not
+* found).  
+* if total number of bits exceed MAXADDRSIZE\_.
+* if number of hierarchy levels donot match with number of bits
+* specified (for each level).  
+\end{quote}
+
+\section{Commands at a glance}
+\label{sec:addresscommand}
+
+The following is a list of address-format related commands used in simulation
+scripts:
+\begin{flushleft}
+\code{$ns_ set-address-format def}\\
+This command is used internally to set the address format to its default value
+of 31 lower bits for port-id, 1 higher bit for mcast and the rest 30 higher bits
+for node-id. However this API has been replaced by the new node API\\
+\code{$ns_ node-config -addressType flat}.
+
+
+\code{$ns_ set-address-format hierarchical}\\
+This command is used to set the address format to the hierarchical configuration
+that consists of 3 levels and 31 lower bits
+for port-id. However this API has been replaced by the new node API\\
+\code{$ns_ node-config -addressType hierarchical}.
+
+
+\code{$ns_ set-address-format hierarchical <levels> <args>}\\
+This command is used to set the address format to a specific hierarchical
+setting. The <levels> indicate the number of levels of hierarchy in the addressing
+structure, while the args define number of bits for each level. An example
+would be \code{$ns_ set-address-format hierachical 3 4 4 16} , where 4, 4 and
+16 defines the number of bits to be used for the address space in level 1 , 2
+and 3 respectively.
+
+
+\end{flushleft}
+\endinput
+
+
+
+
+

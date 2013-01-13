@@ -1,0 +1,16 @@
+The file picoeff.dat.gz can be unzipped with:
+gunzip picoeff.dat.gz
+
+The data file picoeff.dat is in the format below, and contains parameter
+values to use with the PI active queue management module, whose
+validation test is in tcl/test/test-all-pi.
+
+###############################################################
+
+#
+# <Min number of flows, bandwidth (Mbps), RTT (seconds), mean_pktsize> => <a, b, sampling>
+#
+10  1 0.10  100 => 0.0002084418985 0.0002063678498   160.00000
+10  1 0.10  200 => 0.0017288431891 0.0017116407693   320.00000
+...
+

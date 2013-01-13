@@ -1,0 +1,340 @@
+Ryan S. Barnett
+June 28, 2001
+University of Southern California
+
+PGM HOWTO
+
+A simplified version of the Pragmatic General Multicast (PGM) Reliable
+Transport Protocol has been provided for ns 2.1b8.  This implementation
+conforms to a subset of the specification provided by IETF Draft v6 by
+Speakman et al.  The implementation and other PGM related files are contained
+in the ~ns/pgm directory.  The default OTcl parameters for all PGM objects
+are specified in ~ns/tcl/lib/ns-default.tcl.
+
+1. What is supported?
+
+All general PGM procedures are supported, including at least the following:
+
+Senders:
+   a. Multiple PGM senders on a single network,
+   b. RDATA generation,
+   c. NAK reliability,
+   d. Source Path State generation.
+
+Network Elements:
+   a. Source Path State processing,
+   b. NAK reliability,
+   c. Constrained NAK forwarding,
+   d. NAK elimination,
+   e. Constrained RDATA forwarding,
+   f. NAK Anticipation.
+
+Receivers:
+   a. NAK suppression (with a random back-off interval),
+   b. NAK reliability.
+
+2. What is NOT supported?
+
+This implementation of PGM does not support the following features described
+in the PGM specification.  These are left for future enhancements:
+
+   a. PGM Options: These include fragmentation, late joining, redirection,
+      Forward Error Correction, reachability, and session control.
+
+   b. Designated Local Repairer (DLR) support.
+
+   c. Congestion control techniques.
+
+   d. Transmit Windows and Receive Windows. The sender is assumed to have an
+      infinitely large buffer to provide a repair retransmission for any
+      sequence number.
+
+3. PGM Agents Overview
+
+Three PGM agents are available to be used within the Tcl simulation 
+environment: Agent/PGM, Agent/PGM/Sender, and Agent/PGM/Receiver.
+
+Agent/PGM provides the "network element" functionality.  This allows the
+node to intercept intermediate PGM packets, not designated to that node, and
+process them accordingly.  (The required behavior is similar to the
+IP Router Alert option that must be used by PGM routers.)  The typical
+behavior of Agent/PGM includes: source path state processing, NAK
+confirmation, constrained reliable NAK forwarding, and constrained RDATA
+forwarding.
+
+Agent/PGM/Sender provides the functionality for a node to be the source of
+packets for a PGM session.  An Application is run on top of this agent 
+such as Application/Traffic/CBR.  The typical behavior of Agent/PGM/Sender
+includes: heartbeat SPM generation, NAK confirmation, and delayed repair
+transmission.
+
+Agent/PGM/Receiver provides the functionality for a node to be a receiver
+of a PGM session.  The typicial behavior of Agent/PGM/Receiver includes:
+constrained NAK generation and NAK retransmission.
+
+NOTE: A single node can have both the Agent/PGM and Agent/PGM/Receiver
+(or Agent/PGM/Sender) attached to the node.  In fact,
+when PGM is activated in the Simulator, an Agent/PGM is automatically created
+and attached to _every_ node created thereafter.  This is required to
+allow the node to intercept PGM packets (aka router-alert) if it is to be
+a "network element".  Hence, the user never explicitly creates Agent/PGM
+agents.  A command can be issued to the node to disable its
+Agent/PGM, if desired, to simulate an environment with non-PGM routers.  It
+is perfectly normal for a node to be both an Agent/PGM and a Receiver,
+with the Agent/PGM enabled, regardless if it is a leaf node or not.
+
+4. PGM Agent Settings
+
+The following are tunable parameters that are available for the three PGM
+agent types.  The default settings are located in ~ns/tcl/lib/ns-default.tcl.
+
+   a. Agent/PGM
+
+      pgm_enabled_: [0 or 1, default: 1] This is used to toggle whether the
+         given agent is active.  When set to 0 the node simply forwards
+         packets to the next node or agent without any PGM processing.
+
+      nak_retrans_ival_: [default: 50ms] The amount of time the
+         agent waits between retransmitting a NAK that it is waiting for a NCF
+         packet.
+
+      nak_rpt_ival_: [default: 1000ms] This is the amount of time the network
+         element will continue to repeat NAKs while waiting for a
+         corresponding NCF.  Once this time expires and no NCF is received,
+         then the entire repair state is removed for that sequence number.
+
+      nak_rdata_ival_: [default: 10000ms] This is the length of time the
+         network element will wait for the corresponding RDATA before removing
+         the entire repair state.
+
+      nak_elim_ival_: [default: 5000ms] Once a NAK has been confirmed, the
+         network elements must discard all further NAKs for up to this length
+         of time.  This should be a fraction of nak_rdata_ival_.
+
+   b. Agent/PGM/Sender
+
+      spm_interval_: [default: 500ms] The length of time to wait between
+         sending SPM packets.
+
+      rdata_delay_: [default: 70ms] The length of time to delay sending out
+         an RDATA in response to a NAK packet.  This is to allow slow NAKs to
+         get processed so we don't send out duplicate RDATA.  This delay
+         should not exceed twice the greatest propagation delay in the loss
+         neighborhood.
+
+   c. Agent/PGM/Receiver
+
+      max_nak_ncf_retries_: [default: 5] Maximum number of times the receiver
+         can send out a NAK and time-out waiting for an NCF reply.  Once the
+         receiver hits this many retries, it discards the NAK state entirely
+         and suffers permanent data loss.
+
+      max_nak_data_retries_: [default: 5] Maximum number of times we can
+         time-out waiting for RDATA after an NCF confirmation for a NAK
+         request.  Once the receiver hits this many retries, it discards the
+         NAK state entirely and suffers permanent data loss.
+
+      nak_bo_ivl_: [default: 30ms] The random back-off interval.  The
+         receiver will select a random amount of time no greater than this
+         value, before it will send out a NAK packet when detecting a gap in
+         the data stream.  It is during this time that the receiver is
+         looking for an NCF from another node that might have detected the
+         gap first.
+
+      nak_rpt_ivl_: [default: 50ms] The amount of time to wait for a NCF
+         packet after sending out a NAK packet to the upstream node.  If no
+         NCF is received, another random back-off time is observed, and then
+         the NAK is retransmitted.
+
+      nak_rdata_ivl_: [default: 1000ms] The amount of time to wait for RDATA
+         after receiving an NCF confirmation for a given NAK.  Once this timer
+         expires, another random back-off time is observed, and then the NAK
+         is retransmitted.
+
+5. Using PGM
+
+PGM requires that multicast be enabled, therefore your Tcl simulation script
+needs to initialize the ns object with the following statement:
+
+   set ns [new Simulator -multicast on]
+
+To allow nodes to intercept PGM packets and process them, the following
+statement must be used:
+
+   $ns node-config -PGM ON
+
+This will instruct ns to implicitly create an Agent/PGM agent for every
+new node that is created.  If you want to deactivate an Agent/PGM for a node,
+(for example to simulate a non-PGM router), you must extract the agent
+from the node using "get-pgm", and then set pgm_enabled_ to 0.  Here is an
+example:
+
+   set node1 [$ns node]
+   set pgm_agent1 [$node1 get-pgm]
+   $pgm_agent1 set pgm_enabled_ 0
+
+Note that it is perfectly fine to keep an Agent/PGM enabled even if it has
+a Receiver or Sender attached to it.
+
+Create the multicast group for your PGM session, for example:
+
+   set group [Node allocaddr]
+
+Create the Sending PGM agent, for example:
+
+   set src [new Agent/PGM/Sender]
+   $ns attach-agent node2 $src
+   $src set dst_addr_ $group
+   $src set dst_port_ 0
+
+Attach the Constant Bit Rate traffic source to the PGM Sender, for example:
+
+   set cbr [new Application/Traffic/CBR]
+   $cbr attach-agent $src
+   $cbr set rate_ 448Kb
+   $cbr set packetSize_ 210
+   $cbr set random_ 0
+
+Create the PGM Receiver agents and attach them to the nodes that should act
+as receivers, for example:
+
+   set rcv3 [new Agent/PGM/Receiver]
+   $ns attach-agent $node3 $rcv3
+   $ns at 0.01 "$node3 join-group $rcv3 $group"
+
+You must of course attach the links to the nodes using duplex-link, and
+set the routing protocol.  You may also want to add loss modules to
+have packets be dropped from various links.  See the examples in the
+~ns/pgm/tcl directory for further information.
+
+In order to start the simulation you should first have the PGM Sender
+begin to send out heartbeat SPM packets.  These will initialize the
+PGM nodes with source path state.  This allows the nodes to know where
+to send NAK packets in the event of a packet drop.  The SPM's should be
+propagated throughout the network before ODATA is sent from the PGM Sender.
+This is done such as:
+
+   $ns at 0.3 "$src start-SPM"
+
+Now you can activate the CBR traffic source, such as:
+
+   $ns at 0.4 "$cbr start"
+
+To finish the simulation you should first terminate the CBR, and then 
+terminate the heartbeat SPM packets from the PGM Sender.  For example:
+
+   $ns at 1.5 "$cbr stop"
+   $ns at 2.0 "$src stop-SPM"
+
+And then call the finish procedure:
+
+   $ns at 2.0 "finish"
+
+You can then gather PGM statistics on the results of the simulation through
+the finish procedure.  To do this you issue the command "print-stats" on the
+desired Agent/PGM, Agent/PGM/Sender, or Agent/PGM/Receiver.  Remember
+that Receiver and Sender nodes may also have an Agent/PGM, so you will need
+to execute two print-stats for a single node.  For example,
+
+   proc finish {} {
+      ...
+
+      $src print-stats
+
+      set pgm_agent2 [$node2 get-pgm]
+      $pgm_agent2 print-stats
+
+      set pgm_agent3 [$node3 get-pgm]
+      $pgm_agent3 print-stats
+
+      $rcv3 print-stats
+ 
+      ...
+   }
+
+The statistics that are printed out for Agent/PGM/Sender look like the
+following:
+
+   pgmSender-0
+           Last ODATA seqno: 266
+           Last SPM seqno: 3
+           Number of NAKs received: 27
+           Number of RDATA transmitted: 27
+           Max retransmission count for a single RDATA: 0
+
+The first line is a unique identifier of the Sender.  Every time that a
+"new Agent/PGM/Sender" statement is executed the counter increments by one.
+The first sender will have a unique identifier of "pgmSender-0".
+
+The next line indicates the sequence number of the last packet transmitted
+from this source.  Then we have the last sequence number of the SPM packet
+that was transmitted.  Followed by the number of NAK packets that this
+source received and the number of RDATA transmitted.
+
+The last line indicates the maximum number of retransmissions of RDATA for
+any particular sequence number.
+
+The statistics that are printed out for Agent/PGM look like the following:
+
+   pgmAgent-0:
+           NAKs Transmitted:       27
+           NAKs Suppressed:        0
+           Unsolicited NCFs:       0
+           Unsolicited RDATA:      0
+
+The first line is the unique identifier of this agent, it is determined by
+the order of node creation.  The second line indicates the number of NAKs
+that were transmitted upstream.  The third line is the number of NAKs that
+were not acted upon because previous NAK state exists already for that NAK.
+The fourth line is the number of NCF packets that were received for a
+sequence number when a NAK was not transmitted, this quantifies the NAK
+anticipation functionality.  The last line indicates the number of extra
+RDATA that the agent received.  This occurs if an upstream router does not
+support PGM.
+
+The statistics that are printed out for Agent/PGM/Receiver look like the
+following:
+
+   pgmRecv-0:
+           Last packet:            266
+           Max packet:             266
+           Packets recovered:      27
+           Latency (min, max, avg):        0.134128, 0.156994, 0.144058
+           Total NAKs sent:        27
+           Retransmitted NAKs:     0
+
+The first line is the unique identifier of this agent.  The next line is the
+last sequence number received, followed by the maximum contiguous packet
+received.  The next line is the number of packets recovered by RDATA,
+followed by the average latency to recover those packets.  The next line
+indicates the total number of NAKs that were sent, followed by the
+number of NAKs that were retransmitted due to timeouts.
+
+6. Using the PGM Error Model
+
+The PGMErrorModel allows the user to specify which packets should be lost
+on a given link during the simulation.  The interface to this model is
+similar to that of the Periodic Error Model.  You use the procedure
+"drop-packet" with the first argument being the type of PGM packet you
+would like dropped, followed by the cycle period, and finally the offset
+within each period.
+
+To specify the type of PGM packet, use one of the following
+strings: SPM, ODATA, RDATA, NAK, or NCF.
+
+Here is an example of how to drop the fifth ODATA packet that crosses the
+link from Node 1 to Node 2, and continue to drop the fifth packet
+when the next 10 ODATA packets cross the link:
+
+   set loss_module [new PGMErrorModel]
+   $loss_module drop-packet ODATA 10 5
+   $loss_module drop-target [$ns set nullAgent_]
+   $ns lossmodel $loss_module $node1 $node5
+
+Note that the packet drop cycle is counted by the number of packets that
+cross the link that are the given PGM packet type.  It is not dependant on
+the sequence number contained within the packet.
+
+The PGMErrorModel only allows one type of PGM packet to be dropped.  
+Other error models are located in ~ns/errmodel.cc if you need a more
+sophesticated error modeling capability.

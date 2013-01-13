@@ -1,0 +1,483 @@
+release 3.8 (2009-10-15)
+
+   - added support for Non-Renegable Selective Acknowledgements (NR-SACK). 
+     To enable NR-SACKs, set useNonRenegSacks_ tcl bindable variable to 1 at
+     both the data sender and the data receiver.  
+	
+   - Concurrent Multipath Transfer with Potentially Failed(CMT-PF) extension 
+     is default now. To use CMT, set useCmtPF tcl bindable variable to 0 
+     at the data sender. 
+	
+   - added new feature to support a limited size send buffer at the data
+     receiver. Send buffer size can be specified by setting initialSwnd_ tcl
+     bindable variable to desired value. By default, the variable is set to
+     0 which means there is no constraint on the send buffer.
+   
+   - congestion window (cwnd) updates are now done as specified at Section 7.2.1, 
+     7.2.2 and 7.2.3 of RFC4960. Also the number of missing reports to trigger
+     fast retransmits is reduced to three as specified in RFC4960.     
+   
+   - bug fix. A bug discovered by Eduardo Ribeiro and Igor Gavriloff regarding
+     to memory deallocation is fixed. 
+   	  
+   - new validation tests for NR-SACKs and limited send buffer size are added to
+     the test suite.
+
+-------------------------------------------------------------------------------
+release 3.7 (2007-06-15)
+
+   - merged the Concurrent Multipath Transfer with Potentially Failed(CMT-PF)
+     extension to CMT. To use CMT-PF, set useCmtPF tcl bindable variable to 1 
+     at the sender. Cwnd (in MTUs) can be set to 1 or 2 after HB-ACK is 
+     received at the sender. The variable to set cwnd is cmtPFCwnd and default
+     value is 2.
+	
+   - added new feature to confirm destination addresses before data transfer
+     begins (RFC 4460 section 5.4). After receiving INIT_ACK, the INIT sender
+     transmits HEARTBEATs to all destinations. A destination is confirmed upon
+     receipt of HB-ACK. RFC allows data transfer to any confirmed destination. 
+     However, this implementation is more conservative, since, data transfer
+     begins only when all destionations are confirmed. Destination Address(es)
+     confirmation is not implemented for receiver of the INIT.
+   
+   - bug fix. During the failure, CMT with RTX_ASAP goes into infinite loop 
+     while selecting destination for retransmission. This was fixed so that 
+     all destination addresses are considered for retransmissions irrespective
+     of the argument passed to SelectRtxDest(). 
+   
+   - Default Rtx. policy for CMT and CMT-PF is changed from RTX_TO_SAME to 
+     RTX_CWND in ns-default.tcl.
+   
+   - Tcl bindable variable oneHeartbeatTimer is removed. oneHeartbeatTimer 
+     was used to toggle the use of one HEARTBEAT timer for all destinations or
+     a timer per destination. For destination confirmation, each destination 
+     needs its own HEARTBEAT timer, so the implementation is changed to have 
+     one HeartbeatGenTimer per association and one HeartbeatTimeoutTimer per
+     destination. The semantics for tcl bindable variable heartbeatInterval 
+     didn't change.
+	  
+   - New validation tests for SCTP, CMT and CMT-PF are added.
+	
+   - Documentation for CMT and CMT-PF is updated in sctp.README file and 
+     example scripts are provided to run experiments using CMT and CMT-PF. 
+
+-------------------------------------------------------------------------------
+release 3.6 (2006-06-16)
+
+   - merged the Concurrent Multipath Transfer (CMT) extension to SCTP. To
+     use it, set useCmtReordering, useCmtCwnd and useCmtDelAck 1 at the
+     sender, and useCmtDelAck and useDelayedSacks to 1 at the
+     receiver. You can turn OFF the DAC algorithm by setting useCmtDelAck
+     to 0 at both the sender and the receiver. These variables will
+     (hopefully) get consolidated by the next release.
+
+-------------------------------------------------------------------------------
+release 3.5 (2005-09-15)
+
+   - fixed problem with HB pkt size being dependent on arch. 32-bit and
+     64-bit architectures had different size HB pkts due to the hack I
+     had with a dest pointer in the packet payload.
+
+   - added new extensions which combines MultipleFastRtx and Timestamp
+     extensions. It's called MfrTimestamp.
+
+   - bug fix. The tcl bindable initial cwnd was only setting the cwnd
+     before data was ever sent, but was not propagated down to other
+     appropriate places, such as after cwnd reductions due to loss or idle
+     periods. 
+
+   - added the two-level threshold algorithm. The changePrimaryThresh_
+     variable can be used in tcl scripts to set the beta threshold for
+     automatically changing the primary destination after some path error
+     count is exceeded.
+
+   - added a new feature to allow us to simulate overheads of reactive
+     routing protocols used in MANETs. The purpose is to be able to see
+     how features like failover, heartbeating, etc function with such
+     routing protocols, without having to actually simulate MANETs in
+     ns. Two TCL bindable variables have been added: routeCalcDelay_ and
+     routeCacheLifetime_. Also, two traceable variables, timeoutCount_ and
+     rcdCount_, have been added to track the occurance and total number of
+     timeouts and route calculation delays.
+     
+   - bug fix. Stephan Baucke noticed that sometimes wrong RTT samples are
+     taken due to a flaw in the implementation of Karn's algorithm. He
+     also provided the fix, which is only two lines of code: 1 in
+     FastRtx() and 1 in Timeout().
+
+   - added a TCL bindable variable, dormantAction_. This variable controls
+     the action the sender takes when in the dormant state (ie, all
+     destinations have failed). The possible choices are DORMANT_HOP (0),
+     DORMANT_PRIMARY (1), and DORMANT_LASTDEST (2). DORMANT_HOP means the
+     sender keeps hopping to different destinations each time a timeout
+     occurs. DORMANT_PRIMARY means that the sender uses only the
+     primary. DORMANT_LASTDEST means that the sender continues to use the
+     last destination used before the dormant state was entered.
+
+   - modified HB interval calculation to reflect the change in the
+     implementer's guide. The jitter applied to a heartbeat was meant to
+     be a small variance of the RTO, but the RFC's wording currently
+     implies a wide variance due. The implementer's guide modifies the
+     wording to be "On an idle destination address that is
+     allowed to heartbeat, a HEARTBEAT chunk is RECOMMENDED to be sent
+     once per RTO of that destination address plus the protocol parameter
+     'HB.interval' , with jittering of +/- 50% of the RTO value"
+
+   - bug fix. HBs with one heartbeat timer wasn't sending another HB
+     immediately after a timed out HB. However, this fix causes another
+     bug, which I can't fix without making signficant changes (which I
+     don't want to do now). The problem is that since not much state is
+     maintained for HBs, an outstanding HB may be forgotten about if
+     another HB is sent to any destination before the outstanding HB gets
+     acked or times out. This behavior may cause some occasional quirks
+     such as incorrect RTT measurements, extended failure periods,
+     etc. I'll need to address this issue at a later point in time.
+
+   - added two traceable variables (frCount_, mfrCount_) which allows you
+     to track the number of times that fast retransmit and multiple fast
+     retransmit get invoked. These counters are incremented each time the
+     algorithm is invoked, and NOT for each tsn. frCount_ will count only
+     the first time a fast rtx is invoked for a tsn(s). mfrCount_ will
+     count subsequent fast rtx of already fast rtx'd tsns. Added by
+     Armando Caro <acaro@@cis,udel,edu> and Keyur Shah
+     <shah@@cis,udel,edu>. 
+
+   - bug fix. The way the code is maintaining state for chunks marked for
+     retransmission sometimes caused failure detection to take longer than
+     Path.Max.Retrans. When a failure occurs, some data may have made it
+     through before the failure, but the sacks got lost. When the sender
+     retransmits the first outstanding to the alternate destination, the
+     receiver will sack all the data whose sacks got lost. We don't want
+     these sacks to clear the error counter, or else failover would take
+     longer, but this is what the code WAS doing. Now, the error counter
+     is cleared by cum acked data ONLY if the TSNs are not marked for
+     timeout retransmission. The side-effect to this change is that SACKs
+     that arrive late due to RTT spikes will not properly reset the error
+     counter. Also, TSNs at the right edge of the window are many times
+     unnecessarily marked for retransmission during timeout; so when the
+     SACKs for these TSNs arrive, they cannot clear the error counter
+     either. These changes also affects RTT updates.
+
+   - bug fix. The recover variables for fast rtx (both for plain fast rtx
+     and multiple fast rtx) were not being set correctly. The code was
+     just using the last tsn in the send buffer, which is not always the
+     highest outstanding at any given point in time.
+
+   - bug fix. HbAfterRto should not send a HB after an RTO if the timeout
+     retransmission is being sent to the same destination. In other words,
+     if there are no active alternate destinations, then the data
+     retransmission must go to the same destination regardless of the
+     retransmission policy. 
+
+   - bug fix. Under some scenarios when the cumack moved, newly acked TSNs
+     were not clearing the error counter for the destination it was
+     sent. Now anytime a TSN is newly acked by either a new cumack or
+     GapAck, the error counter for that TSN's destination is cleared.
+
+   - bug fix. RtxMarkedChunks was controlling the Max.Burst and
+     BundleControlChunks too soon, and could potentially miscount the
+     burst or transmit packets that ONLY had control chunks. We didn't
+     observe any such scenarios, but the change should avoid this
+     possibility. Report and fix by Jana Iyengar <iyengar@@cis,udel,edu>.
+
+   - bug fix. If a TSN is retransmitted to an alternate destination and it
+     is lower than the lowest TSN outstanding on that alternate
+     destination, the timer for that alternate destination should be
+     restarted. This wasn't happening. Report by Jana Iyengar
+     <iyengar@@cis,udel,edu>.
+
+   - bug fix. Heartbeats were not being generated using a jittering
+     interval of 15-45 secs. For some reason, they were being generated at
+     16 sec intervals. 
+
+   - Made initial RTO, min RTO, max RTO, fast rtx trigger, and sack delay
+     tcl bindable variables.
+
+   - bug fix. Retransmissions were not properly calculating the peer
+     rwnd. (I have no clue why this wasn't caught earlier!)
+
+   - added another extension (called MfrHbAfterRto) which combines
+     MultipleFastRtx and HbAfterRto. 
+
+   - added another experimental retransmission policy for multihomed
+     hosts. Setting rtxToAlt_ to 2, fast rtx goes to the same destination
+     and timeout rtx goes to an alternate destination. 
+
+   - merged sctp-newreno extension into the core of sctp. Since the
+     NewReno changes are now in the implementer's guide, it makes sense to
+     make the main version of SCTP include these changes. With NewReno as
+     the base SCTP, I pushed the changes into the SCTP extensions
+     (sctp-hbAfterRto, sctp-multipleFastRtx, sctp-timestamp)
+
+   - first release since SCTP was merged into ns-2's main distribution. We
+     have now dropped support for ns-allinone-2.1b8.
+
+
+--------------------------------------------------------------------------------
+release 3.4 (2003-08-14)
+
+   - bug fix. DupTsns were not being deleted properly in
+     DeleteNode(). Report and fix by Tonci Juric
+     <tonci.juric@@ericsson,com>.
+
+   - bug fix. DupTsns were not cleared once reported, so the same duptsns
+     were continously reported until the end of the association. Instead,
+     they should be reported once only. Report by Sourabh Ladha
+     <ladha@@cis,udel,edu> and Patricio Barletta <patricio@@fuegolabs,com>.
+
+   - bug fix. ClearList() wasn't using the list passed in. Report and fix
+     by Patricio Barletta <patricio@@fuegolabs,com>.
+
+   - fix compile error. Some gcc versions were complaining that
+     hdr_sctp::offset_ was multiply defined in all the SCTP extensions'
+     .cc files. Simply removed declaration from all files except
+     sctp.cc. Report and fix by Michael Tüxen
+     <Michael.Tuexen@@micmac,franken,de>
+
+   - bug fix. Timeouts were not resetting missing report counter.  Report
+     by Patricio Barletta <patricio@@fuegolabs,com>.
+
+   - changed default chunk size to 1468 to reflect what avg simulation
+     would want 
+
+
+--------------------------------------------------------------------------------
+release 3.3 (2003-07-11)
+
+   - moved from using Random::random() to using Random::uniform() to avoid
+     problems with the test suite output conflicts when migrating to new
+     versions of ns.
+
+   - removed 2 tests from test suite: sctp-legacyApp and sctp-rebundleChunks.
+     they were removed because they use Random::exponential(), which causes
+     tests to fail from version to version of ns.
+
+   - new test suite output which reflects changes of random function used.
+
+   - bug fix. Keyur and I found anoamlous behavior when simulating
+     specific drops. Sometimes, more drops actually improved
+     behavior. Jana and I determined it was a bug. PartialBytesAcked was
+     being incorrectly incremented if there were TSNs already GapAcked
+     when transitioning from SlowStart to CongestionAvoidance. The TSNs
+     GapAcked in SlowStart should not be used to increment
+     PartialBytesAcked when the sender goes into CongestionAvoidance.
+
+   - added experimental MultipleFastRtx extension, which implements Caro's
+     Algorithm for fast retransmits. The algorithm introduces a
+     uiFastRtxRecover variable which maintains the highest tsn outstanding
+     at the time of a tsn's retransmit. That way, once a tsn has been
+     retransmitted, only missing reports triggered by tsns beyond
+     uiFastRtxRecover may trigger yet another fast rtx of the same
+     tsn. This extension was Armando Caro's idea.
+
+   - added experimental HbAfterRto extension, which immediately sends a
+     heartbeat after a TimeoutRtx. The idea is to give the destinations a
+     chance to get an RTT measurement after the RTO is backed off. The
+     hope is to avoid unnecessarily large RTOs (especially on the
+     alternate destinations). This extension was Randall Stewart's idea.
+
+   - bug fix. GenOneDataChunk() was using the wrong variable for
+     incrementing the outstanding bytes, which sometimes created problems
+     for non-FTP applications. Report and fix by Stephan Baucke
+     <stephan.baucke@@ericsson,com>.
+
+   - added experimental Timestamp extention, which allows RTT measurements
+     to be made per packet on both original transmissions and
+     retransmissions. This extension was Armando Caro's idea.
+
+   - added experimental extension called NewReno, which introduces
+     recovery state similar to that of TCP NewReno to avoid multiple cwnd
+     cuts in a single window (ie, round trip). Since SCTP is multihomed,
+     recovery state is maintained per destination. This extension was
+     actually suggested by Johan Garcia, but implemented by Armando Caro
+     and Keyur Shah. However, Randall Stewart already had this feature in
+     his KAME implementation, but didn't include the change in the
+     implementer's draft (yet).
+
+   - bug fix. According to RFC2960, "RTT measurements SHOULD be made no
+     more than once per round-trip for a given destination transport
+     address." Although the measurements weren't being done for every DATA
+     chunk, they were being done more than once per round-trip.
+
+
+--------------------------------------------------------------------------------
+release 3.2 (2002-12-13)
+
+   - bug fix. If chunks were rebundled differently during retransmissions
+     than they were during the original transmissions, the bundling wasn't
+     done properly. In particular, the 4-byte boundary padding wasn't
+     done. Hence, the receiver tried to read a packet misaligned
+     chunks. Report by Stephan Baucke <stephan.baucke@@ericsson,com>,
+     Marcello Pantaleo <Marcello.Pantaleo@@eed,ericsson,se>, and
+     Damir Prusac <Damir.Prusac@@eed,ericsson,se>. 
+
+   - bug fix. non-sctp aware apps which were trying to use the Agent
+     variable size_ as the packet size (or max app write size) were
+     failing. The SCTP agent now sets size_ to the max data size of an app
+     write for such applications. Report by Stephan Baucke
+     <stephan.baucke@@ericsson,com>, Marcello Pantaleo
+     <Marcello.Pantaleo@@eed,ericsson,se>, and Damir Prusac
+     <Damir.Prusac@@eed,ericsson,se>.
+
+   - bug fix. modified ProcessGapAckBlocks() so that sender only trusts
+     gap ack info from last SACK. otherwise, renegging (which our
+     simulation doesn't do) or out of order SACKs would give the sender an
+     incorrect view of the peer's rwnd. in other words, if a SACK doesn't
+     gap ack a chunk which was previously gap acked, the sender must
+     reflect this change and make the chunk outstanding again.
+
+   - modified all emails to spam-blocking syntax. why? cause this code
+     gets posted on the net, and we have been receiving an increasing
+     amount of spam since the first posting of this code.
+
+   - bug fix. COOKIE_ECHO wasn't handled correctly when received in the
+     ESTABLISHED state. so under conditions where the COOKIE_ACK was lost,
+     the association never established. one side would remain in the
+     COOKIE_ECHOED state, while the other remained in the ESTABLISHED
+     state. report and bug fix by Martin Duke <martin.duke@@boeing,com>
+
+   - bug fix. Timeouts on INIT and COOKIE_ECHO chunks were not backing off
+     their timers properly or applying the Max.Init.Retransmits
+     limit. report and bug fix by Martin Duke <martin.duke@@boeing,com>
+
+   - bug fix. Heartbeats were scheduled before assocation was established.
+     So in extreme situations where INITs are repeatedly lost, HBs were
+     sent before the association was established. Also new test case &
+     output to ensure that this bug is fixed. report and bug fix by
+     Martin Duke <martin.duke@@boeing,com>
+
+   - fixed typo in README
+
+   - added tcl bindable option to make all retransmissions go to the same
+     destination unless it is inactive. this is experimental behavior.
+
+
+--------------------------------------------------------------------------------
+release 3.1 (2002-07-02)
+
+   - bug fix. calculation error for rtt updates on heartbeat acks.
+
+   - bug fix. rtx timer wasn't being restarted when the first outstanding
+     on a destination wasn't the first one in the send buffer for that
+     destination. 
+
+   - bug fix. retransmissions were sometimes running into probs in that
+     oustanding bytes and peer rwnd were not accurate.
+
+   - added a tcl boundable variable 'ipHeaderSize_' which sets the IP
+     header size. the default is 20 bytes (IPv4 without any
+     options). NOTE: this has changed from the previous constant of 40
+     bytes for IPv6. it has been changed to match the TCP default.
+
+   - bug fix. sometimes failovers were incorrectly restored.
+
+   - bug fix. "A destination transport address is considered "idle" if no
+     new chunk which can be used for updating path RTT (usually including
+     first transmission DATA, INIT, COOKIE ECHO, HEARTBEAT etc.) and no
+     HEARTBEAT has been sent to it within the current heartbeat period of
+     that address." However, the code was incorrectly counting
+     retransmissions.
+
+   - added support for the "close" command. now the application stop
+     command can be used in the tcl scripts to close the connection. (eg,
+     "ftp0 stop")
+
+   - added rudimentary fragmentation for legacy applications. the idea was
+     not to really have SCTP fragmentation (which would involve more
+     complexity), but instead insert a shim for backwards compatibility
+     (eg, "ftp send 12000"). so a message which doesn't fit into a single
+     packet is broken up for SCTP, so that SCTP doesn't have to fragment.
+     report by Sumathi Elangovan <Sumathi.Elangovan@@uk,thalesgroup,com>
+
+   - some rtx bug fixes.
+
+   - updated sctp.README to include list and description of sctp provided
+     "commands", which are definitely needed for multihoming.
+
+   - added support for ns-2's standard debug_ flag, which simply sets
+     all bits in the debugMask_
+
+   - fixed bugs which were causing some ns-2 validation scripts to
+     fail. test-suite-wireless-lan-tora crashes with a bus error, but that
+     isn't sctp's fault; it crashed with the original ns version 2.1b8.
+
+   - added support for sampling based tracing by introducing the "print"
+     command. request/report by ShaoJian Fu (Jerick) <sfu@@ou,edu>.
+
+   - bug fix. the cwnd and rwnd gating was ignoring app msg size, and the
+     code incorrectly assumed an infinite data source (eg, ftp). report by
+     Sumathi Elangovan <Sumathi.Elangovan@@uk,thalesgroup,com>. 
+
+   - bug fix. probes were sending empty sctp packets with no
+     chunks. report by Janardhan Iyengar <iyengar@@cis,udel,edu>
+
+   - bug fix. incorrectly included the padded bytes in the chunk length
+     field. report and fix by Denio Mariz <dmts@@cin,ufpe,br>
+
+   - added test suite for sctp, thanks to Gerard Heinz <heinz@@cis,udel,edu>
+
+   - fixed heartbeat structure/packet so that it meets the 2-byte boundary
+     requirement for SPARC architectures
+
+   - MAJOR bug fix. crashed sometimes during calls to Tcl_Write().
+
+   - added sctp support to cmu-trace (with help of from Florina Almenárez
+     <florina@@it,uc3m,es>) 
+
+
+--------------------------------------------------------------------------------
+release 3.0 (2002-4-23)
+
+   - added support for:
+      6.4 Multi-homed SCTP Endpoints
+      8.1 Endpoint Failure Detection
+      8.2 Path Failure Detection
+      8.3 Path Heartbeat (without upper layer control)
+
+   - incorporated implementor's guide (up to -04) changes
+      o reset partial_bytes_acked upon detection of packet losses
+      o cwnd gated by its full use while in Slow Start mode
+      o new fast rtx algorithm
+
+   - revamped rtx code to fix fast rtx and timeout rtx related bugs
+
+   - fixed memory leaks
+
+   - wireless/mobile node related bug fix (reported by Zhengliang Yi 
+     <yizhengl@@hotmail,com>)
+
+   - AppData's bug fix related to msgs < 16 bytes (reported by Denio Mariz
+     <dmts@@cin,ufpe,br>)
+
+   - minor bug fix by Mohammed Atiquzzaman <atiq@@ou,edu>
+
+
+--------------------------------------------------------------------------------
+release 2.2 (2002-1-9)
+
+   - bug fixes
+      o slow start calculation in AdjustCwnd(), found by Ye Guanhua
+        <yegh98@@yahoo.com> 
+      o always sacked first incoming packet at beginning of association
+
+
+--------------------------------------------------------------------------------
+release 2.1 (2001-10-2)
+
+   - bug fix (uninitialized uiAdvancedPeerAckPoint)
+   
+
+--------------------------------------------------------------------------------
+release 2 (2001-8-22)
+
+   - upper layer ns-2 API supports legacy ns-2 apps and future sctp-aware apps
+
+   - supports unreliable data mode extension
+
+   - bug fixes
+
+
+--------------------------------------------------------------------------------
+release 1 (2001-7-11)
+
+   - original release

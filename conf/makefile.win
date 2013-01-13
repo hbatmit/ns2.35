@@ -1,0 +1,167 @@
+#  Copyright (c) 1994, 1995, 1996
+# 	The Regents of the University of California.  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that: (1) source code distributions
+#  retain the above copyright notice and this paragraph in its entirety, (2)
+#  distributions including binary code include the above copyright notice and
+#  this paragraph in its entirety in the documentation or other materials
+#  provided with the distribution, and (3) all advertising materials mentioning
+#  features or use of this software display the following acknowledgement:
+#  ``This product includes software developed by the University of California,
+#  Lawrence Berkeley Laboratory and its contributors.'' Neither the name of
+#  the University nor the names of its contributors may be used to endorse
+#  or promote products derived from this software without specific prior
+#  written permission.
+#  THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+#  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+#  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+# @(#) $Header: /cvsroot/nsnam/conf/makefile.win,v 1.17 2002/05/29 22:52:13 buchheim Exp $
+
+# Please change this path to the correct one on your system.
+MSVCDIR	= c:\progra~1\micros~3\VC98
+#MSVCDIR	= c:\progra~1\\DevStudio\VC
+TOOLS32	= $(MSVCDIR)
+PATH	= $(MSVCDIR);$(PATH)
+INCLUDE	= $(MSVCDIR)\include
+# Set this to the _absolute_ path to where ns-allinone is installed. 
+# Tcl/Tk/otcl/tclcl/ns should all be located under this path.
+#LOCAL_SRC = c:\research\vint\ns-allinone-2.1b7
+LOCAL_SRC = e:\conser
+
+# comment this out to build with debug options
+NODEBUG=1
+TARGETOS = BOTH
+
+# uncomment this out to build static version
+STATIC_LIB=1
+
+!include <$(INCLUDE)/win32.mak>
+
+cc32	= cl
+rc32	= rc
+link32	= link
+
+TK_VER = 80
+TCL_VER = 80 
+
+TCL_SUFFIX = 8.0
+TK_SUFFIX = 8.0
+
+TK_DIR = $(LOCAL_SRC)\tk$(TK_SUFFIX)
+TCL_DIR = $(LOCAL_SRC)\tcl$(TCL_SUFFIX)
+OTCL_DIR = $(LOCAL_SRC)\otcl
+TCLCL_DIR = $(LOCAL_SRC)\tclcl
+
+# Static build requires specially hacked versions of tcl8.0 and tk8.0
+# Available from http://mash.cs.berkeley.edu/dist
+!ifdef STATIC_LIB
+LIB_TK	= -LIBPATH:$(TK_DIR)\win stk$(TK_VER).lib
+LIB_TCL = -LIBPATH:$(TCL_DIR)\win stcl$(TCL_VER).lib
+!else
+LIB_TK	= -LIBPATH:$(TK_DIR)\win\Release tk$(TK_VER).lib
+LIB_TCL = -LIBPATH:$(TCL_DIR)\win\Release tcl$(TCL_VER).lib
+!endif
+LIB_OTCL = -LIBPATH:$(OTCL_DIR) otcl.lib
+LIB_TCLCL = $(TCLCL_DIR)\tclcl.lib
+
+LIBRARY_TK = $(TK_DIR)\library
+LIBRARY_TCL = $(TCL_DIR)\library
+
+TCL_LIBRARY_FILES = $(TCL_83_LIBRARY_FILES)
+TKDOSNAMES = $(LIBRARY_TK)/optMenu.tcl $(LIBRARY_TK)/scrlbar.tcl
+
+CC	= $(cc32)
+CPP	= $(cc32)
+LINK	= $(link32)
+MKDEP	= makedep2
+TCLSH	= $(TCL_DIR)\win\tclsh$(TCL_VER).exe
+TCL2C	= $(TCLCL_DIR)\tcl2c++.exe
+AR	= lib -out:
+
+RANLIB	= echo
+INSTALL	= echo
+LN	= echo
+TEST	= echo
+RM	= rm -f
+PERL	= perl
+
+
+!IFDEF NODEBUG
+CCOPT   = -Ox -Zm1000
+!ELSE
+CCOPT	= -Gm -Gi -YX -Zm1000
+!ENDIF
+
+# Include STATIC_LIB so that main.cc will be properly compiled for nam.
+!ifdef STATIC_LIB
+CCOPT = -DSTATIC_LIB $(CCOPT)
+!endif
+
+!IFDEF NODEBUG
+LDFLAGS = -LIBPATH:$(TOOLS32)\lib $(lflags) $(conlibsdll)
+!ELSE
+LDFLAGS = -LIBPATH:$(TOOLS32)\lib /NODEFAULTLIB /INCREMENTAL:NO /DEBUG /NOLOGO $(conlibsdll)
+!ENDIF
+STATIC	= 
+LDOUT	= -out:
+
+DEFINE	= -DNO_TK
+
+INCLUDE_TK = -I$(TK_DIR)\win -I$(TK_DIR)\generic
+INCLUDE_TCL = -I$(TCL_DIR)\win -I$(TCL_DIR)\generic
+INCLUDE_OTCL = -I$(OTCL_DIR)
+INCLUDE_TCLCL = -I$(TCLCL_DIR)
+INCLUDE_X11 = -I$(TK_DIR)\xlib
+INCLUDE_MISC = -I$(TOOLS32)\include
+
+# Disable building STL-dependent object files because VC6.x does
+# not seem to support G++-style (2.8.0 and up) STL.
+OBJ_STL =
+NS_TCL_LIB_STL=
+
+OBJ_COMPAT_C = compat/gettod.o compat/win32.o embedded-console.o
+
+
+# don't want system files to be added when making dependencies
+DEPEND_INCS = \
+	$(INCLUDE_TK) $(INCLUDE_TCL) \
+	$(INCLUDE_OTCL) $(INCLUDE_TCLCL) \
+	$(INCLUDE_X11) $(MD_INC) -I.
+
+# put the subdirs of ~ns in the include path
+INCLUDE_SUBDIRS =  -I./tcp -I./common -I./link -I./queue \
+	-I./adc -I./apps -I./mac -I./mobile -I./trace \
+	-I./routing -I./tools -I./classifier -I./mcast \
+	-I./diffusion3/main -I./diffusion3/lib \
+	-I./diffusion3/nr -I./diffusion3/ns -I./asim/
+
+# the subdirs of ~ns must be FIRST or else bad things happen
+# (for example, VC++ will find the wrong "packet.h"
+INCLUDES = $(INCLUDE_SUBDIRS) $(DEPEND_INCS) $(INCLUDE_MISC)
+
+LIB =	$(LIB_TCLCL) $(LIB_OTCL) \
+	$(LIB_TK) $(LIB_TCL) \
+	libci.lib msvcirt.lib $(guilibsdll)
+#	$(LIB_GRABBER) $(LIB_GSM) \
+#	winmm.lib
+
+CFLAGS	= $(cdebug:Z7=Zi) $(cflags) $(cvarsdll) $(CCOPT) $(DEFINE)
+
+.SUFFIXES : .cc
+
+
+# add -FR$*.sbr if you want browse info
+.cc.o:
+	$(cc32) -c $(CFLAGS) $(INCLUDES) -Fo$@ -Tp $<
+
+.c.o:
+	$(cc32) -c $(CFLAGS) $(INCLUDES) -Fo$@ $<
+
+
+GEN_DIR	= gen\\
+LIB_DIR	= lib\\
+NS	= ns.exe
+NSX	= nsx.exe
+NAM	= nam.exe

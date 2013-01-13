@@ -1,0 +1,360 @@
+#!/usr/bin/perl -w
+
+#
+# Copyright (C) 2001 by USC/ISI
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms are permitted
+# provided that the above copyright notice and this paragraph are
+# duplicated in all such forms and that any documentation, advertising
+# materials, and other materials related to such distribution and use
+# acknowledge that the software was developed by the University of
+# Southern California, Information Sciences Institute.  The name of the
+# University may not be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+# An perl script that produces a set of CDF files that model Web traffic
+# from the output of http_active, used by SAMAN ModelGen
+#
+# This work is supported by DARPA through SAMAN Project
+# (http://www.isi.edu/saman/), administered by the Space and Naval
+# Warfare System Center San Diego under Contract No. N66001-00-C-8066
+
+sub usage {
+        print STDERR <<END;
+      usage: $0 [-e FilenameExtention]
+        Options:
+            -e string  specify the filename extention
+
+END
+        exit 1;
+}
+BEGIN {
+        $dblibdir = "./";
+        push(@INC, $dblibdir);
+}
+use DbGetopt;
+require "dblib.pl";
+my(@orig_argv) = @ARGV;
+&usage if ($#ARGV < 0);
+my($prog) = &progname;
+my($dbopts) = new DbGetopt("e:?", \@ARGV);
+my($ch);                                                                       
+while ($dbopts->getopt) {
+        $ch = $dbopts->opt;
+        if ($ch eq 'e') {
+                $fext = $dbopts->optarg;
+	} else {
+                &usage;
+        };
+};                          
+
+$idle=join(".",$fext,"idle.dat");
+$req=join(".",$fext,"request.dat");
+$reqb=join(".",$fext,"requestb.dat");
+$numpage=join(".",$fext,"numpage.dat");
+$numobj=join(".",$fext,"objcnt.dat");
+$pagesize=join(".",$fext,"pagesize.dat");
+$pagesizeb=join(".",$fext,"pagesizeb.dat");
+$objsize=join(".",$fext,"objsize.dat");
+$objsizeb=join(".",$fext,"objsizeb.dat");
+$objinter=join(".",$fext,"objinter.dat");
+$sessinter=join(".",$fext,"sessinter.dat");
+$server=join(".",$fext,"server.dat");
+$servercdf=join(".",$fext,"server.dat.cdf");
+$persist=join(".",$fext,"persist.dat");
+
+open(IDLE,"> $idle") || die("cannot open $idle.\n");
+open(REQ,"> $req") || die("cannot open $req.\n");
+open(REQB,"> $reqb") || die("cannot open $reqb.\n");
+open(NUMPAGE,"> $numpage") || die("cannot open $numpage.\n");
+open(OBJCNT,"> $numobj") || die("cannot open $numobj.\n");
+open(PAGESIZE,"> $pagesize") || die("cannot open $pagesize.\n");
+open(PAGESIZEB,"> $pagesizeb") || die("cannot open $pagesizeb.\n");
+open(OBJSIZE,"> $objsize") || die("cannot open $objsize.\n");
+open(OBJSIZEB,"> $objsizeb") || die("cannot open $objsizeb.\n");
+open(OBJINTER,"> $objinter") || die("cannot open $objinter.\n");
+open(SESSINTER,"> $sessinter") || die("cannot open $sessinter.\n");
+open(SERVER,"> $server") || die("cannot open $server.\n");
+open(SERVERCDF,"> $servercdf") || die("cannot open $servercdf.\n");
+open(PERSIST,"> $persist") || die("cannot open $persist.\n");
+
+$oldClient = "";
+$pagePerSess = 0;
+$pageSize = 0;
+$objCnt=0;
+$numServer = 0;
+$numConn = 0;
+$numSess = 0;
+$old = "";
+$oldtime = 0;
+
+print "start processing http_active output\n";
+while (<>) {
+        ($time1,$clientIP,$clientPort,$dummy,$serverIP,$port80,$type,$size,$time2) = split(' ',$_);
+
+	$dummy="";
+	$port80=80;
+
+        if ($oldClient ne $clientIP) {
+	        if ($oldClient ne "") {
+               		print NUMPAGE "$pagePerSess\n";
+                	if ($pageSize gt 0) {
+          	       		print PAGESIZE "$pageSize\n";
+          	       		print PAGESIZEB "$pageSize\n";
+                	}
+                	if ($objCnt gt 0) {
+          	       		print OBJCNT "$objCnt\n";
+			}
+           	}
+                $pagePerSess = 1;
+                $pageSize = 0;
+                $objCnt = 0;
+
+                $sess[$numSess] = ($time1 < $time2) ? $time1 : $time2;
+                $numSess++;
+        }
+        if ($type eq "REQ") {
+  		print REQ "$size\n";
+  		print REQB "$size\n";
+        }
+        if ($type eq "IDLE") {
+        	print IDLE "$size\n";
+        	if ($pageSize gt 0) {
+                	print PAGESIZE "$pageSize\n";
+                	print PAGESIZEB "$pageSize\n";
+        	}
+        	if ($objCnt gt 0) {
+                	print OBJCNT "$objCnt\n";
+		}
+        	$pagePerSess++;
+		$objCnt=0;
+        	$pageSize = 0;
+        	$old = "";
+           	$oldtime = 0;
+        }
+        if ($type eq "RSP") {
+        	$pageSize = $pageSize + $size;
+		$objCnt++;
+        	print OBJSIZE "$size\n";
+        	print OBJSIZEB "$size\n";
+
+           	$conn = join('-',$clientIP,$clientPort,$serverIP);
+           	$connection[$numConn] = $conn;
+           	$numConn++;
+
+           	if ($clientIP eq $old) {
+                	$inter = $time2 - $oldtime;
+                	print OBJINTER "$inter\n";
+           	}
+           	$old = $clientIP;
+           	$oldtime = $time1;
+        }
+
+        if ($type ne "IDLE") {
+        	$server[$numServer] = $serverIP;
+        	$numServer++;
+        }
+
+        $oldClient = $clientIP;
+}
+print OBJINTER "0\n";
+print "done processing http_active output\n";
+
+#print "sort array\n";
+@serverSorted = sort @server;
+@connSorted = sort @connection;
+@sessSorted = sort @sess;
+#print "done sorting\n";
+
+$i = 0;
+while ($i < $#sessSorted) {
+	$i1 = $i + 1;
+	$sessInter = $sessSorted[$i1] - $sessSorted[$i];
+	print SESSINTER "$sessInter\n";
+	$i++;
+}
+
+#in case there is only one session
+if ($#sessSorted == 0) {
+	print SESSINTER "0\n";
+}
+
+$old = "";
+$serverCnt = 1;
+$ns = 0;
+$nsSum = 0;
+foreach $j (0 .. $#serverSorted) {
+	if ($serverSorted[$j] ne $old) {
+		if ($old ne "") {
+        		print SERVER "$serverCnt\n";
+        		$svr[$ns] = $serverCnt;
+       		 	$ns++;
+        		$nsSum = $nsSum + $serverCnt;
+        		$serverCnt = 1;
+     		}
+  	}
+	else {
+    		$serverCnt++;
+	}
+	$old = $serverSorted[$j];
+}
+print SERVER "$serverCnt\n";
+$svr[$ns] = $serverCnt;
+$nsSum = $nsSum + $serverCnt;
+
+@svrS = sort numerically @svr;
+
+$tmp = 0;
+foreach $j (0 .. $#svrS) {
+	$tmp = $tmp + $svrS[$j];
+	$prob = $tmp/$nsSum;
+	print SERVERCDF "$j $tmp $prob\n";
+}
+
+$old = "";
+$old1 = "";
+$old2 = "";
+$persistCnt = 0;
+$numConn = 0;
+foreach $k (0 .. $#connSorted) {
+
+	if (($old1 ne $old2) && ($old1 eq $connSorted[$k])) {
+		$persistCnt++;
+	}
+	if ($old ne $connSorted[$k]) {
+		$numConn++;
+	} 
+	$old2 = $old1;
+	$old1 = $connSorted[$k];
+	$old = $connSorted[$k];
+}
+
+$nonPersistCnt = $numConn - $persistCnt;
+$nonPersistCntp = $nonPersistCnt/$numConn;
+print PERSIST "0 $nonPersistCnt $nonPersistCntp\n";
+print PERSIST "1 100 1.0\n";
+
+#the last client/page
+print NUMPAGE "$pagePerSess\n";
+if ($pageSize gt 0) {
+	print PAGESIZE "$pageSize\n";
+	print PAGESIZEB "$pageSize\n";
+}
+if ($objCnt gt 0) {
+	print OBJCNT "$objCnt\n";
+}
+
+close(SERVER);
+close(SERVERCDF);
+close(OBJSIZE);
+close(OBJSIZEB);
+close(PAGESIZE);	
+close(PAGESIZEB);	
+close(OBJCNT);	
+close(NUMPAGE);	
+close(IDLE);	
+close(REQ);
+close(REQB);
+close(OBJINTER);
+close(SESSINTER);
+close(PERSIST);
+
+#compute CDF
+print "compute and output CDF files\n";
+&outputCDF(1000,100,1000,$idle);
+&outputCDF(1,1,1,$numpage);
+&outputCDF(1,1,1,$numobj);
+&outputCDF(0,0.0001,1,$objinter);
+&outputCDF(0,1024,1024,$objsize);
+&outputCDF(0,1024,1024,$pagesize);
+&outputCDF(0,1024,1024,$req);
+&outputCDF(1,1,1,$reqb);
+&outputCDF(0,0.001,1,$sessinter);
+#&outputCDF(0,0.0001,1,"delay.dat");
+print "done computing CDF files\n";
+
+
+sub numerically { $a <=> $b; }
+
+
+sub outputCDF {
+
+	local($cur_epoch,$incr,$dividend,$tfile) = @_;
+
+	local(@data);
+	local(@dataS);
+	local(@epoch);
+	local(@cum);
+
+	open(ORIG,$tfile) || die("cannot open $tfile.\n");
+	$tfileS = join('.',$tfile,"cdf");
+	$newtfile = join(' ',">",$tfileS);
+	open(CDF,$newtfile) || die("cannot open $newtfile.\n");
+
+	$count = 0;
+	$cur_time = 0;
+
+	$i = 0;
+	while ($line = <ORIG>) {
+		chop $line;
+		$data[$i] = $line;
+		$i++;
+	}
+
+	close(ORIG);
+
+	if ($i eq 0) { exit; }
+
+	@dataS = sort numerically @data;
+
+	$i = 0;
+	$sum = 0;
+
+	foreach $j (0 .. $#dataS) {
+
+		$cur_time = $dataS[$j];
+
+		if ($cur_time > $cur_epoch) {
+        		while ($cur_epoch < $cur_time) {
+
+     				$epoch[$i] = $cur_epoch;
+     				$sum = $sum + $count;
+     				$cum[$i] = $sum;
+     				$i++;
+
+     				$cur_epoch = $cur_epoch + $incr;
+     				$count=0;
+   			}
+   			if ($cur_time <= $cur_epoch) {
+      				$count = 1;
+   			} else {
+      				$count = 0;
+   			}
+		} else {
+   			$count++;
+		}
+
+	}
+
+	$epoch[$i] = $cur_epoch;
+	$sum = $sum + $count;
+	$cum[$i] = $sum;
+
+	$oldcum = 0;
+	foreach $j (0 .. $#epoch) {
+		$prob = $cum[$j]/$cum[$#cum];
+		$e = $epoch[$j]/$dividend;
+		if ($cum[$j] ne $oldcum) {
+			print CDF "$e $cum[$j] $prob\n";
+		}
+  		$oldcum = $cum[$j];
+	}
+
+	close(CDF);
+}
+

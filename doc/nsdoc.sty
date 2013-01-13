@@ -1,0 +1,252 @@
+\RequirePackage{ifthen}
+\RequirePackage{html}
+\RequirePackage{alltt}
+
+\RequirePackage{tabularx}
+\renewcommand{\arraystretch}{1.2}
+
+\ifx\@noresizetrue\undefined
+\RequirePackage[dvips]{graphicx}
+\DeclareGraphicsExtensions{.eps, .ps, .epsf}
+\graphicspath{
+  {./}
+  {./figures/}
+  {./sl-figures/}
+  {../sl-figures/}
+  }
+\evensidemargin       -15pt
+\oddsidemargin        -15pt
+\topmargin            -20pt
+\leftmargin           30pt
+\rightmargin          30pt
+\textwidth            6.9in
+\textheight           9.0in
+\parindent            0pt
+\parskip              12pt
+\marginparwidth       1cm
+\message{resize completed}
+\fi
+
+\RequirePackage{pstricks,pst-node}
+\RequirePackage{longtable}
+
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\floatpagefraction}{0.9}
+\renewcommand{\textfraction}{0.05}
+
+% Run the toc tighter:
+\def\@starttoc#1{\begingroup
+  \makeatletter
+  \parskip\z@\@plus\p@\relax         % <----
+  \@input{\jobname.#1}\if@filesw
+  \expandafter\newwrite\csname tf@#1\endcsname
+          \immediate\openout
+                  \csname tf@#1\endcsname \jobname.#1\relax
+  \fi \global\@nobreakfalse\endgroup%
+}
+
+\def\nam{\emph{nam}}
+\def\namf{\textasciitilde\nam/}
+\def\nsTcl{\emph{ns/tclcl}}
+\def\ns{\emph{ns}}
+\def\rtglib{\textsl{rtglib}}
+\def\nsf{\textasciitilde\ns/}
+\def\Tclf{\textasciitilde\emph{tclcl}/}
+
+\def\tup#1{\(\langle\)#1\(\rangle\)}
+%\newif\if@mmode
+\def\code{\bgroup%\ifmmode\@mmodetrue\leavemmode\else\@mmodefalse\fi%
+  \catcode`\#=11\catcode`\_=11\catcode`\$=11\catcode`\&=11\relax\@code}
+\def\@code#1{\ttfamily #1\egroup}
+
+\def\pr@c[#1]#2{\code{#2}\{#1\}}
+\def\proc{\@ifnextchar[{\pr@c}{\pr@c[]}}
+
+\def\f@cn[#1]#2{\code{#2}(#1)}
+\def\fcn{\@ifnextchar[{\f@cn}{\f@cn[void]}}
+
+\def\fcnref#1#2#3{\htmladdnormallink{#1}{#2.html##3}}
+\def\clsref#1#2{\htmladdnormallink{\code{class #1}}{#2.html##class#1}}
+\def\structref#1#2{\htmladdnormallink{\code{struct #1}}{#2.html##struct#1}}
+\def\shdr#1#2#3{\htmladdnormallink{#1}{#2}\label{#3}}
+
+%%%
+%%% Mixed hyperref: use as \href{string}{Section}{label}
+%%% Typesets as ``string (Section~\ref{label})'' in plain \LaTeX, and
+%%% as  ``string'', and links to label in latex2html.
+%%%
+\newcommand{\href}[3]{\hyperref{#1}{#1 (#2~}{)}{#3}}
+\newcommand{\xref}{\htmladdnormallink}
+
+% Define some convenient environments
+\def\cf{\rmfamily\itshape}
+\def\program{\bgroup%
+  \def\;##1;{\hfill;\#{\cf ##1}}%
+  \def\*##1*/{\hfill/*{\cf ##1}*/}%
+  \alltt%
+  \def\bs{\ifmmode\backslash\else\(\backslash\)\fi}%
+}
+\def\endprogram{\endalltt\egroup}
+
+\def\alist{\par\tabularx{\textwidth}{rX}}
+\def\endalist{\endtabularx\par}
+
+\def\zerolistvertdimens{\parskip0pt\topsep0pt\partopsep0pt\parsep0pt\itemsep0pt}
+
+\def\ie{\textit{i.e.}}
+\def\eg{\textit{e.g.}}
+\def\etc{\textit{etc}}
+\def\etal{\textit{et\,al}}
+\def\via{\textit{via}}
+\def\viz{\textit{viz.}}
+
+\def\timestring{\begingroup     % stolen from eplain.tex
+   \count0 = \time
+   \divide\count0 by 60
+   \count2 = \count0   % The hour, from zero to 23.
+   \count4 = \time
+   \multiply\count0 by 60
+   \advance\count4 by -\count0   % The minute, from zero to 59.
+   \ifnum\count4<10
+      \toks1 = {0}%
+   \else
+      \toks1 = {}%
+   \fi
+   \ifnum\count2<12
+      \toks0 = {a.m.}%
+   \else
+      \toks0 = {p.m.}%
+      \advance\count2 by -12
+   \fi
+   \ifnum\count2=0
+      \count2 = 12
+   \fi
+   \number\count2:\the\toks1 \number\count4 \thinspace \the\toks0
+\endgroup}%
+\ifx\today\undefined
+        \def\today{\ifcase\month
+          \or January\or February\or March\or April\or May\or June
+          \or July\or August\or September\or October\or November\or December
+          \fi \space\number\day, \number\year}
+\fi
+\def\timestamp{Version: \timestring\quad\today}
+
+\newif\if@draft\@draftfalse
+\AtEndOfPackage{
+  \if@draft
+    %\def\today{Version: \timestamp}
+    \gdef\@oddhead{\footnotesize\rm\hfil\textbf{DRAFT}\enspace\timestamp}
+    \gdef\@evenhead{\footnotesize\rm\hfil\textbf{DRAFT}\enspace\timestamp}
+    \RequirePackage[notref]{showkeys}
+%    \RequirePackage[english,firsttwo,light]{draftcopy}
+  \else
+    \gdef\timestamp{\today}
+  \fi
+}
+\DeclareOption{draft}{\@drafttrue}
+\ExecuteOptions{}
+\ProcessOptions
+\endinput
+
+### Local Variables:
+### mode: latex
+### comment-column: 60
+### backup-by-copying-when-linked: t
+### file-precious-flag: nil
+### End:
+
+#LaTeX2HTML Version 96.1 : dot.latex2html-init
+#
+
+$MAX_SPLIT_DEPTH = 2;                           #$
+$MAX_LINK_DEPTH = 2;                            #$
+$BOTTOM_NAVIGATION = 1;                         #$
+
+#
+# The \LaTeXe\ commands
+#
+
+sub do_cmd_textasciitilde {
+    join('', '\~', $_[0]);                      #$
+}
+
+#
+# Some from the ifthen package
+#
+sub do_cmd_equal {
+    local($_) = @_;                             #$
+
+    s/$next_pair_pr_rx//o;                      #$
+    local($a) = $&;
+    $a =~ s/$1//g;
+
+    s/$next_pair_pr_rx//o;                      #$
+    local($b) = $&;
+    $b =~ s/$1//g;
+
+    join('', ($a eq $b ? 1 : 0), $_);
+}
+
+sub do_cmd_ifthenelse {
+    local($_) = @_;                             #$
+
+    s/$next_pair_pr_rx//o;                      #$
+    local($a) = $&;
+    $a =~ s/<#$1#>//g;
+
+    s/$next_pair_pr_rx//o;                      #$
+    local($then) = $&;
+
+    s/$next_pair_pr_rx//o;                      #$
+    local($else) = $&;
+
+    join('', ($a eq 1 ? $then : $else), $_);
+}
+
+sub do_cmd_tup {
+    local($_) = @_;                             #$
+    local($rest) = $_;
+    $rest =~ s/$next_pair_pr_rx//o;
+    join('', '&lt;', $&, '&gt;', $rest);
+}
+
+sub do_cmd_danger {
+    join('', '<IMG ALIGN=LEFT ALT="DANGER" SRC="../images/dbend.gif">', $_[0]);
+}                                               #$
+
+&ignore_commands (<<_IGNORED_CMDS_);
+closedanger
+font
+manual
+endgroup
+endgraf
+_IGNORED_CMDS_
+
+sub top_navigation_panel {
+    "$CONTENTS $PREVIOUS_GROUP $PREVIOUS $UP $NEXT $NEXT_GROUP $INDEX"; #$
+}
+
+sub bot_navigation_panel {
+'<hr>List of Indices
+<ul>
+<li> <a href=../ns/CClassIndex.html>C++ classes in <em>ns</em></a>
+<li> <a href=../ns/CFuncIndex.html>C++ functions in <em>ns</em></a>
+<li> <a href=../ns/TclClassIndex.html>Tcl classes in <em>ns</em></a>
+<li> <a href=../ns/TclProcIndex.html>Tcl procedures in <em>ns</em></a>
+<li> <a href=../Tcl/CClassIndex.html>C++ classes in <em>ns/Tcl</em></a>
+<li> <a href=../Tcl/CFuncIndex.html>C++ functions in <em>ns/Tcl</em></a>
+<li> <a href=../Tcl/TclClassIndex.html>Tcl classes in <em>ns/Tcl</em></a>
+<li> <a href=../Tcl/TclProcIndex.html>Tcl procedures in <em>ns/Tcl</em></a>
+</ul><P>
+<a href=../ns.html>The main <em>ns</em> page</a>
+';
+}
+
+### Local Variables:
+### mode: perl
+### comment-column: 60
+### backup-by-copying-when-linked: t
+### file-precious-flag: nil
+### End:
+
+1;      # This must be the last line

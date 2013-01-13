@@ -1,0 +1,195 @@
+dnl standard final commands for vic/vat/etc. autoconf scripts
+dnl $Header: /cvsroot/nsnam/conf/configure.in.tail,v 1.28 2010/02/16 07:10:47 tom_henderson Exp $ (LBL)
+
+
+if test "$enable_static" = "yes" ; then
+	echo Explicitly enabling static compilation
+	V_STATIC="-static"
+elif test "$enable_static" = "no" ; then
+	echo Explicitly disabling static compilation
+	V_STATIC=""
+else
+	echo No explicit static compilation flag\; setting V_STATIC to \"$V_STATIC\"
+fi
+
+AC_SUBST(V_STATIC)
+
+#
+# tcl7.x needs a dynamic loading library (unless built with the
+# -disable-load flag).  Try to find the appropriate one.
+
+if test ! -z "$V_NEED_DL" ; then
+	V_LIB_DL=""
+	case "$target" in 
+	*-*-solaris*)
+		V_LIB_DL="dl"
+		;;
+	sparc-sun-sunos*)
+		V_LIB_DL="dl"
+		;;
+	*-*-bsdi2.1)
+		V_LIB_DL="dl"
+		;;
+	*-*-bsdi3.0)
+		V_LIB_DL="dl"
+		;;
+	*-*-hpux*)
+		V_LIB_DL="dld"
+		;;
+	*-*-linux*)
+		AC_CHECK_LIB(dl, dlopen, V_LIB_DL="dl", V_LIB_DL="dld")
+		;;
+	*-*-cygwin*)
+		V_LIB_DL="dl"
+		;;
+	esac
+	if test ! -z "$V_LIB_DL" ; then
+		case "$target" in
+		*-*-linux*)
+			;;
+		*)
+			AC_CHECK_LIB($V_LIB_DL, main, , V_LIB_DL="", $V_STATIC)
+			;;
+		esac
+	fi
+	if test ! -z "$V_LIB_DL" ; then
+		case "$target" in
+		*-*-bsdi*)
+			;;
+		*-*-linux*)
+			if test -z "$V_STATIC" ; then
+				V_LIB="$V_LIB -l$V_LIB_DL"
+			fi
+			;;
+		*)
+			V_LIB="$V_LIB -l$V_LIB_DL"
+			;;
+		esac
+	else
+		echo "no dynamic load lib"
+	fi
+fi
+
+# Recheck the system to see if we need to add any system-dependent
+# libraries
+
+AC_MSG_CHECKING([system version (for system-dependent libraries)])
+if test -f /usr/lib/NextStep/software_version; then
+    system=NEXTSTEP-`awk '/3/,/3/' /usr/lib/NextStep/software_version`
+else
+    system=`uname -s`-`uname -r`
+    if test "$?" -ne 0 ; then
+	AC_MSG_RESULT([unknown (can't find uname command)])
+	system=unknown
+    else
+	# Special check for weird MP-RAS system (uname returns weird
+	# results, and the version is kept in special file).
+    
+	if test -r /etc/.relid -a "X`uname -n`" = "X`uname -s`" ; then
+	    system=MP-RAS-`awk '{print $3}' /etc/.relid`
+	fi
+	if test "`uname -s`" = "AIX" ; then
+	    system=AIX-`uname -v`.`uname -r`
+	fi
+	AC_MSG_RESULT($system)
+    fi
+fi
+
+dnl Assumes that OS X requires CoreFoundation and assumes that it is present
+case $system in
+    Darwin-7.*|Darwin-8.*)
+	V_LIB="$V_LIB -framework CoreFoundation"
+esac
+
+dnl This check is not very general and vestigal (at least from an ns-point of view).  Can it be deleted? -johnh, 13-Oct-99
+if test "$host_cpu" = alpha ; then 
+	V_DEFINE="$V_DEFINE -DINT_64=u_long"
+fi
+
+# various include hacks
+dirs="/usr/src/local/include-fixes \
+	/import/mcast/include"
+for dir in $dirs; do
+	if test -d $dir ; then
+		V_INCLUDE="$V_INCLUDE -I$dir"
+	fi
+done
+
+# always use -g with gcc during development (even with -O)
+# force noline so that we can debug all functions
+if test "$CC" = gcc && test -f .devel ; then
+	V_CCOPT="$V_CCOPT -g -Wall -Werror"
+	V_DEFINE="$V_DEFINE -fsigned-char -fno-inline"
+fi
+
+V_DEFINE="$V_DEFINE $V_SHM"
+
+V_TAR_TARGET=$target_os
+AC_SUBST(V_TAR_TARGET)
+
+absolutize_list() {
+    tmp=""
+    for p
+    do 
+	case $p in
+	-L* | -I*) tmp="$tmp `absolutize $p`";;
+	*) tmp="$tmp $p";;
+        esac
+    done
+    echo $tmp
+}
+
+# Replace relative path with absolute path
+V_LIB_TCLCL=`absolutize_list $V_LIB_TCLCL`
+V_LIB_OTCL=`absolutize_list $V_LIB_OTCL`
+V_LIB_TCL=`absolutize_list $V_LIB_TCL`
+V_LIB_TK=`absolutize_list $V_LIB_TK`
+V_LIBS=`absolutize_list $V_LIBS`
+V_INCLUDES=`absolutize_list $V_INCLUDES`
+
+# Since SMASH and MASH need different sets of libraries, we
+# use each lib definition seperately instead of using V_LIBS.
+AC_SUBST(V_LIB_TCLCL)
+AC_SUBST(V_LIB_OTCL)
+AC_SUBST(V_LIB_TCL)
+AC_SUBST(V_LIB_TK)
+
+AC_SUBST(V_ALL)
+AC_SUBST(V_CCOPT)
+AC_SUBST(V_TAR_EXTRA)
+AC_SUBST(V_LIB)
+AC_SUBST(V_DEFINE)
+AC_SUBST(V_SIGRET)
+AC_SUBST(V_SHELL)
+AC_SUBST(V_TARCMD)
+AC_SUBST(V_INCLUDE)
+AC_SUBST(V_OBJ)
+AC_SUBST(V_BROKEN_OBJ)
+AC_SUBST(V_OBJ_CRYPT)
+AC_SUBST(V_RANLIB)
+AC_SUBST(V_AR)
+
+AC_SUBST(V_STLOBJ)
+AC_SUBST(V_NS_TCL_LIB_STL)
+AC_SUBST(V_LSSCRIPT)
+
+AC_PROG_INSTALL
+
+dnl backwards compability---if nothing else, do Makefile
+define([AcOutputFiles],ifdef([AcOutputFiles],AcOutputFiles,Makefile))
+AC_OUTPUT(AcOutputFiles)
+
+if test ! -d gen ; then 
+	echo "creating ./gen"
+	mkdir gen
+fi
+
+if test ! -d bin ; then 
+	echo "creating ./bin"
+	mkdir bin
+fi
+
+if test -f .devel -o "$enable_devel" = "yes" ; then
+	make depend
+fi
+

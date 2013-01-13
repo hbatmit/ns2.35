@@ -1,0 +1,35 @@
+%
+% latex2html evidently gets confused if these package defs
+% aren't here in the topmost level
+%
+%% test
+\documentclass{article}
+\usepackage{times}
+\usepackage{psfig}
+%%\usepackage[T1]{fontenc}
+\usepackage{ifthen}
+\usepackage{html}
+\usepackage{nsDoc}
+
+\newcommand{\shdr}[3]{\htmladdnormallink{#1}{#2}\label{#3}}
+
+%%\includeonly{agents}
+\begin{document}
+
+\section*{Note}
+This is an incomplete, pre-draft version of the simulator
+notes.
+In particular, it has not yet been merged with Kannan's
+(or anyone else's)
+sections of the document.  Kevin Fall (kfall@ee.lbl.gov).
+(\today).
+\include{sim}
+\include{agents}
+\include{queue_mgmt}
+\include{delays}
+\include{trace}
+\include{packet_format}
+\include{math}
+\include{classify_route}
+
+\end{document}

@@ -1,0 +1,73 @@
+\evensidemargin       -15pt
+\oddsidemargin        -15pt
+\topmargin            -20pt
+\leftmargin           30pt
+\rightmargin          30pt
+\textwidth            6.9in
+\textheight           9.0in
+\parindent            0pt
+\parskip              12pt
+\marginparwidth       1cm
+
+\def\textasciitilde{\~}
+\newcommand{\nsTcl}{\emph{ns/Tcl}}
+\newcommand{\ns}{\emph{ns}}
+\newcommand{\nTcl}{\emph{Tcl}}
+\newcommand{\Tcl}{``Tcl''}
+\newcommand{\OTcl}{``OTcl''}
+\newcommand{\TclProg}{\emph{Tcl}}
+\newcommand{\OTclProg}{\emph{OTcl}}
+\newcommand{\nsf}[1]{\textasciitilde\ns/#1}
+\newcommand{\Tclf}[1]{\textasciitilde\nTcl/#1}
+
+\newcommand{\tup}[1]{$\langle$#1$\rangle$}
+\newcommand{\code}[1]{\texttt{#1}}
+
+% function ref:  use as \fref[optional args]{filename}{function}
+% Typesets as ``function(optional args)'', and links
+% filename.html#function
+%
+\newcommand{\fref}[3][void]{\ifthenelse{\equal{#1}{void}}{%
+    \htmladdnormallink{\code{#3}()}{#2.html##3}}{%
+    \htmladdnormallink{\code{#3}(#1)}{#2.html##3}}}
+%
+% procedure ref: use as \pref{filename}{class}{method}
+% Typesers as ``\code{method}'', and links filename.html#class::method
+%
+\newcommand{\pref}[3]{\htmladdnormallink{\code{#3}}{#1.html##2::#3}}
+%
+% class ref: use as \cref[class|struct]{filename}{ClassName}
+% Typesets as ``class|struct ClassName'', and links
+% filename.html#classClassName
+%
+\newcommand{\cref}[3][class]{\htmladdnormallink{#1 #3}{#2.html##1#3}}
+%
+% Arbitrary ref: use as \aref{string}{file}{method}
+% Typesets as: ``string'', and links file::method.
+%
+\newcommand{\aref}[3]{\htmladdnormallink{#1}{#2.html##3}}
+%
+% Mixed hyperref: use as \href{string}{Section}{label}
+% Typesets as ``string (Section~\ref{label})'' in plain \LaTeX, and
+% as  ``string'', and links to label in latex2html.
+%
+\newcommand{\href}[3]{\hyperref{#1}{#1 (#2~}{)}{#3}}
+%
+% short form ref for htmladdnormallink, use as \xref{arg}{link},
+% Typesets as: ``arg'', with links to link.
+%
+\newcommand{\xref}[2]{\htmladdnormallink{#1}{#2}}
+
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\etc}{\textit{etc}}
+
+\makeatletter
+\font\manual=manfnt
+\def\dbend{{\manual\char127}}
+\def\d@nger{\medbreak\begingroup\clubpenalty=10000
+  \def\par{\endgraf\endgroup\medbreak} \noindent\hangindent3pc\hangafter=-2
+  \hbox to0pt{\hskip-\hangindent\dbend\hfill}\normalfont}
+\def\danger{\d@nger}
+\def\closedanger{\endgraf\endgroup}
+\makeatother
+

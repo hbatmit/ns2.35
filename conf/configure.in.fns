@@ -1,0 +1,279 @@
+
+dnl
+dnl autoconf rules to find things in general
+dnl
+
+
+dnl
+dnl General approach to using these macros:
+dnl
+dnl bracket a group of them that must succeed or fail together
+dnl with NS_BEGIN_PACKAGE(s)/NS_END_PACKAGE(s).
+dnl In between put NS_CHECK_{LIB,HEADER}_PATH().
+dnl Custom checks can call NS_PACKAGE_NOT_COMPLETE(s) if something's wrong.
+dnl
+dnl See configure.in.dmalloc for an example.
+dnl
+dnl These macros add their stuff to V_LIBS, V_INCLUDES, V_DEFINES.
+dnl You should add them to your Makefile.in
+dnl You also need to put NS_FNS_TAIL in your configure.in
+dnl (typically just before including configure.in.tail).
+dnl
+dnl
+
+
+dnl
+dnl NS_BEGIN_PACKAGE(NAME)
+dnl
+dnl (Internally, _UNDERWAY says that we found some part of it,
+dnl _COMPLETE says we've got all of it.)
+dnl
+AC_DEFUN(NS_BEGIN_PACKAGE,
+[
+NS_PACKAGE_[$1]_UNDERWAY=false
+NS_PACKAGE_[$1]_COMPLETE=true
+])
+
+dnl
+dnl If a test fails, call NS_PACKAGE_NOT_COMPLETE(NAME) to cause NS_END_PACKAGE to
+dnl eventually die.
+dnl
+AC_DEFUN(NS_PACKAGE_NOT_COMPLETE,
+[
+NS_PACKAGE_[$1]_COMPLETE=false
+])
+
+dnl
+dnl NS_END_PACKAGE(NAME,REQUIRED)
+dnl REQUIRED should be "yes" or "no"
+dnl
+AC_DEFUN(NS_END_PACKAGE,
+[
+NS_PACKAGE_[$1]_VALID=false
+if $NS_PACKAGE_[$1]_UNDERWAY; then
+	if $NS_PACKAGE_[$1]_COMPLETE; then
+		: [All components of $1 found.]
+		NS_PACKAGE_[$1]_VALID=true
+	else
+		AC_MSG_ERROR([Installation of $1 seems incomplete or can't be found automatically.
+Please correct the problem by telling configure where $1 is
+using the argument --with-$1=/path/to/package
+(perhaps after installing it),
+or the package is not required, disable it with --with-$1=no.])
+	fi
+fi
+if test "x$2" = xyes; then
+	if $NS_PACKAGE_[$1]_VALID; then
+		:
+	else
+		AC_MSG_ERROR([$1 is required but could not be completely found.
+Please correct the problem by telling configure where $1 is
+using the argument --with-$1=/path/to/package,
+or the package is not required, disable it with --with-$1=no.])
+	fi
+fi
+])
+
+dnl
+dnl NS_CHECK_LIB_PATH(LIBRARY,PATH,SUGGESTION,SUGGESTION_PATH,VARIABLE,PACKAGE)
+dnl LIBRARY should be with a dotted version number but without a .a extension
+dnl PATH is whitespace separated
+dnl SUGGESTION, no disables, "" or "yes" enables, otherwise search SUGGESTION_PATH
+dnl SUGGESTION_PATH
+dnl sets VARIABLE to be the include stuff
+dnl PACKAGE is the name specified in NS_{BEGIN,END}_PACKAGE or "no"
+dnl
+dnl Automatically adds it to V_LIBS and adds a -DHAVE_LIBLIBRARY to V_DEFINES
+dnl
+
+AC_DEFUN(NS_CHECK_LIB_PATH,
+[
+AC_MSG_CHECKING([for lib$1])
+if test "x$3" = "xno"; then
+	: disable library
+	$5=FAIL
+	NS_PACKAGE_NOT_COMPLETE($6)
+	AC_MSG_RESULT(no)
+
+else
+	places="$2"
+	if test "x$3" != "x" -a "x$3" != xyes; then
+		if test ! -d $3; then
+			AC_MSG_ERROR($3 is not a directory)
+		fi
+		places="$4"
+	fi
+
+	$5=""
+	dnl full_lib_name is libtcl7.6
+	full_lib_name="$1"
+	dnl simple_lib_name is libtcl76
+	simple_lib_name=`echo $full_lib_name | sed -e 's/\.//'`
+	dnl other_simple_lib_name is libtcl7_6
+	other_simple_lib_name=`echo $full_lib_name | sed -e 's/\./_/'`
+	dnl simpler_lib_name is libtcl
+	simpler_lib_name=`echo $simple_lib_name | sed -e 'y/0123456789/          /'`
+	double_break=false
+	for dir in $places; do
+		for file in $full_lib_name $simple_lib_name $other_simple_lib_name $simpler_lib_name
+		do
+			if test -r $dir/lib$file.so -o -r $dir/lib$file.a -o -r $dir/lib$file.dylib; then
+				$5="-L$dir -l$file"
+				double_break=true
+				break
+			fi
+		done
+		if $double_break; then
+			break
+		fi
+	done
+	if test "FAIL$[$5]" = "FAIL" ; then
+		NS_PACKAGE_NOT_COMPLETE($6)
+		AC_MSG_RESULT(no)
+	else
+		if test "$solaris"; then
+			$5="-R$dir $[$5]"
+		fi
+
+		changequote(, )dnl
+		ac_tr_lib=HAVE_LIB`echo $1 | sed -e 's/[^a-zA-Z0-9_]/_/g' \
+		    -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/'`
+		changequote([, ])dnl
+		AC_DEFINE_UNQUOTED($ac_tr_lib)
+
+		dnl add to list
+		V_LIBS="$[$5] $V_LIBS"
+		V_DEFINES="-D$ac_tr_lib $V_DEFINES"
+
+		NS_PACKAGE_[$6]_UNDERWAY=true
+
+		AC_MSG_RESULT($[$5])
+	fi
+fi
+])
+
+
+
+dnl
+dnl NS_CHECK_HEADER_PATH(HEADER,PATH,SUGGESTION,SUGGESTION_PATH,VARIABLE,PACKAGE)
+dnl HEADER should be file with an extension
+dnl PATH is whitespace separated
+dnl SUGGESTION, no disables, "" or "yes" enables, otherwise search SUGGESTION_PATH
+dnl SUGGESTION_PATH
+dnl sets VARIABLE to be the include stuff
+dnl PACKAGE is the name specified in NS_{BEGIN,END}_PACKAGE or "no"
+dnl
+dnl Automatically adds it to V_INCLUDES and adds a -DHAVE_HEADER to V_DEFINES
+dnl
+
+AC_DEFUN(NS_CHECK_HEADER_PATH,
+[
+AC_MSG_CHECKING([for $1])
+if test "x$3" = "xno"; then
+	: disable header
+	$5=FAIL
+	NS_PACKAGE_NOT_COMPLETE($6)
+	AC_MSG_RESULT(no)
+
+else
+	places="$2"
+	if test "x$3" != "x" -a "x$3" != xyes; then
+		if test ! -d $3; then
+			AC_MSG_ERROR($3 is not a directory)
+		fi
+		places="$4"
+	fi
+
+	$5=""
+	found=""
+	for dir in $places; do
+		if test -r $dir/$1; then
+                        found="$dir"
+                        if test "$CC" != "icc" ||
+                                test "$dir" != "/usr/include"; then
+                                $5="-I$dir"
+                        fi
+			break
+		fi
+	done
+	if test "FAIL$found" = "FAIL" ; then
+		NS_PACKAGE_NOT_COMPLETE($6)
+		AC_MSG_RESULT(no)
+	else
+
+		changequote(, )dnl
+		  ac_tr_hdr=HAVE_`echo $1 | sed 'y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%'`
+		changequote([, ])dnl
+                AC_DEFINE_UNQUOTED($ac_tr_hdr)
+
+		V_INCLUDES="$[$5] $V_INCLUDES"
+		V_DEFINES="-D$ac_tr_hdr $V_DEFINES"
+
+		NS_PACKAGE_[$6]_UNDERWAY=true
+
+		AC_MSG_RESULT($[$5])
+	fi
+fi
+])
+
+
+dnl
+dnl NS_CHECK_ANY_PATH(ANY,PATH,SUGGESTION,SUGGESTION_PATH,VARIABLE,PACKAGE)
+dnl ANY shoudl be the file
+dnl PATH is whitespace separated
+dnl SUGGESTION, no disables, "" or "yes" enables, otherwise search SUGGESTION_PATH
+dnl SUGGESTION_PATH
+dnl sets VARIABLE to be the include stuff
+dnl PACKAGE is the name specified in NS_{BEGIN,END}_PACKAGE or "no"
+dnl
+
+AC_DEFUN(NS_CHECK_ANY_PATH,
+[
+AC_MSG_CHECKING([for $1])
+if test "x$3" = "xno"; then
+	: disable header
+	$5=FAIL
+	NS_PACKAGE_NOT_COMPLETE($6)
+	AC_MSG_RESULT(no)
+
+else
+	places="$2"
+	if test "x$3" != "x" -a "x$3" != xyes; then
+		if test ! -d $3; then
+			AC_MSG_ERROR($3 is not a directory)
+		fi
+		places="$4"
+	fi
+
+	$5=""
+	for dir in $places; do
+		if test -r $dir/$1; then
+			$5="$dir"
+			break
+		fi
+	done
+	if test "FAIL$[$5]" = "FAIL" ; then
+		NS_PACKAGE_NOT_COMPLETE($6)
+		AC_MSG_RESULT(no)
+	else
+
+		NS_PACKAGE_[$6]_UNDERWAY=true
+
+		AC_MSG_RESULT($[$5])
+	fi
+fi
+])
+
+
+
+dnl
+dnl Final stuff for fns
+dnl
+AC_DEFUN(NS_FNS_TAIL,
+[
+AC_SUBST(V_INCLUDES)
+AC_SUBST(V_LIBS)
+AC_SUBST(V_DEFINES)
+dnl AC_SUBST(V_OBJS)
+])
+

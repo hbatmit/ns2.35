@@ -1,0 +1,28 @@
+%TGIF 2.16-p12
+state(0,32,100,0,0,1,16,0,9,1,1,2,0,1,0,1,1,'Helvetica-Bold',1,25,0,0,1,10,0,0,1,1,0,16,0,0,1,1,1,1,1088,1408).
+%
+% @(#)$Header: /cvsroot/nsnam/ns-2/doc/figures/rtlconfig.obj,v 1.1 1997/11/16 22:50:06 kannan Exp $
+% %W%
+%
+page(1,"").
+rcbox('black',100,100,300,200,0,5,1,0,16,0,0,0,[
+]).
+rcbox('black',400,100,600,200,0,5,1,0,16,1,0,0,[
+]).
+rcbox('black',700,100,900,200,0,5,1,0,16,2,0,0,[
+]).
+text('black',151,104,'Helvetica-Bold',1,20,4,0,0,1,98,92,3,0,18,5,0,0,0,0,[
+	"register{}",
+	"",
+	"invoked by",
+	"rtproto{}"]).
+text('black',434,102,'Helvetica-Bold',1,20,4,0,0,1,137,92,9,0,18,5,0,0,0,0,[
+	"configure{}",
+	"",
+	"invokes",
+	"$rtproto init-all"]).
+text('black',715,104,'Helvetica-Bold',1,20,4,0,0,1,171,92,11,0,18,5,0,0,0,0,[
+	"compute-routes{}",
+	"",
+	"centralised route",
+	"compute algorithm"]).

@@ -1,0 +1,623 @@
+%
+% personal commentary:
+%        DRAFT DRAFT DRAFT
+%        - KFALL
+%
+\chapter{Queue Management and Packet Scheduling}
+\label{chap:qmgmt}
+
+Queues represent locations where packets may be held (or dropped).
+Packet scheduling refers to the decision process used to choose
+which packets should be serviced or dropped.
+Buffer management refers to any particular discipline used
+to regulate the occupancy of a particular queue.
+At present, support is included for drop-tail (FIFO) queueing,
+RED buffer management, CBQ (including a priority and round-robin scheduler), 
+and
+variants of Fair Queueing including, Fair Queueing (FQ),
+Stochastic Fair Queueing (SFQ), and Deficit Round-Robin (DRR).
+In the common case where a {\em delay} element is downstream from
+a queue, the queue may be {\em blocked} until it is re-enabled
+by its downstream neighbor.
+This is the mechanism by which transmission delay is simulated.
+In addition, queues may be forcibly blocked or unblocked at arbitrary
+times by their neighbors (which is used to implement multi-queue
+aggregate queues with inter-queue flow control).
+Packet drops are implemented in such a way that queues contain
+a ``drop destination''; that is, an object that receives all packets
+dropped by a queue.
+This can be useful to (for example) keep statistics on dropped packets.
+
+\section{The C++ Queue Class}
+\label{sec:qclass}
+
+The \code{Queue} class is derived from a \code{Connector} base class.
+It provides a base class used by particular types of (derived) queue classes,
+as well as a call-back function to implement blocking (see next section).
+The following definitions are provided in \code{queue.h}:
+\begin{program}
+        class Queue : public Connector \{
+         public:
+                virtual void enque(Packet*) = 0;
+                virtual Packet* deque() = 0;
+                void recv(Packet*, Handler*);
+                void resume();
+                int blocked();
+                void unblock();
+                void block();
+         protected:
+                Queue();
+                int command(int argc, const char*const* argv);
+                int qlim_;         \* maximum allowed pkts in queue */
+                int blocked_;
+                int unblock_on_resume_; \* unblock q on idle? */
+                QueueHandler qh_;
+        \};
+\end{program}
+The \code{enque} and \code{deque} functions are pure virtual, indicating
+the \code{Queue} class is to be used as a base class;
+particular queues are derived
+from \code{Queue} and implement these two functions as necessary.
+Particular queues do not, in general, override the \code{recv} function
+because it invokes the
+the particular \code{enque} and \code{deque}.
+
+The \code{Queue} class does not contain much internal state.
+Often these are
+\href{special monitoring objects}{Chapter}{chap:trace}.
+The \code{qlim_} member is constructed to dictate a bound on the maximum
+queue occupancy, but this is not enforced by the \code{Queue} class itself; it
+must be used by the particular queue subclasses if they need this value.
+The \code{blocked_} member is a boolean indicating whether the
+queue is able to send a packet immediately to its downstream neighbor.
+When a queue is blocked, it is able to enqueue packets but not send them.
+
+\subsection{Queue blocking}
+\label{sec:qblock}
+
+A queue may be either blocked or unblocked at any given time.
+Generally, a queue is blocked when a packet is in transit between it
+and its downstream neighbor (most of the time if the queue is occupied).
+A blocked queue will remain blocked as long as it downstream link is
+busy and the queue has at least one packet to send.
+A queue becomes unblocked only when its \code{resume} function is
+invoked (by means of a downstream neighbor scheduling it via
+a callback), usually when no packets are queued.
+The callback is implemented by using the following class and
+methods:
+\begin{program}
+        class QueueHandler : public Handler \{
+        public:
+                inline QueueHandler(Queue& q) : queue_(q) \{\}
+                void handle(Event*); /* calls queue_.resume() */
+         private:
+                Queue& queue_;
+        \};
+        void QueueHandler::handle(Event*)
+        \{
+                queue_.resume();
+        \}
+
+        Queue::Queue() : drop_(0), blocked_(0), qh_(*this)
+        \{
+                Tcl& tcl = Tcl::instance();
+                bind("limit_", &qlim_);
+        \}
+        void Queue::recv(Packet* p, Handler*)
+        \{
+                enque(p);
+                if (!blocked_) \{
+                        /*
+                         * We're not block.  Get a packet and send it on.
+                         * We perform an extra check because the queue
+                         * might drop the packet even if it was
+                         * previously empty!  (e.g., RED can do this.)
+                         */
+                        p = deque();
+                        if (p != 0) \{
+                                blocked_ = 1;
+                                target_->recv(p, &qh_);
+                        \}
+                \}
+        \}
+        void Queue::resume()
+        \{
+                Packet* p = deque();
+                if (p != 0)
+                        target_->recv(p, &qh_);
+                else \{
+                        if (unblock_on_resume_)
+                                blocked_ = 0;
+                        else
+                                blocked_ = 1;
+                \}
+        \}
+\end{program}
+The handler management here is somewhat subtle.
+When a new \code{Queue} object is created,
+it includes a \code{QueueHandler} object (\code{qh_})
+which is initialized to contain a reference to the new \code{Queue} object
+(\code{Queue& QueueHandler::queue_}).
+This is performed by the \code{Queue} constructor using the expression
+\code{qh_(*this)}.
+When a Queue receives a packet it calls the subclass
+(i.e. queueing discipline-specific) version of
+the \code{enque} function with the packet.
+If the queue is not blocked, it is allowed to send a packet and
+calls the specific \code{deque} function which determines which
+packet to send, blocks the queue (because a packet is now in transit), and
+sends the packet to the queue's downstream neighbor.
+Note that any future packets received from upstream neighbors
+will arrive to a blocked queue.
+When a downstream neighbor wishes to cause the queue to become unblocked
+it schedules the QueueHandler's \code{handle} function by
+passing \code{&qh_} to the simulator scheduler.
+The \code{handle} function invokes \code{resume}, which
+will send the next-scheduled packet downstream (and leave the queue blocked),
+or unblock the queue when no packet is ready to be sent.
+This process is made more clear by also referring to the
+\href{\fcn[]{LinkDelay::recv} method}{Section}{sec:delayclass}.
+
+\subsection{PacketQueue Class}
+\label{sec:packetqclass}
+
+The \code{Queue} class may implement buffer management and scheduling but
+do not implement the low-level operations on a particular queue.
+The \code{PacketQueue} class is used for this purpose, and is defined as follows
+(see \code{queue.h}):
+\begin{program}
+        class PacketQueue \{
+        public:
+                PacketQueue();
+                int length(); /* queue length in packets */
+                void enque(Packet* p);
+                Packet* deque();
+                Packet* lookup(int n);
+                /* remove a specific packet, which must be in the queue */
+                void remove(Packet*);
+        protected:
+                Packet* head_;
+                Packet** tail_;
+                int len_;               // packet count
+        \};
+\end{program}
+This class maintains a linked-list of packets, and is commonly
+used by particular scheduling and buffer management disciplines
+to hold an ordered set of packets.
+Particular scheduling or buffer management schemes may make
+use of several \code{PacketQueue} objects.
+The \code{PacketQueue} class maintains current counts of the number of
+packets held in the queue which is returned by the \fcn[]{length} method.
+The \code{enque} function places the specified packet at the end of
+the queue and updates the \code{len_} member variable.
+The \code{deque} function returns the packet at the head of the
+queue and removes it from the queue (and updates the counters), or
+returns NULL if the queue is empty.
+The \code{lookup} function returns the $n$th packet from the head
+of the queue, or NULL otherwise.
+The \code{remove} function deletes the packet stored in the given address
+from the queue (and updates the counters).
+It causes an abnormal program termination if the packet does not exist.
+
+\section{Example: Drop Tail}
+\label{sec:droptail}
+
+The following example illustrates the implementation of the
+\code{Queue/DropTail} object,
+which implements FIFO scheduling and
+drop-on-overflow buffer management typical of most present-day
+Internet routers.
+The following definitions declare the class and its OTcl linkage:
+\begin{program}
+        /*
+         * {\cf A bounded, drop-tail queue}
+         */
+        class DropTail : public Queue \{
+         protected:
+                void enque(Packet*);
+                Packet* deque();
+                PacketQueue q_;
+        \};
+\end{program}
+The base class \code{Queue},
+from which \code{DropTail} is derived, provides most
+of the needed functionality.
+The drop-tail queue maintains exactly one FIFO queue, implemented
+by including an object of the \code{PacketQueue} class.
+Drop-tail implements its own versions of \code{enque} and \code{deque}
+as follows:
+\begin{program}
+        /*
+         * {\cf drop-tail}
+         */
+        void DropTail::enque(Packet* p)
+        \{
+                q_.enque(p);
+                if (q_.length() >= qlim_) \{
+                        q_.remove(p);
+                        drop(p);
+                \}
+        \}
+
+        Packet* DropTail::deque()
+        \{
+                return (q_.deque());
+        \}
+\end{program}
+Here, the \code{enque} function first stores the packet in the
+internal packet queue (which has no size restrictions), and then
+checks the size of the packet queue versus \code{qlim_}.
+Drop-on-overflow is implemented by dropping the packet most recently
+added to the packet queue if the limit is reached or exceeded.
+\emph{Note:} in the implementation of \code{enque} above, 
+ setting \code{qlim_} to \code{n} actually means a queue size of \code{n-1}.
+Simple FIFO scheduling is implemented in the \code{deque} function
+by always returning the first packet in the packet queue.
+
+
+\section{Different types of Queue objects}
+\label{sec:queueobjects}
+A queue object is a general class of object capable of holding and
+possibly marking or discarding packets as they travel through the
+simulated topology. Configuration Parameters used for queue objects are:
+\begin{description}
+\item[limit\_] The queue size in packets. 
+
+\item[blocked\_] Set to false by default, this is true if the queue is
+blocked (unable to send a packet to its downstream neighbor). 
+
+\item[unblock\_on\_resume\_] Set to true by default, indicates a queue
+should unblock itself at the time the last packet packet sent has been
+transmitted (but not necessarily received). 
+\end{description}
+
+Other queue objects derived from the base class Queue are drop-tail, FQ,
+SFQ, DRR, RED and CBQ queue objects. Each are described as follows:
+\begin{itemize}
+
+\item Drop-tail objects:
+Drop-tail objects are a subclass of Queue objects that implement simple
+FIFO queue. There are no methods, configuration parameter, or state
+variables that are specific to drop-tail objects. 
+
+\item FQ objects:
+FQ objects are a subclass of Queue objects that implement Fair queuing.
+There are no methods that are specific to FQ objects. 
+Configuration Parameters are:
+\begin{description}
+\item[secsPerByte\_] 
+\end{description}
+There are no state variables associated with this object. 
+
+\item SFQ objects:
+SFQ objects are a subclass of Queue objects that implement Stochastic Fair
+queuing. There are no methods that are specific to SFQ objects. 
+Configuration Parameters are:
+\begin{description}
+\item[maxqueue\_]
+
+\item[buckets\_]
+\end{description}
+There are no state variables associated with this object. 
+
+\item DRR objects:
+DRR objects are a subclass of Queue objects that implement deficit round
+robin scheduling. These objects implement deficit round robin scheduling
+amongst different flows ( A particular flow is one which has packets with
+the same node and port id OR packets which have the same node id alone).
+Also unlike other multi-queue objects, this queue object implements a
+single shared buffer space for its different flows. Configuration
+Parameters are:
+\begin{description}
+\item[buckets\_] Indicates the total number of buckets to be used for
+hashing each of the flows. 
+
+\item[blimit\_] Indicates the shared buffer size in bytes. 
+
+\item[quantum\_] Indicates (in bytes) how much each flow can send during
+its turn. 
+
+\item[mask\_] mask\_, when set to 1, means that a particular flow consists
+of packets having the same node id (and possibly different port ids),
+otherwise a flow consists of packets having the same node and port ids. 
+\end{description}
+
+\item RED objects:
+RED objects are a subclass of Queue objects that implement random
+early-detection gateways. The object can be configured to either drop or
+``mark'' packets. There are no methods that are specific to RED objects. 
+Configuration Parameters are:
+\begin{description}
+\item[bytes\_] Set to "true" to enable ``byte-mode'' RED, where the size
+of arriving packets affect the likelihood of marking (dropping) packets. 
+
+\item[queue-in-bytes\_]
+Set to "true" to measure the average queue size in bytes rather than
+packets. Enabling this option also causes thresh\_ and maxthresh\_ to be
+automatically scaled by mean\_pktsize\_ (see below). 
+
+\item[thresh\_]
+The minimum threshold for the average queue size in packets. 
+
+\item[maxthresh\_]
+The maximum threshold for the average queue size in packets. 
+
+\item[mean\_pktsize\_]
+A rough estimate of the average packet size in bytes. Used in updating the
+calculated average queue size after an idle period. 
+
+\item[q\_weight\_]
+The queue weight, used in the exponential-weighted moving average for
+calculating the average queue size. 
+
+\item[wait\_]
+Set to true to maintain an interval between dropped packets. 
+
+\item[linterm\_]
+As the average queue size varies between "thresh\_" and "maxthresh\_", the
+packet dropping probability varies between 0 and "1/linterm". 
+
+\item[setbit\_]
+Set to "true" to mark packets by setting the congestion indication bit in
+packet headers rather than drop packets. 
+
+\item[drop-tail\_]
+Set to true to use drop-tail rather than randomdrop when the queue
+overflows or the average queue size exceeds "maxthresh\_". For a further
+explanation of these variables, see [2]. 
+\end{description}
+None of the state variables of the RED implementation are accessible. 
+
+
+\item CBQ objects:
+CBQ objects are a subclass of Queue objects that implement class-based
+queueing. 
+
+\code{$cbq insert <class>}\\
+Insert traffic class class into the link-sharing structure associated with
+link object cbq. 
+
+\code{$cbq bind <cbqclass> <id1> [$id2]}\\
+Cause packets containing flow id id1 (or those in the range id1 to
+id2 inclusive) to be associated with the traffic class cbqclass. 
+
+\code{$cbq algorithm <alg>}\\
+Select the CBQ internal algorithm. <alg> may be set to one of:
+"ancestor-only", "top-level", or "formal". 
+
+
+\item CBQ/WRR objects:
+CBQ/WRR objects are a subclass of CBQ objects that implement weighted
+round-robin scheduling among classes of the same priority level. In
+contrast, CBQ objects implement packet-by-packet round-robin scheduling
+among classes of the same priority level. Configuration Parameters are:
+\begin{description}
+\item[maxpkt\_] The maximum size of a packet in bytes. This is used only
+by CBQ/WRR objects in computing maximum bandwidth allocations for the
+weighted round-robin scheduler. 
+\end{description}
+\end{itemize}
+
+
+\textsc{CBQclass Objects}\\
+CBQClass objects implement the traffic classes associated with CBQ
+objects. 
+
+\code{$cbqclass setparams <parent> <okborrow> <allot> <maxidle> <prio> <level>}\\
+Sets several of the configuration parameters for the CBQ traffic class
+(see below). 
+
+\code{$cbqclass parent <cbqcl|none>}\\
+specify the parent of this class in the link-sharing tree. The parent may
+be specified as ``none'' to indicate this class is a root. 
+
+\code{$cbqclass newallot <a>}\\
+Change the link allocation of this class to the specified amount (in range
+0.0 to 1.0). Note that only the specified class is affected. 
+
+\code{$cbqclass install-queue <q>}\\
+Install a Queue object into the compound CBQ or CBQ/WRR link structure.
+When a CBQ object is initially created, it includes no internal queue
+(only a packet classifier and scheduler).
+
+Configuration Parameters are:
+\begin{description}
+\item[okborrow\_] is a boolean indicating the class is permitted to borrow
+bandwidth from its parent. 
+
+\item[allot\_] is the maximum fraction of link bandwidth allocated to the
+class expressed as a real number between 0.0 and 1.0. 
+
+\item[maxidle\_] is the maximum amount of time a class may be required to
+have its packets queued before they are permitted to be forwarded 
+
+\item[priority\_]
+is the class' priority level with respect to other classes. This value may
+range from 0 to 10, and more than one class may exist at the same
+priority. Priority 0 is the highest priority. 
+
+\item[level\_]
+is the level of this class in the link-sharing tree. Leaf nodes in the
+tree are considered to be at level 1; their parents are at level 2, etc. 
+
+\item[extradelay\_]
+increase the delay experienced by a delayed class by the specified time 
+\end{description}
+
+
+\textsc{Queue-monitor objects}\\
+QueueMonitor Objects are used to monitor a set of packet and byte arrival,
+departure and drop counters. It also includes support for aggregate
+statistics such as average queue size, etc.
+
+\code{$queuemonitor}\\
+reset all the cumulative counters described below (arrivals, departures,
+and drops) to zero. Also, reset the integrators and delay sampler, if
+defined. 
+
+\code{$queuemonitor set-delay-samples <delaySamp_>}\\
+Set up the Samples object delaySamp\_ to record statistics about queue
+delays. delaySamp\_ is a handle to a Samples object i.e the Samples object
+should have already been created. 
+
+\code{$queuemonitor get-bytes-integrator}\\
+Returns an Integrator object that can be used to find the integral of the
+queue size in bytes. 
+
+\code{$queuemonitor get-pkts-integrator}\\
+Returns an Integrator object that can be used to find the integral of the
+queue size in packets.
+
+\code{$queuemonitor get-delay-samples}\\
+Returns a Samples object delaySamp\_ to record statistics about queue
+delays.
+\\
+There are no configuration parameters specific to this object. 
+\\
+State Variables are:
+\begin{description}
+\item[size\_] Instantaneous queue size in bytes. 
+
+\item[pkts\_] Instantaneous queue size in packets. 
+
+\item[parrivals\_] Running total of packets that have arrived. 
+
+\item[barrivals\_] Running total of bytes contained in packets that have
+arrived. 
+
+\item[pdepartures\_] Running total of packets that have departed (not
+dropped). 
+
+\item[bdepartures\_] Running total of bytes contained in packets that have
+departed (not dropped). 
+
+\item[pdrops\_] Total number of packets dropped. 
+
+\item[bdrops\_] Total number of bytes dropped. 
+
+\item[bytesInt\_] Integrator object that computes the integral of the
+queue size in bytes. The sum\_ variable of this object has the running sum
+(integral) of the queue size in bytes. 
+
+\item[pktsInt\_] Integrator object that computes the integral of the queue
+size in packets. The sum\_ variable of this object has the running sum
+(integral) of the queue size in packets. 
+\end{description}
+
+
+\textsc{QUEUEMONITOR/ED Objects}\\
+This derived object is capable of differentiating regular packet drops
+from early drops. Some queues distinguish regular drops (e.g. drops due to
+buffer exhaustion) from other drops (e.g. random drops in RED queues).
+Under some circumstances, it is useful to distinguish these two types of
+drops. 
+\\
+State Variables are:
+\begin{description}
+\item[epdrops\_] The number of packets that have been dropped ``early''. 
+
+\item[ebdrops\_] The number of bytes comprising packets that have been
+dropped ``early''. 
+\end{description}
+
+Note: because this class is a subclass of QueueMonitor, objects of this
+type also have fields such as pdrops\_ and bdrops\_. These fields describe
+the total number of dropped packets and bytes, including both early and
+non-early drops. 
+
+
+\textsc{QueueMonitor/ED/Flowmon Objects}\\
+These objects may be used in the place of a conventional QueueMonitor
+object when wishing to collect per-flow counts and statistics in addition
+to the aggregate counts and statistics provided by the basic QueueMonitor. 
+
+\code{$fmon classifier <cl>}\\
+This inserts (read) the specified classifier into (from) the flow monitor
+object. This is used to map incoming packets to which flows they are
+associated with. 
+
+\code{$fmon dump}\\
+Dump the current per-flow counters and statistics to the I/O channel
+specified in a previous attach operation. 
+
+\code{$fmon flows}\\
+Return a character string containing the names of all flow objects known
+by this flow monitor. Each of these objects are of type
+QueueMonitor/ED/Flow. 
+
+\code{$fmon attach <chan>}\\
+Attach a tcl I/O channel to the flow monitor. Flow statistics are written
+to the channel when the dump operation is executed. 
+
+Configuration Parameters are:
+\begin{description}
+\item[enable\_in\_] Set to true by default, indicates that per-flow
+arrival state should be kept by the flow monitor. If set to false, only
+the aggregate arrival information is kept. 
+
+\item[enable\_out\_]
+Set to true by default, indicates that per-flow departure state should be
+kept by the flow monitor. If set to false, only the aggregate departure
+information is kept. 
+
+\item[enable\_drop\_]
+Set to true by default, indicates that per-flow drop state should be kept
+by the flow monitor. If set to false, only the aggregate drop information
+is kept. 
+
+\item[enable\_edrop\_]
+Set to true by default, indicates that per-flow early drop state should be
+kept by the flow monitor. If set to false, only the aggregate early drop
+information is kept. 
+\end{description}
+
+
+\textsc{QueueMonitor/ED/Flow Objects}\\
+These objects contain per-flow counts and statistics managed by a
+QueueMonitor/ED/Flowmon object. They are generally created in an OTcl
+callback procedure when a flow monitor is given a packet it cannot map on
+to a known flow. Note that the flow monitor's classifier is responsible
+for mapping packets to flows in some arbitrary way. Thus, depending on the
+type of classifier used, not all of the state variables may be relevant
+(e.g. one may classify packets based only on flow id, in which case the
+source and destination addresses may not be significant). 
+State Variables are:
+\begin{description}
+\item[src\_] The source address of packets belonging to this flow. 
+
+\item[dst\_] The destination address of packets belonging to this flow. 
+
+\item[flowid\_] The flow id of packets belonging to this flow. 
+\end{description}
+
+\section{Commands at a glance}
+\label{sec:queuecommand}
+
+Following is a list of queue commands used in simulation scripts:
+\begin{flushleft}
+\code{$ns_ queue-limit <n1> <n2> <limit>}\\
+This sets a limit on the maximum buffer size of the queue in the link between
+nodes <n1> and <n2>.
+
+
+\code{$ns_ trace-queue <n1> <n2> <optional:file>}\\
+This sets up trace objects to log events in the queue. If tracefile is not
+passed, it uses \code{traceAllFile_} to write the events.
+
+
+\code{$ns_ namtrace-queue <n1> <n2> <optional:file>}\\
+Similar to trace-queue above, this sets up nam-tracing in the queue.
+
+
+\code{$ns_ monitor-queue <n1> <n2> <optional:qtrace> <optional:sampleinterval>}\\
+This command inserts objects that allows us to monitor the queue size. This
+returns a handle to the object that may be queried to determine the average
+queue size. The default value for sampleinterval is 0.1.
+
+
+\end{flushleft}
+
+% JoBS contributed by Nicolas Christin <nicolas@cs.virginia.edu>
+\input{jobs}
+
+\endinput

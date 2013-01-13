@@ -1,0 +1,13 @@
+#! /bin/sh
+
+echo "test-all has been moved"
+echo
+echo "to validate ns (running all test suites), run"
+echo "    ./validate"
+echo
+echo "to run the old test-all (a subset of validate), run"
+echo "    ./tcl/test/test-all-simple"
+echo
+echo "for example code, please see ./README"
+
+exit 1

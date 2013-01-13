@@ -1,0 +1,311 @@
+  \begin{tabular}{llll}
+  \# : & comment -- this line is ignored & & \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  T : & Dummy event to be used in time synchronization & & \\
+    &  -t & <time> & time \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  n : & node & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & node id \\
+    &  -v & <shape> & shape (circle, box, hexagon) \\
+    &  -c & <color> & color \\
+    &  -z & <double> & size of node \\
+    &  -a & <int> & address \\
+    &  -x & <double> & x location \\
+    &  -y & <double> & y location \\
+    &  -i & <color> & label color \\
+    &  -b & <string> & label \\
+    &  -l & <string> & label \\
+    &  -o & <color> & previous color \\
+    &  -S & <string> & state (UP, DOWN, COLOR) \\
+    &  -L & <string> & previous label \\
+    &  -p & <string> & label location \\
+    &  -P & <string> & previous label location \\
+    &  -i & <color> & inside label color \\
+    &  -I & <color> & previous inside label color \\
+    &  -e & <color> & label color \\
+    &  -E & <color> & previous label color \\
+    &  -u & <string> & x velocity \\
+    &  -U & <string> & x velocity \\
+    &  -V & <string> & y velocity \\
+    &  -T & <double> & node stop time \\
+    &  -w & <flag> & wireless node \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  l : & link & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -r & <double> & transmission rate \\
+    &  -D & <double> & delay \\
+    &  -h & <double> & length \\
+    &  -O & <orientation> & orientation \\
+    &  -b & <string> & label \\
+    &  -c & <color> & color \\
+    &  -o & <color> & previous color \\
+    &  -S & <string> & state (UP, DOWN) \\
+    &  -l & <string l> & label \\
+    &  -L & <string> & previous label \\
+    &  -e & <color> & label color \\
+    &  -E & <color> & previous label color \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  + : & enqueue packet & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & packet color attribute id \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  - : & dequeue packet & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & attribute \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  h : & hop & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & attribute \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+    &  -R & <double> & wireless broadcast radius \\
+    &  -D & <double> & wireless broadcast duration \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  r : & receive & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & attribute \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+    &  -R & <double> & wireless broadcast radius \\
+    &  -D & <double> & wireless broadcast duration \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  d : & drop line & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & attribute \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  E : & session enqueue & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & attribute \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  D : & session dequeue & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & attribute \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  P : & session drop & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -e & <int> & extent \\
+    &  -a & <int> & attribute \\
+    &  -i & <int> & id \\
+    &  -l & <int> & energy \\
+    &  -c & <string> & conversation \\
+    &  -x & <comment> & comment \\
+    &  -p & <string> & packet type \\
+    &  -k & <string> & packet type \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  a : & agent & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -x & <flag> & remove agent \\
+    &  -n & <string> & agent name \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  f : & feature & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -x & <flag> & remove feature \\
+    &  -T & <char> & type \\
+    &  -n & <string> & name \\
+    &  -a & <string> & agent \\
+    &  -v & <string> & value \\
+    &  -o & <string> & previous value \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  G : & group & & \\
+    &  -t & <time> & time \\
+    &  -n & <string> & name \\
+    &  -i & <int> & node id \\
+    &  -a & <int> & group id \\
+    &  -x & <flag> & remove from group \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  L : & lan link & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -o & <orientation> & orientation \\
+    &  -O & <orientation> & orientation \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  m : & mark node & & \\
+    &  -t & <time> & time \\
+    &  -n & <string> & name \\
+    &  -s & <int> & node id \\
+    &  -c & <string> & color \\
+    &  -h & <string> & shape (circle, square, hexagon) \\
+    &  -X & <flag> & remove mark \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  R : & routing event & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -g & <int> & multicast group \\
+    &  -p & <packet source> & packet source id or * \\
+    &  -n & <flag> & negative cache \\
+    &  -x & <flag> & this route timed out \\
+    &  -T & <double> & timeout \\
+    &  -m & <string> & mode (iif or oif) \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  v : & execute tcl expression & & \\
+    &  -t & <time> & time \\
+    &  -e & <tcl expression> & tcl script \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  V : & set trace file version & & \\
+    &  -t & <time> & time \\
+    &  -v & <string> & time \\
+    &  -a & <int> & time \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  N : & use nam graph & & \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  W : & wireless range & & \\
+    &  -t & <time> & time \\
+    &  -x & <int> & X \\
+    &  -y & <int> & Y \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  g : & energy status -- for future use & & \\
+    &  -t & <time> & time \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  A : & hierarchical address space configuration -- initilization only & & \\
+    &  -t & <time> & time \\
+    &  -n & <int> & hierarchy \\
+    &  -p & <int> & port shift \\
+    &  -o & <hex> & port mask \\
+    &  -c & <int> & mulitcast shift \\
+    &  -a & <int> & multicast mask \\
+    &  -h & <int> & hierarchy \\
+    &  -m & <int> & node shift \\
+    &  -s & <int> & node mask \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  c : & color table configuration -- initialization only & & \\
+    &  -t & <time> & time \\
+    &  -i & <int> & id \\
+    &  -n & <string> & color \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  q : & create packet queue -- initialization only & & \\
+    &  -t & <time> & time \\
+    &  -s & <int> & source id \\
+    &  -d & <int> & destination id \\
+    &  -a & <orientation> & orientaion \\
+  \end{tabular}
+
+  \begin{tabular}{llll}
+  X : & layout lan & & \\
+    &  -t & <time> & time \\
+    &  -n & <string> & name \\
+    &  -r & <double> & rate \\
+    &  -D & <double> & delay \\
+    &  -o & <orientation> & orientation \\
+    &  -O & <orientation> & orientation \\
+  \end{tabular}
+

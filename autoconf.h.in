@@ -1,0 +1,97 @@
+/* -*-	Mode:C++; c-basic-offset:8; tab-width:8; indent-tabs-mode:t -*- */
+/*
+ * Copyright (c) 1997 University of Southern California.
+ * All rights reserved.                                            
+ *                                                                
+ * Redistribution and use in source and binary forms are permitted
+ * provided that the above copyright notice and this paragraph are
+ * duplicated in all such forms and that any documentation, advertising
+ * materials, and other materials related to such distribution and use
+ * acknowledge that the software was developed by the University of
+ * Southern California, Information Sciences Institute.  The name of the
+ * University may not be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ */
+
+/* This file should contain variables changed only by autoconf. */
+
+#define NSPERL_PATH "@PERL@"
+#define NSTCLSH_PATH "@V_TCLSH@"
+
+/* If you need these from tcl, see the file tcl/lib/ns-autoconf.tcl.in */
+
+/*
+ * Put autoconf #define's here to keep them off the command line.
+ * see autoconf.info(Header Templates) in the autoconf docs.
+ */
+
+#undef _GNU_SOURCE
+
+/* what does random(3) return? */
+#define RANDOM_RETURN_TYPE int
+
+/* type definitions */
+#undef int8_t
+#undef int16_t
+#undef int32_t
+#undef u_int8_t
+#undef u_int16_t
+#undef u_int32_t
+
+/* 64-bits */
+#undef HAVE_INT64
+#define SIZEOF_LONG 4
+#undef int64_t
+
+/* socklen_t (for nse) */
+#undef HAVE_SOCKLEN_T
+
+/* functions */
+#undef HAVE_BCOPY
+#undef HAVE_BZERO
+#undef HAVE_GETRUSAGE
+#undef HAVE_SBRK
+#undef HAVE_SNPRINTF
+#undef HAVE_STRTOLL
+#undef HAVE_STRTOQ
+#undef HAVE_ADDR2ASCII
+#undef HAVE_FEENABLEEXCEPT
+
+/* headers */
+#undef STDC_HEADERS
+#undef HAVE_STRING_H
+#undef HAVE_STRINGS_H
+#undef HAVE_ARPA_INET_H
+#undef HAVE_NETINET_IN_H
+#undef HAVE_NET_ETHERNET_H
+#undef HAVE_FENV_H
+
+/* structures */
+#undef HAVE_ETHER_HEADER_STRUCT
+#undef HAVE_ETHER_ADDRESS_STRUCT
+
+/* constants */
+#undef HAVE_SIOCGIFHWADDR
+
+
+/* stl */
+#ifdef __cplusplus
+#undef HAVE_STL
+
+#undef CPP_REQUIRES_NAMESPACE 
+#ifdef CPP_REQUIRES_NAMESPACE
+
+#ifndef CPP_NAMESPACE
+#define CPP_NAMESPACE std
+#endif
+
+
+using namespace CPP_NAMESPACE;
+#endif /* CPP_NAMESPACE */
+#endif /* __cplusplus */
+

@@ -1,0 +1,92 @@
+\chapter{UDP Agents}
+\label{sec:udpAgents}
+
+\section{UDP Agents}
+\label{sec:udpagent}
+UDP agents are implemented in \code{udp.\{cc, h\}}.  A UDP agent accepts
+data in variable size chunks from an application, and segments the data 
+if needed.  UDP packets also contain a monotonically increasing sequence
+number and an RTP timestamp.  Although real UDP packets do not contain 
+sequence numbers or timestamps, this sequence number does not incur any 
+simulated overhead, and can be useful for tracefile analysis or for
+simulating UDP-based applications.
+
+The default maximum segment size (MSS) for UDP agents is 1000 byte:
+\begin{program}
+Agent/UDP set packetSize_   1000              \; max segment size;
+\end{program}
+This OTcl instvar is bound to the C++ agent variable \code{size_}.  
+
+Applications can access UDP agents via the \fcn[]{sendmsg} function in C++,
+or via the \code{send} or \code{sendmsg} methods in OTcl, as described in
+section \ref{sec:systemcalls}.  
+
+The following is a simple example of how a UDP agent may be used in a program.  
+In the example, the CBR traffic generator is started at time 1.0, at which time
+the generator begins to periodically call the UDP agent \fcn[]{sendmsg}
+function.
+\begin{program}
+        set ns [new Simulator]
+        set n0 [$ns node]
+        set n1 [$ns node]
+        $ns duplex-link $n0 $n1 5Mb 2ms DropTail
+
+        set udp0 [new Agent/UDP]
+        $ns attach-agent $n0 $udp0
+        set cbr0 [new Application/Traffic/CBR]
+        $cbr0 attach-agent $udp0
+        $udp0 set packetSize_ 536	\; set MSS to 536 bytes;
+
+        set null0 [new Agent/Null]
+        $ns attach-agent $n1 $null0
+        $ns connect $udp0 $null0
+        $ns at 1.0 "$cbr0 start"
+\end{program}
+
+\section{Commands at a glance}
+\label{sec:udpcommand}
+
+The following commands are used to setup UDP agents in simulation scripts:
+\begin{flushleft}
+\code{set udp0 [new Agent/UDP]}\\
+This creates an instance of the UDP agent.
+
+
+\code{$ns_ attach-agent <node> <agent>}\\
+This is a common command used to attach any <agent> to a given <node>.
+
+
+\code{$traffic-gen attach-agent <agent>}\\
+This a class Application/Traffic/<traffictype> method which connects the
+traffic generator to the given <agent>. For example, if we want to setup
+a CBR traffic flow for the udp agent, udp1, we given the following commands\\
+\begin{program}
+set cbr1 [new Application/Traffic/CBR]
+$cbr1 attach-agent $udp1
+\end{program}
+
+
+\code{$ns_ connect <src-agent> <dst-agent>}\\
+This command sets up an end-to-end connection between two agents (at the
+transport layer).
+
+
+\begin{program}
+$udp set packetSize_ <pktsize>
+$udp set dst_addr_ <address>
+$udp set dst_port_ <portnum>
+$udp set class_ <class-type>
+$udp set ttl_ <time-to-live>
+..... etc
+\end{program}
+
+The above are different parameter values that may be set as shown above
+for udp agents. The default values can be found in 
+\ns/tcl/lib/ns-default.tcl.
+
+For a typical example of setting up an UDP agent used in a simulation, see
+the above section \ref{sec:udpagent}.
+
+\end{flushleft}
+
+\endinput

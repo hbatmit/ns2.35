@@ -1,0 +1,69 @@
+#!/bin/csh -f 
+
+date
+
+set ns_dir = "../../../../"
+set out_dir = "out/"
+
+@ BW = 30
+@ seed = 472904
+@ delay = 10
+@ num_hops = 9
+set tcl_file =  parking_lot_topo.tcl
+
+
+\rm -f ${out_dir}tmp.log ${out_dir}u.* ${out_dir}q.* ${out_dir}d.*  ${out_dir}uq.* ${out_dir}uqd.* ${out_dir}string.eps
+
+@ e = 1
+#foreach exp ( RED/XCP RED CSFQ REM Vq ) 
+#foreach exp ( XCP RED DropTail REM ) 
+foreach exp ( XCP )
+    echo "Experiment: Efficiency of a ${exp} Queue with BW= ${BW} delay= ${delay} msec "
+    echo "${ns_dir}ns $tcl_file ${num_hops} 0 ${seed}  ${exp} ${BW} 30  $delay  > ${out_dir}tmp.log"
+    ${ns_dir}ns $tcl_file ${num_hops} 0 ${seed}  ${exp} ${BW} 30  $delay  > ${out_dir}tmp.log
+    
+#    \rm ${out_dir}u.$e ${out_dir}q.$e ${out_dir}d.$e
+ 
+    @ l = 0
+    while ( $l < $num_hops )
+	echo "Link = $l"
+	@ next_l = ($l + 1)
+      
+        if ($exp == "XCP") then
+	    set suffix = red
+        else
+	   set suffix = trace
+        endif
+	
+    # Bottleneck Utilization
+	grep "u " TR/ft_${suffix}_q${l}.tr | awk '{print $2, $3}' >! ${out_dir}u.${l}.${e}.dat
+	awk -v L=$l \
+        'BEGIN {sum=0.0;f=0;} {sum=sum+$2; f=f+1} \
+        END {printf("%d %g\n",L+1, sum/f);}' \
+        ${out_dir}u.${l}.${e}.dat >>! ${out_dir}u.${e}
+
+	#Queue Size
+	grep "q " TR/ft_${suffix}_q${l}.tr | awk '{print $2, $3}' >! ${out_dir}q.${l}.${e}.dat
+	awk -v L=$l 'BEGIN {sum=0.0;f=0;} {sum=sum+$2; f=f+1} END {printf("%d %d\n",L+1, sum/f)}' \
+        ${out_dir}q.${l}.${e}.dat >>! ${out_dir}q.${e}
+	
+
+	grep "q$l drops" ${out_dir}tmp.log| awk -v L=$l '{print L+1, $4}' >>! ${out_dir}d.${e}
+
+	@ l = ($l + 1)
+    end
+    
+    join ${out_dir}u.$e  ${out_dir}q.$e > ${out_dir}uq.$e
+    join ${out_dir}uq.$e ${out_dir}d.$e > ${out_dir}uqd.$e
+
+    @ e = $e + 1
+	
+end
+  
+cd ${out_dir}
+
+gnuplot string.gp
+gv string.eps &    
+
+echo "DONE"
+date

@@ -1,0 +1,208 @@
+#!/usr/bin/perl -w
+
+open(IDLEI,"> idle.in.dat");
+open(IDLEO,"> idle.out.dat");
+open(REQI,"> request.in.dat");
+open(REQO,"> request.out.dat");
+open(NUMPAGEI,"> numpage.in.dat");
+open(NUMPAGEO,"> numpage.out.dat");
+open(PAGESIZEI,"> pagesize.in.dat");
+open(PAGESIZEO,"> pagesize.out.dat");
+open(SESSINTERI,"> sessinter.in.dat");
+open(SESSINTERO,"> sessinter.out.dat");
+open(SERVER,"> server.dat");
+open(SERVERCDF,"> server.dat.cdf");
+
+
+$numServer = 0;
+$oldtimeI = 0;
+$oldtimeO = 0;
+$oldT = 0;
+$oldclnt = "";
+
+print "start processing model output\n";
+while (<>) {
+        ($type,$fld1,$fld2,$fld3,$fld4,$fld5,$fld6,$fld7,$fld8,$fld9) = split(' ',$_);
+
+	$fld3="";
+	$fld7="";
+
+        if ($type eq "req") {
+	   if ($fld2 eq $oldclnt) {
+	     $idle = $fld5 - $oldT; 
+             if ($fld4 eq "7") {
+               print IDLEI "$idle\n";
+             } else {
+               print IDLEO "$idle\n";
+	     }
+	   }
+           if ($fld4 eq "7") {
+               print REQI "$fld8\n";
+               print PAGESIZEI "$fld9\n";
+           } else {
+               print REQO "$fld8\n";
+               print PAGESIZEO "$fld9\n";
+               $server[$numServer] = $fld4;
+               $numServer++;
+	   }
+	   $oldclnt = $fld2;
+	   $oldT = $fld5;
+        }
+        if ($type eq "Session") {
+           if ($fld1 eq "Inbound") {
+              print NUMPAGEI "$fld4\n";
+	      $inter = $fld6 - $oldtimeI;
+	      print SESSINTERI "$inter\n";
+	      $oldtimeI = $fld6;
+	   }
+           if ($fld1 eq "Outbound") {
+              print NUMPAGEO "$fld4\n";
+	      $inter = $fld6 - $oldtimeO;
+	      print SESSINTERO "$inter\n";
+	      $oldtimeO = $fld6;
+	   }
+	}
+}
+
+print "sort array\n";
+@serverSorted = sort @server;
+print "done sorting\n";
+
+$old = "";
+$serverCnt = 1;
+$ns = 0;
+$nsSum = 0;
+foreach $j (0 .. $#serverSorted) {
+  if ($serverSorted[$j] ne $old) {
+     if ($old ne "") {
+        print SERVER "$serverCnt\n";
+        $svr[$ns] = $serverCnt;
+        $ns++;
+        $nsSum = $nsSum + $serverCnt;
+        $serverCnt = 1;
+     }
+  }
+  else {
+    $serverCnt++;
+  }
+  $old = $serverSorted[$j];
+}
+print SERVER "$serverCnt\n";
+$svr[$ns] = $serverCnt;
+$nsSum = $nsSum + $serverCnt;
+
+@svrS = sort numerically @svr;
+
+$tmp = 0;
+foreach $j (0 .. $#svrS) {
+  $tmp = $tmp + $svrS[$j];
+  $prob = $tmp/$nsSum;
+  $j1 = $j+1;
+  print SERVERCDF "$j1 $tmp $prob\n";
+}
+
+close(IDLEI);
+close(IDLEO);
+close(REQI);
+close(REQO);
+close(NUMPAGEI);
+close(NUMPAGEO);
+close(PAGESIZEI);
+close(PAGESIZEO);
+close(SESSINTERI);
+close(SESSINTERO);
+close(SERVER);
+close(SERVERCDF);
+
+#compute CDF
+&outputCDF(1,1,1,"request.in.dat");
+&outputCDF(1,1,1,"request.out.dat");
+&outputCDF(1,1,1,"numpage.in.dat");
+&outputCDF(1,1,1,"numpage.out.dat");
+&outputCDF(1,1,1,"pagesize.in.dat");
+&outputCDF(1,1,1,"pagesize.out.dat");
+&outputCDF(0,0.01,1,"sessinter.in.dat");
+&outputCDF(0,0.01,1,"sessinter.out.dat");
+&outputCDF(1,0.1,1,"idle.in.dat");
+&outputCDF(1,0.1,1,"idle.out.dat");
+
+sub numerically { $a <=> $b; }
+
+
+sub outputCDF {
+
+local($cur_epoch,$incr,$dividend,$tfile) = @_;
+
+local(@data);
+local(@dataS);
+local(@epoch);
+local(@cum);
+
+open(ORIG,$tfile);
+$tfileS = join('.',$tfile,"cdf");
+$newtfile = join(' ',">",$tfileS);
+open(CDF,$newtfile);
+
+$count = 0;
+$cur_time = 0;
+
+$i = 0;
+while ($line = <ORIG>) {
+  chop $line;
+  $data[$i] = $line;
+  $i++;
+}
+
+close(ORIG);
+
+if ($i eq 0) { exit; }
+
+
+@dataS = sort numerically @data;
+
+$i = 0;
+$sum = 0;
+
+foreach $j (0 .. $#dataS) {
+
+$cur_time = $dataS[$j];
+
+if ($cur_time > $cur_epoch) {
+   while ($cur_epoch < $cur_time) {
+
+     $epoch[$i] = $cur_epoch;
+     $sum = $sum + $count;
+     $cum[$i] = $sum;
+     $i++;
+
+     $cur_epoch = $cur_epoch + $incr;
+     $count=0;
+   }
+   if ($cur_time <= $cur_epoch) {
+      $count = 1;
+   } else {
+      $count = 0;
+   }
+} else {
+   $count++;
+}
+
+}
+
+$epoch[$i] = $cur_epoch;
+$sum = $sum + $count;
+$cum[$i] = $sum;
+
+$oldcum = 0;
+foreach $j (0 .. $#epoch) {
+  $prob = $cum[$j]/$cum[$#cum];
+  $e = $epoch[$j]/$dividend;
+  if ($cum[$j] ne $oldcum) {
+     print CDF "$e $cum[$j] $prob\n";
+  }
+  $oldcum = $cum[$j];
+}
+
+close(CDF);
+}
+

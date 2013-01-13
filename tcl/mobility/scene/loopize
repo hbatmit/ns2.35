@@ -1,0 +1,25 @@
+#!/bin/sh
+
+#
+# convert bulkey CMU scripts
+# into something more compact
+#
+
+T=/tmp/$$
+#T=t
+cat >$T.raw
+grep set-dist <$T.raw >$T.set-dist
+
+grep -v set-dist <$T.raw
+
+cat $T.set-dist |
+	grep ^.god_ |
+	perl -ane 'BEGIN { print "foreach {a b c} {\n"; }
+		{ print "\t$F[2] $F[3] $F[4]\n" }
+		END { print "} {\n\t\$god_ set-dist \$a \$b \$c\n}\n"; }'
+
+cat $T.set-dist |
+	grep -v ^.god_ |
+	perl -ane 'BEGIN { print "foreach {t a b c} {\n"; }
+		{ $F[7] =~ s/"//g; print "\t$F[2] $F[5] $F[6] $F[7]\n" }
+		END { print "} {\n\t\$ns_ at \$t \"god_ set-dist \$a \$b \$c\"\n}\n"; }'

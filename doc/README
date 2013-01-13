@@ -1,0 +1,5 @@
+This directory will eventually hold the main documentation for
+ns-2 (and probably nam).  During it's development period the
+real work is being done in individual sub-directories.  If you
+want to work on documentation, just make a subdirectory with
+your name and you may work on it there. -Kevin

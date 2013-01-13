@@ -1,0 +1,11 @@
+#cwnd curve
+set term png
+set out "p_simple.png"
+plot "p_simple.trace" u 1:2 w li
+
+#queue information
+reset
+clear
+set term png
+set out "queue_simple.png"
+plot "queue_simple.trace" u 1:2 w li

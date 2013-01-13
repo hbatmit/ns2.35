@@ -1,0 +1,96 @@
+\chapter{DCCP Agents}
+\label{sec:dccpAgents}
+
+\section{DCCP Agents}
+\label{sec:dccpagent}
+This section describes the operation of the DCCP agents in \ns.
+At current \ns implementation, there are two major congestion 
+control of DCCP agents: CCID2 and CCID3.
+It is a symmetric two-way agent in the sense that it represents
+both a sender and receiver.
+DCCP for \ns is still under development.
+
+The files described in this section are too numerous to enumerate here.
+Basically it covers most files matching the regular expression
+\nsf{dccp*.\{cc, h\}}.
+
+Applications can access DCCP agents via the \fcn[]{sendmsg} function in C++,
+or via the \code{send} or \code{sendmsg} methods in OTcl, as described in
+section \ref{sec:systemcalls}.  
+
+The following is a simple example of how a DCCP CCID2 agent may be used in a program.  
+In the example, the CBR traffic generator is started at time 1.0, at which time
+the generator begins to periodically call the DCCP agent \fcn[]{sendmsg}
+function.
+
+\begin{program}
+        set ns [new Simulator]
+        set sender [$ns node]
+        set receiver [$ns node]
+        $ns duplex-link $sender $receiver 5Mb 2ms DropTail
+
+        set dccp0 [new Agent/DCCP/TCPlike]
+        $dccp0 set window_ 7000
+        set dccpsink0 [new Agent/DCCP/TCPlike]
+        $ns attach-agent $sender $dccp0
+        $ns attach-agent $receiver $dccpsink0
+      
+        set cbr0 [new Application/Traffic/CBR]
+        $cbr0 attach-agent $dccp0
+        $cbr0 set packetSize_ 160
+        $cbr0 set rate_ 80Kb
+
+        $ns connect $dccp0 $dccpsink0
+        $ns at 1.0 "$cbr0 start"
+\end{program}
+
+The following example uses DCCP CCID3.
+\begin{program}
+        set ns [new Simulator]
+        set sender [$ns node]
+        set receiver [$ns node]
+        $ns duplex-link $sender $receiver 5Mb 2ms DropTail
+
+        set dccp0 [new Agent/DCCP/]
+        set dccpsink0 [new Agent/DCCP/TFRC]
+        $ns attach-agent $sender $dccp0
+        $ns attach-agent $receiver $dccpsink0
+      
+        set cbr0 [new Application/Traffic/CBR]
+        $cbr0 attach-agent $dccp0
+        $cbr0 set packetSize_ 160
+        $cbr0 set rate_ 80Kb
+
+        $ns connect $dccp0 $dccpsink0
+        $ns at 1.0 "$cbr0 start"
+\end{program}
+
+\section{Commands at a glance}
+\label{sec:dccpcommand}
+
+The following commands are used to setup DCDP agents in simulation scripts:
+\begin{flushleft}
+\code{set dccp0 [new Agent/DCCP/TCPlike]}\\
+This creates an instance of the DCCP CCID2 agent.
+
+\code{set dccp0 [new Agent/DCCP/TFRC]}\\
+This creates an instance of the DCCP CCID3 agent.
+
+\code{$ns_ attach-agent <node> <agent>}\\
+This is a common command used to attach any <agent> to a given <node>.
+
+\code{$traffic-gen attach-agent <agent>}\\
+This a class Application/Traffic/<traffictype> method which connects the
+traffic generator to the given <agent>. For example, if we want to setup
+a CBR traffic flow for the dccp agent, dccp0, we given the following commands\\
+\begin{program}
+set cbr1 [new Application/Traffic/CBR]
+$cbr1 attach-agent $dccp0
+\end{program}
+
+For a more complex example of setting up an DCCP agent used in a simulation, see
+the example code in tcl/ex folder.
+
+\end{flushleft}
+
+\endinput

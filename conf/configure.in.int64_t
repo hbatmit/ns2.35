@@ -1,0 +1,94 @@
+dnl autoconf rules for 64-bit integers
+dnl $Id: configure.in.int64_t,v 1.7 2009/05/22 19:30:45 tom_henderson Exp $
+
+dnl
+dnl start by looking for supporting functions
+dnl
+AC_CHECK_FUNCS(strtoq strtoll)
+
+dnl
+dnl int64_t seems to be what C 9x will have (in stdint.h),
+dnl but we're not there yet, so poke around for alternatives.
+dnl
+
+INT64_T_ALTERNATIVE=none
+HAVE_SUPPORTING_FUNC=false
+
+AC_CHECK_SIZEOF(long,0)
+if test $ac_cv_sizeof_long -ge 8
+then
+	INT64_T_ALTERNATIVE=long
+	AC_CHECK_FUNC(strtol)
+fi
+
+AC_CACHE_CHECK([for __int64_t],nsnam_cv_int64_t_HAVE___INT64_T,[
+AC_TRY_RUN([
+main() { __int64_t x; exit (sizeof(x) >= 8 ? 0 : 1); }
+],
+nsnam_cv_int64_t_HAVE___INT64_T=yes,nsnam_cv_int64_t_HAVE___INT64_T=no,nsnam_cv_int64_t_HAVE___INT64_T=cross)])
+if test x"$nsnam_cv_int64_t_HAVE___INT64_T" = x"yes" -a "x$INT64_T_ALTERNATIVE" = xnone; then
+	INT64_T_ALTERNATIVE=__int64_t
+fi
+
+AC_CACHE_CHECK([for long long],nsnam_cv_int64_t_HAVE_LONG_LONG,[
+AC_TRY_RUN([
+main() { long long x; exit (sizeof(x) >= 8 ? 0 : 1); }
+],
+nsnam_cv_int64_t_HAVE_LONG_LONG=yes,nsnam_cv_int64_t_HAVE_LONG_LONG=no,nsnam_cv_int64_t_HAVE_LONG_LONG=cross)])
+if test x"$nsnam_cv_int64_t_HAVE_LONG_LONG" = x"yes" -a "x$INT64_T_ALTERNATIVE" = xnone; then
+	INT64_T_ALTERNATIVE="long long"
+fi
+
+dnl
+dnl icky icky
+dnl
+dnl AC_CHECK_TYPE_UNQUOTED(TYPE, DEFAULT)
+AC_DEFUN(AC_CHECK_TYPE_UNQUOTED,
+[AC_REQUIRE([AC_HEADER_STDC])dnl
+AC_MSG_CHECKING(for $1)
+AC_CACHE_VAL(ac_cv_type_$1,
+[AC_EGREP_CPP(dnl
+changequote(<<,>>)dnl
+<<(^|[^a-zA-Z_0-9])$1[^a-zA-Z_0-9]>>dnl
+changequote([,]), [#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif], ac_cv_type_$1=yes, ac_cv_type_$1=no)])dnl
+AC_MSG_RESULT($ac_cv_type_$1)
+if test $ac_cv_type_$1 = no; then
+  AC_DEFINE_UNQUOTED([$1], [$2], [description])
+fi
+])
+
+dnl
+dnl now set up int64_t
+dnl
+AC_CHECK_TYPE_UNQUOTED(int64_t,$INT64_T_ALTERNATIVE)
+
+dnl
+dnl and broadcast our discovery
+dnl
+AC_MSG_CHECKING([which kind of 64-bit int to use])
+if test $ac_cv_type_int64_t = yes -o "$INT64_T_ALTERNATIVE" != none
+then
+	if test "$INT64_T_ALTERNATIVE" = long -o "$ac_cv_func_strtoq" = yes -o "$ac_cv_func_strtoll" = yes
+	then
+		AC_DEFINE([HAVE_INT64], [1], ["do we have int64 type ?"])
+		if test $ac_cv_type_int64_t = yes
+		then
+			AC_MSG_RESULT([int64_t])
+		else
+			AC_MSG_RESULT($INT64_T_ALTERNATIVE)
+		fi
+	else
+		AC_MSG_RESULT([missing strto 64-bit-type])
+	fi
+else
+	AC_MSG_RESULT(none)
+fi
+
+dnl
+dnl see tclcl or ns's config.h for other STRTOI64 and STRTOI64_FMTSTR
+dnl
+

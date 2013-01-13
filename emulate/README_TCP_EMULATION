@@ -1,0 +1,36 @@
+ To execute the ns emulation code 
+ 	make nse 
+	Run scripts as root. 
+
+ To originate a TCP connection from ns we need two machines. 
+ To use tcpemu.tcl perform the following steps:
+	- Perform the following steps on machine A 
+		- Add a route to a dummy IP address assigned to ns TCP node using
+			route add dummy_IP IP_where_nse_is_running
+		- Disable IP redirects using
+			sysctl -w net.inet.ip.redirect=0
+		- start a tcp server application on some machine A
+		( TCP Application provided at www-scf.usc.edu/~alefiyah/application/tcp-server.tar.gz ) 
+	
+	-Perform following steps on machine B
+		- Disable IP forwarding using
+			sysctl -w net.inet.ip.forwarding=0
+		- Configure tcpemu.tcl with address and port for TCP server application 
+		- run "nse tcpemu.tcl" 
+
+To pass traffic through ns, we need three machines
+Machine A with start a TCP connection with Machine B via machine C which has nse running. 
+To use thrutcp.tcl perform the following steps:
+	- Perform following steps on machine A and machine B 
+		- Disable IP redirects
+		- Disable IP forwarding 
+	
+	- On machine A, add route to machine B via machine C 
+		route add B_IP C_IP
+
+	- On machine B, add route to machine A via machine C
+		route add A_IP C_IP
+
+	- Configure the correct filters in thrutcp.tcl
+	- run "nse thrutcp.tcl
+	- Start any TCP application ( ie: ftp or rcp) between machines A and B 

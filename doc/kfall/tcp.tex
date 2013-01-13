@@ -1,0 +1,35 @@
+%
+%
+% Q's for sally:
+%	timestamps are supplied in each packet, and any new ACK
+%	triggers an update to the estimator, but yet there is
+%	other (unused?) code which apparently looks like it once
+%	did the one measurement per window of data... what's the
+%	story on that?
+%
+\documentclass{article}
+
+\PassOptionsToPackage{draft}{MyPreamble}
+%%\usepackage[widen-page,skrunch-figures]{MyPreamble}
+%%\usepackage[widen-page,skrunch-figures]
+\usepackage{nsDoc}
+\include{localhack}
+\newcommand{\shdr}[3]{\htmladdnormallink{#1}{#2}\label{#3}}
+
+\begin{document}
+
+\title{\nsTcl\ internals documentation}
+\author{%
+  Kevin Fall \tup{kfall@ee.lbl.gov}\\
+  Kannan Varadhan \tup{kannan@catarina.usc.edu}}
+\date{\today}
+
+\def\c#1{\ensuremath{C_{#1}}}
+\def\d#1{\ensuremath{D_{#1}}}
+
+% \maketitle
+
+\input{../tcp.tex}
+
+
+\end{document}

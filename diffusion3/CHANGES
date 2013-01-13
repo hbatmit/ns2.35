@@ -1,0 +1,212 @@
+Diffusion 3.2.0
+---------------
+
+- Added support for blacklisting neighbor nodes to the Filter API. The
+  two new API functions (addToBlacklist() and clearBlacklist()) were added
+  to dr.cc and supporting code was added to the filter_core.
+- Added the first alpha version of RMST (Reliable Multi-Segment Transport).
+  The sendRmst() API function was added to dr.cc. This filter is located
+  in the filters directory and there are sample rmst applications in
+  the apps directory.
+- Changed the node id environment variable from scadds_addr
+  to node_addr.
+- Added support for emstar-class devices with the --with-emstar
+  configure option.
+- Added --disable-stats and --with-emsim options to configure.
+  --with-emsim is a super-set of --with-emstar, but also adds
+  support running diffusion under emsim. It will try to detect
+  if it's being executed under emsim and then get node and
+  group ids from the corresponding environment variables. When compiled
+  with --with-emsim, Gear will also try to get node location information
+  from emsim's SIM_LOC environment variable.
+  --disable-stats will remove all iostats code from the filter_core
+  (and the two stats-related command-line options -s and -i).
+- Added the DiffPrintWithTime function. It works the same way as
+  DiffPrint, but will print a timestamp before the message.
+- Added support for gear to forward messages to geographic points
+  (in addition to regions).
+- Changed diffusion so it outputs stats to /tmp/diffusion-%d.out,
+  allowing multiple nodes running on a single machine to create
+  separate files (removed the ifdef for ns to it will do it also
+  inside ns).
+- Changed the directory structure to group diffusion filters and
+  applications in separate directories. Also moved stats.cc from the
+  library to the filter_core directory.
+- Renamed gradient --> two_phase_pull and diffusion --> filter_core
+  to avoid confusion. Some gear files were also renamed to match files
+  in other directories.
+- Removed support for the old rpc_stats mechanism (from lib/drivers)
+
+Diffusion 3.1.3
+---------------
+
+- Diffusion now compiles with GCC 3.1 without any warnings.
+- Updated the autoconf/automake scripts to work with autoconf 2.52,
+  automake 1.6.3 and libtool 1.4.2. These versions are now required if
+  users want to re-create the configure script. make dist now includes
+  all other files (CHANGES, VERSION, COPYRIGHT, doc/*, and config/*).
+  In addition, the --with-sh4 and --with-ipaq configure options were
+  removed (the new autoconf version uses --host for cross-compiling).
+- Changed the sendPacket function in the WINSNG driver to print the
+  destination node if it is not cached.
+- Fixed a bug in gradient.cc that caused positive reinforcements to also
+  go to local sources.
+- Updated parameters in config.hh to optimize diffusion for the various
+  supported radios.
+- Changed the iolog module to also output time information, allowing
+  logs to be merged later offline if node's clocks are synchronized
+  (this requires users to upgrade to Diffusion Visualization Tools 1.0.1
+  as this release will not work with prior versions).
+- Merged a few ns related fixes from the ns distribution.
+- Updated push_sender and push_receiver to work with gear.
+- Added new addTimer function to the diffusion API. Old addTimer still
+  works but it is now obsolete and support will be removed in future
+  releases. Refer to the updated diffusion API document for more details.
+- Changed the event management functions in diffusion/library. There is
+  a new class (TimersManager) that now controls the event queue. Changed
+  all applications that use timers (diffusion, gradient, and gear) to
+  use the new addTimer API.
+- removeTimer is now supported in ns.
+- Removed all timer references from config.hh in lib/main.
+- Changed gradient.cc not to forward data back to where it comes from.
+  This will suppress duplicate traffic when we have a lot of cross
+  subscriptions.
+- Improved debugging in Gear. All debug messages now have a timestamp.
+
+Diffusion 3.1.2
+---------------
+
+- Fixed timing issue in dr.cc (ns related issue).
+- Added support for gear to work with push.
+- Added an iohook layer that allows code to work between diffusion core
+  and the device drivers.
+- Added support for an iolog layer that logs incoming and outgoing
+  packets as they are received/sent to the various device drivers.
+- Removed support for the BBN logger.
+
+Diffusion 3.1.1
+---------------
+
+- Added support for the new Sensoria RF API (Tested with Sensoria
+  software version 2.0.1).
+- Changed the filter add/update scheme so diffusion can be
+  started after filters.
+
+Diffusion 3.1
+-------------
+
+- Revised GEAR to add support for all four operators (GE, GT, LE, LT)
+  for declaring a closed geographic region.
+- Added support for PUSH in the library API and in the gradient filter.
+- Added push_sender and push_receiver to the pingapp directory. These
+  are the 'push' versions of ping_sender and ping_receiver.
+- Removed agent1/agent2 from the distribution.
+- Changed the log filter to also print the packet size.
+- Included a revised (release 9.0) API document, with examples of
+  PUSH and GEAR subscriptions/publications.
+- Diffusion now uses autoconf/automake. It simplifies configuring/
+  compiling diffusion for the different hardware platforms and
+  rf device options.
+
+Diffusion 3.0.7
+---------------
+
+- Added the first alpha version GEAR in the apps directory. Diffusion
+  now should be able to use geographic information to route packets,
+  not requiring all interest messages to be flooded.
+- Changed the filter scheme so now each filter has to have a
+  distinct priority (i.e. we don't support two filters with the
+  same priority value anymore).
+- Merged SendMessage and SendMessageToNext into a single function,
+  (SendMessage). It now allows filters to specify the next filter's
+  priority and therefore allows filters to be bypassed.
+- Changed the message class not to include a copy of the raw packet
+  anymore.
+- Changed all instances of FLAGGED_DATA to EXPLORATORY_DATA, in order
+  to be consistent with the names used elsewhere.
+- Added functionality to the API allowing filters work to in a single
+  thread mode. Added the doIt() and doOne() API functions to allow
+  the application/filter to give up its thread (either permanently
+  or just for a moment) for the library API to receive packets and
+  manage timers.
+- Added the DiffApp class that applications and filters can derive
+  from. It adds basic command line parsing code and keeps some of
+  the library's interface code.
+- Fixed a bug in agent1/agent2 when running in multi-threaded mode
+  (there's a lock inside libc that blocks fflush when also doing a
+  getc).
+- Added the iPaq ARM platform to the supported systems (in config.mk).
+
+Diffusion 3.0.6
+---------------
+
+- Added support for BBN's distributed logger.
+- Changed the diffPrint function to use the variable argument
+  list syntax, as suggested by Peter Boettcher.
+- Renamed the agent applications to ping_sender and ping_receiver,
+  and added some extra functionality to measure latency and packet
+  loss.
+- Included the Steel Knight Applications (sk_sensorApp and
+  sk_gatewayApp).
+- Fixed bug when receiving an incoming message from the MoteNIC.
+- Included the nested queries applications in the distribution under
+  apps/nested.
+
+Diffusion 3.0.5
+---------------
+
+- Changed several makefiles to ease code integration.
+- Changed diffusion statistics to include total number of messages sent
+  to a neighbor (unicast + broadcast).
+- Changed some internal names to allow easier NS integration.
+- Added wrappers for time and output functions to allow distributed
+  logging and easier NS integration.
+- Added option to support delayed positive reinforcement messages in
+  response to an exploratory data message.
+
+Diffusion 3.0.4
+---------------
+
+- Fixed the code to work when only a single data packet is sent in
+  response to an interest message.
+- Added more randomization to the code so it works better when clocks
+  are synchronized.
+- The distribution now includes a source routing filter that can be
+  used to send a message along a pre-specified path.
+- Tuned diffusion parameters for optimal operation on the SensIT
+  hardware.
+
+Diffusion 3.0.3
+---------------
+
+- Diffusion can now use alternate ports (instead of the default 2000)
+  with the new command line option '-p port'. Other apps will have to
+  be changed to use this feature.
+- The '-s' command line option has been removed.
+- This version features an initial implementation of the device independent
+  layer in diffusion along with diffusion drivers for the RPC, the MoteNic
+  Wired UDP and UDP communication with local modules/apps. Everything has
+  been moved to main/drivers.
+- Diffusion/and the API library now use dynamically allocated buffers for
+  both incoming and outgoing packets.
+- Fixed the code to compile without warnings on gcc 2.97 (used to cross
+  compile code for the new Sensoria nodes).
+- Fixed all Makefiles to include the config.mk configuration file.
+- The UDP driver now can support diffusion running on port other than
+  2000. The config file for the wired diffusion now accepts the port
+  number along with the host ip address. This allows one to run multiple
+  'diffusion nodes' on a single machine.
+- Diffusion now has a driver for the WINSNG 2.0 nodes' radios.
+
+Diffusion 3.0.2
+---------------
+
+- Removed all dependencies from the radiometrix library.
+  It should compile fine now with Red Hat 7.1. This version
+  of diffusion does not support the old 'userland' implementation
+  of the radiometrix drivers.
+
+Diffusion 3.0.1
+---------------
+
+- Initial release of diffusion 3.

@@ -1,0 +1,26 @@
+Some Explaination of MPLS Code 
+
+August 29, 2000
+
+- MPLS CODE IS HIGHLY EXPERIMENTAL AND IS NOT THOROUGHLY TESTED. YOU 
+  SHOULD CAREFULLY VALIDATE IT FOR YOUR SPECIFIC USAGE. IF YOU FIND 
+  ANY BUG, OR HAVE ANY PATCH, PLEASE SEND TO ns-users@isi.edu
+
+- It does not work with multicast routing, particularly because (1)
+  there is no label setup mechanism for multicast groups, (2) there is
+  no multicast replicator to cooperate with MPLS classifier, and (3)
+  MPLS header contain pointers, which do not work with multicast
+  replicator.
+
+- It works only with flat unicast routing but not hierarchical routing
+  in any form. This is because current node-config architecture only
+  provides exclusive node types, namely, a node cannot supports
+  hierarchical routing and MPLS at the same time.
+  
+- Some interfaces in MPLS classifier and MPLS node are expected to
+  change in the near future to accomodate a new design of node-config
+  mechanism.
+
+- There are no simple example files of MPLS code, because the ones in
+  MPLS test suite are enough to serve as examples. Please read
+  tcl/test/test-suite-mpls.tcl.

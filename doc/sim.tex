@@ -1,0 +1,347 @@
+%
+% wee haw
+% personal commentary:
+%        DRAFT DRAFT DRAFT
+%        - KFALL
+%
+\chapter{The Class Simulator}
+\label{chap:sim}
+
+The overall simulator is described by a Tcl
+\clsref{Simulator}{../ns-2/ns-lib.h}.
+It provides a set of interfaces for configuring a simulation
+and for choosing the type of event scheduler used to drive
+the simulation.
+A simulation script generally begins by creating an instance
+of this class and calling various methods to create nodes, topologies,
+and configure other aspects of the simulation.
+A subclass of Simulator called \code{OldSim} is used to support
+\ns~v1 backward compatibility.
+
+The procedures and functions described in this chapter can be found in
+\nsf{tcl/lib/ns-lib.tcl}, \nsf{scheduler.\{cc,h\}}, and, \nsf{heap.h}.
+
+\section{Simulator Initialization}
+\label{sec:siminit}
+
+When a new simulation object is created in tcl,
+\fcnref{the initialization procedure}{../ns-2/ns-lib.h}{Simulator::init}
+performs the following operations:
+\begin{itemize}
+        \item initialize the packet format (calls {\tt create\_packetformat})
+        \item create a scheduler (defaults to a calendar scheduler)
+        \item create a ``null agent'' (a discard sink used in various places)
+\end{itemize}
+The packet format initialization sets up field offsets within packets
+used by the entire simulation.  It is described in more detail
+in \href{the following chapter on packets}{Chapter}{chap:pformat}.
+The scheduler runs the simulation in an event-driven manner and may
+be replaced by alternative schedulers which provide somewhat
+different semantics (see the following section for more detail).
+The null agent is created with the following call:
+\begin{program}
+        set nullAgent_ [new Agent/Null]
+\end{program}
+This agent is generally useful as a sink for dropped packets or
+as a destination for packets that are not counted or recorded.
+
+\section{Schedulers and Events}
+\label{sec:sched}
+
+The simulator is an event-driven simulator.
+There are presently four schedulers available in the simulator, each
+of which is implemented using a different data structure:
+a simple linked-list, heap, calendar queue (default), and a special
+type called ``real-time''.  Each of these are described below.
+The scheduler runs by selecting the next earliest event, executing
+it to completion, and returning to execute the next event.Unit of time used by scheduler is seconds.
+Presently, the simulator is single-threaded, and only one event
+in execution at any given time.
+If more than one event are scheduled to execute at the same time,
+their execution is performed on the first scheduled -- first
+dispatched manner.  Simultaneous events are not re-ordered anymore by
+schedulers (as it was in earlier versions) and all schedulers should
+yeild the same order of dispatching given the same input.
+ 
+No partial execution of events or pre-emption is supported.
+
+An {\em event} generally comprises a ``firing time'' and a handler function.
+The actual definition of an event is found in \nsf{scheduler.h}:
+\begin{program}
+        class Event \{ 
+        public: 
+                Event* next_;           \* event list */ 
+                Handler* handler_;      \* handler to call when event ready */
+                double time_;           \* time at which event is ready */
+                int uid_;               \* unique ID */
+                Event() : time_(0), uid_(0) \{\}
+        \};   
+        /*   
+         * {\cf The base class for all event handlers.  When an event's scheduled}
+         * {\cf time arrives, it is passed to handle which must consume it.}
+         * {\ie, if it needs to be freed it, it must be freed by the handler.}
+         */  
+        class Handler \{
+         public: 
+                virtual void handle(Event* event);
+        \};   
+\end{program}
+Two types of objects are derived from the base
+\clsref{Event}{../ns-2/scheduler.cc}: packets and ``at-events''.
+Packets are described in detail 
+\href{in the next chapter}{Chapter}{sec:packetclass}.
+An at-event is a tcl procedure execution scheduled to occur at
+a particular time. 
+This is frequently used in simulation scripts.
+A simple example of how it is used is as follows:
+\begin{program}
+        \ldots
+        set ns_ [new Simulator]
+        $ns_ use-scheduler Heap
+        $ns_ at 300.5 "$self complete_sim"
+        \ldots
+\end{program}
+This tcl code fragment first creates a simulation object,
+then changes the default scheduler implementation to be heap-based
+(see below), and finally schedules the function \code{$self complete_sim}
+to be executed at time 300.5 (seconds)%
+(Note that this particular code fragment expects to be encapsulated 
+in an object instance procedure, where the appropriate
+reference to \code{$self} is correctly defined.).
+At-events are implemented as events where the handler is
+effectively an execution of the tcl interpreter.
+
+\subsection{The List Scheduler}
+\label{sec:listsched}
+
+The list scheduler (\clsref{Scheduler/List}{../ns-2/scheduler.cc})
+implements the scheduler using a simple linked-list structure.
+The list is kept in time-order (earliest to latest), so event
+insertion and deletion require scanning the list to find the
+appropriate entry.
+Choosing the next event for execution requires trimming the first
+entry off the head of the list.
+This implementation preserves event execution in a FIFO manner
+for simultaneous events.
+
+\subsection{the heap scheduler}
+\label{sec:heapsched}
+
+The heap scheduler (\clsref{Scheduler/Heap}{../ns-2/scheduler.cc})
+implements the scheduler using a heap structure.
+This structure is superior to the list structure for a large number
+of events, as insertion and deletion times are in $O(\log n)$
+for $n$ events.
+This implementation in \ns~v2 is borrowed from the
+MaRS-2.0 simulator \cite{Alae94:Design};
+it is believed that MaRS itself borrowed the code
+from NetSim \cite{Heyb89:Netsim},
+although this lineage has not been completely verified.
+
+\subsection{The Calendar Queue Scheduler}
+\label{sec:cqsched}
+
+The calendar queue scheduler
+(\clsref{Scheduler/Calendar}{../ns-2/scheduler.cc})
+uses a data structure analogous to a one-year desk calendar,
+in which events on the same month/day of multiple years can be recorded in
+one day.
+It is formally described in \cite{Brow88:Calendar}, and informally described
+in Jain (p. 410) \cite{Jain91:Art}.
+The implementation of Calendar queues in \ns~v2
+was contributed by David Wetherall (presently at MIT/LCS).
+
+The calendar queue scheduler since \ns~v2.33 is improved by the following
+three algorithms:
+\begin{itemize}
+	\item A heuristic improvement that changes the linear search direction
+in enqueue operations. The original implementation searches the events in
+a bucket in \emph{chronological order} to find the in-order spot for the event
+that is being inserted.
+The new implementation searches the bucket in \emph{reverse chronological order}
+because the event being inserted is usually later than most of the events that are
+already in the bucket.
+	\item A new bucket width estimation that uses the average interval of
+\emph{dequeued events} as the estimation of bucket width. It is stated in
+\cite{Brow88:Calendar} that the optimal bucket width should be the \emph{average inverval of all events in the future}.
+The original implementation uses the average interval of \emph{future events currently in the most crowded bucket}
+as the estimation. This estimation is unstable because it is very likely
+that many future events will be inserted into the bucket after this estimation, significantly changing the
+averaged event interval in the bucket. The new implementation uses the observed event interval 
+in the past, which will not change, to estimate the event interval in future.
+	\item SNOOPy Calendar Queue: a Calendar queue variant that dynamically
+tunes the bucket width according to the cost trade-off between enqueue
+operation and dequeue operation.
+The SNOOPy queue improvement is described in \cite{Tan00SNOOPyQueue}.
+In this implementation, there is one tcl parameter {\tt adjust\_new\_width\_interval\_ }
+specifying the interval with which the SNOOPy queue should re-calculate the bucket width.
+Setting this parameter to 0 turns off the SNOOPy queue algorithm and degrades the scheduler
+back to the original Calendar Queue. In general, normal simulation users are
+not expected to change this parameter.
+\end{itemize}
+The details of these improvements are described in \cite{WeiCao06NSLinuxTCP}.
+
+The implementation of these three improvements was contributed by Xiaoliang (David) Wei at Caltech/NetLab.
+
+\subsection{The Real-Time Scheduler}
+\label{sec:rtsched}
+
+The real-time scheduler (\clsref{Scheduler/RealTime}{../ns-2/scheduler.cc})
+attempts to synchronize the execution of events with real-time.
+It is currently implemented as a subclass of the list scheduler.
+The real-time capability in ns is still under development, but is used
+to introduce an \ns\ simulated network into a real-world topology
+to experiment with easily-configured network topologies, cross-traffic, etc. 
+This only works for relatively slow network traffic data rates, as the
+simulator must be able to keep pace with the real-world packet arrival
+rate, and this synchronization is not presently enforced.
+
+
+\subsection{Precision of the scheduler clock used in ns}
+\label{sec:precision}
+
+Precision of the scheduler clock can be defined as the smallest time-scale 
+of the simulator that can be correctly represented. The clock variable for 
+ns is represented by a double. As per the IEEE std for floating numbers, 
+a double, consisting of 64 bits must allocate the following bits between 
+its sign, exponent and mantissa fields.
+
+\begin{program}
+
+sign     exponent      mantissa
+ 1 bit   11 bits        52 bits
+\end{program}
+
+Any floating number can be represented in the form ($X * 2^n$) where 
+X is the mantissa and n is the exponent. Thus the precision of timeclock in ns can be defined as ($1/2^(52)$).
+As simulation runs for longer times the number of remaining bits to represent 
+the time educes thus reducing the accuracy. Given 52 bits we can safely say 
+time upto around ($2^(40)$) can be represented with considerable accuracy. 
+Anything greater than that might not be very accurate as you have remaining 12 
+bits to represent the time change. However ($2^(40)$) is a very large number and 
+we donot anticipate any problem regarding precision of time in ns.
+
+
+\section{Other Methods}
+\label{sec:other}
+
+The {\tt Simulator} class provides a number of methods used
+to set up the simulation.
+They generally fall into three categories:
+methods to create and manage the topology 
+(which in turn consists of
+\href{managing the nodes}{Chapter}{chap:nodes} and
+\href{managing the links}{Chapter}{chap:links}),
+\href{methods to perform tracing}{Chapter}{chap:trace},
+and helper functions to deal with the scheduler.
+The following is a list of the non-topology related simulator methods:
+\begin{program}
+Simulator instproc now {} \; return scheduler's notion of current time;
+Simulator instproc at args \; schedule execution of code at specified time;
+Simulator instproc cancel args \; cancel event;
+Simulator instproc run args \; start scheduler;
+Simulator instproc halt {} \; stop (pause) the scheduler;
+Simulator instproc flush-trace {} \; flush all trace object write buffers;
+Simulator instproc create-trace { type files src dst } \; create trace object;
+Simulator instproc create_packetformat \; set up the simulator's packet format;
+
+\clearpage
+
+\section{Commands at a glance}
+\label{sec:simcommand}
+\begin{flushleft}
+Synopsis:
+\code{ns <otclfile> <arg> <arg>..}\\
+Description:
+Basic command to run a simulation script in ns.
+The simulator (ns) is invoked  via the ns interpreter, an extension of the
+vanilla otclsh command shell. A simulation is defined by a OTcl script
+(file). Several examples of OTcl scripts can be found under \ns/tcl/ex
+directory.
+
+
+The following is a list of simulator commands commonly used in simulation
+scripts:
+
+\code{set ns_ [new Simulator]}\\
+This command creates an instance of the simulator object.
+
+
+\code{set now [$ns_ now]}\\
+The scheduler keeps track of time in a simulation. This returns scheduler's
+notion of current time.
+
+
+\code{$ns_ halt}\\
+This stops or pauses the scheduler.
+
+
+\code{$ns_ run}\\
+This starts the scheduler.
+
+
+\code{$ns_ at <time> <event>}\\
+This schedules an <event> (which is normally a piece of code) to be executed
+at the specified <time>.
+e.g $ns_ at $opt(stop) "puts \"NS EXITING..\" ; $ns_ halt"
+or, $ns_ at 10.0 "$ftp start"
+
+
+\code{$ns_ cancel <event>}\\
+Cancels the event. In effect, event is removed from scheduler's list of 
+ready to run events.
+
+
+\code{$ns_ create-trace <type> <file> <src> <dst> <optional arg: op>}\\
+This creates a trace-object of type <type> between <src> and <dst> objects
+and attaches trace-object to <file> for writing trace-outputs. If op is defined
+as "nam", this creates nam tracefiles; otherwise if op is not defined, ns
+tracefiles are created on default.
+
+
+\code{$ns_  flush-trace}\\
+Flushes all trace object write buffers.
+
+
+\code{$ns_ gen-map}\\
+This dumps information like nodes, node components, links etc created for a
+given simulation. This may be broken for some scenarios (like wireless).
+
+
+\code{$ns_ at-now <args>}\\
+This is in effect like command "$ns_ at $now $args". Note that this function
+may not work because of tcl's string number resolution.
+
+
+These are additional simulator (internal) helper functions (normally used
+for developing/changing the ns core code) :
+
+\code{$ns_ use-scheduler <type>}\\
+Used to specify the type of scheduler to be used for simulation. The different
+types of scheduler available are List, Calendar, Heap and RealTime. Currently
+Calendar is used as default.
+
+
+\code{$ns_ after <delay> <event>}\\
+Scheduling an <event> to be executed after the lapse of time <delay>.
+
+
+\code{$ns_ clearMemTrace}\\
+Used for memory debugging purposes.
+
+
+\code{$ns_ is-started}\\
+This returns true if simulator has started to run and false if not.
+
+
+\code{$ns_ dumpq}\\
+Command for dumping events queued in scheduler while scheduler is halted.
+
+
+\code{$ns_ create_packetformat}\\
+This sets up simulator's packet format.
+
+\end{flushleft}
+\end{program}
+
+\endinput

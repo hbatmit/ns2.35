@@ -1,0 +1,165 @@
+#! /bin/sh
+# script to run all tests in test-suite.tcl
+#
+# Copyright (c) 1995 The Regents of the University of California.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the Network Research
+#	Group at Lawrence Berkeley National Laboratory.
+# 4. Neither the name of the University nor of the Laboratory may be used
+#    to endorse or promote products derived from this software without
+#    specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# @(#) $Header: /cvsroot/nsnam/ns-2/bin/ktest-all,v 1.6 1997/09/11 00:50:51 heideman Exp $
+#
+# This script was written and contributed by Matt Mathis (mathis@psc.edu)
+# This script was later hacked extensively by Kannan to build the rtglib
+# test suites.  The script has been renamed to reflet this extensive hacking.
+#	-- Kannan (kannan@isi.edu) Mon Apr 28 10:44:11 PDT 1997
+#
+PROG=`basename $0`
+
+# Compress raw trace files for storage.
+COMPRESSP=:
+
+if [ $# -ge 1 ] ; then
+	TESTSUITE=tcl/test/test-suite-$1
+	shift
+else
+	TESTSUITE=tcl/test/test-suite-routed
+fi
+
+old_tests=`perl -ane 'm.^proc test_. && 
+		print substr($F[1], index($F[1], "_")+1), " "' $TESTSUITE.tcl`
+new_tests=`perl -ane 'm.^Class Test/. && 
+		print substr($F[1], index($F[1], "/")+1), " "' $TESTSUITE.tcl`
+top=`perl -ane 'm.^Class Topology/. && 
+	print substr($F[1], index($F[1], "/")+1), " "' tcl/test/topologies.tcl`
+
+if [ -n "$old_tests" -a -n "$new_tests" ] ; then
+    echo "$PROG: warning $TESTSUITE.tcl mixes old and new test suites" 2>&1
+    echo "$PROG: ignore old tests" 2>&1
+    old_tests=
+fi
+
+if [ $# -ge 1 ] ; then
+	tests="$@"
+else
+	tests="$old_tests $new_tests"
+fi
+topologies=${top:-X}
+
+# Note that the telnet test includes random source behavior - its output
+# is not currently repeatable from run to run
+
+if [ ! -d test-output-raw ]; then
+	mkdir test-output-raw
+fi
+
+compare() {
+    if [ -f all.tr ]
+    then
+	file=`perl -ane '$F[2] =~ s/test_// ; $F[2] =~ s/_/-/g; print $F[2]; exit' out.tr`
+#	if echo $file | grep : >/dev/null ; then
+#	    file=`echo $file | sed 's/^[a-zA-Z0-9_]*:\(.*\)/'$1':\1/'`
+#	fi
+	if [ -f test-output-raw/$file.gz ]
+	then
+		gunzip test-output-raw/$file.gz
+	fi
+	COMPRESS=$COMPRESSP
+	if [ ! -f test-output-raw/$file ]
+	then
+	    echo saving output to $file for future validation
+	    cp all.tr test-output-raw/$file
+	else
+	    cmp -s all.tr test-output-raw/$file
+	    if [ $? = 0 ]
+	    then
+		echo Test output agrees with reference output "($file)"
+	    else
+		echo Test output differs from reference output "($file)"
+		DIFFCMD="diff test-output-raw/$file.test test-output-raw/$file"
+		if [ `diff test-output-raw/$file all.tr | wc -l` -le 10 ]
+		then
+		    echo "output of $DIFFCMD"
+		    diff -c all.tr test-output-raw/$file
+		fi
+		cp all.tr test-output-raw/$file.test
+		echo "Diagnose with: $DIFFCMD"
+		COMPRESS=false
+	    fi
+	fi
+	if [ -n "$DISPLAY" ] ; then
+	    raw2xg -s 0.01 -m 90 out.tr | xgraph &
+	    sleep 5
+	else
+	    if [ ! -d ps-files ] ; then
+		mkdir ps-files
+	    fi
+	    if raw2gp -g -a -s 0.01 -m 90 out.tr | gnuplot ; then
+		egrep BoundingBox $file.ps > ps-files/$file.bb
+		gzip $file.ps 
+		mv $file.ps.gz ps-files
+		rm -f packets drops link-fails link-recovery
+	    fi
+	fi
+	if ${COMPRESS} ; then
+		gzip test-output-raw/$file
+	fi
+    else
+	echo "Test $1 did not run over topology $2.  Continuing..."
+    fi
+}
+
+#
+
+echo $tests
+for t in $tests; do
+    for p in $topologies; do
+	echo
+	echo -n Running test: ./ns $TESTSUITE.tcl $t
+	case $p in
+	X)	p=""; echo "" ;;
+	*)	echo " $p" ;;
+	esac
+
+	# Beware that xgraph is run on temp.rands asynchronously, if it
+	# is slow to launch, you may get an incorrect graph
+	rm -f all.tr out.tr core
+	./ns $TESTSUITE.tcl $t $p && compare $t $p
+	if [ -f core ] ; then
+		if [ ! -d crash ] ; then
+			mkdir crash
+		fi
+		mv core crash/$t:$p.core
+		echo Core dump moved to crash/$t:$p.core
+	fi
+    done
+    if [ -n "$DISPLAY" ] ; then
+	echo 'next?'
+	read answer
+    fi
+done

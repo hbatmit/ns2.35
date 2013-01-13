@@ -1,0 +1,108 @@
+Test ecn:
+This is a simple test of two flows with ECN.
+
+#######################################################################
+# Tahoe Tests #
+#######################################################################
+
+The first set of tests explores various scenarios 
+representing a single instance of congestion, with either a
+single ECN, a single packet drop, or various combinations of ECN
+and packet drops.  Because these events occur in one window of data,
+they are interpreted by the sender as a single instance of
+congestion, and result only in a single reduction on the
+congestion window.  All six of the following tests show
+a connection that cuts its congestion window in half, sometimes
+with a preceeding slow-start.
+
+ecn_nodrop_tahoe: A single ECN.
+ecn_twoecn_tahoe: ECN followed by another ECN
+ecn_drop_tahoe: ECN followed by a Fast Retransmit. 
+ecn_drop1_tahoe: A Fast Retransmit where the second duplicate 
+  acknowledgement carries an ECN-echo. 
+ecn_drop2_tahoe: A Fast Retransmit followed by a duplicate acknowledgement
+  carrying ECN-echo.
+ecn_noecn_tahoe: A Fast Retransmit, no ECN.
+
+The second set of tests all illustrate a burst of packet drops.
+The first two tests (Fast Retransmit with and without ECN) show
+the same performance.  
+
+ecn_bursty_tahoe: A Fast Retransmit.
+ecn_burstyEcn_tahoe: ECN followed by a Fast Retransmit.
+
+The third test illustrates the pathologies
+that can occur without "bugFix_".
+
+ecn_noBugfix_tahoe: The Fast Retransmit without bugFix_
+
+The following set of tests show that performance is not
+worsened if a packet gets its ECN bit set rather than being
+dropped at the router.  These scenarios illustrate a retransmit 
+timeout.
+
+ecn_timeout2_tahoe: A Retransmit Timeout.
+ecn_timeout_tahoe: ECN followed by a Retransmit Timeout.  (The first 
+  packet has the ECN bit set rather than being dropped.)
+ecn_timeout3_tahoe: A Retransmit Timeout with an ECN in the middle
+  of the dropped packets.  (The second packet has the ECN bit set
+  rather than being dropped.)
+
+This test shows that an ECN on a packet sent after a
+Retransmit Timeout in properly interpreted as an instance
+of new congestion.
+
+ecn_timeout1_tahoe: ECN followed by a Retransmit Timeout, followed
+  by an ECN representing a new instance of congestion.
+
+#######################################################################
+# Reno Tests #
+#######################################################################
+
+The following tests are similar to the Tahoe tests:
+ecn_nodrop_reno, ecn_twoecn_reno, ecn_drop_reno,
+ecn_drop1_reno, and ecn_noecn_reno. 
+
+ecn_bursty_reno: A Fast Retransmit followed by a Retransmit Timeout. 
+  Ssthresh is reduced twice, once for each event.
+ecn_burstyEcn_reno: An ECN followed by a Fast Retransmit followed by a
+  Retransmit Timeout.
+
+ecn_noBugfix_reno: This shows the unnecessary Fast Retransmit from
+  the absence of Bugfix_.
+
+ecn_timeout_reno: An ECN followed by a Retransmit Timeout. 
+ecn_timeout1_reno: ECN followed by a Retransmit Timeout, followed
+  by an ECN representing a new instance of congestion.
+
+#######################################################################
+# Sack Tests #
+#######################################################################
+
+The following tests are similar to the Tahoe tests:  ecn_nodrop_sack,
+ecn_twoecn_sack, ecn_drop_sack, ecn_drop1_sack, ecn_noecn_sack.
+
+ecn_bursty_sack: A Fast Retransmit followed by a Retransmit Timeout.  
+  The sender doesn't send a new packet when it receives the ACK for the
+  retransmitted packet because "pipe_" indicates that it still
+  has too many outstanding packets.
+ecn_burstyEcn_sack: An ECN followed by a Fast Retransmit.  Because
+  of the ECN, the sender has fewer packets in flight when the
+  three dup acks arrive.
+ecn_burstyEcn1_sack: An ECN followed by a Fast Retransmit, followed
+  by a Retransmit Timeout.  This test has two more packets dropped 
+  that "ecn_burstyEcn_sack".
+
+ecn_noBugfix_sack: This shows the unnecessary Fast Retransmit from
+  the absence of Bugfix_.
+
+ecn_timeout_sack: An ECN followed by a Retransmit Timeout.
+ecn_timeout1_sack: ECN followed by a Retransmit Timeout, followed
+  by an ECN representing a new instance of congestion.
+ecn_fourdrops_sack: ECN followed by four interspersed packet drops.
+
+#######################################################################
+# Other Tests #
+#######################################################################
+ecn1
+

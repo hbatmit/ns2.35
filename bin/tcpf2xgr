@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# tcpf2xgr -- convert full-tcp trace file to xgraph or gnuplot
+# Usage: tcpf2xgr [-r] [-m wrap] [-s scale] TclShPath tracefile <xgraph | gnuplot> [testname]
+#
+PATH=$PATH:../../bin:.
+PROGNAME=$0
+
+while [ $# -ne 0 ] # loop over arguments
+do
+	case $1 in
+	-[mM])	opts="$opts $1 $2"
+		shift;;
+	-[sS])	opts="$opts $1 $2"
+		shift;;
+	-[nN])	opts="$opts $1 $2"
+		shift;;
+	-[rR])	opts="$opts $1"
+		shift;;
+
+	*)	break;;
+	esac
+	shift
+done
+
+if [ $# -lt 3 ]; then
+	echo "Usage: $PROGNAME [-m wrap] [-r] [-s scale] TclShPath tracefile <xgraph | gnuplot> testname"
+	exit 1;
+fi
+TCLSH=$1; shift
+GNAME=$1
+if [ $# -eq 3 ]; then
+	GNAME=$3;
+fi
+PROGDIR=`dirname $PROGNAME`
+$TCLSH $PROGDIR/tcpfull-summarize.tcl $opts $1 $1
+$TCLSH $PROGDIR/tcpfull-summarize.tcl $opts $1 $1.r reverse
+$TCLSH $PROGDIR/cplot.tcl $2 $GNAME.forw \
+	$1.p "segments sent" \
+	$1.acks "acks w/data rcvd" \
+	$1.packs "pure acks rcvd" \
+	$1.d "drops" \
+	$1.es "zero-len segments sent" \
+	$1.ctrl "SYN or FIN" \
+	$1.ecn "EcnEcho ACKs" \
+	$1.cact "Cong Action" \
+	$1.sack "Acks w/SACK info" | $2 &
+
+$TCLSH $PROGDIR/cplot.tcl $2 $GNAME.REV $1.r.p "segments sent" \
+	$1.r.acks "acks w/data rcvd" \
+	$1.r.packs "pure acks rcvd" \
+	$1.r.d "drops" \
+	$1.r.es "zero-len segments sent" \
+	$1.r.ctrl "SYN or FIN" \
+	$1.r.ecn "EcnEcho ACKs" \
+	$1.r.cact "Cong Action" \
+	$1.r.sack "Acks w/SACK info" | $2 &
+
+sleep 2
+rm -f $1.p $1.acks $1.packs $1.d $1.ctrl $1.es $1.ecn $1.cact $1.sack
+rm -f $1.r.p $1.r.acks $1.r.packs $1.r.d $1.r.ctrl $1.r.es $1.r.ecn $1.r.cact $1.r.sack

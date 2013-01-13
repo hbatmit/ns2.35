@@ -1,0 +1,92 @@
+#
+# Copyright (C) 1997 by USC/ISI
+# All rights reserved.                                            
+#                                                                
+# Redistribution and use in source and binary forms are permitted
+# provided that the above copyright notice and this paragraph are
+# duplicated in all such forms and that any documentation, advertising
+# materials, and other materials related to such distribution and use
+# acknowledge that the software was developed by the University of
+# Southern California, Information Sciences Institute.  The name of the
+# University may not be used to endorse or promote products derived from
+# this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+# 
+
+#
+# Maintainer: Kannan Varadhan <kannan@isi.edu>
+# Version Date: $Date: 1997/10/23 20:53:36 $
+#
+# @(#) $Header: /cvsroot/nsnam/ns-2/tcl/ex/srm.txt,v 1.8 1997/10/23 20:53:36 kannan Exp $ (USC/ISI)
+#
+
+There are five example scripts to demonstrate the implementation of SRM.
+These are srm-star.tcl, srm-chain.tcl, srm.tcl, srm-adapt-req.tcl, and
+srm-adapt-rep.tcl.  When the results from each of these scripts is viewed in
+nam, data traffic is coloured white, traffic from the source is coloured
+blue, and traffic from the the receivers is multi-coloured in various shades
+of red.  (Tiny packets are requests, slightly larger packets are session
+messages, and large colored packets are repairs.)
+
+Traffic from the source consists of session messages, and repairs.
+Traffic from the receivers is session messages, requests, and
+(occasionally) repairs.
+
+In order to make viewing protocol behaviour more intuitive in nam, these
+scripts source ../mcast/srm-nam.tcl.  This script modifies the messages
+classes, to achieve the desired colouring described earlier.  Dense mode
+traffic, such as joins and prunes, where applicable, are coloured black.
+Data traffic is white (the good guys, see? :-) In addition, requests are
+normally teensy weensy packets (about 12 bytes long), session messages are
+medium sized, and data packets are relatively hugish.
+
+In addition, sources are square, leaf nodes are circle, transit nodes
+are hexagonal.  In general, all nodes are members of the group.  The
+exception is the star topology, in which the central node is not.
+
+(NB:  If DM multicasting is used, then expect to send periodic prunes
+and joins as explicit messages).
+
+Example 1: srm-chain.tcl is chain topology, with a CBR source at node 0.
+All the nodes join the group at time t =~ 1.0s.  They take another 3.0s
+to determine distances to all other group members.  The traffic
+generator starts at 3.5s.  A single packet drop is created through link
+dynamics (the link is toggled momentarily using one of the route
+models) at 3.52s.
+
+Example 2: srm-star.tcl is a star topology, with identical parameters
+to the earlier chain topology.  You can vary the number of nodes in the
+topology by editing srm_star.tcl.  However, the nam config file is
+written for a 8 (+1) node topology.
+
+Example 3:  srm.tcl is a Y topology, with the source at the
+center, and receivers at each of the arms.  The data source is an
+exponential traffic generator (see tg.txt, tg.tcl for additional
+details).  The traffic generator directly feeds the srm agent.  (This
+is unlike earlier situations where the traffic generator feeds the node
+directly).  Data generation starts at 0.5s.  Nodes 1, 2, and 3 join at
+1.0s., 1.1s., and 1.2s respectively.  As each node comes up, it
+requests the initial sequence of data from the source that it is
+currently missing.  Request messages will start appearing after about
+3s.  because the nodes have not computed distances to each other
+accurately yet.
+
+Example 4, 5: srm-adapt-re[pq].tcl is a 8 node topology, identical to
+srm-star.tcl.  The simulation runs for 50s.  In the -req, the link
+incident to the source fails periodically, causing data packets to be
+dropped.  This causes request parameter adaptation in all the other
+receivers.  The -rep form is the dual in which one of the receivers
+experiences the loss, and all the other members adapt their repair
+parameters to respond to this loss.  The default situation uses
+Adaptive timers, but can be setup to use Fixed timers by specifying it
+as a command line option (for e.g. ``../../ns srm-adapt-rep.tcl Fixed'').
+This allows us to compare adaptive timers with other types of timers
+(such as Fixed timers) in identical scenarios.
+
+In each of the examples, output statistics is written out to
+srmStats.tr.   Detailed event trace files are written to srmEvents.tr.
+Source srm-debug.tcl if you want to see additional details of the delay
+computation functions.

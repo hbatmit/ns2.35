@@ -1,0 +1,4 @@
+man 4 route
+man 9 rtalloc
+man 9 rtentry
+man 8 rtquery	(rip only, -p option for gated "poll" option)

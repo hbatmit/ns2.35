@@ -1,0 +1,112 @@
+\chapter{Changes made to the IEEE 802.15.4 Implementation in NS-2.31}
+\label{chap:wpan}
+
+In the following, changes made to the IEEE 802.15.4 WPAN module in as
+of \ns\ release 2.31
+are described along with the reasons for the modifications and a list
+of files affected.  This file was authored by Iyappan Ramachandran.
+
+\section{Radio shutdown}
+Ability to put a WPAN node to sleep has been added in this release. 
+\\
+\begin{enumerate}
+
+\item{A macro called SHUTDOWN has been defined in ./wpan/p802\_15\_4def.h
+that provides the capability to shut a node down when it does not
+have any packet to transmit. Currently, there is no provision to enable/disable radio shutdown from the tcl interface directly, but an indirect way exists (see point \ref{point_shutdown_from_tcl}). }
+
+\item{Two functions \mbox{Phy802\_15\_4::wakeupNode()} and
+\mbox{Phy802\_15\_4::putNodeToSleep()} have been added that can be
+called to shutdown and wake up the radio. These functions primarily
+serve to decrement the correct amount of energy consumed in sleep
+state. \\
+File affected: ./wpan/p802\_15\_4phy.cc,  ./wpan/p802\_15\_4phy.h}
+
+\item{A new timer called macWakeupTimer has been added to serve as an alarm clock
+for the node to wake itself up (for beacon reception, etc.) before it shuts down. The timer on expiry calls
+\mbox{Phy802\_15\_4::wakeupNode()}.\\
+Files changed: ./wpan/p802\_15\_4mac.cc, ./wpan/p802\_15\_4mac.h,
+./wpan/p802\_15\_4timer.cc, ./wpan/p802\_15\_4timer.h,
+./wpan/p802\_15\_4csmaca.h}
+
+\item{\label{point_shutdown_from_tcl}Variables P\_sleep\_ (sleep state power consumption), P\_transition\_ (power consumption in sleep-wakeup transition) and T\_transition\_ (time taken for sleep-wakeup transition)
+already exist in mac/wireless-phy.h. T\_transition\_ was not initialized earlier and now has been.
+In addition, a new vew variable named T\_sleep\_ has been added to wireless-phy to indicate the time at which radio shutdown is to be enabled. This can be set from the tcl interface using the variable name sleepTime (see \mbox{./tcl/ex/wpan\_demo\_sleep.tcl}). Thus, it is possible to keep the SHUTDOWN macro \#defined, but set sleepTime to a  very large value to keep radio shutdown disabled throughout the simulations. This provides a means to turn on/off radio shutdown from the tcl interface.\\
+Files affected: mac/wireless-phy.h}
+
+\item{The radio if asleep should be woken up when MAC receives a packet to
+transmit. Similarly, a sleeping radio needs to be woken up to
+receive beacons whenever they are expected to arrive. If radio
+shutdown is activated, the radio needs to be put to sleep after
+transmission of a packet. \mbox{Mac802\_15\_4::recv()} does this by
+calling functions \mbox{Phy802\_15\_4::wakeupNode()} and
+\mbox{Phy802\_15\_4::putNodeToSleep()}, which decrement energy spent sleeping.\\
+Files affected: ./wpan/p802\_15\_4mac.cc}
+
+\item{After every beacon reception, the node can shut itself down if it doesn't
+have a packet pending to be transmitted when radio shutdown has been
+activated. This is done by \mbox{Mac802\_15\_4::recvBeacon()} by
+calling \mbox{Phy802\_15\_4::putNodeToSleep()}.\\
+Files affected:  ./wpan/p802\_15\_4mac.cc}
+
+\item{If the node is being put to sleep when not in use, the sleep-to-idle transition
+needs to be accounted for. This is done in \mbox{CsmaCA802\_15\_4::start()}. The backoff time 
+for the first backoff stage is calculated as \mbox{wtime=MAX(wtime,ceil(phy$\rightarrow$T\_transition\_local\_/bPeriod)*bPeriod)}.\\
+Files affected:  ./wpan/p802\_15\_4csmaca.cc}
+
+\end{enumerate}
+
+\section{Other changes}
+\begin{enumerate}
+\item{After backing off \textit{macMaxCSMABackoffs} and being unable to transmit a packet,
+the MAC has to report a channel access failure. The older implementation kept attempting to
+transmit the packet indefinitely, instead of reporting channel access failure.
+This has been fixed in the \mbox{Mac802\_15\_4::mcps\_data\_request()} function.
+Also the node is put to sleep (if need be) at this stage.\\
+Files affected: ./wpan/p802\_15\_4mac.cc}
+
+\item{A new constant called aCCATime has been added, which indicates the CCA
+duration in symbol periods.\\
+Files affected:  ./wpan/p802\_15\_4const.h}
+
+\item{CCA duration has been specified to be 8 symbol durations. In the older implementation,
+CCA was being done right at the end of the 8th symbol duration to determine
+channel idleness. As a result, if the channel is busy for the first
+8 symbol durations and goes idle after that (which is likely), the
+implementation would indicate channel idle while in reality it
+shouldn't. This has been fixed by doing the CCA at the end of the
+4th symbol duration, but reporting channel status at the 8th. For
+this purpose, a new timer CCAReportH has been added which on expiry calls
+CCAReportHandler that does the reporting.
+Files affected:  ./wpan/p802\_15\_4phy.cc,  ./wpan/p802\_15\_4phy.h}
+
+\item{The \mbox{Phy802\_15\_4::PD\_DATA\_indication()} function calls
+\mbox{WirelessChannel::sendUp()} to check if the packet has been received correctly and
+to decrement the energy consumed in the packet reception. The SendUp() function is already
+being called by recv() and calling it a second time causes energy to be decremented twice.
+This bug has been fixed in \mbox{Phy802\_15\_4::PD\_DATA\_indication()}.\\
+Files affected: ./wpan/p802\_15\_4phy.cc}
+
+\item{\mbox{Phy802\_15\_4::recv()} function that receives packets from the channel checks
+if the packet has been received correctly using
+\mbox{WirelessPhy::sendUp()}, failing which the packet is freed.
+sendUp() returns a 0 either when the node is asleep or when the
+packets received power is less than the CS threshold. In the former
+case, the variables rxTotPower and rxTotNum need to be updated for
+CS purposes before dropping the packet, while in the latter case the
+packet simply needs to be dropped. Zheng's implementation was
+dropping all packets without updating the variables. This has been
+fixed in
+\mbox{Phy802\_15\_4::recv()}.\\
+Files affected: ./wpan/p802\_15\_4phy.cc}
+
+\item{The receiver has to be turned on for the carrier sensing operation and therefore
+receive power $P_r$ is consumed during this period. The earlier implementation did not
+decrement receive energy due to carrier sensing. This has been added in function
+\mbox{Phy802\_15\_4::CarrierSenser()}. Also, energy is spent during the tx-rx
+turnaround. This has been accounted for as well.\\
+Files affected:  ./wpan/p802\_15\_4phy.cc}
+
+\end{enumerate}
+
+\endinput

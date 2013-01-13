@@ -1,0 +1,70 @@
+###########################################################
+
+# README         : Diffusion port into ns-2
+# author         : Padma Haldar
+#
+#
+###########################################################
+
+We have completed the first-cut of porting diffusion testbed code into ns.
+Being the first-cut, we shall continue to work on
+extending/debugging/improving the port.
+You can get the diffusion code from the latest snapshot from http://www.isi.edu/nsnam/ns/ns-build.html
+Please note that since we plan to work on the port,
+you'll need to download the latest snapshot to see the most recent updates.
+
+There is a version of diffusion already in ns which was implemented
+several years back and had become relatively old and outdated. The newer
+version, ported from SCADDS group testbed has several features not present
+in the older version. We outline the highlights of this port below:
+
+* Directed Diffusion has been implemented by SCADDS group at USC/ISI.
+Briefly it consists of 
+(a) an application layer that generates interest (for sinks) and data (for
+sources)
+(b) a core Diffusion layer that serves as an input/output interface for
+all diffusion communications
+(c) filters that are used to manipulate data/messages that may have
+several applications (in-network aggregration, logging , debugging etc)
+(d) an elaborate data naming or attribute system.
+
+* Application layer APIs are defined for subscribing (unsubscribing) to
+certain types of data, publishing (unpublish) certain set of data and
+for sending and receiving data into/from the network.
+
+* Diffusion interests and data are represented by
+attribute-value-operation tuplet. The operation field is used to match
+attributes by means of certain operation rules.
+
+* The older version of diffusion already in ns has a very simple attribute
+representation (single integer); and filters were not implemented.
+
+* The port is under ~ns/diffusion3 dir and tcl methods for setting up
+core-diffusion and diffusion-application agents in a node can be found
+under ~ns/tcl/lib/{ns-lib,ns-diffusion}.tcl
+
+* tcl/ex/diffusion3/(simple-diffusion.tcl, diffusion-100.tcl,
+diffusion-500.tcl) are
+example scripts. The first scenario consists of a simple 3 node topology using ping application,
+whereas the second and third scripts use a 100 and 500 node topology
+respectively, using the the same ping app.
+tcl/test/test-suite-diffusion3.tcl is a test-suite for validating the
+port.
+
+* Basic ns tracing can be turned on as shown in the examples.
+
+* For the first-cut, we have a ping application defined as 
+(Application/DiffApp/Ping{Source/Sink}). We plan to have other diffusion applications in place in the fiture.
+Also note that we still don't have tcl APIs for setting up applications,
+attributes etc. we continue to work on them.
+
+*  Note that ns does not currently have a MAC layer that is energy-aware
+(for example, a TDMA MAC).  We expect to integrate an energy-aware MAC
+developed by Wei Ye shortly, but in the meantime diffusion users
+may wish to adjust the 802.11 MAC energy parameters to approximate a
+sensor-net specific MAC.
+
+* This version of the port is based on diffusion3.2.0
+
+Any comments, bug-reports and other feedbacks are welcome as usual.
+

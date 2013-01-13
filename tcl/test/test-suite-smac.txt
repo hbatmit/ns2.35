@@ -1,0 +1,41 @@
+brdcast1
+A simple 2 node topology in which each node broadcasts a ping request and reply to each other.
+2 nodes start sending at the same time. no collision.
+
+brdcast2
+3 node topology. Nodes brdcast ping requests at the same time. packets 6 and 8 have a collision and are dropped. They are not retx'ed as these are brdcast pkts.
+
+unicast1
+simple 2 node topology. node 0 unicasts node 1.
+
+unicast2
+3 nodes all can hear one another.node 2 send brdcast ping requests overlapping with unicast pkts 
+
+unicast3
+3 nodes. node 2 can hear the sender(0) only, not receiver(1). node 0 and 1 exchange unicast pkts. node 2 send brdcasts. node 1 receives a corrupt pkt from 2 and being in CS, goes to sleep, so doesn't recv brdcast reply [2] from 0. Later node 1 wakes up to send unicast reply to node 0.
+
+unicast4
+3 nodes. 0->1 and node 2 sends brdcast. 2 is neighbor to recvr 1. can hear CTS only.
+
+unicast5
+4 nodes. 0->1 and 3->2. 3 can hear 0 but not recv from it.2 can hear and recv from 0.
+node 3 received ping answer from  2 with round-trip-time 619.0 ms.
+node 0 received ping answer from  1 with round-trip-time 1116.8 ms.
+
+unicast6
+4 nodes. 0->1 and 3->2. 3 cannot hear from 0. 2 can recv from only receiver 1. hence the 2 senders start sending at the same time which results in collision at recvr node 1. once the brdcast arp request is lost, it is never sent out again, which results in the ping request never leaving node 0. 2 & 3 exchange usual ping req/reply.
+node 3 received ping answer from 2 with round-trip-time 599.6 ms.
+
+unicast7
+same scenario as 6. 0->1 and 2->3. same collision happens at node 1. arp is not brdcasted again. hence node 0 never gets to send out ping req to 1.
+
+unicast8
+same as 6. 1->0 and 2->3. now the sender can hear one another and so avoids collision.
+
+unicast9
+node 0 and 3 canoot hear each other. 1 and 2 can hear everybody but only recv from 0 &2 and 3 & 1 resp.
+
+unicast10
+0->1 and 3->2 but neither pair can hear oneanothr hence has simultaneous exchanges. least time taken.
+node 0 received ping answer from  1 with round-trip-time 504.6 ms.
+node 3 received ping answer from  2 with round-trip-time 524.6 ms.

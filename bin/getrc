@@ -1,0 +1,65 @@
+eval 'exec perl -I ./bin -S $0 ${1+"$@"}'		#-*-Perl-*-
+	if 0;
+
+require 5.001;
+
+($progname) = ($0 =~ m!([^/]+)$!);
+sub usage {
+	die <<ENDUSAGE;
+usage: $progname -s node1 [options] [trace file...]
+
+get trace files that match certain criteria related to source, dest or flow-id
+
+options:
+	-o outfile	write subset trace to output file
+	-b		bi-directional, i.e. gather lines 
+	-d node2	specify destination
+	-f flowid	specify flow id
+	-e              get event-trace
+ENDUSAGE
+}
+
+$usage = "usage: $progname [-b] [-e] [-o outfile] -s node1 [-d node2] [-f flowid] [trace files...]\n";
+
+$opt_s = -1;
+$opt_d = -1;
+$opt_b = 0;
+$opt_f = -1;
+$opt_e = 0;
+
+use Getopt::Std;
+#require 'getopts.pl';
+(getopts('bo:s:d:ef:') && $opt_s != -1) || usage;
+#(&Getopts('bo:s:d:ef:') && $opt_s != -1) || usage;
+
+open(STDOUT, ">$opt_o") if ($opt_o);
+while (<>) {
+    /^v/ && do {
+	print $_;
+	next;
+    };
+    @F = split;
+    
+    if ($F[2] == $opt_s) {				# if src matches
+	if (($opt_f != -1) && $F[7] != $opt_f) {
+		next;
+	}
+	print $_ unless (($opt_d != -1) && $F[3] != $opt_d);	# print unless dst & !match
+	next;
+    }
+    if ($opt_b && $F[3] == $opt_s) {			# else if bi && dst fld mch
+	if (($opt_f != -1) && $F[7] != $opt_f) {
+		next;
+	}
+	print $_ unless (($opt_d != -1) && $F[2] != $opt_d);	# prt unless dst & !mch sfld
+	next;
+    }
+    if ($opt_e) {
+	print $_ unless !($F[0] eq 'E');
+	next;
+    }
+    
+}
+close(STDOUT);
+exit;
+

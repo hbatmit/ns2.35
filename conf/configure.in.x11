@@ -1,0 +1,104 @@
+dnl autoconf rules to find X11 includes and libraries
+dnl $Header: /cvsroot/nsnam/conf/configure.in.x11,v 1.6 2010/09/05 01:43:59 tom_henderson Exp $ (LBL)
+
+xlibdirs="\
+	/usr/openwin/lib \
+	/usr/X11R6/lib \
+	/usr/lib/X11R6 \
+	/usr/X11R5/lib \
+	/usr/lib/X11R5 \
+	/usr/X11R4/lib \
+	/usr/lib/X11R4 \
+	/usr/local/lib \
+	/usr/X386/lib \
+	/usr/X11/lib \
+	/usr/unsupported/lib \
+	/Developer/SDKs/MacOSX10.4u.sdk/usr/X11R6/lib \
+	/Developer/SDKs/MacOSX10.5.sdk/usr/X11R6/lib \
+	/Developer/SDKs/MacOSX10.6.sdk/usr/X11R6/lib \
+	/import/X11R4/usr/lib"
+
+xincdirs="\
+	/usr/openwin/include \
+	/usr/X11R6/include \
+	/usr/include/X11R6 \
+	/usr/X11R5/include \
+	/usr/include/X11R5 \
+	/usr/X11R4/include \
+	/usr/include/X11R4 \
+	/usr/local/include \
+	/usr/X386/include \
+	/usr/X11/include \
+	/usr/lpp/X11/include \
+	/usr/unsupported/include \
+	/Developer/SDKs/MacOSX10.4u.sdk/usr/X11R6/include \
+	/Developer/SDKs/MacOSX10.5.sdk/usr/X11R6/include \
+	/Developer/SDKs/MacOSX10.6.sdk/usr/X11R6/include \
+	/import/X11R4/include"
+
+
+echo "checking for X11 header files"
+if test "$x_includes" = NONE ; then
+	AC_TEST_CPP([#include <X11/Intrinsic.h>],x_includes="",x_includes=NONE)
+	if test "$x_includes" = NONE ; then
+	        for i in $xincdirs ; do
+			if test -r $i/X11/Intrinsic.h; then
+				x_includes=$i
+				break
+			fi
+	        done
+		if test "$x_includes" = NONE ; then
+			echo "can't find X includes"
+	       		exit 1
+		fi
+	fi
+fi
+if test -n "$x_includes" ; then 
+	V_INCLUDE_X11=-I$x_includes
+	AC_SUBST(V_INCLUDE_X11)
+fi
+
+echo "checking for X11 library archive"
+if test "$x_libraries" = NONE ; then
+	AC_CHECK_LIB(X11, XOpenDisplay, x_libraries="", x_libraries=NONE)
+	if test "$x_libraries" = NONE ; then
+		for i in $xlibdirs ; do
+			if test -r $i/libX11.a -o -r $i/libX11.so -o -r $i/libX11.dll.a -o -r $i/libX11.dylib; then
+				x_libraries=$i
+				break
+			fi
+       		done
+		if test "$x_libraries" = NONE ; then
+			echo "can't find X library"
+			exit 1
+		fi
+	fi
+fi
+
+V_LIB_X11=-lX11
+
+if test -n "$V_SHM" ; then
+	if test -z "$x_libraries" ; then
+		AC_CHECK_LIB(Xext, XShmAttach, V_Xext="-lXext", V_Xext=NONE, -lX11)
+	else
+		echo "checking for libXext.a"
+		if test -f $x_libraries/libXext.a -o -f $x_libraries/libXext.so -o -f $x_libraries/libXext.dylib; then
+			V_Xext="-lXext"
+		else
+			echo "warning: compiling without -lXext"
+		fi
+	fi
+	if test "$V_Xext" = NONE ; then
+		echo "warning: compiling without -lXext"
+	else
+		V_LIB_X11="$V_Xext $V_LIB_X11"
+	fi
+fi
+
+if test -n "$x_libraries" ; then
+	V_LIB_X11="-L$x_libraries $V_LIB_X11"
+	if test $solaris ; then
+		V_LIB_X11="-R$x_libraries $V_LIB_X11"
+	fi
+fi
+AC_SUBST(V_LIB_X11)

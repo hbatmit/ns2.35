@@ -1,0 +1,159 @@
+%!
+%%BoundingBox: 217 284 344 596
+%%Title: uni-nd-intf
+%%CreationDate: Fri Sep 12 15:33:35 1997
+%%Creator: Tgif-2.16-p12 by William Chia-Wei Cheng (william@cs.UCLA.edu)
+
+/tgifdict 35 dict def
+tgifdict begin
+
+/tgifpatdict 10 dict def
+
+/tgifpatbyte
+ { currentdict /retstr get exch
+   pat i cellsz mod get put
+ } def
+
+/tgifpatproc
+ { 0 1 widthlim {tgifpatbyte} for retstr
+   /i i 1 add def
+ } def
+
+/tgifpatfill
+ { tgifpatdict begin
+      /h exch def
+      /w exch def
+      /lty exch def
+      /ltx exch def
+      /cellsz exch def
+      /pat exch def
+
+      /widthlim w cellsz div cvi 1 sub def
+      /retstr widthlim 1 add string def
+      /i 0 def
+
+      ltx lty translate
+      w h true [1 0 0 1 0 0] {tgifpatproc} imagemask
+      ltx neg lty neg translate
+   end
+ } def
+
+/pat3 <8000000008000000> def
+/pat4 <8800000022000000> def
+/pat5 <8800220088002200> def
+/pat6 <8822882288228822> def
+/pat7 <aa55aa55aa55aa55> def
+/pat8 <77dd77dd77dd77dd> def
+/pat9 <77ffddff77ffddff> def
+/pat10 <77ffffff77ffffff> def
+/pat11 <7fffffff7fffffff> def
+/pat12 <8040200002040800> def
+/pat13 <40a00000040a0000> def
+/pat14 <ff888888ff888888> def
+/pat15 <ff808080ff080808> def
+/pat16 <f87422478f172271> def
+/pat17 <038448300c020101> def
+/pat18 <081c22c180010204> def
+/pat19 <8080413e080814e3> def
+/pat20 <8040201008040201> def
+/pat21 <8844221188442211> def
+/pat22 <77bbddee77bbddee> def
+/pat23 <c1e070381c0e0783> def
+/pat24 <7fbfdfeff7fbfdfe> def
+/pat25 <3e1f8fc7e3f1f87c> def
+/pat26 <0102040810204080> def
+/pat27 <1122448811224488> def
+/pat28 <eeddbb77eeddbb77> def
+/pat29 <83070e1c3870e0c1> def
+/pat30 <fefdfbf7efdfbf7f> def
+/pat31 <7cf8f1e3c78f1f3e> def
+
+/tgifcentertext { dup stringwidth pop 2 div neg 0 rmoveto } def
+
+end
+
+%%PageBoundingBox: 217 284 344 596
+tgifdict begin
+/tgifsavedpage save def
+
+1 setmiterlimit
+1 setlinewidth
+
+0 setgray
+
+72 0 mul 72 11.00 mul translate
+72 128 div 100 mul 100 div dup neg scale
+
+gsave
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      500 422 moveto (Multicast) tgifcentertext show
+      500 441 moveto (Routing) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      500 622 moveto (Unicast) tgifcentertext show
+      500 641 moveto (Routing) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      500 822 moveto (Network) tgifcentertext show
+      500 841 moveto (Dynamics) tgifcentertext show
+   grestore
+
+% BOX
+0 setgray
+gsave
+   1.415 setmiterlimit
+   newpath
+      400 350 moveto 600 350 lineto 600 500 lineto 400 500 lineto
+   closepath stroke
+   1 setmiterlimit
+grestore
+
+% BOX
+0.373 0.620 0.627 setrgbcolor
+gsave
+   newpath
+   390 690 moveto 610 690 lineto 610 760 lineto 390 760 lineto
+   closepath 1 setgray fill
+   0.373 0.620 0.627 setrgbcolor
+   newpath
+      390 690 moveto 610 690 lineto 610 760 lineto 390 760 lineto
+   closepath eoclip newpath
+   pat11 8 384 688 232 80 tgifpatfill
+grestore
+
+% BOX
+0 setgray
+gsave
+   1.415 setmiterlimit
+   newpath
+      400 550 moveto 600 550 lineto 600 700 lineto 400 700 lineto
+   closepath stroke
+   1 setmiterlimit
+grestore
+
+% BOX
+0 setgray
+gsave
+   1.415 setmiterlimit
+   newpath
+      400 750 moveto 600 750 lineto 600 900 lineto 400 900 lineto
+   closepath stroke
+   1 setmiterlimit
+grestore
+
+grestore
+tgifsavedpage restore
+end
+%MatchingCreationDate: Fri Sep 12 15:33:35 1997

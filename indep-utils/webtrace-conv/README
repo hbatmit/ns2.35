@@ -1,0 +1,56 @@
+# $Header: /cvsroot/nsnam/ns-2/indep-utils/webtrace-conv/README,v 1.2 2002/03/13 00:20:42 haoboy Exp $
+
+1. Traces
+---------
+
+This directory contains parsers to convert 4 types of proxy traces to input 
+files as required by PagePool/ProxyTrace.
+
+ucb/: UCB Home-IP trace, available at 
+  The code is partially taken from Steven Gribble's 
+  original trace parser. 
+
+dec/: DEC proxy trace, available at 
+  ftp://ftp.digital.com/pub/DEC/traces/proxy/webtraces.html. The code is 
+  partially taken from Alex Rousskov's trace parser (available at 
+  ftp://ftp.digital.com/pub/DEC/traces/proxy/contrib/proxytrace2any.tar.gz).
+
+epa/: EPA server trace, available at
+  http://ita.ee.lbl.gov/html/contrib/EPA-HTTP.html.
+
+nlanr/: NLANR proxy trace, refreshed daily and available at:
+  ftp://ircache.nlanr.net/Traces/
+
+
+2. Usage
+--------
+
+In any of these directories, doing a make will produce an executable 
+'tr-stat'. It assigns a unique integer ID to every client, server, and page
+appeared in the trace, and generates two output files which can be used to 
+drive PagePool/ProxyTrace. It reads from standard input. Its usage is:
+
+	tr-stat MaxReqNum [Duration StartTime] < trace_file
+
+	MaxReqNum: the maximum number of requests in a trace file
+	Duration:  the length of the trace to be converted.
+		   Its default value is the entire trace.
+	StartTime: the starting time of the trace where to start conversion.
+		   Its default value is the starting time of the first 
+		   record in the trace.
+
+Note that the paths and libraries in these makefiles are set ad hoc. For 
+different installations, users have to change the paths and libraries.
+
+The output of 'tr-stat' consists of two files: reqlog, and pglog. 'reqlog' 
+contains the request stream extracted from the trace, its format is:
+
+	{<time> <clientID> <serverID> <URL_ID>}
+	i <Duration> <Number_of_unique_URLs>
+
+The format of pglog is
+
+	<serverID> <URL_ID> <PageSize> <AccessCount>
+
+For an example as how to use these files with PagePool/ProxyTrace, please 
+look at ~ns/tcl/ex/simple-webcache-trace.tcl.

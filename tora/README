@@ -1,0 +1,11 @@
+tora.h			- TORA objects/definitions...
+tora_dest.h		- destinations the routing protocol knows about
+tora_neighbor.h		- per destination neighbors
+tora_packet.h		- packet definitions
+
+tora.cc			- basic TORA functionality
+tora_api.cc		- TORA API (defined cmu/rtproto/rtproto.h) used by IMEP
+tora_io.cc		- packet processing and I/O
+tora_logs.cc		- logging functions
+tora_neighbor.cc	- imeplents per destination neighbors
+tora_dest.cc		- implements destinations

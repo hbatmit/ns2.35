@@ -1,0 +1,24 @@
+#!/bin/sh
+# used for energy study with enough energy
+# one mobility mode, random change distribution of traffic source
+
+for proto in AODV DSR TORA DSDV
+do
+
+  echo "$proto simulation"
+
+  i=1
+
+  while [ "$i" -le 1 ] 
+  do 
+    echo "# $i run ..."
+
+    ../../../ns estudy.tcl -rp $proto -initialenergy 0.5 -tr e-$proto.tr -cp cbr.tcl -sc mobility.tcl -nam $proto.nam -x 670 -y 670 -nn 5 -stop 500
+
+    i=`expr $i + 1`
+
+  done
+
+done
+
+

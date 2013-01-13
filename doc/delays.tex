@@ -1,0 +1,127 @@
+%
+% personal commentary:
+%        DRAFT DRAFT DRAFT
+%        - KFALL
+%
+\chapter{Delays and Links}
+\label{chap:delays}
+
+Delays represent the time required for a packet to
+traverse a link.
+A special form of this object (``dynamic link'')
+also captures the possibility of a link failure.
+The amount of time required for a packet to traverse a link
+is defined to be $s/b + d$ where $s$ is the packet size
+(as recorded in its IP header), $b$ is the speed of the link
+in bits/sec, and $d$ is the link delay in seconds.
+The implementation of link delays is closely associated with
+the blocking procedures described for Queues in
+Section\ref{sec:qblock}.
+
+\section{The LinkDelay Class}
+\label{sec:delayclass}
+
+The \clsref{LinkDelay}{../ns-2/delay.cc} is derived from the
+base \clsref{Connector}{../ns-2/connector.h}.
+Its definition is in \nsf{delay.cc}, and is briefly excerpted below:
+\begin{program}
+        class LinkDelay : public Connector \{
+         public:
+                LinkDelay();
+                void recv(Packet* p, Handler*);
+                void send(Packet* p, Handler*);
+                void handle(Event* e);
+                double delay();    \* line latency on this link */
+                double bandwidth(); \* bandwidth on this link */
+                inline double txtime(Packet* p) \{ \* time to send pkt p on this link */
+                        hdr_cmn* hdr = (hdr_cmn*) p->access(off_cmn_);
+                        return (hdr->size() * 8. / bandwidth_);
+                \}
+
+         protected:
+                double bandwidth_; \* bandwidth of underlying link (bits/sec) */
+                double delay_;     \* line latency */
+                int dynamic_;     \* indicates whether or not link is ~ */
+                Event inTransit_;
+                PacketQueue* itq_; \* internal packet queue for dynamic links */
+                Packet* nextPacket_; \* to be delivered for a dynamic link. */
+                Event intr_;
+        \};
+\end{program}
+The 
+\fcnref{\fcn[]{recv} method}{../ns-2/delay.cc}{DelayLink::recv}
+overrides the base
+\fcnref{class Connector}{../ns-2/connector.cc}{Connector::recv} version.
+It is defined as follows:
+\begin{program}
+        void LinkDelay::recv(Packet* p, Handler* h)
+        \{    
+                double txt = txtime(p);
+                Scheduler& s = Scheduler::instance();
+                if (dynamic_) \{
+                        Event* e = (Event*)p;
+                        e->time_ = s.clock() + txt + delay_; 
+                        itq_->enque(p);
+                        schedule_next();
+                \} else \{
+                        s.schedule(target_, p, txt + delay_);
+                \}       
+                /*{\cf XXX only need one intr_ since upstream object should}
+                 * {\cf block until it's handler is called}
+                 *       
+                 * {\cf This only holds if the link is not dynamic.  If it is, then}
+                 * {\cf the link itself will hold the packet, and call the upstream}
+                 * {\cf object at the appropriate time.  This second interrupt is}
+                 * {\cf called \code{inTransit_}, and is invoked through \fcn[]{schedule_next}}
+                 */
+                s.schedule(h, &intr_, txt);
+        \}   
+\end{program}
+This object supports one 
+\fcnref{instproc-like}{../ns-2/delay.cc}{LinkDelay::command},
+\code{$object dynamic},
+to set its variable, \code{dynamic_}. 
+This variable determines whether the link is dynamic or not (\ie, prone
+to fail/recover at appropriate times).
+The internal behavior of the link in each case is different.
+
+For ``non-dynamic'' links,
+this method operates by receiving a packet, $p$,  and scheduling two
+events.
+Assume these two events are called $E_1$ and $E_2$, and that
+event $E_1$ is scheduled to occur before $E_2$.
+$E_1$ is scheduled to occur when the upstream node attached to this
+delay element has completed sending the current packet
+(which takes time equal to the packet size divided by the link bandwidth).
+$E_1$ is usually associated with a \code{Queue} object, and will
+cause it to (possibly) become unblocked (see section \ref{sec:qblock}).
+$E_2$ represents the packet arrival event at the downstream neighbor
+of the delay element.
+Event $E_2$ occurs a number of seconds later than $E_1$ equal to the
+link delay.
+
+Alternately, when the link is dynamic, and receives  $p$, then
+it will schedule $E_1$ to possibly unblock the queue at the
+appropriate time.
+However, $E_2$ is scheduled only
+if $p$ is the only packet currently in transit.
+Otherwise, there is at least one packet in transit on the link that must
+be delivered before $p$ at $E_2$.
+Therefore, packet $p$ is held in the object's inTransit queue, \code{itq_}.
+When the packet just before $p$ in transit on the link is delivered
+at the neighbor node, 
+the DelayLink object will schedule an event for itself to fire at $E_2$.
+At that appropriate time then, 
+\fcnref{it's \fcn[]{handle} method}{../ns-2/delay.cc}{LinkDelay::handle}
+will directly send $p$ to its target.
+The object's internal
+\fcnref{\fcn[]{schedule\_next} method}{../ns-2/delay.h}{%
+        LinkDelay::schedule\_next} 
+will schedule these events for packet sin transit at the appropriate time.
+
+\section{Commands at a glance}
+
+The LinkDelay object represents the time required by a packet to
+transverse the link and is used internally within a Link. Hence we donot
+list any linkdelay related commands suitable for simulation scripts here.
+

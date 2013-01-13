@@ -1,0 +1,16 @@
+The code in this directory is from libg++,
+either copied directly (builtin.h),
+or derived with genclass (everything else).
+
+If you genclass new classes, 
+please
+	(1) make sure they don't use any gcc-isms
+	(2) comment out #include <stream> and replace
+		the "cerr <<" statement in the default error handler
+		with fprintf (ns doesn't use streams, just printf)
+
+
+Current classes:
+int.Vec:      arrays of integers (with bounds checking and helpers)
+int.RVec:     auto-resizing arrays of integers
+

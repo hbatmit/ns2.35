@@ -1,0 +1,290 @@
+%
+% personal commentary:
+%        DRAFT DRAFT DRAFT
+%        - GNGUYEN
+%
+\chapter{Error Model}
+\label{chap:error_model}
+
+This chapter describes the implementation and configuration of error
+models, which introduces packet losses into a simulation. 
+
+In addition to the basic class ErrorModel described in details below, 
+  there are several other types of error modules not being 
+  completely documented yet,
+  which include:
+  \begin{itemize}
+    \item SRMErrorModel, PGMErrorModel: 
+      error model for SRM and PGM.
+    \item ErrorModel/Trace: 
+      error model that reads a loss trace (instead of a math/computed model)
+    \item MrouteErrorModel:
+      error model for multicast routing, now inherits from trace.
+    \item ErrorModel/Periodic:
+      models periodic packet drops (drop every nth packet we see).
+      This model can be conveniently combined with a flow-based classifier
+      to achieve drops in particular flows
+    \item SelectErrorModel:
+       for Selective packet drop.
+    \item ErrorModel/TwoState:
+      Two-State:  error-free and error
+    \item ErrorModel/TwoStateMarkov, ErrorModel/Expo, ErrorModel/Empirical:
+      inerit from ErrorModel/TwoState.
+    \item ErrorModel/List:
+      specify a list of packets/bytes to drop,
+      which could be in any order.
+  \end{itemize}
+
+Their definitions can be found in \nsf{queue/errmodel.\{cc, h\}} and
+ \nsf{tcl/lib/ns-errmodel.tcl, ns-default.tcl}.
+
+\section{Implementation}
+
+The procedures and functions described in this section can be found in
+\nsf{errmodel.\{cc, h\}}.
+
+Error model simulates link-level errors or loss by either marking the
+packet's error flag or dumping the packet to a drop target.  In
+simulations, errors can be generated from a simple model such as the
+packet error rate, or from more complicated statistical and empirical models.
+To support a wide variety of models, the unit of error can be specified
+in term of packet, bits, or time-based.
+
+The \code{ErrorModel} class is derived from the \code{Connector} base
+class.  As the result, it inherits some methods for hooking up objects
+such as \code{target} and \code{drop-target}.  If the drop target
+exists, it will received corrupted packets from \code{ErrorModel}.
+Otherwise, \code{ErrorModel} just marks the \code{error_} flag of the
+packet's common header, thereby, allowing agents to handle the loss.
+The \code{ErrorModel} also defines additional Tcl method \code{unit} to
+specify the unit of error and \code{ranvar} to specify the random
+variable for generating errors.  If not specified, the unit of error
+will be in packets, and the random variable will be uniform distributed
+from 0 to 1.  Below is a simple example of creating an error model with
+the packet error rate of 1 percent (0.01):
+\begin{program}
+        # create a loss_module and set its packet error rate to 1 percent
+        set loss_module [new ErrorModel]
+        \$loss_module set rate_ 0.01
+
+        # {\cf optional:  set the unit and random variable}
+        \$loss_module unit pkt            \; error unit: packets (the default);
+        \$loss_module ranvar [new RandomVariable/Uniform]
+
+        # {\cf set target for dropped packets}
+        \$loss_module drop-target [new Agent/Null]
+\end{program}
+
+In C++, the \code{ErrorModel} contains both the mechanism and policy for
+dropping packets.  The packet dropping mechanism is handled by the
+\code{recv} method, and packet corrupting policy is handled by the
+\code{corrupt} method.
+\begin{program}
+        enum ErrorUnit \{ EU_PKT=0, EU_BIT, EU_TIME \};
+
+        class ErrorModel : public Connector \{
+        public:
+                ErrorModel();
+                void recv(Packet*, Handler*);
+                virtual int corrupt(Packet*);
+                inline double rate() \{ return rate_; \}
+        protected:
+                int command(int argc, const char*const* argv);
+                ErrorUnit eu_;          \* error unit in pkt, bit, or time */
+                RandomVariable* ranvar_;
+                double rate_;
+        \};
+\end{program}
+The \code{ErrorModel} only implements a simple policy based on a single
+error rate, either in packets of bits.  More sophisticated dropping
+policy can be implemented in C++ by deriving from \code{ErrorModel} and
+redefining its \code{corrupt} method.
+
+%{\bf To be completed.}
+
+\section{Configuration}
+
+The previous section talked about error model, in this section we
+discuss how to use error models in ns over either wired networks or
+wireless ones. 
+
+To use an error model for wired networks, at first it has to be
+inserted into a SimpleLink object. Because a SimpleLink is a composite
+object (Chapter \ref{chap:links}), an error model can be inserted to
+many places. Currently we provide the following methods to insert an
+error module into three different places.
+
+\begin{itemize}
+\item Insert an error module in a SimpleLink BEFORE the queue module. 
+  This is provided by the following two OTcl methods: 
+
+  \begin{alist}
+    SimpleLink::errormodule args & When an error model is given
+    as a parameter, it inserts the error module into the simple link,
+    right after the queue module, and set the drop-target of the error
+    model to be the drop trace object of the simple link. Note that
+    this requires the following configuration order:
+	\code{ns namtrace-all}
+  followed by link configurations, followed by error
+    model insertion. When no argument is given, it returns the current
+    error model in the link, if there's any. This method is defined in
+    \ns/tcl/lib/ns-link.tcl \\
+
+    Simulator::lossmodel \tup{em} \tup{src} \tup{dst} & Call
+    SimpleLink::errormodule to insert the given error module into the
+    simple link (src, dst). It's simply a wrapper for the above
+    method. This method is defined in \ns/tcl/lib/ns-lib.tcl. 
+  \end{alist}
+  
+\item Insert an error module in a SimpleLink AFTER the queue but
+  BEFORE the delay link.
+  This is provided by the following two methods:
+
+  \begin{alist}
+    SimpleLink::insert-linkloss args & This method's behavior
+    is identical to that of \code{SimpleLink::errormodule}, except
+    that it inserts an error module immediately after the queue
+    object. It's defined in \ns/tcl/lib/ns-link.tcl \\
+
+    Simulator::link-lossmodel \tup{em} \tup{src} \tup{dst} &
+    This is a wrapper for \code{SimpleLink::insert-linkloss}. It's
+    defined in \ns/tcl/lib/ns-lib.tcl 
+  \end{alist}
+  
+  The nam traces generated by error models inserted using these two
+  methods do not require special treatment and can be visualized using
+  an older version of nam. 
+
+\item Insert an error module in a Link AFTER the delay link module. 
+  This can be done by \code{Link::install-error}. 
+  Currently this API doesn't produce any trace. It only serves as a
+  placeholder for possible future extensions. 
+\end{itemize}
+
+To add an error model over wireless networks, each node can insert 
+a given statistical error model either over outgoing or incoming wireless channels.
+Precisely, the instanciated error model would be stuck between mac and netif modules 
+depicted in Figure \ref{fig:mobilenode-dsr}. For the outgoing link, the error module
+would be pointed by downtarget\_ of the above mac module while for the incoming link 
+it would be linked by uptaget\_ pointer of the below netif module. And in each case 
+the target\_ of the error module points to either the netif or the mac respectively.  
+The difference of placing over the two different locations is that the outgoing causes
+all the receivers to receive the packet suffering the same degree of errors since the error is
+determined before wireless channel module copies the packet. On the other
+hand, the incoming error module lets each receiver get the packet corrupted with different
+degree of error since the error is independently computed in each error module.
+
+The insertion into the wireless protocol stack can be done by calling
+node-config command explained in Section~\ref{sec:node:nodeconfig} with
+the two options IncomingErrrProc and OutgoingErrProc. We can use these two options 
+at the same time or each one separately.  The argument of the two option is the
+name of the global procedure which creates an error model object,
+feeds it with necessary initial values appropriate for the new error
+module, and finally returns the object pointer. The following shows a
+simple TCL example script to add an error module into the wireless
+protocol stack.
+\begin{program}
+	$ns node-config -IncomingErrProc UniformErr -OutgoingErrProc UniformErr
+
+	proc UniformErr {} {
+		set err [new ErrorModel]
+		$err unit packet
+		return $err
+	}
+\end{program}
+
+\section{Multi-state error model}
+
+Contributed by Jianping Pan (jpan@bbcr.uwaterloo.ca).
+
+The multi-state error model implements time-based error state
+transitions. Transitions to the next  
+error state occur at the end of the duration of the current state. The
+next error state is then selected using the 
+transition state matrix.
+
+To create a multi-state error model, the following parameters should
+be supplied (as defined in \ns/tcl/lib/ns-errmodel.tcl): 
+\begin{itemize}
+\item {\tt states}: an array of states (error models).
+\item {\tt periods}: an array of state durations.
+\item {\tt trans}: the transition state model matrix.
+\item {\tt transunit}: one of {\tt [pkt|byte|time]}.
+\item {\tt sttype}: type of state transitions to use: either {\tt
+    time} or {\tt pkt}.
+\item {\tt nstates}: number of states.
+\item {\tt start}: the start state.
+\end{itemize}
+
+Here is a simple example script to create a multi-state error model:
+\begin{program}
+        set tmp [new ErrorModel/Uniform 0 pkt]
+        set tmp1 [new ErrorModel/Uniform .9 pkt]
+        set tmp2 [new ErrorModel/Uniform .5 pkt]
+
+        # {\cf Array of states (error models)}
+        set m_states [list $tmp $tmp1 $tmp2]
+        # {\cf Durations for each of the states, tmp, tmp1 and tmp2, respectively}
+        set m_periods [list 0 .0075 .00375]
+        # {\cf Transition state model matrix}
+        set m_transmx \{ \{0.95 0.05 0\}
+          \{0   0   1\}
+          \{1   0   0\} \}
+        set m_trunit pkt
+        # {\cf Use time-based transition}
+        set m_sttype time
+        set m_nstates 3
+        set m_nstart [lindex $m_states 0]
+
+        set em [new ErrorModel/MultiState $m_states $m_periods $m_transmx \\
+                $m_trunit $m_sttype $m_nstates $m_nstart]
+\end{program} %$
+
+\section{Commands at a glance}
+\label{sec:errmodelcommand}
+
+The following is a list of error-model related commands commonly used in
+simulation scripts:
+
+\begin{program}
+set em [new ErrorModel]
+$em unit pkt
+$em set rate_ 0.02
+$em ranvar [new RandomVariable/Uniform]
+$em drop-target [new Agent/Null]
+\end{program}
+
+This is a simple example of how to create and configure an error model.
+The commands to place the error-model in a simple link will be shown next.
+
+\begin{flushleft}
+\code{$simplelink errormodule  <args>}\\
+This commands inserts the error-model before the queue object in simple link.
+However in this case the error-model's drop-target points to the link's
+\code{drophead_} element.
+
+
+\code{$ns_ lossmodel <em> <src> <dst>}\\
+This command places the error-model before the queue in a simplelink defined
+by the <src> and <dst> nodes. This is basically a wrapper for the above method.
+
+
+\code{$simplelink insert-linkloss <args>}\\
+This inserts a loss-module after the queue, but right before the delay \code{link_}
+element in the simple link. This is because nam can visualize a packet drop
+only if the packet is on the link or in the queue. The error-module's
+drop-target points to the link's \code{drophead_} element.
+
+
+\code{$ns_ link-lossmodel <em> <src> <dst>}\\
+This too is a wrapper method for insert-linkloss method described above.
+That is this inserts the error-module right after the queue element in a
+simple link (src-dst).
+
+\end{flushleft}
+
+
+% Local Variables:
+% TeX-master: "everything"
+% LocalWords:
+% End

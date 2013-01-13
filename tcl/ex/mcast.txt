@@ -1,0 +1,11 @@
+"ns mcast.tcl": a multicast routing demo using nam, illustrating
+"flood and prune" multicast routing.
+
+At time 1.0 a CBR source at node 1 starts sending to group A (black
+packets).  Prune packets are sent (purple).
+At time 1.1 a CBR source at node 3 starts sending to group B (red
+packets).
+At time 1.2 node 2 joins the group B, then leaves at time 1.25.
+(Graft packets are off-white.)
+At time 1.3 node 2 again joins group B.
+At time 1.35, node 2 joins group A.

@@ -1,0 +1,52 @@
+# Investigating TCP's larger initial windows:
+# 
+# To use many_tcp.tcl to investigate packet drop rates with larger
+# initial windows:
+# This runs two simulations, one with initial windows of one packet and
+# one (-init-win 0) with initial windows as specified in the internet
+# draft for larger initial windows, and for each simulation prints out
+# the aggregate packet drop rate.
+# 
+# RED, two-way traffic, single congested gateway.
+
+set seed=12345
+set params='-print-drop-rate 1 -debug 0 -trace-filename none' 
+set p1='-bottle-queue-length 50 -bottle-queue-method RED'
+set p2='-client-arrival-rate 120 -bottle-bw 10Mb -ns-random-seed '$seed 
+set p3='-client-mouse-chance 90 -client-mouse-packets 10' 
+set p4='-client-bw 100Mb -node-number 100 -client-reverse-chance 10'
+set p5='initial-client-count 0'
+
+#% ns many_tcp.tcl $params $p1 $p2 $p3 $p4 $p5
+# total_drops 1529 total_packets 59679
+# drop_percentage  2.5620
+#
+#% ns many_tcp.tcl $params $p1 $p2 $p3 $p4 $p5 -init-win 0
+# total_drops 1814 total_packets 60044
+# drop_percentage  3.0211
+#
+#% ns many_tcp.tcl $params $p1 $p2 $p3 $p4 $p5 -init-win 10
+# total_drops 3407 total_packets 58716
+# drop_percentage  5.8025
+# 
+# Time to run:  1 minute 2 seconds.
+# 
+# To check with xgraph, make the following changes:
+
+set params='-print-drop-rate 1 -debug 0 -trace-filename out'
+set p6='duration 2 graph-results 1 graph-join-queueing 0 -graph-scale 2'
+
+#% ns many_tcp.tcl $params $p1 $p2 $p3 $p4 $p5 $p6
+ns many_tcp.tcl $params $p1 $p2 $p3 $p4 $p5 $p6 -init-win 0
+#% ns many_tcp.tcl $params $p1 $p2 $p3 $p4 $p5 $p6 -init-win 10
+# 
+# Each row of 90 packets of the graph represents a new connection.
+# Connections get reset and reused, for efficiency of execution. 
+# 
+# ----------------------------
+# 
+# ToDo: Opening N flows at once.
+# ToDo: compare without syn_, delayed-open.
+# 
+# ------------
+

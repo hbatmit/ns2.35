@@ -1,0 +1,26 @@
+#! /bin/sh
+progname=`basename $0`
+
+if [ -f ns ] ; then
+    PROG=./ns
+elif [ -f ns.dyn ] ; then
+    PROG=./ns.dyn
+fi
+
+rm -f out.tr all.tr core
+echo $PROG tcl/test/test-suite-$1.tcl $2 $3
+if $PROG tcl/test/test-suite-$1.tcl $2 $3 ; then
+    if [ ! -f out.tr ] ; then
+	echo "$progname: no output?" 1>&2
+    else
+	if [ -n "$DISPLAY" ] ; then
+	    raw2xg -m 90 -s 0.01 out.tr | xgraph 
+	else
+	    file=`perl -ane '$F[2] =~ s/test_// ; $F[2] =~ s/_/-/g; print $F[2]; exit' out.tr`
+	    raw2gp -a out.tr | gnuplot
+	    echo "$progname: postscript of graph is in $file.ps"
+	fi
+    fi
+elif [ -f core ] ; then
+    echo "$progname: core dump" 1>&2
+fi

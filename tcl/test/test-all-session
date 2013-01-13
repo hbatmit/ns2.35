@@ -1,0 +1,6 @@
+#! /bin/sh
+
+file="test-suite-session.tcl"
+directory="test-output-session"
+version="v2"
+./test-all-template1 $file $directory $version $@

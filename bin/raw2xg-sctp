@@ -1,0 +1,271 @@
+eval 'exec perl -S $0 ${1+"$@"}'		# -*-perl-*-
+    if 0;
+
+require 5.001;
+
+($progname) = ($0 =~ m!([^/]+)$!);
+sub usage {
+    print STDERR <<END;
+usage: $progname [options] [trace files...]
+
+options:
+    -a          plot SACKs when leaving data recevier
+    -A 	        plot SACKs when arriving at data sender
+    -f          plot FORWARD CUM TSNs when leaving data sender
+    -F          plot FORWARD CUM TSNs when received at data recevier
+    -s SCALE    scale TSN numbers by SCALE
+    -n FACTOR	scale flow number by FACTOR
+    -m MODULUS  treat TSN numbers as mod MODULUS
+    -q		show queueing delay 
+    -t TITLE    title of test
+
+Traditional ``wrapping'' ns plots (as called from the test scripts)
+can be generated with -s 0.01 -m 90.
+END
+    exit 1;
+};
+$usage = "usage: $progname [-a] [trace files...]\n";
+
+require 'getopts.pl';
+&Getopts('aAfFs:m:n:qt:') || usage;
+
+$c = 0;
+@pplus = @pminus = ();
+@splus = @sminus = @srec = ();
+@rplus = @rminus = @rrec = ();
+@d = @lu = @ld = ();
+%q_time_seg = ();
+
+$plot_sacks_sent = defined($opt_a);
+$plot_sacks_received = defined($opt_A);
+$plot_forward_sent = defined($opt_f);
+$plot_forward_received = defined($opt_F);
+
+$scale = defined($opt_s) ? $opt_s : 1;
+$modulus = defined($opt_m) ? $opt_m : 2 ** 31;
+$flow_factor = defined($opt_n) ? $opt_n : 1;
+
+$plot_queueing_delay = defined($opt_q);
+
+$file = $sacks = '';
+
+sub translate_point {
+    my($time, $seq, $flow) = @_;
+    return ($time, $flow * $flow_factor + ($seq % $modulus) * $scale);
+}
+
+while (<>) {
+    $dfile = $ARGV;
+    @F = split;
+    /testName/ && ($file = $F[2], next);
+
+    /^\- / && do {
+	$c = $F[7] if ($c < $F[7]);
+	$is_init = ($F[6] =~ /I/);
+	next if ($is_init);
+	$is_sack = ($F[6] =~ /S/);
+	$is_nrsack = ($F[6] =~ /N/);
+	next if (($is_sack || $is_nrsack) && !$plot_sacks_sent);
+	$is_forward = ($F[6] =~ /R/);
+	next if ($is_forward && !$plot_forward_sent);
+	$is_heartbeat = ($F[6] =~ /H/);
+	$is_heartbeat_ack = ($F[6] =~ /B/);
+	next if ($is_heartbeat || $is_heartbeat_ack);
+
+	($x, $y) = translate_point(@F[1, 11, 7]);
+	$statement = "$x $y\n";
+
+	if ($is_sack || $is_nrsack) { 
+	    push(@sminus, $statement);
+	} else {
+	    if ($is_forward) {
+		push(@rminus, $statement);
+	    } else {
+		push(@pminus, $statement);
+	    };
+	};
+	next;
+    };
+
+    /^\+ / && do {
+	if ($plot_queueing_delay) {
+	    $c = $F[7] if ($c < $F[7]);
+	    $is_init = ($F[6] =~ /I/);
+	    next if ($is_init);
+	    $is_sack = ($F[6] =~ /S/);
+	    $is_nrsack = ($F[6] =~ /N/);
+	    next if (($is_sack || $is_nrsack) && !$plot_sacks_sent);
+	    $is_forward = ($F[6] =~ /R/);
+	    next if ($is_forward && !$plot_forward_sent);
+	    $is_heartbeat = ($F[6] =~ /H/);
+	    $is_heartbeat_ack = ($F[6] =~ /B/);
+	    next if ($is_heartbeat || $is_heartbeat_ack);
+	    
+	    ($x, $y) = translate_point(@F[1, 11, 7]);
+	    $statement = "$x $y\n";
+	    
+	    if ($is_sack || $is_nrsack) { 
+		push(@splus, $statement);
+	    } else {
+		if ($is_forward) {
+		    push(@rplus, $statement);
+		} else {
+		    push(@pplus, $statement);
+		};
+	    };
+	};
+	next;
+    };
+
+    /^r / && do {
+	$c = $F[7] if ($c < $F[7]);
+	$is_init = ($F[6] =~ /I/);
+	next if ($is_init);
+	$is_sack = ($F[6] =~ /S/);
+	$is_nrsack = ($F[6] =~ /N/);
+	next if (($is_sack || $is_nrsack) && !$plot_sacks_received);
+	$is_forward = ($F[6] =~ /R/);
+	next if ($is_forward && !$plot_forward_received);
+	$is_heartbeat = ($F[6] =~ /H/);
+	$is_heartbeat_ack = ($F[6] =~ /B/);
+	next if ($is_heartbeat || $is_heartbeat_ack);
+
+	($x, $y) = translate_point(@F[1, 11, 7]);
+	$statement = "$x $y\n";
+	
+	if ($is_sack || $is_nrsack) { 
+	    push(@srec, $statement);
+	} else {
+	    if($is_forward) {
+		push(@rrec, $statement);
+	    };
+	};
+	next;
+    };
+
+
+    /^d / && do {
+	$is_init = ($F[6] =~ /I/);
+	next if ($is_init);
+	$is_heartbeat = ($F[6] =~ /H/);
+	$is_heartbeat_ack = ($F[6] =~ /B/);
+	next if ($is_heartbeat || $is_heartbeat_ack);
+
+	($x, $y) = translate_point(@F[1, 11, 7]);
+	push(@d, "$x $y\n");
+	next;
+    };
+    /link-down/ &&	(push(@ld, $F[1]), next);
+    /link-up/ &&	(push(@lu, $F[1]), next);
+}	
+
+
+
+if ($file eq '') {
+	($file) = ($dfile =~ m!([^/]+)$!);
+}
+
+$title  = defined($opt_t) ? $opt_t : $file;
+print "TitleText: $title\n" .
+    "Device: Postscript\n" .
+    "BoundBox: true\n" .
+    "Ticks: true\n" .
+    (defined($opt_q) ? "" : "NoLines: true\n") .
+    "Markers: true\n" .
+    "XUnitText: time\n" .
+    "YUnitText: chunks\n";
+
+if ($plot_queueing_delay) {
+    @sorted_pplus = sort (@pplus);
+    print "\n\"data sent (buffered)\n", @sorted_pplus;
+} else {
+    printf "\n\"[data sent (buffered)]\n0 1\n";    
+};
+
+@sorted_pminus = sort (@pminus);
+print "\n\"data sent\n", @sorted_pminus;
+
+if ($plot_sacks_received) {
+    @sorted_srec = sort (@srec);
+
+    if ($is_sack) {
+      print "\n\"sack received\n", @sorted_srec;
+    }
+    else {
+      print "\n\"nr-sack received\n", @sorted_srec;
+    }
+} else {
+    printf "\n\"[sack received]\n0 1\n";    
+};
+
+#
+# Repeat the first line twice in the drops file because often we have only
+# one drop and xgraph won't print marks for data sets with only one point.
+#
+if(@d) {
+    @sorted_d = sort (@d);
+    print "\n\"drops\n", @d[0..3], @sorted_d;
+} else {
+    print "\n\"[drops]\n0 1\n";
+}
+
+if ($plot_sacks_sent) {
+    @sorted_splus = sort (@splus);
+    if ($is_sack) {
+      print "\n\"sack sent\n", @sorted_splus;
+    }
+    else {
+      print "\n\"nr-sack sent\n", @sorted_splus;
+    }
+} else {
+    printf "\n\"[sack sent]\n0 1\n";    
+};
+
+# Commented out by ALC because doesn't seem to be too useful and is wasting
+# limited colored shapes provided by xgraph.
+#
+#if ($plot_sacks_sent && $plot_queueing_delay) {
+#    @sorted_sminus = sort (@sminus);
+#    print "\n\"sack sent (buffered)\n", @sorted_sminus;
+#} else {
+#    printf "\n\"[sack sent (buffered)]\n0 1\n";    
+#};
+
+if ($plot_forward_received) {
+    @sorted_rrec = sort (@rrec);
+    print "\n\"forward received\n", @sorted_rrec;
+} else {
+    printf "\n\"[forward received]\n0 1\n";    
+};
+
+if ($plot_forward_sent) {
+    @sorted_rplus = sort (@rplus);
+    print "\n\"forward sent\n", @sorted_rplus;
+} else {
+    printf "\n\"[forward sent]\n0 1\n";    
+};
+
+# Commented out by ALC because doesn't seem to be too useful and is wasting
+# limited colored shapes provided by xgraph.
+#
+#if ($plot_forward_sent && $plot_queueing_delay) {
+#    @sorted_rminus = sort (@rminus);
+#    print "\n\"forward sent (buffered)\n", @sorted_rminus;
+#} else {
+#    printf "\n\"[forward sent (buffered)]\n0 1\n";    
+#};
+
+$c++;
+print "\n";
+foreach $i (@ld) {
+	print "\"link-down\n$i 0\n$i $c\n";
+}
+foreach $i (@lu) {
+	print "\"link-up\n$i 0\n$i $c\n";
+}
+
+exit 0;
+
+
+
+

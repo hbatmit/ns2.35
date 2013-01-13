@@ -1,0 +1,98 @@
+dnl Process this file with autoconf to produce a configure script.
+dnl
+
+AC_INIT(ns_tclsh.cc)
+
+AC_GNU_SOURCE
+
+AC_CONFIG_HEADER(autoconf.h)
+
+V_PROG="ns"
+V_LIB=""
+V_SHELL=""
+
+builtin(include, ./conf/configure.in.fns)
+
+dnl default to non-static
+enable_static=no
+
+builtin(include, ./conf/configure.in.head)
+builtin(include, ./conf/configure.in.stl)
+builtin(include, ./conf/configure.in.tcl)
+builtin(include, ./conf/configure.in.tk)
+builtin(include, ./conf/configure.in.otcl)
+builtin(include, ./conf/configure.in.TclCL)
+builtin(include, ./conf/configure.in.misc)
+builtin(include, ./conf/configure.in.x11)
+builtin(include, ./conf/configure.in.tcldebug)
+builtin(include, ./conf/configure.in.dmalloc)
+default_classinstvar=yes
+builtin(include, ./conf/configure.in.debugopts)
+
+PERL_OPTIONAL=true
+builtin(include, ./conf/configure.in.perl)
+if test "x$PERL" = x
+then
+	AC_MSG_WARN([Perl5 not found; test scripts will not run succesfully.])
+fi
+
+AC_HEADER_STDC
+
+dnl AC_CHECK_FUNCS will place -D's in @DEFS@
+AC_CHECK_HEADERS(arpa/inet.h fenv.h netinet/in.h string.h strings.h time.h unistd.h net/ethernet.h)
+dnl check for libm is needed for subseq checks
+AC_CHECK_LIB(m, main, , AC_MSG_ERROR(Could not find math library, cannot continue.))
+AC_CHECK_FUNCS(bcopy bzero fesetprecision feenableexcept getrusage sbrk snprintf)
+
+dnl
+dnl figure out random return type
+dnl
+AC_MSG_CHECKING(return type of random)
+touch confdefs.h
+AC_TRY_RUN([#include <stdlib.h>
+#include "confdefs.h"
+long random() { return 1; }
+main() { exit(0); }
+],
+AC_MSG_RESULT(long)
+AC_DEFINE(RANDOM_RETURN_TYPE,long)
+,
+AC_MSG_RESULT(int)
+AC_DEFINE(RANDOM_RETURN_TYPE,int)
+,
+AC_MSG_RESULT(cross compiling--guessing int)
+AC_DEFINE(RANDOM_RETURN_TYPE,int)
+)
+
+dnl
+dnl check some types
+dnl
+AC_CHECK_TYPE(int8_t,signed char)
+AC_CHECK_TYPE(int16_t,short)
+AC_CHECK_TYPE(int32_t,int)
+AC_CHECK_TYPE(u_int8_t,unsigned char)
+AC_CHECK_TYPE(u_int16_t,unsigned short)
+AC_CHECK_TYPE(u_int32_t,unsigned int)
+AC_CHECK_TYPE(u_char, unsigned char)
+AC_CHECK_TYPE(u_int, unsigned int)
+
+builtin(include, ./conf/configure.in.int64_t)
+
+
+dnl dynamic library support
+builtin(include, ./conf/configure.in.dynamic)
+AC_CHECK_HEADER([dlfcn.h], , [ AC_MSG_ERROR([cannot find dlfcn.h]) ])
+AC_MSG_CHECKING([for ns library name])
+NSLIB=libns${SHLIB_SUFFIX}
+AC_MSG_RESULT([$NSLIB])
+AC_SUBST(NSLIB)
+
+
+
+
+dnl Look for emulation specific stuff
+builtin(include, ./conf/configure.in.nse)
+
+NS_FNS_TAIL
+define(AcOutputFiles,Makefile tcl/lib/ns-autoconf.tcl indep-utils/webtrace-conv/ucb/Makefile indep-utils/webtrace-conv/dec/Makefile indep-utils/webtrace-conv/nlanr/Makefile indep-utils/webtrace-conv/epa/Makefile indep-utils/cmu-scen-gen/setdest/Makefile)
+builtin(include, ./conf/configure.in.tail)

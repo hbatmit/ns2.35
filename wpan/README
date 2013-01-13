@@ -1,0 +1,78 @@
+*** NS2 simulator for 802.15.4 (release v1.1) ***
+
+ZigBee routing is now maintained by ZigBee NWK WG and 
+no longer included in this release.
+
+>>> Platforms supported
+    ns2 version: 2.26 and 2.27
+    OS: Linux, Sun Solaris and FreeBSD
+
+>>> Installation
+
+    1) Unpack the tarball by entering
+         tar -xzvf wpan11.tar.gz
+       and the following directories will be automatically created:
+       wpan_zbr ---- wpan ---- cpp
+                           |-- demo
+                           |-- nam
+                           |-- tcl
+                           |-- trace
+                           |-- update
+    
+       Note: If you have problems with the above tar command, you can try to 
+             unpack the tarball by using
+               gunzip wpan11.tar.gz
+             and then
+               tar vxf wpan11.tar
+    
+    2) Execute (under 'wpan_zbr')
+         ./install
+
+>>> Testing
+
+    Test the simulator by executing (under 'demo'):
+
+    1) demo1: AODV
+       ns wpan_demo1.tcl			// default traffic: ftp
+       ns wpan_demo1.tcl -traffic cbr		// use cbr traffic
+       ns wpan_demo1.tcl -traffic poisson	// use poisson traffic
+
+    2) demo2: AODV/Star/beacon enabled
+       ns wpan_demo2.tcl			// default traffic: ftp
+       ns wpan_demo2.tcl -traffic cbr		// use cbr traffic
+       ns wpan_demo2.tcl -traffic poisson	// use poisson traffic
+
+    3) demo3: AODV/Peer-to-Peer/beacon enabled
+       ns wpan_demo3.tcl			// default traffic: ftp
+       ns wpan_demo3.tcl -traffic cbr		// use cbr traffic
+       ns wpan_demo3.tcl -traffic poisson	// use poisson traffic
+
+    4) demo4: ZigBee routing(ZBR)/Peer-to-Peer/beacon enabled
+       (a) mixture of RN+ and RN- (11 RN+, 10 RN-)
+           ns wpan_demo4.tcl			// default traffic: mix (cbr + poisson)
+           ns wpan_demo4.tcl -traffic ftp	// use ftp traffic
+           ns wpan_demo4.tcl -traffic cbr	// use cbr traffic
+           ns wpan_demo4.tcl -traffic poisson	// use poisson traffic
+       (b) all RN+
+           (replace wpan_demo4.tcl with wpan_demo4_p.tcl in (a))
+       (c) all RN-
+           (replace wpan_demo4.tcl with wpan_demo4_m.tcl in (a))
+
+    5) demo5: ZigBee routing(ZBR)/Peer-to-Peer/beacon enabled
+       (replace wpan_demo4.tcl with wpan_demo5.tcl in 4)(a))
+
+    Note: For release not including ZigBee routing, demo4 and demo5 will
+          run AODV instead of ZBR.
+
+>>> Uninstallation
+
+    To uninstall, execute (under 'wpan_zbr'):
+      ./install -u
+
+>>> The available commands (accessible through Tcl) are listed in the file COMMAND
+    and some brief help information can be found in the file WPAN_ZBR_pub.pdf
+
+
+>>> Please report bugs to:
+    Jianliang Zheng (zheng@ee.ccny.cuny.edu)
+    Myung J. Lee (lee@ccny.cuny.edu)
