@@ -32,6 +32,10 @@ source configuration.tcl
 set left_router  [ $ns node ]
 set right_router [ $ns node ]
 
+# Set CoDel control parameters 
+Queue/CoDel set target_ 5ms
+Queue/CoDel set interval_ 100ms
+
 # connect them by a bottleneck link, with a queue discipline (qdisc)
 $ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
 
@@ -80,17 +84,19 @@ for { set i 0 } { $i < $num_servers } { incr i } {
 }
 
 # Set parameters for the DRR queue
-Simulator instproc get-link { node1 node2 } {
-    $self instvar link_
-    set id1 [$node1 id]
-    set id2 [$node2 id]
-    return $link_($id1:$id2)
+if { $bottleneck_qdisc == "DRR" } {
+  Simulator instproc get-link { node1 node2 } {
+      $self instvar link_
+      set id1 [$node1 id]
+      set id2 [$node2 id]
+      return $link_($id1:$id2)
+  }
+  set l [$ns get-link $left_router $right_router]
+  set q [$l queue]
+  $q blimit 25000
+  $q quantum 1000
+  $q buckets 2
 }
-set l [$ns get-link $left_router $right_router]
-set q [$l queue]
-$q blimit 25000
-$q quantum 1000
-$q buckets 2
 
 # Run simulation
 $ns at $duration "finish $ns $trace_file"
