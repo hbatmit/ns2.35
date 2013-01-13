@@ -248,6 +248,11 @@ Queue/REM set pmark_ 0.0
 Queue/REM set markpkts_ false
 Queue/REM set qib_ false
 
+Queue/CoDel set curq_ 0.0
+Queue/CoDel set d_exp_ 0.0
+Queue/CoDel set interval_ 0.1
+Queue/CoDel set target_ .005
+
 Queue/GK set ecnlim_ 0.95
 Queue/GK set mean_pktsize_ 1000
 Queue/GK set curq_ 0

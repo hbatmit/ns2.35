@@ -217,7 +217,7 @@ OBJ_CC = \
 	tools/integrator.o tools/queue-monitor.o \
 	tools/flowmon.o tools/loss-monitor.o \
 	queue/queue.o queue/drop-tail.o \
-	adc/simple-intserv-sched.o queue/red.o \
+	adc/simple-intserv-sched.o queue/red.o queue/codel.o \
 	queue/semantic-packetqueue.o queue/semantic-red.o \
 	tcp/ack-recons.o \
 	queue/sfq.o queue/fq.o queue/drr.o queue/srr.o queue/cbq.o \
