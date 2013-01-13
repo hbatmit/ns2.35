@@ -6,4 +6,4 @@ set egress_bw          10Mb
 set egress_latency     10ms
 set bottleneck_bw      50Mb
 set bottleneck_latency 50ms
-set bottleneck_qdisc   DropTail
+set bottleneck_qdisc   DRR

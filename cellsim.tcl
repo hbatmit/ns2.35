@@ -60,7 +60,10 @@ for { set i 0 } { $i < $num_clients } { incr i } {
 
   # Set packetSize_ and related parameters.
   $client_cbr($i) set packetSize_ 250
-  $client_cbr($i) set interval_   20ms
+  set interval [ expr $i + 1 ]
+  append interval "ms"
+  puts $interval
+  $client_cbr($i) set interval_   $interval
   $client_cbr($i) set random_     1
   $ns at 0.0 "$client_cbr($i) start"
   $ns at 5.0 "$client_cbr($i) stop "
@@ -77,5 +80,19 @@ for { set i 0 } { $i < $num_servers } { incr i } {
   $ns connect $client_udp($i) $server_sink($i)
 }
 
+# Set parameters for the DRR queue
+Simulator instproc get-link { node1 node2 } {
+    $self instvar link_
+    set id1 [$node1 id]
+    set id2 [$node2 id]
+    return $link_($id1:$id2)
+}
+set l [$ns get-link $left_router $right_router]
+set q [$l queue]
+$q blimit 25000
+$q quantum 250
+$q buckets 5
+
 # Run simulation
 $ns run
+finish $ns $trace_file
