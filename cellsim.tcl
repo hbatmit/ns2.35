@@ -55,13 +55,13 @@ $ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $b
 # Create number of required client nodes
 for { set i 0 } { $i < $num_clients } { incr i } {
   set client_node($i) [ $ns node ]
-  $ns duplex-link $client_node($i) $left_router $ingress_bw $ingress_latency DropTail
+  $ns duplex-link $client_node($i) $left_router [ bw_parse $ingress_bw ] $ingress_latency DropTail
 }
 
 # Create number of required server nodes
 for { set i 0 } { $i < $num_servers } { incr i } {
   set server_node($i) [ $ns node ]
-  $ns duplex-link $right_router $server_node($i) $egress_bw  $egress_latency DropTail
+  $ns duplex-link $right_router $server_node($i) [ bw_parse $egress_bw ]  $egress_latency DropTail
 }
 
 # Create traffic sources on client
