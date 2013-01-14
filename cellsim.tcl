@@ -80,7 +80,7 @@ for { set i 0 } { $i < $num_clients } { incr i } {
   set rate [ expr ( $i + 1 ) * 5 ]
   append rate "Mb"
   puts $rate
-  $client_cbr($i) set rate_   $rate
+  $client_cbr($i) set rate_   [ bw_parse $rate ]
   $client_cbr($i) set random_     0
   $ns at 0.0 "$client_cbr($i) start"
 }
