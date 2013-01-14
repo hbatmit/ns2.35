@@ -5,11 +5,11 @@
 #include <algorithm>
 
 static class SFDClass : public TclClass {
- public:
-	SFDClass() : TclClass("Queue/SFD") {}
-	TclObject* create(int, const char*const*) {
-		return (new SFD(0));
-	}
+  public:
+    SFDClass() : TclClass("Queue/SFD") {}
+    TclObject* create(int, const char*const*) {
+      return (new SFD(0));
+    }
 } class_sfd;
 
 int SFD::command(int argc, const char*const* argv) 
@@ -31,7 +31,10 @@ FlowStats::FlowStats() :
 
 SFD::SFD( double capacity ) :
   _capacity( capacity )
-{}
+{ 
+  bind( "_capacity", &_capacity );
+  _packet_queue = new PacketQueue;
+}
 
 void SFD::enque(Packet *p)
 {
@@ -118,8 +121,8 @@ double SFD::est_fair_share()
   auto capacity = _capacity ;
 
   /* First, determine all the allocations */
-  while ( !current_share.empty() and capacity > 0 ) {
-    auto total_shares = desired.size();
+  while ( (!current_share.empty()) and (capacity > 0) ) {
+    auto total_shares = current_share.size();
     auto unit_share   = capacity / total_shares ;
     std::list<uint64_t> user_list;
     for ( auto it = current_share.begin(); it != current_share.end(); it++ )
