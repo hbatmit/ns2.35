@@ -142,6 +142,10 @@ double SFD::est_fair_share()
     }
   }
 
+  /* finalize allocations */
+  for ( auto &user_share : current_share ) {
+    final_share[ user_share.first ] = current_share[ user_share.first ];
+  }
   /* Determine fair share rate as max over all allocations */
   auto arg_max = std::max_element( final_share.begin(), final_share.end(), 
                  [&] (const std::pair<uint64_t,double> & p1, const std::pair<uint64_t,double> &p2 )
