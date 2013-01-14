@@ -45,6 +45,10 @@ if { $bottleneck_qdisc == "sfqCoDel" } {
   Queue/sfqCoDel set curq_     0
 }
 
+if { $bottleneck_qdisc == "SFD" } {
+  Queue/SFD set _capacity [ bw_parse $bottleneck_bw ]
+}
+
 # connect them by a bottleneck link, with a queue discipline (qdisc)
 $ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
 
