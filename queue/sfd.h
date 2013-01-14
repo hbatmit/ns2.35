@@ -43,6 +43,7 @@ class SFD : public Queue {
 
   public :
     SFD( double capacity );
+    int command(int argc, const char*const* argv); 
 
     /* inherited functions from queue */
     void enque( Packet *p );

@@ -4,6 +4,25 @@
 #include <stdint.h>
 #include <algorithm>
 
+static class SFDClass : public TclClass {
+ public:
+	SFDClass() : TclClass("Queue/SFD") {}
+	TclObject* create(int, const char*const*) {
+		return (new SFD(0));
+	}
+} class_sfd;
+
+int SFD::command(int argc, const char*const* argv) 
+{
+  if (argc == 3) {
+    if (!strcmp(argv[1], "capacity")) {
+     _capacity=atof(argv[2]);
+     return (TCL_OK);
+    }
+  }
+  return Queue::command(argc, argv);
+}
+
 FlowStats::FlowStats() :
   _last_arrival( 0.0 ),
   _acc_pkt_size( 0.0 ),
@@ -18,18 +37,25 @@ void SFD::enque(Packet *p)
 {
   /* Compute flow_id using hash */
   uint64_t flow_id = hash( p ); 
+  printf( " Packet hashes into flow id %lu \n", flow_id );
 
   /* Estimate arrival rate */
   double now = Scheduler::instance().clock();
   double arrival_rate = est_flow_rate( flow_id, now, p );
+  printf( " Arrival rate estimate is %f \n", arrival_rate );
 
   /* Estimate fair share */
   _fair_share = est_fair_share() ;
+  printf( " Fair share estimate is %f\n", _fair_share );
+
   double drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
 
   /* Toss a coin and drop, for UDP */  
   if ( !should_drop( drop_probability ) ) {
+    printf( " Not dropping packet, drop_probability is %f\n", drop_probability );
     _packet_queue->enque( p );
+  } else {
+    printf( " Dropping packet, drop_probability is %f\n", drop_probability );
   }
 }
 
