@@ -59,6 +59,7 @@ void SFD::enque(Packet *p)
     _packet_queue->enque( p );
   } else {
     printf( " Dropping packet, drop_probability is %f\n", drop_probability );
+    drop( p );
   }
 }
 
