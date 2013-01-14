@@ -32,9 +32,18 @@ source configuration.tcl
 set left_router  [ $ns node ]
 set right_router [ $ns node ]
 
-# Set CoDel control parameters 
-Queue/CoDel set target_ 5ms
-Queue/CoDel set interval_ 100ms
+## Set CoDel/sfqCoDel control parameters 
+if { $bottleneck_qdisc == "CoDel" } {
+  Queue/CoDel    set target_   $codel_target
+  Queue/CoDel    set interval_ $codel_interval
+}
+
+if { $bottleneck_qdisc == "sfqCoDel" } {
+  Queue/sfqCoDel set target_   $codel_target
+  Queue/sfqCoDel set interval_ $codel_interval
+  Queue/sfqCoDel set d_exp_    0.0
+  Queue/sfqCoDel set curq_     0
+}
 
 # connect them by a bottleneck link, with a queue discipline (qdisc)
 $ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
