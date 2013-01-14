@@ -34,13 +34,13 @@ set right_router [ $ns node ]
 
 ## Set CoDel/sfqCoDel control parameters 
 if { $bottleneck_qdisc == "CoDel" } {
-  Queue/CoDel    set target_   $codel_target
-  Queue/CoDel    set interval_ $codel_interval
+  Queue/CoDel    set target_   [ delay_parse $codel_target ]
+  Queue/CoDel    set interval_ [ delay_parse $codel_interval ]
 }
 
 if { $bottleneck_qdisc == "sfqCoDel" } {
-  Queue/sfqCoDel set target_   $codel_target
-  Queue/sfqCoDel set interval_ $codel_interval
+  Queue/sfqCoDel set target_   [ delay_parse $codel_target ]
+  Queue/sfqCoDel set interval_ [ delay_parse $codel_interval ]
   Queue/sfqCoDel set d_exp_    0.0
   Queue/sfqCoDel set curq_     0
 }
