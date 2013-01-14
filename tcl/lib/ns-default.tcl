@@ -253,6 +253,11 @@ Queue/CoDel set d_exp_ 0.0
 Queue/CoDel set interval_ 0.1
 Queue/CoDel set target_ .005
 
+Queue/sfqCoDel set curq_ 0.0
+Queue/sfqCoDel set d_exp_ 0.0
+Queue/sfqCoDel set interval_ 0.1
+Queue/sfqCoDel set target_ .005
+
 Queue/GK set ecnlim_ 0.95
 Queue/GK set mean_pktsize_ 1000
 Queue/GK set curq_ 0
