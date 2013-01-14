@@ -12,25 +12,41 @@
  * with the TCP loss equation.
  */
 
-class TaggedPacket {
-  Packet p;
-  double _arrived;
-  double _delivered;
+class FlowStats {
+  public :
+    double _last_arrival ;
+    double _acc_pkt_size;
+    double _flow_rate;
+    FlowStats();
 };
 
 class SFD : public Queue {
+  private :
+    /* Underlying FIFO and link speed */
+    PacketQueue *_packet_queue;
+    double _capacity;
+
+    /* Hash from packet to flow */
+    uint64_t hash( Packet *p );
+
+    /* Per flow stats for rate estimation (borrowed from CSFQ) */
+    std::map<uint64_t,FlowStats> _flow_stats;
+    static constexpr double  K = 0.2; /* 200 ms */
+    double est_flow_rate( uint64_t flow_id, double now, Packet* p );
+
+    /* Fair share rate of link */
+    double est_fair_share() ;
+    double _fair_share;
+
+    /* Probabilistic dropping */
+    bool should_drop( double prob ); 
+
   public :
-    SFD();
-  protected :
-    PacketQueue _packet_queue; /* Underlying FIFO */
+    SFD( double capacity );
 
     /* inherited functions from queue */
-    void enque( Packet * );
+    void enque( Packet *p );
     Packet* deque();
-
-    /* Maintain per flow stats */
-    /* Map from flow_id (after hashing) to flow_history i.e list of Tagged packets */
-    std::map<uint32_t,std::list<TaggedPacket>> _flow_stats;
 };
 
 #endif
