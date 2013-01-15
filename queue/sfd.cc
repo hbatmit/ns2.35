@@ -52,14 +52,22 @@ void SFD::enque(Packet *p)
   _fair_share = est_fair_share() ;
   printf( " Fair share estimate is %f\n", _fair_share );
 
-  double drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
+  /* Extract protocol (TCP vs UDP) from the header */
+  hdr_cmn* hdr  = hdr_cmn::access(p); 
+  packet_t pkt_type   = hdr->ptype();
+  double drop_probability = 0;
+  if ( pkt_type == PT_CBR ) {
+    drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
+  } else if ( pkt_type == PT_TCP ) {
+    drop_probability = std::max( 0.0 , 1 - ((1.33*_fair_share)/arrival_rate) );
+  }
 
-  /* Toss a coin and drop, for UDP */  
+  /* Toss a coin and drop */  
   if ( !should_drop( drop_probability ) ) {
-    printf( " Not dropping packet, drop_probability is %f\n", drop_probability );
+    printf( " Not dropping packet of type %d , drop_probability is %f\n", pkt_type, drop_probability );
     _packet_queue->enque( p );
   } else {
-    printf( " Dropping packet, drop_probability is %f\n", drop_probability );
+    printf( " Dropping packet of type %d, drop_probability is %f\n", pkt_type, drop_probability );
     drop( p );
   }
 }
