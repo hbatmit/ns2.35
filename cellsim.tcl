@@ -11,15 +11,26 @@ proc finish { sim_object trace_file } {
   exit 0
 }
 
-# Generic topology :
+# UDP topology :
 #
-#  client_node(0) --                                    ---server_node(0)
-#                   \                                  /
-#  client_node(1)----left_router-----------right_router----server_node(1)
-#        .          /                                  \        .
-#        .         /                                    \       .
-#        .        /                                      \      .
-#  client_node(n)                                          server_node(m)
+#  udp_client_node(0)  --                                    ---udp_server_node(0)
+#                        \                                  /
+#  udp_client_node(1)----left_router-----------right_router----udp_server_node(1)
+#             .          /                                  \        .
+#             .         /                                    \       .
+#             .        /                                      \      .
+#  udp_client_node(n)                                          udp_server_node(n)
+
+# TCP topology :
+#
+#  tcp_client_node(0)  --                                    ---tcp_server_node(0)
+#                        \                                  /
+#  tcp_client_node(1)----left_router-----------right_router----tcp_server_node(1)
+#             .          /                                  \        .
+#             .         /                                    \       .
+#             .        /                                      \      .
+#  tcp_client_node(n)                                          tcp_server_node(n)
+
 
 # read bandwidths from config file
 source configuration.tcl
@@ -41,59 +52,9 @@ if { $bottleneck_qdisc == "sfqCoDel" } {
   Queue/sfqCoDel set curq_     0
 }
 
+# Set link capacity for SFD
 if { $bottleneck_qdisc == "SFD" } {
   Queue/SFD set _capacity [ bw_parse $bottleneck_bw ]
-}
-
-# connect them by a bottleneck link, with a queue discipline (qdisc)
-$ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
-
-# open a file for tracing
-set trace_file [ open cellsim.tr w ]
-$ns trace-queue $left_router $right_router $trace_file
-
-# Create number of required client nodes
-for { set i 0 } { $i < $num_clients } { incr i } {
-  set client_node($i) [ $ns node ]
-  $ns duplex-link $client_node($i) $left_router [ bw_parse $ingress_bw ] $ingress_latency DropTail
-}
-
-# Create number of required server nodes
-for { set i 0 } { $i < $num_servers } { incr i } {
-  set server_node($i) [ $ns node ]
-  $ns duplex-link $right_router $server_node($i) [ bw_parse $egress_bw ]  $egress_latency DropTail
-}
-
-# Create traffic sources on client
-for { set i 0 } { $i < $num_clients } { incr i } {
-  
-  # Create UDP Agents 
-  set client_udp($i) [ new Agent/UDP ]
-  $ns attach-agent $client_node($i) $client_udp($i)
-
-  # Generate CBR traffic on UDP Agent
-  set client_cbr($i) [ new Application/Traffic/CBR ]
-  $client_cbr($i) attach-agent $client_udp($i)
-
-  # Set packetSize_ and related parameters.
-  $client_cbr($i) set packetSize_ 1000
-  set rate [ expr ( $i + 1 ) * 5 ]
-  append rate "Mb"
-  puts $rate
-  $client_cbr($i) set rate_   [ bw_parse $rate ]
-  $client_cbr($i) set random_     0
-  $ns at 0.0 "$client_cbr($i) start"
-}
-
-# Create traffic receivers on server
-for { set i 0 } { $i < $num_servers } { incr i } {
-
-  # Create Application Sinks
-  set server_sink($i) [ new Agent/Null ]
-  $ns attach-agent $server_node($i) $server_sink($i)
-
-  # Connect them to their sources
-  $ns connect $client_udp($i) $server_sink($i)
 }
 
 # Set parameters for the DRR queue
@@ -109,6 +70,80 @@ if { $bottleneck_qdisc == "DRR" } {
   $q blimit 25000
   $q quantum 1000
   $q buckets 2
+}
+
+# connect routers by a bottleneck link, with a queue discipline (qdisc)
+$ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
+
+# open a file for tracing bottleneck link alone
+set trace_file [ open cellsim.tr w ]
+$ns trace-queue $left_router $right_router $trace_file
+
+# CBR/UDP clients
+for { set i 0 } { $i < $num_udp } { incr i } {
+  # Create node
+  set udp_client_node($i) [ $ns node ]
+  $ns duplex-link $udp_client_node($i) $left_router [ bw_parse $ingress_bw ] $ingress_latency DropTail
+  
+  # Create UDP Agents 
+  set udp_client($i) [ new Agent/UDP ]
+  $ns attach-agent $udp_client_node($i) $udp_client($i)
+
+  # Generate CBR traffic on UDP Agent
+  set cbr_client($i) [ new Application/Traffic/CBR ]
+  $cbr_client($i) attach-agent $udp_client($i)
+
+  # Set packetSize_ and related parameters.
+  $cbr_client($i) set packetSize_ 1000
+  puts "UDP rate $cbr_rate"
+  $cbr_client($i) set rate_   [ bw_parse $cbr_rate ]
+  $cbr_client($i) set random_     0
+  $ns at 0.0 "$cbr_client($i) start"
+}
+
+# CBR/UDP servers
+for { set i 0 } { $i < $num_udp } { incr i } {
+  # Create node
+  set udp_server_node($i) [ $ns node ]
+  $ns duplex-link $right_router $udp_server_node($i) [ bw_parse $egress_bw ]  $egress_latency DropTail
+
+  # Create Application Sinks
+  set udp_server($i) [ new Agent/Null ]
+  $ns attach-agent $udp_server_node($i) $udp_server($i)
+
+  # Connect them to their sources
+  $ns connect $udp_client($i) $udp_server($i)
+}
+
+# FTP/TCP clients
+for { set i 0 } { $i < $num_tcp } { incr i } {
+  # Create node
+  set tcp_client_node($i) [ $ns node ]
+  $ns duplex-link $tcp_client_node($i) $left_router [ bw_parse $ingress_bw ] $ingress_latency DropTail
+
+  # Create TCP Agents
+  set tcp_client($i) [ new Agent/TCP/Linux ]
+  $tcp_client($i) select_ca cubic
+  $ns attach-agent $tcp_client_node($i) $tcp_client($i)
+
+  # Generate FTP traffic on TCP Agent
+  set ftp_client($i) [ new Application/FTP ]
+  $ftp_client($i) attach-agent $tcp_client($i)
+  $ns at 0.0 "$ftp_client($i) start"
+}
+
+# FTP/TCP traffic servers
+for { set i 0 } { $i < $num_tcp } {incr i } {
+  # Create node
+  set tcp_server_node($i) [ $ns node ]
+  $ns duplex-link $right_router $tcp_server_node($i) [ bw_parse $egress_bw ]  $egress_latency DropTail
+
+  # Create server sinks for FTP
+  set tcp_server($i) [ new Agent/TCPSink/Sack1 ]
+  $ns attach-agent $tcp_server_node($i) $tcp_server($i)
+
+  # Connect them to their sources
+  $ns connect $tcp_client($i) $tcp_server($i)
 }
 
 # Run simulation
