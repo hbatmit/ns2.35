@@ -14,27 +14,28 @@ for line in fh.readlines() :
   src_addr=int(records[8].split('.')[0])
   dst_addr=int(records[9].split('.')[0])
   pkt_size_bits=int(records[5])*8
+  protocol=(records[4]);
 
   if ( action == "+" ) :
     #enqueued at the first router
-    if (src_addr,dst_addr ) not in send_stats :
-      send_stats[ (src_addr,dst_addr) ] = pkt_size_bits;
+    if (src_addr, dst_addr, protocol ) not in send_stats :
+      send_stats[ (src_addr, dst_addr, protocol) ] = pkt_size_bits;
     else : 
-      send_stats[ (src_addr,dst_addr) ] += pkt_size_bits;
+      send_stats[ (src_addr, dst_addr, protocol) ] += pkt_size_bits;
 
   if ( action == "r" ) :
     #received at the second router 
-    if (src_addr,dst_addr ) not in recv_stats :
-      recv_stats[ (src_addr,dst_addr) ] = pkt_size_bits;
+    if (src_addr, dst_addr, protocol ) not in recv_stats :
+      recv_stats[ (src_addr, dst_addr, protocol) ] = pkt_size_bits;
     else : 
-      recv_stats[ (src_addr,dst_addr) ] += pkt_size_bits;
+      recv_stats[ (src_addr, dst_addr, protocol) ] += pkt_size_bits;
  
-  if ( src_node == 0 ) and ( dst_node == 1 ) and ( action == "d" ) :
+  if ( action == "d" ) :
     # dropped packet
-    if (src_addr,dst_addr ) not in drop_stats :
-      drop_stats[ (src_addr,dst_addr) ] = pkt_size_bits;
+    if (src_addr, dst_addr, protocol ) not in drop_stats :
+      drop_stats[ (src_addr, dst_addr, protocol) ] = pkt_size_bits;
     else : 
-      drop_stats[ (src_addr,dst_addr) ] += pkt_size_bits;
+      drop_stats[ (src_addr, dst_addr, protocol) ] += pkt_size_bits;
 
 for pair in send_stats :
   print "Pair : ",pair
