@@ -1,5 +1,5 @@
-set num_udp            1
-set num_tcp            1
+set num_udp            10
+set num_tcp            10
 set ingress_bw         10Mb
 set ingress_latency    1ms
 set egress_bw          10Mb

@@ -3,6 +3,7 @@
 #include "rng.h"
 #include <stdint.h>
 #include <algorithm>
+#include <float.h>
 
 static class SFDClass : public TclClass {
   public:
@@ -122,7 +123,7 @@ double SFD::est_fair_share()
   auto capacity = _capacity ;
 
   /* First, determine all the allocations */
-  while ( (!current_share.empty()) and (capacity > 0) ) {
+  while ( (!current_share.empty()) and (capacity > DBL_MIN ) ) {
     auto total_shares = current_share.size();
     auto unit_share   = capacity / total_shares ;
     std::list<uint64_t> user_list;
