@@ -4,14 +4,10 @@
 # Create a simulator object
 set ns [ new Simulator ]
 
-# open a file for tracing
-set trace_file [ open cellsim.tr w ]
-$ns trace-all $trace_file
-
 # Clean up procedures 
 proc finish { sim_object trace_file } {
   $sim_object flush-trace
-  close $trace_file 
+  close $trace_file
   exit 0
 }
 
@@ -51,6 +47,10 @@ if { $bottleneck_qdisc == "SFD" } {
 
 # connect them by a bottleneck link, with a queue discipline (qdisc)
 $ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
+
+# open a file for tracing
+set trace_file [ open cellsim.tr w ]
+$ns trace-queue $left_router $right_router $trace_file
 
 # Create number of required client nodes
 for { set i 0 } { $i < $num_clients } { incr i } {

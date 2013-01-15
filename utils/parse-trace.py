@@ -1,6 +1,7 @@
 #! /usr/bin/python
 import sys
 fh=open(sys.argv[1])
+duration=float(sys.argv[2])
 drop_stats=dict()
 send_stats=dict()
 recv_stats=dict()
@@ -12,37 +13,38 @@ for line in fh.readlines() :
   dst_node=int(records[3])
   src_addr=int(records[8].split('.')[0])
   dst_addr=int(records[9].split('.')[0])
+  pkt_size_bits=int(records[5])*8
 
-  if ( dst_node == 0 ) and ( action == "+" ) :
-    #sending into first router
+  if ( action == "+" ) :
+    #enqueued at the first router
     if (src_addr,dst_addr ) not in send_stats :
-      send_stats[ (src_addr,dst_addr) ] = 1;
+      send_stats[ (src_addr,dst_addr) ] = pkt_size_bits;
     else : 
-      send_stats[ (src_addr,dst_addr) ] +=1;
+      send_stats[ (src_addr,dst_addr) ] += pkt_size_bits;
 
-  if ( src_node == 1 ) and ( action == "r" ) :
-    #sending out of the second router 
+  if ( action == "r" ) :
+    #received at the second router 
     if (src_addr,dst_addr ) not in recv_stats :
-      recv_stats[ (src_addr,dst_addr) ] = 1;
+      recv_stats[ (src_addr,dst_addr) ] = pkt_size_bits;
     else : 
-      recv_stats[ (src_addr,dst_addr) ] += 1;
+      recv_stats[ (src_addr,dst_addr) ] += pkt_size_bits;
  
   if ( src_node == 0 ) and ( dst_node == 1 ) and ( action == "d" ) :
     # dropped packet
     if (src_addr,dst_addr ) not in drop_stats :
-      drop_stats[ (src_addr,dst_addr) ] = 1;
+      drop_stats[ (src_addr,dst_addr) ] = pkt_size_bits;
     else : 
-      drop_stats[ (src_addr,dst_addr) ] +=1;
+      drop_stats[ (src_addr,dst_addr) ] += pkt_size_bits;
 
 for pair in send_stats :
   print "Pair : ",pair
-  print "sent :",8000*send_stats[pair], " bits"
+  print "sent :",send_stats[pair]/duration, " bits/second"
   if pair not in recv_stats :
     print "recv",0
   else :
-    print "recv :",8000*recv_stats[pair]," bits"
+    print "recv :",recv_stats[pair]/duration," bits/second"
   if pair not in drop_stats :
     print "dropped",0
   else :
-    print "dropped",8000*drop_stats[pair]," bits"
+    print "dropped",drop_stats[pair]/duration," bits/second"
   print "====================\n"
