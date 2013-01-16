@@ -33,8 +33,13 @@ FlowStats::FlowStats() :
 SFD::SFD( double capacity ) :
   _capacity( capacity )
 { 
+  bind("_iter", &_iter ); 
   bind( "_capacity", &_capacity );
   _packet_queue = new PacketQueue;
+  _dropper = new RNG();
+  for (int i=1; i < _iter ; i++ ) {
+    _dropper->reset_next_substream();
+  }
 }
 
 void SFD::enque(Packet *p)
@@ -166,6 +171,5 @@ double SFD::est_fair_share()
 bool SFD::should_drop( double prob )
 {
   /* Toss a biased coin */
-  static RNG* dropper = new RNG();
-  return dropper->next_double() <= prob ;
+  return _dropper->next_double() <= prob ;
 }

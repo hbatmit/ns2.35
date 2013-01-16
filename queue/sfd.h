@@ -5,6 +5,7 @@
 #include "queue.h"
 #include <map>
 #include <list>
+#include "rng.h"
 
 /*
  * Stochastic Fair Dropping : Variation of AFD 
@@ -23,6 +24,10 @@ class FlowStats {
 
 class SFD : public Queue {
   private :
+    /* Random dropper, one for the whole queue, pick _iter^{th} substream */
+    RNG* _dropper ;
+    int _iter;
+
     /* Underlying FIFO and link speed */
     PacketQueue *_packet_queue;
     double _capacity;

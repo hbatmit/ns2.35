@@ -55,6 +55,7 @@ if { $bottleneck_qdisc == "sfqCoDel" } {
 # Set link capacity for SFD
 if { $bottleneck_qdisc == "SFD" } {
   Queue/SFD set _capacity [ bw_parse $bottleneck_bw ]
+  Queue/SFD set _iter 5
 }
 
 # Set parameters for the DRR queue
