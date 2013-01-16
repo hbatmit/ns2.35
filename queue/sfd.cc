@@ -64,7 +64,8 @@ void SFD::enque(Packet *p)
   if ( pkt_type == PT_CBR ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   } else if ( pkt_type == PT_TCP ) {
-    drop_probability = std::max( 0.0 , 1 - ((1.33*_fair_share)/arrival_rate) );
+    double tcp_coefficient = 1.33;
+    drop_probability = std::max( 0.0 , 1 - ((tcp_coefficient*_fair_share)/arrival_rate) );
   }
 
   /* Toss a coin and drop */  
