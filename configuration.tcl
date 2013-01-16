@@ -1,8 +1,8 @@
-set num_udp            10
-set num_tcp            10
-set ingress_bw         10Mb
+set num_udp            1
+set num_tcp            1
+set ingress_bw         20Mb
 set ingress_latency    1ms
-set egress_bw          10Mb
+set egress_bw          20Mb
 set egress_latency     1ms
 set bottleneck_bw      10Mb
 set bottleneck_latency 1ms
@@ -10,7 +10,7 @@ set bottleneck_qdisc   SFD
 set duration           100
 set codel_target       5ms
 set codel_interval     100ms
-set cbr_rate           1Mb
+set cbr_rate           10Mb
 
 # TCP parameters
 #bdp in packets, based on the nominal rtt
