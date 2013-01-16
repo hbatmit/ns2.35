@@ -27,7 +27,8 @@ int SFD::command(int argc, const char*const* argv)
 FlowStats::FlowStats() :
   _last_arrival( 0.0 ),
   _acc_pkt_size( 0.0 ),
-  _flow_rate( 0.0 )
+  _flow_rate( 0.0 ),
+  _last_drop_prob( 0.0 )
 {}
 
 SFD::SFD( double capacity ) :
@@ -55,12 +56,18 @@ void SFD::enque(Packet *p)
   /* Extract protocol (TCP vs UDP) from the header */
   hdr_cmn* hdr  = hdr_cmn::access(p); 
   packet_t pkt_type   = hdr->ptype();
-  double drop_probability = 0;
-  if ( pkt_type == PT_CBR ) {
-    drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
-  } else if ( pkt_type == PT_TCP ) {
-    drop_probability = std::max( 0.0 , 1 - ((1.33*_fair_share)/arrival_rate) );
+
+  /* If _fair_share is empty simply enqueue packet */
+  if ( _fair_share == 0 ) {
+    _packet_queue->enque( p );
+    return;
   }
+
+  /* Estimate drop probability */
+  double fair_drop_rate = std::max( 0.0 , 1 - _fair_share/arrival_rate );
+  double tcp_drop_rate  = pow( (arrival_rate/_fair_share), 2 ) * _flow_stats[ flow_id ]._last_drop_prob ;
+  double drop_probability = std::min( std::max( fair_drop_rate, tcp_drop_rate ), 1.0 );
+  _flow_stats[ flow_id ]._last_drop_prob = drop_probability;
 
   /* Toss a coin and drop */  
   if ( !should_drop( drop_probability ) ) {
