@@ -75,6 +75,8 @@ if { $bottleneck_qdisc == "DRR" } {
 
 # connect routers by a bottleneck link, with a queue discipline (qdisc)
 $ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
+set bottleneck_link [ $ns link $left_router $right_router ]
+set link_handle [$bottleneck_link link ]
 
 # open a file for tracing bottleneck link alone
 set trace_file [ open cellsim.tr w ]
