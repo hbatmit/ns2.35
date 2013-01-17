@@ -23,8 +23,8 @@ class CellLink : public TclObject {
     std::vector<RNG*>    _rate_generators;
     uint32_t _iter;
     uint32_t _current_slot;
-    static constexpr double TIME_SLOT_DURATION = 1.67 ; /* CDMA, 1.67 ms time slots */
-    static const uint32_t EWMA_SLOTS = 100 ;
+    double TIME_SLOT_DURATION; /* CDMA, 1.67 ms time slots */
+    uint32_t EWMA_SLOTS;
 
   public :
     CellLink( uint32_t num_users, uint32_t iteration_number );

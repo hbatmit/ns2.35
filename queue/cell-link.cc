@@ -4,8 +4,12 @@
 static class CellLinkClass : public TclClass {
   public :
     CellLinkClass() : TclClass("CellLink") {}
-    TclObject* create(int, const char*const*) {
-      return (new CellLink( 0, 0 ));
+    TclObject* create(int argc, const char*const* argv) {
+      if ( argc != 6 ) {
+        printf( " Invalid number of args to CellLink \n" );
+        exit(-1);
+      }
+      return ( new CellLink( atoi(argv[4]), atoi(argv[5]) ) );
     }
 } class_cell_link;
 
@@ -16,6 +20,16 @@ int CellLink::command(int argc, const char*const* argv)
       tick();
       return TCL_OK;
     }
+    if ( !strcmp( argv[1], "TIME_SLOT_DURATION" ) ) {
+      Tcl& tcl = Tcl::instance();
+      tcl.resultf("%f",TIME_SLOT_DURATION);
+      return (TCL_OK);
+    }
+    if ( !strcmp( argv[1], "EWMA_SLOTS" ) ) {
+      Tcl &tcl = Tcl::instance();
+      tcl.resultf("%d",EWMA_SLOTS);
+      return (TCL_OK);
+    }
   }
   return TclObject::command(argc,argv);
 }
@@ -25,11 +39,13 @@ CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
   _current_user( uint32_t (-1) ),
   _current_rates( std::vector<double>( _num_users ) ),
   _average_rates( std::vector<double>( _num_users ) ),
-  _rate_generators( std::vector<RNG*> ( _rate_generators ) ),
+  _rate_generators( std::vector<RNG*>( _num_users, new RNG() ) ),
   _iter( iteration_number )
 {
-  bind( "_iter", &_iter );
-  bind( "_num_users", &_num_users );
+  bind( "TIME_SLOT_DURATION", &TIME_SLOT_DURATION );
+  bind( "EWMA_SLOTS", &EWMA_SLOTS );
+  printf( "CellLink: TIME_SLOT_DURATION %f, EWMA_SLOTS %d , num_user %u, iter %u\n", TIME_SLOT_DURATION, EWMA_SLOTS, _num_users, _iter );
+  fflush( stdout );
   auto advance_substream = [&] ( RNG *r ) 
                            { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
   std::for_each( _rate_generators.begin(), _rate_generators.end(), advance_substream );
@@ -43,7 +59,8 @@ void CellLink::tick()
   if (schedule_now) {
     _current_user = pick_user_to_schedule();
     Tcl& tcl = Tcl::instance();
-    tcl.evalf("link_handle set bandwidth_ %f", _current_rates.at( _current_user ) );
+    printf( "$link_handle set bandwidth_ %f \n", _current_rates.at( _current_user )  ); 
+    tcl.evalf("$link_handle set bandwidth_ %f", _current_rates.at( _current_user ) );
     update_average_rates( _current_user );
   } else {
     update_average_rates( (uint32_t) -1 );
@@ -56,7 +73,7 @@ uint32_t CellLink::pick_user_to_schedule()
   std::transform( _current_rates.begin(), _current_rates.end(),
                   _average_rates.begin(), normalized_rates.begin(),
                   [&] ( const double & rate, const double & average)
-                  { return rate/average ; } );
+                  { return (average != 0 ) ? rate/average : 1.0 ; } );
   return std::distance( normalized_rates.begin(),
                         std::max_element( normalized_rates.begin(), normalized_rates.end() ) );
 }
