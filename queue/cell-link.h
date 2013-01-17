@@ -2,6 +2,8 @@
 #define CELL_LINK_HH
 
 #include<vector>
+#include "rng.h"
+#include "cdma-rates.h"
 /* An implementation of a fading Cellular Link,
  * along with a proportionally fair scheduler .
  * Tcl script calls tick() at slot boundaries
@@ -18,14 +20,13 @@ class CellLink {
     uint32_t _current_user;
     std::vector<double> _current_rates;
     std::vector<double> _average_rates;
+    std::vector<RNG>    _rate_generators;
+    uint32_t iteration_number;
     uint32_t  _current_slot;
     static constexpr double TIME_SLOT_DURATION = 1.67 ; /* CDMA, 1.67 ms time slots */
-    static const EWMA_SLOTS = 100 ;
+    static const uint32_t EWMA_SLOTS = 100 ;
 
   public :
-    /* Get current link rate for user i, used to get fair_share_{i} in SFD */
-    double get_current_rate( uint32_t user_id );
-
     /* Called by simulator, every TIME_SLOT_DURATION on CellLink */
     void tick( double now );
 
@@ -43,6 +44,6 @@ class CellLink {
 
     /* Get current user whose packets get sent out on SFD::deque() */
     uint32_t get_current_user();
-}
+};
 
 #endif

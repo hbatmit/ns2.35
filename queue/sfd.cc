@@ -44,9 +44,6 @@ SFD::SFD( double capacity ) :
 
 void SFD::enque(Packet *p)
 {
-  Tcl& tcl = Tcl::instance();
-  tcl.eval( "$link_handle set bandwidth_ 2Mb \n" );
-
   /* Compute flow_id using hash */
   uint64_t flow_id = hash( p ); 
   printf( " Packet hashes into flow id %lu \n", flow_id );
