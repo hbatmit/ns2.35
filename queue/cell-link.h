@@ -20,13 +20,14 @@ class CellLink {
     uint32_t _current_user;
     std::vector<double> _current_rates;
     std::vector<double> _average_rates;
-    std::vector<RNG>    _rate_generators;
-    uint32_t iteration_number;
-    uint32_t  _current_slot;
+    std::vector<RNG*>    _rate_generators;
+    uint32_t _iter;
+    uint32_t _current_slot;
     static constexpr double TIME_SLOT_DURATION = 1.67 ; /* CDMA, 1.67 ms time slots */
     static const uint32_t EWMA_SLOTS = 100 ;
 
   public :
+    CellLink( uint32_t num_users, uint32_t iteration_number );
     /* Called by simulator, every TIME_SLOT_DURATION on CellLink */
     void tick( double now );
 

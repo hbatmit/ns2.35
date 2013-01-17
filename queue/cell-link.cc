@@ -1,16 +1,29 @@
 #include "cell-link.h"
 #include <algorithm>
 
+CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
+  _num_users( num_users ),
+  _current_user( uint32_t (-1) ),
+  _current_rates( std::vector<double>( _num_users ) ),
+  _average_rates( std::vector<double>( _num_users ) ),
+  _rate_generators( std::vector<RNG*> ( _rate_generators ) ),
+  _iter( iteration_number )
+{
+  auto advance_substream = [&] ( RNG *r ) 
+                           { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
+  std::for_each( _rate_generators.begin(), _rate_generators.end(), advance_substream );
+}
+
 void CellLink::tick( double now )
 {
   _current_slot++;
   generate_new_rates();
   bool schedule_now = time_to_revise();
   if (schedule_now) {
-    uint32_t scheduled_user = pick_user_to_schedule();
+    _current_user = pick_user_to_schedule();
     Tcl& tcl = Tcl::instance();
-    tcl.evalf("link_handle set bandwidth_ %f", _current_rates.at( scheduled_user ) );
-    update_average_rates( scheduled_user );
+    tcl.evalf("link_handle set bandwidth_ %f", _current_rates.at( _current_user ) );
+    update_average_rates( _current_user );
   } else {
     update_average_rates( (uint32_t) -1 );
   }
@@ -32,7 +45,7 @@ void CellLink::generate_new_rates()
   /* For now, generate new rates uniformly from allowed rates
    * TODO: fix this to exponential or random walk 
    * */
-  auto rate_generator = [&] ( RNG & r ) { return ALLOWED_RATES[ r.uniform( (int)ALLOWED_RATES.size() )]; };
+  auto rate_generator = [&] ( RNG *r ) { return ALLOWED_RATES[ r->uniform( (int)ALLOWED_RATES.size() )]; };
   std::transform( _rate_generators.begin(), _rate_generators.end(),
                   _current_rates.begin(),
                   rate_generator );
