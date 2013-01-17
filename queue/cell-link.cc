@@ -1,6 +1,25 @@
 #include "cell-link.h"
 #include <algorithm>
 
+static class CellLinkClass : public TclClass {
+  public :
+    CellLinkClass() : TclClass("CellLink") {}
+    TclObject* create(int, const char*const*) {
+      return (new CellLink( 0, 0 ));
+    }
+} class_cell_link;
+
+int CellLink::command(int argc, const char*const* argv)
+{
+  if ( argc == 2 ) {
+    if ( !strcmp( argv[1], "tick" ) ) {
+      tick();
+      return TCL_OK;
+    }
+  }
+  return TclObject::command(argc,argv);
+}
+
 CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
   _num_users( num_users ),
   _current_user( uint32_t (-1) ),
@@ -9,12 +28,14 @@ CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
   _rate_generators( std::vector<RNG*> ( _rate_generators ) ),
   _iter( iteration_number )
 {
+  bind( "_iter", &_iter );
+  bind( "_num_users", &_num_users );
   auto advance_substream = [&] ( RNG *r ) 
                            { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
   std::for_each( _rate_generators.begin(), _rate_generators.end(), advance_substream );
 }
 
-void CellLink::tick( double now )
+void CellLink::tick()
 {
   _current_slot++;
   generate_new_rates();

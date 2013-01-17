@@ -14,7 +14,7 @@
  * ----if so, pick a new user based on prop. fairness
  * --in either case, update EWMA average */
 
-class CellLink {
+class CellLink : public TclObject {
   private:
     uint32_t _num_users;
     uint32_t _current_user;
@@ -29,7 +29,7 @@ class CellLink {
   public :
     CellLink( uint32_t num_users, uint32_t iteration_number );
     /* Called by simulator, every TIME_SLOT_DURATION on CellLink */
-    void tick( double now );
+    void tick( void );
 
     /* Find the user to schedule, using the proportional fair scheduler */
     uint32_t pick_user_to_schedule();
@@ -45,6 +45,10 @@ class CellLink {
 
     /* Get current user whose packets get sent out on SFD::deque() */
     uint32_t get_current_user();
+
+    /* Tcl interface */
+    int command(int argc, const char*const* argv);
+
 };
 
 #endif
