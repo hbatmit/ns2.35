@@ -97,6 +97,7 @@ for { set tick 0 } { $tick < $total_slots } { incr tick } {
 set trace_file [ open cellsim.tr w ]
 $ns trace-queue $left_router $right_router $trace_file
 
+set counter 0
 # CBR/UDP clients
 for { set i 0 } { $i < $num_udp } { incr i } {
   # Create node
@@ -106,6 +107,10 @@ for { set i 0 } { $i < $num_udp } { incr i } {
   # Create UDP Agents 
   set udp_client($i) [ new Agent/UDP ]
   $ns attach-agent $udp_client_node($i) $udp_client($i)
+
+  # set flow id
+  $udp_client($i) set fid_ $counter
+  set counter [ incr counter ]
 
   # Generate CBR traffic on UDP Agent
   set cbr_client($i) [ new Application/Traffic/CBR ]
@@ -143,6 +148,10 @@ for { set i 0 } { $i < $num_tcp } { incr i } {
   set tcp_client($i) [ new Agent/TCP/Linux ]
   $tcp_client($i) select_ca cubic
   $ns attach-agent $tcp_client_node($i) $tcp_client($i)
+
+  # set flow id
+  $tcp_client($i) set fid_ $counter
+  set counter [ incr counter ]
 
   # Generate FTP traffic on TCP Agent
   set ftp_client($i) [ new Application/FTP ]
