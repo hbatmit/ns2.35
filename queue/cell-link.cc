@@ -1,5 +1,6 @@
 #include "cell-link.h"
 #include <algorithm>
+#include <float.h>
 
 static class CellLinkClass : public TclClass {
   public :
@@ -64,7 +65,7 @@ void CellLink::tick()
   if (schedule_now) {
     _current_user = pick_user_to_schedule();
     Tcl& tcl = Tcl::instance();
-    printf( "$link_handle set bandwidth_ %f \n", _current_rates.at( _current_user )  ); 
+    printf( "$link_handle set bandwidth_ %f for user %lu \n", _current_rates.at( _current_user ), _current_user  ); 
     tcl.evalf("$link_handle set bandwidth_ %f", _current_rates.at( _current_user ) );
     update_average_rates( _current_user );
   } else {
@@ -78,7 +79,8 @@ uint32_t CellLink::pick_user_to_schedule()
   std::transform( _current_rates.begin(), _current_rates.end(),
                   _average_rates.begin(), normalized_rates.begin(),
                   [&] ( const double & rate, const double & average)
-                  { return (average != 0 ) ? rate/average : 1.0 ; } );
+                  { return (average != 0 ) ? rate/average :  DBL_MAX ; } );
+                  /* If average is zero, schedule preferentially */
   return std::distance( normalized_rates.begin(),
                         std::max_element( normalized_rates.begin(), normalized_rates.end() ) );
 }
