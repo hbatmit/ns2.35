@@ -28,8 +28,8 @@ class SFD : public Queue {
     RNG* _dropper ;
     int _iter;
 
-    /* Underlying FIFO and link speed */
-    PacketQueue *_packet_queue;
+    /* Underlying per flow FIFOs */
+    std::map<uint64_t,PacketQueue*> _packet_queues;
     double _capacity;
 
     /* Hash from packet to flow */

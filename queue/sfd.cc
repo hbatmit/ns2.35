@@ -35,7 +35,6 @@ SFD::SFD( double capacity ) :
 { 
   bind("_iter", &_iter ); 
   bind( "_capacity", &_capacity );
-  _packet_queue = new PacketQueue;
   _dropper = new RNG();
   for (int i=1; i < _iter ; i++ ) {
     _dropper->reset_next_substream();
@@ -71,7 +70,11 @@ void SFD::enque(Packet *p)
   /* Toss a coin and drop */  
   if ( !should_drop( drop_probability ) ) {
     printf( " Not dropping packet of type %d , drop_probability is %f\n", pkt_type, drop_probability );
-    _packet_queue->enque( p );
+    if ( _packet_queues.find( flow_id )  != _packet_queues.end() ) {
+      _packet_queues.at( flow_id )->enque( p );
+    } else {
+      _packet_queues[ flow_id ] = new PacketQueue();
+    }
   } else {
     printf( " Dropping packet of type %d, drop_probability is %f\n", pkt_type, drop_probability );
     drop( p );
@@ -80,8 +83,16 @@ void SFD::enque(Packet *p)
 
 Packet* SFD::deque()
 {
-  /* For now, simply do FIFO */
-  return _packet_queue->deque();
+  /* For now, simply ask the cell_link for the next user */
+  Tcl& tcl = Tcl::instance();
+  tcl.evalf( "$cell_link get_current_user" );
+  uint64_t current_user = atoi( tcl.result() );
+  printf( "Currently scheduled user is %d \n", current_user );
+  if ( _packet_queues.find( current_user ) != _packet_queues.end() ) {
+    return _packet_queues.at( current_user )->deque();
+  } else {
+    return 0; /* empty */
+  }
 }
 
 uint64_t SFD::hash(Packet* pkt)
