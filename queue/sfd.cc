@@ -87,9 +87,7 @@ Packet* SFD::deque()
 uint64_t SFD::hash(Packet* pkt)
 {
   hdr_ip *iph=hdr_ip::access(pkt);
-  uint64_t i;
-  i = (uint64_t)iph->saddr();
-  return ((i + (i >> 8) + ~(i>>4)) % ((2<<23)-1))+1; // modulo a large prime
+  return ( iph->flowid() ); // modulo a large prime
 }
 
 double SFD::est_flow_rate( uint64_t flow_id, double now, Packet *p ) 
