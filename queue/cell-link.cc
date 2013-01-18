@@ -30,6 +30,11 @@ int CellLink::command(int argc, const char*const* argv)
       tcl.resultf("%d",EWMA_SLOTS);
       return (TCL_OK);
     }
+    if ( !strcmp( argv[1], "get_current_user" ) ) {
+      Tcl &tcl = Tcl::instance();
+      tcl.resultf("%d",get_current_user() );
+      return (TCL_OK);
+    }
   }
   return TclObject::command(argc,argv);
 }
