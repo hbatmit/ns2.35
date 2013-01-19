@@ -63,7 +63,7 @@ void SFD::enque(Packet *p)
   if ( pkt_type == PT_CBR ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   } else if ( pkt_type == PT_TCP ) {
-    double tcp_coefficient = 1.33;
+    double tcp_coefficient = 1.0;
     drop_probability = std::max( 0.0 , 1 - ((tcp_coefficient*_fair_share)/arrival_rate) );
   }
 
@@ -89,9 +89,12 @@ Packet* SFD::deque()
 {
   /* Implement FIFO by looking at arrival time of HOL pkt */
   typedef std::pair<uint64_t,std::queue<double>> Flow;
-  auto flow_compare = [&] (const Flow & T1, const Flow &T2 ) { return T1.second.front() < T2.second.front() ; };
+  auto flow_compare = [&] (const Flow & T1, const Flow &T2 )
+                       { if (T1.second.empty()) return false;
+                         else if(T2.second.empty()) return true;
+                         else return T1.second.front() < T2.second.front() ; };
   uint64_t current_flow = std::min_element( _timestamps.begin(), _timestamps.end(), flow_compare ) -> first;
-                                                                                                             
+
   if ( _packet_queues.find( current_flow ) != _packet_queues.end() ) {
     if ( !_timestamps.at( current_flow ).empty() ) {
       _timestamps.at( current_flow ).pop();
