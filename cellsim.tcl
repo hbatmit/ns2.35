@@ -37,6 +37,7 @@ source configuration.tcl
 
 # get iteration number from cmd line
 set iter [ expr [ lindex $argv 0 ] ]
+set is_poisson [ lindex $argv 1 ]
 
 # create left_router and right_router
 set left_router  [ $ns node ]
@@ -75,27 +76,6 @@ if { $bottleneck_qdisc == "DRR" } {
   $q quantum 1000
   $q buckets 2
 }
-
-# connect routers by a bottleneck link, with a queue discipline (qdisc)
-$ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
-set bottleneck_link [ $ns link $left_router $right_router ]
-set link_handle [$bottleneck_link link ]
-
-# Set up cellular link
-set cell_link [ new CellLink [ expr $num_tcp + $num_udp ] $iter ]
-
-# Make sure it ticks at the right times
-set slot_duration [ $cell_link TIME_SLOT_DURATION ]
-set total_slots [ expr $duration / $slot_duration ]
-puts "Total number of slots"
-puts $total_slots
-for { set tick 0 } { $tick < $total_slots } { incr tick } {
-  $ns at [ expr $slot_duration * $tick ] "$cell_link tick "
-}
-
-# open a file for tracing bottleneck link alone
-set trace_file [ open cellsim.tr w ]
-$ns trace-queue $left_router $right_router $trace_file
 
 set counter 0
 # CBR/UDP clients
@@ -172,6 +152,18 @@ for { set i 0 } { $i < $num_tcp } {incr i } {
   # Connect them to their sources
   $ns connect $tcp_client($i) $tcp_server($i)
 }
+
+# connect routers by a bottleneck link, with a queue discipline (qdisc)
+if { $is_poisson == "poisson"} {
+  source link/poisson.tcl
+  DelayLink/PoissonLink set _iter $iter
+  set bottleneck_bw $poisson_rate
+}
+$ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
+
+# open a file for tracing bottleneck link alone
+set trace_file [ open cellsim.tr w ]
+$ns trace-queue $left_router $right_router $trace_file
 
 # Run simulation
 $ns at $duration "finish $ns $trace_file"
