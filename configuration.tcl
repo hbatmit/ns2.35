@@ -5,7 +5,7 @@ set ingress_latency    1ms
 set egress_bw          20Mb
 set egress_latency     1ms
 set bottleneck_bw      10Mb
-set bottleneck_latency 1ms
+set bottleneck_latency 20ms
 set bottleneck_qdisc   SFD
 set duration           100
 set codel_target       5ms
