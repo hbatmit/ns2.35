@@ -5,6 +5,7 @@
 #include "queue.h"
 #include <map>
 #include <list>
+#include <queue>
 #include "rng.h"
 
 /*
@@ -28,9 +29,10 @@ class SFD : public Queue {
     RNG* _dropper ;
     int _iter;
 
-    /* Underlying per flow FIFOs */
+    /* Underlying per flow FIFOs & incoming timestamps */
     std::map<uint64_t,PacketQueue*> _packet_queues;
     double _capacity;
+    std::map<uint64_t,std::queue<double>> _timestamps;
 
     /* Hash from packet to flow */
     uint64_t hash( Packet *p );

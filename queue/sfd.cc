@@ -72,8 +72,12 @@ void SFD::enque(Packet *p)
     printf( " Not dropping packet of type %d , drop_probability is %f\n", pkt_type, drop_probability );
     if ( _packet_queues.find( flow_id )  != _packet_queues.end() ) {
       _packet_queues.at( flow_id )->enque( p );
+      _timestamps.at( flow_id ).push( now );
     } else {
       _packet_queues[ flow_id ] = new PacketQueue();
+      _timestamps[ flow_id ] = std::queue<double>();
+      _packet_queues.at( flow_id )->enque( p );
+      _timestamps.at( flow_id ).push( now );
     }
   } else {
     printf( " Dropping packet of type %d, drop_probability is %f\n", pkt_type, drop_probability );
@@ -83,13 +87,16 @@ void SFD::enque(Packet *p)
 
 Packet* SFD::deque()
 {
-  /* For now, simply ask the cell_link for the next user */
-  Tcl& tcl = Tcl::instance();
-  tcl.evalf( "$cell_link get_current_user" );
-  uint64_t current_user = atoi( tcl.result() );
-  printf( "Currently scheduled user is %d \n", current_user );
-  if ( _packet_queues.find( current_user ) != _packet_queues.end() ) {
-    return _packet_queues.at( current_user )->deque();
+  /* Implement FIFO by looking at arrival time of HOL pkt */
+  typedef std::pair<uint64_t,std::queue<double>> Flow;
+  auto flow_compare = [&] (const Flow & T1, const Flow &T2 ) { return T1.second.front() < T2.second.front() ; };
+  uint64_t current_flow = std::min_element( _timestamps.begin(), _timestamps.end(), flow_compare ) -> first;
+                                                                                                             
+  if ( _packet_queues.find( current_flow ) != _packet_queues.end() ) {
+    if ( !_timestamps.at( current_flow ).empty() ) {
+      _timestamps.at( current_flow ).pop();
+    }
+    return _packet_queues.at( current_flow )->deque();
   } else {
     return 0; /* empty */
   }
