@@ -32,7 +32,7 @@ class SFD : public Queue {
     /* Underlying per flow FIFOs & incoming timestamps */
     std::map<uint64_t,PacketQueue*> _packet_queues;
     double _capacity;
-    std::map<uint64_t,std::queue<double>> _timestamps;
+    std::map<uint64_t,std::queue<uint64_t>> _timestamps;
 
     /* Hash from packet to flow */
     uint64_t hash( Packet *p );
