@@ -47,7 +47,7 @@
 class LinkDelay : public Connector {
  public:
 	LinkDelay();
-	void recv(Packet* p, Handler*);
+	virtual void recv(Packet* p, Handler*);
 	void send(Packet* p, Handler*);
 	void handle(Event* e);
 	double delay() { return delay_; }
