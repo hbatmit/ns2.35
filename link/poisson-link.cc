@@ -8,17 +8,16 @@ static class PoissonLinkClass : public TclClass {
     }
 } class_poisson_link;
 
-PoissonLink::PoissonLink( double lambda, uint32_t iter ) :
+PoissonLink::PoissonLink( double bandwidth, uint32_t iter ) :
   LinkDelay(),
   _arrivals( new RNG ),
-  _lambda( lambda ),
-  _iter( iter ),
-  _next_rx( 0.0 )
+  _bandwidth( bandwidth ),
+  _iter( iter )
 {
   printf( "In PoissonLink constructor \n" );
-  bind_bw("bandwidth_",&_lambda); 
+  bind_bw("bandwidth_",&_bandwidth);
   /* call it bandwidth_ to not break ns-link.tcl */ 
-  
+
   bind("_iter",&_iter);
   /* set _iter separately */
 
@@ -27,25 +26,16 @@ PoissonLink::PoissonLink( double lambda, uint32_t iter ) :
   }
 }
 
-double PoissonLink::generate_interarrival( void )
+double PoissonLink::transmission_time( double num_bits )
 {
-  return _arrivals->exponential( 1.0/_lambda );
+  return _arrivals->exponential( num_bits/_bandwidth );
 }
 
 void PoissonLink::recv( Packet* p, Handler* h)
 {
   Scheduler& s = Scheduler::instance();
-  double interarrival = 0.0;
-  if ( _next_rx == 0.0 ) {
-    /* We haven't seen any deliveries yet hence 
-       last reception is 0 */
-    _next_rx = s.clock() + delay_ ;
-  } else {
-    /* Simulate _next_rx as a Poisson process */
-    interarrival = generate_interarrival();
-    _next_rx += interarrival;
-  }
-  printf( " Now: %e Iter :%d , Next reception: %e, interarrival: %e, lambda :%e \n", s.clock(), _iter, _next_rx, interarrival, _lambda );
-  s.schedule(target_, p, _next_rx - s.clock() );
-  s.schedule(h, &intr_,  _next_rx - s.clock() );
+  double tx_time = transmission_time( 8. * hdr_cmn::access(p)->size() ) ;
+  printf( " Now: %e Iter :%d , txtime %f \n", s.clock(), _iter, tx_time );
+  s.schedule(target_, p, tx_time + delay_ ); /* Propagation delay */
+  s.schedule(h, &intr_,  tx_time ); /* Transmission delay */
 }

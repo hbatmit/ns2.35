@@ -157,9 +157,8 @@ for { set i 0 } { $i < $num_tcp } {incr i } {
 if { $is_poisson == "poisson"} {
   source link/poisson.tcl
   DelayLink/PoissonLink set _iter $iter
-  set bottleneck_bw $poisson_rate
 }
-$ns duplex-link $left_router $right_router $bottleneck_bw $bottleneck_latency $bottleneck_qdisc
+$ns duplex-link $left_router $right_router [ bw_parse $bottleneck_bw ] $bottleneck_latency $bottleneck_qdisc
 
 # open a file for tracing bottleneck link alone
 set trace_file [ open cellsim.tr w ]

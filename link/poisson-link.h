@@ -15,16 +15,15 @@
 class PoissonLink : public LinkDelay {
   private :
     RNG* _arrivals;
-    double _lambda;
+    double _bandwidth;
     uint32_t _iter;
-    double _next_rx;
 
   public :
     /* constructor */
-    PoissonLink( double lambda, uint32_t iter );
+    PoissonLink( double _bandwidth, uint32_t iter );
 
     /* generate next inter arrival time */
-    double generate_interarrival( void );
+    double transmission_time( double num_bits );
 
     /* override the recv function from LinkDelay */
     virtual void recv( Packet* p, Handler* h );

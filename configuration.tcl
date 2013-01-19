@@ -5,7 +5,6 @@ set ingress_latency    1ms
 set egress_bw          20Mb
 set egress_latency     1ms
 set bottleneck_bw      10Mb
-set poisson_rate       100
 set bottleneck_latency 1ms
 set bottleneck_qdisc   SFD
 set duration           100
