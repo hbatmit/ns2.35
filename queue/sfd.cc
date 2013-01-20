@@ -94,8 +94,10 @@ Packet* SFD::deque()
 {
   uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
+    printf( "Using Fcfs \n");
     current_flow = fcfs_scheduler();
   } else if ( _qdisc == QDISC_RAND ) {
+    printf( "Using Rand \n");
     current_flow = random_scheduler();
   } else {
     assert( false );
