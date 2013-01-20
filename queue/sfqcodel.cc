@@ -80,6 +80,7 @@ sfqCoDelQueue::sfqCoDelQueue() : tchan_(0)
      bin_[i].newflag = 0;
      bin_[i].index = i;
      bin_[i].on_sched_ = 0;
+     bin_[i].src = -1;
     }
     pq_ = bin_[0].q_; //does ns need this?
     reset();
@@ -116,6 +117,15 @@ void sfqCoDelQueue::enque(Packet* pkt)
 	// the bin's id comes from a hash of its header
 	unsigned int i = hash(pkt) % MAXBINS;
 	(bin_[i].q_)->enque(pkt);
+       
+        /* detect collisions here */
+        hdr_ip *iph = hdr_ip::access( pkt );
+        int compare= (int)iph->saddr();
+        if ( bin_[i].src == -1 )
+            bin_[i].src=compare;
+        else 
+            if ( bin_[i].src != compare )
+                fprintf( stderr, "Collisions between %d and %d src addresses\n", bin_[i].src, (int)iph->saddr() );
 
 	//if it's the only bin in use, set binsched_
         if(binsched_ == NULL) {
@@ -225,6 +235,7 @@ static inline u_int32_t jhash_3words( u_int32_t a, u_int32_t b, u_int32_t c, u_i
 unsigned int sfqCoDelQueue::hash(Packet* pkt)
 {
   hdr_ip* iph = hdr_ip::access(pkt);
+  return iph->flowid();
   return jhash_3words(iph->daddr(), iph->saddr(),
                       (iph->dport() << 16) | iph->sport(), 0);
 }

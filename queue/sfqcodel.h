@@ -64,6 +64,7 @@ struct dodequeResult { Packet* p; int ok_to_drop; };
 	int on_sched_;
         bindesc* prev;
         bindesc* next;
+        int src;    //to detect collisions keep track of actual src address
     } ;
 
 class sfqCoDelQueue : public Queue {
