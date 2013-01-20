@@ -14,6 +14,9 @@
  * with the TCP loss equation.
  */
 
+#define QDISC_FCFS 0
+#define QDISC_RAND 1
+
 class FlowStats {
   public :
     double _last_arrival ;
@@ -25,14 +28,26 @@ class FlowStats {
 
 class SFD : public Queue {
   private :
+    /* Queuing discipline */
+    int _qdisc;
+
+    /* Link Capacity */
+    double _capacity;
+
+    /* Underlying per flow FIFOs */
+    std::map<uint64_t,PacketQueue*> _packet_queues;
+
     /* Random dropper, one for the whole queue, pick _iter^{th} substream */
     RNG* _dropper ;
     int _iter;
 
-    /* Underlying per flow FIFOs & incoming timestamps */
-    std::map<uint64_t,PacketQueue*> _packet_queues;
-    double _capacity;
+    /* Random scheduler, one for whole queue, pick _iter^{th} substream for RNG */
+    RNG* _rand_scheduler;
+    uint64_t random_scheduler( void );
+
+    /* Fcfs scheduler, use timestamps */ 
     std::map<uint64_t,std::queue<uint64_t>> _timestamps;
+    uint64_t fcfs_scheduler( void );
 
     /* Hash from packet to flow */
     uint64_t hash( Packet *p );

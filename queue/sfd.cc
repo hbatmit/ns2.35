@@ -35,9 +35,12 @@ SFD::SFD( double capacity ) :
 { 
   bind("_iter", &_iter ); 
   bind( "_capacity", &_capacity );
+  bind("_qdisc", &_qdisc );
   _dropper = new RNG();
+  _rand_scheduler = new RNG();
   for (int i=1; i < _iter ; i++ ) {
     _dropper->reset_next_substream();
+    _rand_scheduler->reset_next_substream();
   }
 }
 
@@ -89,13 +92,14 @@ void SFD::enque(Packet *p)
 
 Packet* SFD::deque()
 {
-  /* Implement FIFO by looking at arrival time of HOL pkt */
-  typedef std::pair<uint64_t,std::queue<uint64_t>> Flow;
-  auto flow_compare = [&] (const Flow & T1, const Flow &T2 )
-                       { if (T1.second.empty()) return false;
-                         else if(T2.second.empty()) return true;
-                         else return T1.second.front() < T2.second.front() ; };
-  uint64_t current_flow = std::min_element( _timestamps.begin(), _timestamps.end(), flow_compare ) -> first;
+  uint64_t current_flow = (uint64_t)-1;
+  if ( _qdisc == QDISC_FCFS ) {
+    current_flow = fcfs_scheduler();
+  } else if ( _qdisc == QDISC_RAND ) {
+    current_flow = random_scheduler();
+  } else {
+    assert( false );
+  }
 
   if ( _packet_queues.find( current_flow ) != _packet_queues.end() ) {
     if ( !_timestamps.at( current_flow ).empty() ) {
@@ -105,6 +109,28 @@ Packet* SFD::deque()
   } else {
     return 0; /* empty */
   }
+}
+
+uint64_t SFD::fcfs_scheduler( void ) {
+  /* Implement FIFO by looking at arrival time of HOL pkt */
+  typedef std::pair<uint64_t,std::queue<uint64_t>> FlowTs;
+  auto flow_compare = [&] (const FlowTs & T1, const FlowTs &T2 )
+                       { if (T1.second.empty()) return false;
+                         else if(T2.second.empty()) return true;
+                         else return T1.second.front() < T2.second.front() ; };
+  return std::min_element( _timestamps.begin(), _timestamps.end(), flow_compare ) -> first;
+}
+
+uint64_t SFD::random_scheduler( void ) {
+  /* Implement Random scheduler */
+  typedef std::pair<uint64_t,PacketQueue*> FlowQ;
+  std::vector<FlowQ> available_flows( _packet_queues.size() );
+  auto filter_end = std::remove_copy_if( _packet_queues.begin(), _packet_queues.end(),
+                                         available_flows.begin(),
+                                         [&] (const FlowQ &T) { return T.second->length()==0; } );
+  available_flows.erase( filter_end, available_flows.end() );
+  return ( available_flows.empty() ) ? ( uint64_t ) -1 :
+                                       available_flows.at( _rand_scheduler->uniform( (int)available_flows.size() ) ).first;
 }
 
 uint64_t SFD::hash(Packet* pkt)
