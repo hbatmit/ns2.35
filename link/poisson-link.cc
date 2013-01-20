@@ -14,7 +14,7 @@ PoissonLink::PoissonLink( double bandwidth, uint32_t iter ) :
   _bandwidth( bandwidth ),
   _iter( iter )
 {
-  printf( "In PoissonLink constructor \n" );
+  fprintf( stderr, "In PoissonLink constructor \n" );
   bind_bw("bandwidth_",&_bandwidth);
   /* call it bandwidth_ to not break ns-link.tcl */ 
 

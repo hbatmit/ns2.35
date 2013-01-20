@@ -41,7 +41,7 @@ for pair in send_stats :
   print "Pair : ",pair
   print "sent :",send_stats[pair]/duration, " bits/second"
   if pair not in recv_stats :
-    print "recv",0
+    print "recv :",0," bits/second"
   else :
     print "recv :",recv_stats[pair]/duration," bits/second"
   if pair not in drop_stats :
