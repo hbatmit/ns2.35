@@ -5089,16 +5089,6 @@ $as_echo_n "checking that $CXX can handle -O2... " >&6; }
 int
 main ()
 {
-#if __GNUC__ < 2  || __GNUC_MINOR__ < 8
-		/* gcc */
-		error
-		#endif
-		#if __GNUC_MINOR__ < 92
-		/* egcs */
-		int error;
-		#endif
-
-  ;
   return 0;
 }
 _ACEOF
