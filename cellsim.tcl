@@ -65,20 +65,11 @@ if { $bottleneck_qdisc == "SFD" } {
   Queue/SFD set _K [ expr [ lindex $argv 3 ] ]
 }
 
-# Set parameters for the DRR queue
-if { $bottleneck_qdisc == "DRR" } {
-  Simulator instproc get-link { node1 node2 } {
-      $self instvar link_
-      set id1 [$node1 id]
-      set id2 [$node2 id]
-      return $link_($id1:$id2)
-  }
-  set l [$ns get-link $left_router $right_router]
-  set q [$l queue]
-  $q blimit 25000
-  $q quantum 1000
-  $q buckets 2
-}
+# DRR defaults for simulation
+Queue/DRR set buckets_ 100
+Queue/DRR set blimit_ 25000
+Queue/DRR set quantum_ 1000
+Queue/DRR set mask_ 0
 
 set counter 0
 # CBR/UDP clients
