@@ -11,7 +11,6 @@ set duration           100
 set codel_target       5ms
 set codel_interval     100ms
 set cbr_rate           10Mb
-set sfd_qdisc          fcfs
 
 # TCP parameters
 #bdp in packets, based on the nominal rtt

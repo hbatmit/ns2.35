@@ -54,7 +54,7 @@ class SFD : public Queue {
 
     /* Per flow stats for rate estimation (borrowed from CSFQ) */
     std::map<uint64_t,FlowStats> _flow_stats;
-    static constexpr double  K = 0.1; /* 100 ms */
+    double  _K; /* default : 200 ms */
     double est_flow_rate( uint64_t flow_id, double now, Packet* p );
 
     /* Fair share rate of link */

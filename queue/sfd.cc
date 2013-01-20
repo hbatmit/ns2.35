@@ -31,11 +31,14 @@ FlowStats::FlowStats() :
 {}
 
 SFD::SFD( double capacity ) :
-  _capacity( capacity )
+  _capacity( capacity ),
+  _K( 0.2 )
 { 
   bind("_iter", &_iter ); 
   bind( "_capacity", &_capacity );
   bind("_qdisc", &_qdisc );
+  bind("_K", &_K );
+  fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f \n", _iter, _capacity, _qdisc, _K );
   _dropper = new RNG();
   if ( _qdisc == QDISC_RAND ) {
     _rand_scheduler = new RNG();
@@ -169,7 +172,7 @@ double SFD::est_flow_rate( uint64_t flow_id, double now, Packet *p )
   /* Apply EWMA with exponential weight, and update _last_arrival */
   _flow_stats[ flow_id ]._last_arrival = now;
   _flow_stats[ flow_id ]._flow_rate = 
-    (1.0 - exp(-interarrival_time/K))*(double )packet_size/interarrival_time + exp(-interarrival_time/K)*_flow_stats[ flow_id ]._flow_rate;
+    (1.0 - exp(-interarrival_time/_K))*(double )packet_size/interarrival_time + exp(-interarrival_time/_K)*_flow_stats[ flow_id ]._flow_rate;
 
   return _flow_stats[ flow_id ]._flow_rate;
 }

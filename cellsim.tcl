@@ -60,7 +60,9 @@ if { $bottleneck_qdisc == "sfqCoDel" } {
 if { $bottleneck_qdisc == "SFD" } {
   Queue/SFD set _capacity [ bw_parse $bottleneck_bw ]
   Queue/SFD set _iter $iter
+  set sfd_qdisc  [ lindex $argv 2 ]
   Queue/SFD set _qdisc [ expr [ string equal $sfd_qdisc "fcfs" ] == 1 ? 0 : 1 ]
+  Queue/SFD set _K [ expr [ lindex $argv 3 ] ]
 }
 
 # Set parameters for the DRR queue
