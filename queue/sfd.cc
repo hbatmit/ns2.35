@@ -37,10 +37,14 @@ SFD::SFD( double capacity ) :
   bind( "_capacity", &_capacity );
   bind("_qdisc", &_qdisc );
   _dropper = new RNG();
-  _rand_scheduler = new RNG();
+  if ( _qdisc == QDISC_RAND ) {
+    _rand_scheduler = new RNG();
+  }
   for (int i=1; i < _iter ; i++ ) {
     _dropper->reset_next_substream();
-    _rand_scheduler->reset_next_substream();
+    if ( _qdisc == QDISC_RAND ) {
+     _rand_scheduler->reset_next_substream();
+    }
   }
 }
 
