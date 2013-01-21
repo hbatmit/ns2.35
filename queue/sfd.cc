@@ -87,7 +87,11 @@ void SFD::enque(Packet *p)
     enque_packet( p, flow_id );
   } else {
     printf( " Dropping packet of type %d, drop_probability is %f\n", pkt_type, drop_probability );
-    drop( p );
+    enque_packet( p, flow_id );
+    drop( _packet_queues.at( flow_id )->deque() ); /* Drop from front of queue */
+    if ( !_timestamps.at( flow_id ).empty() ) {
+      _timestamps.at( flow_id ).pop();
+    }
   }
 }
 
