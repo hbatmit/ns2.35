@@ -38,15 +38,21 @@ SFD::SFD( double capacity ) :
   bind("_qdisc", &_qdisc );
   bind("_K", &_K );
   bind("_headroom", &_headroom );
-  /* Restrict advertised capapcity right here */
+  /* Restrict advertised capacity right here */
+  printf( "Using head_room of %f \n", _headroom );
   _capacity = _capacity * (1 - _headroom);
   fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f \n", _iter, _capacity, _qdisc, _K );
   _dropper = new RNG();
+  _queue_picker = new RNG();
   if ( _qdisc == QDISC_RAND ) {
+    printf( "Using Rand \n");
     _rand_scheduler = new RNG();
+  } else {
+    printf( "Using Fcfs \n");
   }
   for (int i=1; i < _iter ; i++ ) {
     _dropper->reset_next_substream();
+    _queue_picker->reset_next_substream();
     if ( _qdisc == QDISC_RAND ) {
      _rand_scheduler->reset_next_substream();
     }
@@ -59,16 +65,22 @@ void SFD::enque(Packet *p)
 
   /* Compute flow_id using hash */
   uint64_t flow_id = hash( p ); 
-  printf( " Packet hashes into flow id %lu \n", flow_id );
+
+  /* If it's an ACK, simply enque */
+  if (hdr_cmn::access(p)->ptype() == PT_ACK ) {
+   enque_packet(p, flow_id);
+   return;
+  }
 
   /* Estimate arrival rate */
   double now = Scheduler::instance().clock();
   double arrival_rate = est_flow_rate( flow_id, now, p );
-  printf( " Arrival rate estimate for flow %lu is %f \n", flow_id, arrival_rate );
+  printf( " Time %f : Arrival rate estimate for flow %lu, src:%u, dst:%u is %f \n",
+          now, flow_id, (int)(hdr_ip::access(p)->saddr()), (int)(hdr_ip::access(p)->daddr()), arrival_rate);
 
   /* Estimate fair share */
   _fair_share = est_fair_share() ;
-  printf( " Fair share estimate is %f\n", _fair_share );
+  printf( " Time %f : Fair share estimate is %f\n", now, _fair_share );
 
   /* Check if the link is congested */
   typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
@@ -79,21 +91,25 @@ void SFD::enque(Packet *p)
   hdr_cmn* hdr  = hdr_cmn::access(p); 
   packet_t pkt_type   = hdr->ptype();
   double drop_probability = 0;
-  printf( "Using head_room of %f \n", _headroom );
   if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) and ( total_ingress >= _capacity ) ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   }
 
   /* Toss a coin and drop */  
   if ( !should_drop( drop_probability ) ) {
-    printf( " Not dropping packet of type %d , drop_probability is %f\n", pkt_type, drop_probability );
+    printf( " Time %f : Not dropping packet of type %d , from flow %lu drop_probability is %f\n", now, pkt_type, flow_id, drop_probability );
     enque_packet( p, flow_id );
   } else {
-    printf( " Dropping packet of type %d, drop_probability is %f\n", pkt_type, drop_probability );
+    /* find longest queue  and drop from front*/
+    uint64_t drop_flow = longest_queue();
+    printf( " Time %f : Dropping packet of type %d, from flow %lu drop_probability is %f\n", now, pkt_type, drop_flow, drop_probability );
     enque_packet( p, flow_id );
-    drop( _packet_queues.at( flow_id )->deque() ); /* Drop from front of queue */
-    if ( !_timestamps.at( flow_id ).empty() ) {
-      _timestamps.at( flow_id ).pop();
+    Packet* head = _packet_queues.at( drop_flow )->deque();
+    if (head != 0 ) {
+        drop( head );
+    }
+    if ( !_timestamps.at( drop_flow ).empty() ) {
+      _timestamps.at( drop_flow ).pop();
     }
   }
 }
@@ -101,13 +117,10 @@ void SFD::enque(Packet *p)
 Packet* SFD::deque()
 {
   /* Implements pure virtual function Queue::deque() */
-
   uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
-    printf( "Using Fcfs \n");
     current_flow = fcfs_scheduler();
   } else if ( _qdisc == QDISC_RAND ) {
-    printf( "Using Rand \n");
     current_flow = random_scheduler();
   } else {
     assert( false );
@@ -121,6 +134,25 @@ Packet* SFD::deque()
   } else {
     return 0; /* empty */
   }
+}
+
+uint64_t SFD::longest_queue( void )
+{
+  /* Find maximum queue length */
+  typedef std::pair<uint64_t,PacketQueue*> FlowQ;
+  auto flow_compare = [&] (const FlowQ & T1, const FlowQ &T2 )
+                       { return T1.second->length() < T2.second->length() ; };
+  auto max_len=std::max_element( _packet_queues.begin(), _packet_queues.end(), flow_compare )->second->length();
+
+  /* Find all flows that have the maximum queue length */
+  std::vector<FlowQ> all_max_flows( _packet_queues.size() );
+  auto filter_end =  std::remove_copy_if( _packet_queues.begin(), _packet_queues.end(), all_max_flows.begin(),
+                       [&] (const FlowQ &T ) { return T.second->length() != max_len ; } );
+  all_max_flows.erase( filter_end, all_max_flows.end() );
+
+  /* Pick one at random */
+  auto max_elem = all_max_flows.at( _queue_picker->uniform( (int) all_max_flows.size() ) ).first;
+  return max_elem;
 }
 
 uint64_t SFD::fcfs_scheduler( void ) 

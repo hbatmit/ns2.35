@@ -38,9 +38,15 @@ class SFD : public Queue {
     std::map<uint64_t,PacketQueue*> _packet_queues;
     void enque_packet( Packet* p, uint64_t flow_id );
 
-    /* Random dropper, one for the whole queue, pick _iter^{th} substream */
+    /* Random dropping :
+       Toss a coin
+       Pick one of the longest queues at random
+       Drop from front of that queue
+     */
     RNG* _dropper ;
+    RNG* _queue_picker;
     int _iter;
+    uint64_t longest_queue( void );
 
     /* Random scheduler, one for whole queue, pick _iter^{th} substream for RNG */
     RNG* _rand_scheduler;
