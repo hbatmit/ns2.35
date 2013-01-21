@@ -35,7 +35,7 @@ void PoissonLink::recv( Packet* p, Handler* h)
 {
   Scheduler& s = Scheduler::instance();
   double tx_time = transmission_time( 8. * hdr_cmn::access(p)->size() ) ;
-  printf( " Now: %e Iter :%d , txtime %f \n", s.clock(), _iter, tx_time );
+//  printf( " Now: %e Iter :%d , txtime %f \n", s.clock(), _iter, tx_time );
   s.schedule(target_, p, tx_time + delay_ ); /* Propagation delay */
   s.schedule(h, &intr_,  tx_time ); /* Transmission delay */
 }
