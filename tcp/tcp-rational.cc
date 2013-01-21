@@ -99,13 +99,14 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	 * If we are counting the actual amount of data acked, ackcount >= 1.
 	 * Otherwise, ackcount=1 just as in standard TCP.
 	 */
-	if (count_bytes_acked_)
+	if (count_bytes_acked_) {
 		ackcount = tcph->seqno() - last_ack_;
-	else
+	} else {
 		ackcount = 1;
+	}
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = max(maxseq_, highest_ack_);
-	update_cwnd();
+	update_cwnd(last_rtt);
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
 		closed_ = 1;
@@ -113,8 +114,26 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	}
 }
 
+/*
+ * A simple function to update cwnd using last_rtt; provided only for reference.
+ * This function is highly conservative about delay, slowing down the rate 
+ * aggressively when delay rises.
+ */
 void 
-RationalTcpAgent::update_cwnd()
+RationalTcpAgent::update_cwnd(double last_rtt)
 {
-	cwnd_ = 100;		// fix this to be the right computation!
+	double srtt =  (t_srtt_ >> T_SRTT_BITS) * tcp_tick_;
+	if (last_rtt > 2*srtt) {
+		// reduce cwnd 
+		double extratime = last_rtt - srtt;
+		double extra = (cwnd_/srtt)*extratime;
+		printf("Reducing cwnd from %.2f ", (double)cwnd_);
+		cwnd_ -= (cwnd_/srtt)*extratime/2;
+		if (cwnd_ < 1) {
+			cwnd_ = 1;
+		}
+		printf("to %.2f srtt %.3f last_rtt %.3g\n", (double)cwnd_, (double)srtt, (double)last_rtt);
+	} else {
+		opencwnd();
+	}
 }

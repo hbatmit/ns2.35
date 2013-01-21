@@ -96,6 +96,32 @@ proc create-dumbbell-topology {bneckbw delay} {
     }
 }
 
+proc create-sources-sinks {} {
+    global ns opt s d src recvapp tp
+    
+    set numsrc $opt(nsrc)
+    if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
+        set linuxcc [ string range $opt(tcp) 10 [string length $opt(tcp)] ]
+        set opt(tcp) "TCP/Linux"
+    }
+
+    for {set i 0} {$i < $numsrc} {incr i} {
+        set tp($i) [$ns create-connection-list $opt(tcp) $s($i) $opt(sink) $d 0]
+        set tcpsrc [lindex $tp($i) 0]
+        set tcpsink [lindex $tp($i) 1]
+        if { [info exists linuxcc] } { 
+            $ns at 0.0 "$tcpsrc select_ca $linuxcc"
+            $ns at 0.0 "$tcpsrc set_ca_default_param linux debug_level 2"
+        }
+        $tcpsrc set window_ $opt(rcvwin)
+        $tcpsrc set packetSize_ $opt(pktsize)
+        set src($i) [ $tcpsrc attach-app $opt(app) ]
+        set recvapp($i) [new LoggingApp $i]
+        $recvapp($i) attach-agent $tcpsink
+        $ns at 0.0 "$recvapp($i) start"
+    }
+}
+
 proc finish {} {
     global ns opt recvapp ontime
     global f
@@ -119,7 +145,6 @@ proc finish {} {
             puts [ format "%d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr 8.0*$totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$ontime($i)/$opt(simtime)] $utility ]
         }
     }
-
 #    $ns flush-trace
 #    close $f
     exit 0
@@ -153,20 +178,16 @@ LoggingApp instproc results { } {
     return [list $nbytes_ $cumrtt_ $numsamples_]
 }
 
-#remove-all-packet-headers;      # removes all except common header
-#add-packet-header IP TCP 
-
 ## MAIN ##
 
 Getopt
 if { $opt(seed) >= 0 } {
     ns-random $opt(seed)
 }
-if [info exists opt(maxq)] {
-    Queue set limit_ $opt(maxq)
-}
 
 set ns [new Simulator]
+
+Queue set limit_ $opt(maxq)
 
 # if we don't set up tracing early, trace output isn't created!!
 #set f [open opt(tr).tr w]
@@ -180,26 +201,16 @@ set d [$ns node];               # destination for all the TCPs
 set gw [$ns node];              # bottleneck router
 
 create-dumbbell-topology $opt(bneck) $opt(delay)
-set numsrc $opt(nsrc)
+create-sources-sinks
 
-for {set i 0} {$i < $numsrc} {incr i} {
-    set tp($i) [$ns create-connection-list $opt(tcp) $s($i) $opt(sink) $d 0]
-    [lindex $tp($i) 0] set window_ $opt(rcvwin)
-    [lindex $tp($i) 0] set packetSize_ $opt(pktsize)
-    set src($i) [ [lindex $tp($i) 0] attach-app $opt(app) ]
-    set recvapp($i) [new LoggingApp $i]
-    $recvapp($i) attach-agent [lindex $tp($i) 1]
-    $ns at 0.0 "$recvapp($i) start"
-}
-
-for {set i 0} {$i < $numsrc} {incr i} {
+for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set on_ranvar($i) [new RandomVariable/$opt(onrand)]
     $on_ranvar($i) set avg_ $opt(onavg)
     set off_ranvar($i) [new RandomVariable/$opt(offrand)]
     $off_ranvar($i) set avg_ $opt(offavg)
 }
 
-for {set i 0} {$i < $numsrc} {incr i} {
+for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set state($i) OFF
     set curtime($i) 0.0
     set ontime($i) 0.0;         # total time spent in the "on" phase
@@ -231,7 +242,12 @@ for {set i 0} {$i < $numsrc} {incr i} {
     }
 }
 
-puts "Results for $opt(tcp) $opt(gw) over $opt(simtime) seconds:"
+if { [info exists linuxcc] } {
+    puts "Results for $opt(tcp) $opt(gw) over $opt(simtime) seconds:"
+} else {
+    puts "Results for $opt(tcp) $opt(gw) over $opt(simtime) seconds:"
+}
+
 $ns at $opt(simtime) "finish"
 
 $ns run

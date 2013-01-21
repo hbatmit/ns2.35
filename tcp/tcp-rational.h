@@ -26,7 +26,7 @@ public:
 	virtual void send_idle_helper();
 	virtual void recv_newack_helper(Packet* pkt);
 	virtual double initial_window();
-	virtual void update_cwnd();
+	virtual void update_cwnd(double last_rtt);
 protected:
 	int count_bytes_acked_;
 };
@@ -44,7 +44,7 @@ public:
 	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
 	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
 	virtual double initial_window() {return RationalTcpAgent::initial_window();}
-	virtual void update_cwnd() {RationalTcpAgent::update_cwnd();}
+	virtual void update_cwnd(double last_rtt) {RationalTcpAgent::update_cwnd(last_rtt);}
 };
 
 /* 
@@ -59,7 +59,7 @@ public:
 	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
 	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
 	virtual double initial_window() {return RationalTcpAgent::initial_window();}
-	virtual void update_cwnd() {RationalTcpAgent::update_cwnd();}
+	virtual void update_cwnd(double last_rtt) {RationalTcpAgent::update_cwnd(last_rtt);}
 };
 
 #endif
