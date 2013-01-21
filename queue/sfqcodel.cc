@@ -106,10 +106,10 @@ void sfqCoDelQueue::reset()
 void sfqCoDelQueue::enque(Packet* pkt)
 {
     // check for tail drop on full buffer
-    if(curlen_ >= qlim_) {
-	drop(pkt);
-    } else {
-        HDR_CMN(pkt)->ts_ = Scheduler::instance().clock();
+//    if(curlen_ >= qlim_) {
+//	drop(pkt);
+//    } else { // ANIRUDH: Infinite buffer with no TailDrop
+    {   HDR_CMN(pkt)->ts_ = Scheduler::instance().clock();
 	curlen_++;
 	curq_ += HDR_CMN(pkt)->size();
 
