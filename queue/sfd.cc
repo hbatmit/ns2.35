@@ -38,6 +38,8 @@ SFD::SFD( double capacity ) :
   bind("_qdisc", &_qdisc );
   bind("_K", &_K );
   bind("_headroom", &_headroom );
+  /* Restrict advertised capapcity right here */
+  _capacity = _capacity * (1 - _headroom);
   fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f \n", _iter, _capacity, _qdisc, _K );
   _dropper = new RNG();
   if ( _qdisc == QDISC_RAND ) {
@@ -68,17 +70,18 @@ void SFD::enque(Packet *p)
   _fair_share = est_fair_share() ;
   printf( " Fair share estimate is %f\n", _fair_share );
 
+  /* Check if the link is congested */
+  typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
+  double total_ingress = std::accumulate( _flow_stats.begin(), _flow_stats.end(), 0.0,
+                         [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._flow_rate ;} );
+
   /* Extract protocol (TCP vs UDP) from the header */
   hdr_cmn* hdr  = hdr_cmn::access(p); 
   packet_t pkt_type   = hdr->ptype();
   double drop_probability = 0;
   printf( "Using head_room of %f \n", _headroom );
-  _fair_share = _fair_share * ( 1 - _headroom ); /* Artificially restrict the fair share */
-  if ( pkt_type == PT_CBR ) {
+  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) and ( total_ingress >= _capacity ) ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
-  } else if ( pkt_type == PT_TCP ) {
-    double tcp_coefficient = 1.0;
-    drop_probability = std::max( 0.0 , 1 - ((tcp_coefficient*_fair_share)/arrival_rate) );
   }
 
   /* Toss a coin and drop */  
