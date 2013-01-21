@@ -1301,6 +1301,26 @@ if [TclObject is-class Agent/TCP/BayFullTcp] {
 	Agent/TCP/BayFullTcp/Sack set max_sack_blocks_ 3; # max # of sack blks
 }
 
+#
+# FAST TCP: installed from http://www.cubinlab.ee.unimelb.edu.au/ns2fasttcp 
+# on Jan 21 2013 (hari)
+#
+Agent/TCP/Fast  set cwnd_update_period_ 0.01
+Agent/TCP/Fast  set avgRTT_ 0
+Agent/TCP/Fast  set baseRTT_ 0
+Agent/TCP/Fast  set avg_cwnd_last_RTT_ 0
+Agent/TCP/Fast  set alpha_ 100
+Agent/TCP/Fast  set beta_ 100
+Agent/TCP/Fast  set gamma_ 0.5
+Agent/TCP/Fast  set mi_threshold_ 0.00075
+# This variable is used to determine the calculation method used by NS2 FAST.
+# Because in real network system, cwnd is an integral while here cwnd is a
+# double, we provide 3 modes to get cwnd: 1. use double to store cwnd
+# (high_accuracy_cwnd != 0 nor 1); 2. use int to store cwnd, ignore the
+# calculation error(high_accuracy_cwnd = 0); 3. use int to store cwnd but
+# also consider the calculation error(high_accuracy_cwnd = 1).
+Agent/TCP/Fast  set high_accuracy_cwnd_ 2
+
 # Default values used by wireless simulations
 Agent/Null set sport_           0
 Agent/Null set dport_           0

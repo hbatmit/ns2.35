@@ -243,9 +243,9 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
 }
 
 if { [info exists linuxcc] } {
-    puts "Results for $opt(tcp) $opt(gw) over $opt(simtime) seconds:"
+    puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 } else {
-    puts "Results for $opt(tcp) $opt(gw) over $opt(simtime) seconds:"
+    puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 }
 
 $ns at $opt(simtime) "finish"
