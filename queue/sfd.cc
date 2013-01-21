@@ -32,12 +32,14 @@ FlowStats::FlowStats() :
 
 SFD::SFD( double capacity ) :
   _capacity( capacity ),
-  _K( 0.2 )
+  _K( 0.2 ),
+  _headroom( 0.05 )
 { 
   bind("_iter", &_iter ); 
   bind( "_capacity", &_capacity );
   bind("_qdisc", &_qdisc );
   bind("_K", &_K );
+  bind("_headroom", &_headroom );
   fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f \n", _iter, _capacity, _qdisc, _K );
   _dropper = new RNG();
   if ( _qdisc == QDISC_RAND ) {
@@ -72,6 +74,8 @@ void SFD::enque(Packet *p)
   hdr_cmn* hdr  = hdr_cmn::access(p); 
   packet_t pkt_type   = hdr->ptype();
   double drop_probability = 0;
+  printf( "Using head_room of %f \n", _headroom );
+  _fair_share = _fair_share * ( 1 - _headroom ); /* Artificially restrict the fair share */
   if ( pkt_type == PT_CBR ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   } else if ( pkt_type == PT_TCP ) {
