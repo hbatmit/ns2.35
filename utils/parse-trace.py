@@ -62,24 +62,24 @@ for line in fh.readlines() :
       drop_stats[ (src_addr, dst_addr, protocol) ] += pkt_size_bits;
 
 for pair in send_stats :
-  print "Pair : ",pair
-  print "sent :",send_stats[pair]/duration, " bits/second"
+  print "Pair :",pair
+  print "sent :",send_stats[pair]/duration, "bits/second"
   if pair not in recv_stats :
-    print "recv :",0," bits/second"
+    print "recv :",0,"bits/second"
   else :
-    print "recv :",recv_stats[pair]/duration," bits/second"
+    print "recv :",recv_stats[pair]/duration,"bits/second"
   if pair not in drop_stats :
     print "dropped",0
   else :
-    print "dropped",drop_stats[pair]/duration," bits/second"
+    print "dropped",drop_stats[pair]/duration,"bits/second"
   delay_stats[pair].sort();
   flow_throughputs[ pair ] = recv_stats[ pair ]/duration
   flow_percentiles[ pair ] = 1000*delay_stats[pair][int(float(sys.argv[3])*len(delay_stats[pair]))]
-  print sys.argv[3]," %ile delay :", flow_percentiles[ pair ]," ms "
+  print sys.argv[3]," %ile delay :", flow_percentiles[ pair ],"ms"
   print "====================\n"
 
-print>>sys.stderr,"Aggregate statistics "
-print>>sys.stderr,"Total throughput ",sum(flow_throughputs.values()), " bits/second "
-print>>sys.stderr,"Average ",sys.argv[3]," percentile ", sum( flow_percentiles.values() )/len( flow_percentiles.values() ), " ms "
-print>>sys.stderr,"Throughput fairness ",jain_fainess( flow_throughputs.values() )
-print>>sys.stderr,"Delay fairness ", jain_fainess( map ( lambda x : 1.0/x , flow_percentiles.values() ) )
+print>>sys.stderr,"Aggregate statistics"
+print>>sys.stderr,"Total throughput %.0f"%sum(flow_throughputs.values()), "bits/second"
+print>>sys.stderr,"Average",sys.argv[3],"percentile %.0f"%(sum( flow_percentiles.values() )/len( flow_percentiles.values() )), "ms"
+print>>sys.stderr,"Throughput fairness",jain_fainess( flow_throughputs.values() )
+print>>sys.stderr,"Delay fairness", jain_fainess( map ( lambda x : 1.0/x , flow_percentiles.values() ) )
