@@ -7,36 +7,36 @@
 
 #include "tcp-rational.h"
 
-static class TcpRationalClass : public TclClass {
+static class RationalTcpClass : public TclClass {
 public:
-	TcpRationalClass() : TclClass("Agent/TCP/Rational") {}
+	RationalTcpClass() : TclClass("Agent/TCP/Rational") {}
 	TclObject* create(int, const char*const*) {
-		return (new TcpRationalAgent());
+		return (new RationalTcpAgent());
 	}
-} class_tcprational;
+} class_rational_tcp;
 
-static class RenoTcpRationalClass : public TclClass {
+static class RationalRenoTcpClass : public TclClass {
 public:
-	RenoTcpRationalClass() : TclClass("Agent/TCP/Reno/Rational") {}
+	RationalRenoTcpClass() : TclClass("Agent/TCP/Reno/Rational") {}
 	TclObject* create(int, const char*const*) {
-		return (new RenoTcpRationalAgent());
+		return (new RationalRenoTcpAgent());
 	}
-} class_reno_tcp_rational;	
+} class_rational_reno_tcp;
 
-static class NewRenoTcpRationalClass : public TclClass {
+static class RationalNewRenoTcpClass : public TclClass {
 public:
-	NewRenoTcpRationalClass() : TclClass("Agent/TCP/Newreno/Rational") {}
+	RationalNewRenoTcpClass() : TclClass("Agent/TCP/Newreno/Rational") {}
 	TclObject* create(int, const char*const*) {
-		return (new NewRenoTcpRationalAgent());
+		return (new RationalNewRenoTcpAgent());
 	}
-} class_newreno_tcp_rational;	
+} class_rational_newreno_tcp;
 
 /*
  * initial_window() is called in a few different places in tcp.cc.
  * This function overrides the default. 
  */
 double
-TcpRationalAgent::initial_window()
+RationalTcpAgent::initial_window()
 {
 	// This is just a copy of the relevant parts of the default TCP.
 	if (wnd_init_option_ == 1) {
@@ -54,7 +54,7 @@ TcpRationalAgent::initial_window()
 }
 
 void 
-TcpRationalAgent::send_helper(int maxburst) 
+RationalTcpAgent::send_helper(int maxburst) 
 {
 	/* 
 	 * If there is still data to be sent and there is space in the
@@ -71,7 +71,7 @@ TcpRationalAgent::send_helper(int maxburst)
  * Connection has been idle for some time. 
  */
 void
-TcpRationalAgent::send_idle_helper() 
+RationalTcpAgent::send_idle_helper() 
 {
 
 }
@@ -84,7 +84,7 @@ TcpRationalAgent::send_idle_helper()
  * This function overrides the default.
  */
 void
-TcpRationalAgent::recv_newack_helper(Packet *pkt) 
+RationalTcpAgent::recv_newack_helper(Packet *pkt) 
 {
 	double now = Scheduler::instance().clock();
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
@@ -114,7 +114,7 @@ TcpRationalAgent::recv_newack_helper(Packet *pkt)
 }
 
 void 
-TcpRationalAgent::update_cwnd()
+RationalTcpAgent::update_cwnd()
 {
 	cwnd_ = 100;		// fix this to be the right computation!
 }

@@ -82,7 +82,7 @@ LIB	= \
 	-lm @LIBS@
 #	-L@libdir@ \
 
-CFLAGS	+= $(CCOPT) $(DEFINE) -std=c++0x
+CFLAGS	+= $(CCOPT) $(DEFINE) 
 
 # Explicitly define compilation rules since SunOS 4's make doesn't like gcc.
 # Also, gcc does not remove the .o before forking 'as', which can be a
@@ -192,7 +192,7 @@ OBJ_CC = \
 	common/ivs.o \
 	common/messpass.o common/tp.o common/tpm.o apps/worm.o \
 	tcp/tcp.o tcp/tcp-sink.o tcp/tcp-reno.o \
-	tcp/tcp-newreno.o \
+	tcp/tcp-newreno.o tcp/tcp-rational.o \
 	tcp/tcp-vegas.o tcp/tcp-rbp.o tcp/tcp-full.o tcp/rq.o \
 	baytcp/tcp-full-bay.o baytcp/ftpc.o baytcp/ftps.o \
 	tcp/scoreboard.o tcp/scoreboard-rq.o tcp/tcp-sack1.o tcp/tcp-fack.o \

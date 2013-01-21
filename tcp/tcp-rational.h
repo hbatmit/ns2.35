@@ -14,10 +14,10 @@
 #include "random.h"
 #include "template.h"
 
-/* TCPRational with Tahoe */
-class TcpRationalAgent : public virtual TcpAgent {
+/* Rational TCP with Tahoe */
+class RationalTcpAgent : public virtual TcpAgent {
 public:
-	TcpRationalAgent() : count_bytes_acked_(0)
+	RationalTcpAgent() : count_bytes_acked_(0)
 	{
 		bind_bool("count_bytes_acked_", &count_bytes_acked_);
 	}
@@ -32,34 +32,34 @@ protected:
 };
 
 /* 
- * TCPRational with Reno.
+ * Rational TCP with Reno.
  */
 
-class RenoTcpRationalAgent : public virtual RenoTcpAgent, public TcpRationalAgent {
+class RationalRenoTcpAgent : public virtual RenoTcpAgent, public RationalTcpAgent {
 public:
-	RenoTcpRationalAgent() : RenoTcpAgent(), TcpRationalAgent() {}
+	RationalRenoTcpAgent() : RenoTcpAgent(), RationalTcpAgent() {}
 
 	/* helper functions */
-	virtual void send_helper(int maxburst) {TcpRationalAgent::send_helper(maxburst);}
-	virtual void send_idle_helper() {TcpRationalAgent::send_idle_helper();}
-	virtual void recv_newack_helper(Packet* pkt) {TcpRationalAgent::recv_newack_helper(pkt);}
-	virtual double initial_window() {return TcpRationalAgent::initial_window();}
-	virtual void update_cwnd() {TcpRationalAgent::update_cwnd();}
+	virtual void send_helper(int maxburst) {RationalTcpAgent::send_helper(maxburst);}
+	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
+	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
+	virtual double initial_window() {return RationalTcpAgent::initial_window();}
+	virtual void update_cwnd() {RationalTcpAgent::update_cwnd();}
 };
 
 /* 
- * TCPRational with NewReno.
+ * Rational TCP with NewReno.
  */
-class NewRenoTcpRationalAgent : public virtual NewRenoTcpAgent, public TcpRationalAgent {
+class RationalNewRenoTcpAgent : public virtual NewRenoTcpAgent, public RationalTcpAgent {
 public:
-	NewRenoTcpRationalAgent() : NewRenoTcpAgent(), TcpRationalAgent() {}
+	RationalNewRenoTcpAgent() : NewRenoTcpAgent(), RationalTcpAgent() {}
 
 	/* helper functions */
-	virtual void send_helper(int maxburst) {TcpRationalAgent::send_helper(maxburst);}
-	virtual void send_idle_helper() {TcpRationalAgent::send_idle_helper();}
-	virtual void recv_newack_helper(Packet* pkt) {TcpRationalAgent::recv_newack_helper(pkt);}
-	virtual double initial_window() {return TcpRationalAgent::initial_window();}
-	virtual void update_cwnd() {TcpRationalAgent::update_cwnd();}
+	virtual void send_helper(int maxburst) {RationalTcpAgent::send_helper(maxburst);}
+	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
+	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
+	virtual double initial_window() {return RationalTcpAgent::initial_window();}
+	virtual void update_cwnd() {RationalTcpAgent::update_cwnd();}
 };
 
 #endif

@@ -635,6 +635,7 @@ OldSim instproc init args {
 	set classMap_(facktcp) Agent/TCP/Fack
 	set classMap_(tcp-newreno) Agent/TCP/Newreno
 	set classMap_(tcpnewreno) Agent/TCP/Newreno
+	set classMap_(tcpnewreno) Agent/TCP/Rational
 	set classMap_(cbr) Agent/CBR
 	set classMap_(tcp-sink) Agent/TCPSink
 	set classMap_(tcp-sack1) Agent/TCP/Sack1

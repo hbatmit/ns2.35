@@ -31,6 +31,7 @@ set opt(tcp) TCP/Reno
 set opt(sink) TCPSink
 set opt(app) FTP
 set opt(pktsize) 1460
+set opt(rcvwin) 130
 
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
@@ -127,26 +128,26 @@ Class LoggingApp -superclass Application
 LoggingApp instproc init {id} {
     $self set connid_ $id
     $self set nbytes_ 0
-    $self set cumsrtt_ 0.0
+    $self set cumrtt_ 0.0
     $self set numsamples_ 0
     eval $self next
 }
 
 LoggingApp instproc recv {bytes} {
-    $self instvar nbytes_ connid_ cumsrtt_ numsamples_
+    $self instvar nbytes_ connid_ cumrtt_ numsamples_
     global ns tp
 
-#    puts "[$ns now]: CWND $connid_: [ [lindex $tp($connid_) 0] set cwnd_ ]"
-#    puts "[$ns now]: SRTT $connid_: [ [lindex $tp($connid_) 0] set srtt_ ]"
     set nbytes_ [expr $nbytes_ + $bytes]
-    set cumsrtt_ [expr [ [lindex $tp($connid_) 0] set srtt_ ]  + $cumsrtt_]
+    set rtt_ [expr [[lindex $tp($connid_) 0] set rtt_] * [Agent/TCP set tcpTick_]]
+
+    set cumrtt_ [expr $rtt_  + $cumrtt_]
     set numsamples_ [expr $numsamples_ + 1]
     return nbytes_
 }
 
 LoggingApp instproc results { } {
-    $self instvar nbytes_ cumsrtt_ numsamples_
-    return [list $nbytes_ $cumsrtt_ $numsamples_]
+    $self instvar nbytes_ cumrtt_ numsamples_
+    return [list $nbytes_ $cumrtt_ $numsamples_]
 }
 
 #remove-all-packet-headers;      # removes all except common header
@@ -180,7 +181,7 @@ set numsrc $opt(nsrc)
 
 for {set i 0} {$i < $numsrc} {incr i} {
     set tp($i) [$ns create-connection-list $opt(tcp) $s($i) $opt(sink) $d 0]
-    [lindex $tp($i) 0] set window_ 130
+    [lindex $tp($i) 0] set window_ $opt(rcvwin)
     [lindex $tp($i) 0] set packetSize_ $opt(pktsize)
     set src($i) [ [lindex $tp($i) 0] attach-app $opt(app) ]
     set recvapp($i) [new LoggingApp $i]
@@ -227,7 +228,7 @@ for {set i 0} {$i < $numsrc} {incr i} {
     }
 }
 
-puts "Results for $opt(tcp) over $opt(simtime) seconds:"
+puts "Results for $opt(tcp) $opt(gw) over $opt(simtime) seconds:"
 $ns at $opt(simtime) "finish"
 
 $ns run
