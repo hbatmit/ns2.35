@@ -36,8 +36,10 @@ set opt(rcvwin) 130
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 1Mb;             # bottleneck bandwidth (for some topos)
+set opt(accessrate) 10Mb;       # rate of access link src -> gw
 set opt(maxq) 1000;             # max queue length at bottleneck
-set opt(delay) 50ms;            # total one-way delay in topology
+set opt(delay) 49ms;            # total one-way delay in topology
+set opt(accessdelay) 1ms;       # latency of access link
 
 
 # random on-off times for sources
@@ -89,7 +91,7 @@ proc create-dumbbell-topology {bneckbw delay} {
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
 #        $ns duplex-link $s($i) $gw 10Mb 1ms DropTail
 #        $ns duplex-link $gw $d $bneckbw $delay DropTail
-        $ns duplex-link $s($i) $gw 10Mb 1ms $opt(gw)
+        $ns duplex-link $s($i) $gw $opt(accessrate) $opt(accessdelay) $opt(gw)
         $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
     }
 }
@@ -98,13 +100,13 @@ proc finish {} {
     global ns opt recvapp ontime
     global f
 
-    puts "ConnID\tMbits\tMbits/s\tAvgSRTT\tOn%\tUtility"
+    puts "ConnID\tMbits\tMbits/s\tAvgRTT\tOn%\tUtility"
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         if { $ontime($i) > 0.0 } {
 #            puts [$recvapp($i) results]
             set totalbytes [expr [lindex [$recvapp($i) results] 0] ]
             if { [lindex [$recvapp($i) results] 2] > 0 } {
-                set avgrtt [expr [lindex [$recvapp($i) results] 1] / [lindex [$recvapp($i) results] 2] ]
+                set avgrtt [expr 1000*[lindex [$recvapp($i) results] 1] / [lindex [$recvapp($i) results] 2] ]
             } else {
                 set avgrtt 0
             }
@@ -139,9 +141,10 @@ LoggingApp instproc recv {bytes} {
 
     set nbytes_ [expr $nbytes_ + $bytes]
     set rtt_ [expr [[lindex $tp($connid_) 0] set rtt_] * [Agent/TCP set tcpTick_]]
-
-    set cumrtt_ [expr $rtt_  + $cumrtt_]
-    set numsamples_ [expr $numsamples_ + 1]
+    if {$rtt_ > 0} {
+        set cumrtt_ [expr $rtt_  + $cumrtt_]
+        set numsamples_ [expr $numsamples_ + 1]
+    }
     return nbytes_
 }
 
