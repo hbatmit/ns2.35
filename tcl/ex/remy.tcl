@@ -106,7 +106,7 @@ proc create-sources-sinks {} {
     }
 
     for {set i 0} {$i < $numsrc} {incr i} {
-        set tp($i) [$ns create-connection-list $opt(tcp) $s($i) $opt(sink) $d 0]
+        set tp($i) [$ns create-connection-list $opt(tcp) $s($i) $opt(sink) $d $i]
         set tcpsrc [lindex $tp($i) 0]
         set tcpsink [lindex $tp($i) 1]
         if { [info exists linuxcc] } { 
@@ -165,7 +165,7 @@ LoggingApp instproc recv {bytes} {
     global ns tp
 
     set nbytes_ [expr $nbytes_ + $bytes]
-    set rtt_ [expr [[lindex $tp($connid_) 0] set rtt_] * [Agent/TCP set tcpTick_]]
+    set rtt_ [expr [[lindex $tp($connid_) 0] set rtt_] * [[lindex $tp($connid_) 0] set tcpTick_]]
     if {$rtt_ > 0} {
         set cumrtt_ [expr $rtt_  + $cumrtt_]
         set numsamples_ [expr $numsamples_ + 1]

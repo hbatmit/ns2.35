@@ -237,9 +237,9 @@ void LinuxTcpAgent::time_processing(Packet* pkt, unsigned char flag, s32* seq_ur
 void LinuxTcpAgent::rtt_update(double tao, unsigned long pkt_seq_no)
 {
 	double now = Scheduler::instance().clock();
-	if (ts_option_)
+	if (ts_option_) {
 		t_rtt_ = int(tao /tcp_tick_ + 0.5);
-	else {
+	} else {
 		double sendtime = now - tao;
 		sendtime += boot_time_;
 		double tickoff = fmod(sendtime, tcp_tick_);
