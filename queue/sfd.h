@@ -34,8 +34,9 @@ class SFD : public Queue {
     /* Link Capacity */
     double _capacity;
 
-    /* Underlying per flow FIFOs */
+    /* Underlying per flow FIFOs and enque wrapper */
     std::map<uint64_t,PacketQueue*> _packet_queues;
+    void enque_packet( Packet* p, uint64_t flow_id );
 
     /* Random dropper, one for the whole queue, pick _iter^{th} substream */
     RNG* _dropper ;
@@ -48,6 +49,7 @@ class SFD : public Queue {
     /* Fcfs scheduler, use timestamps */ 
     std::map<uint64_t,std::queue<uint64_t>> _timestamps;
     uint64_t fcfs_scheduler( void );
+    uint64_t _counter;
 
     /* Hash from packet to flow */
     uint64_t hash( Packet *p );

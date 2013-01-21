@@ -31,9 +31,7 @@ FlowStats::FlowStats() :
 {}
 
 SFD::SFD( double capacity ) :
-  _capacity( capacity ),
-  _K( 0.2 ),
-  _headroom( 0.05 )
+  _counter( 0.0 )
 { 
   bind("_iter", &_iter ); 
   bind( "_capacity", &_capacity );
@@ -55,7 +53,7 @@ SFD::SFD( double capacity ) :
 
 void SFD::enque(Packet *p)
 {
-  static uint64_t counter = 0;
+  /* Implements pure virtual function Queue::enque() */
 
   /* Compute flow_id using hash */
   uint64_t flow_id = hash( p ); 
@@ -86,15 +84,7 @@ void SFD::enque(Packet *p)
   /* Toss a coin and drop */  
   if ( !should_drop( drop_probability ) ) {
     printf( " Not dropping packet of type %d , drop_probability is %f\n", pkt_type, drop_probability );
-    if ( _packet_queues.find( flow_id )  != _packet_queues.end() ) {
-      _packet_queues.at( flow_id )->enque( p );
-      _timestamps.at( flow_id ).push( ++counter );
-    } else {
-      _packet_queues[ flow_id ] = new PacketQueue();
-      _timestamps[ flow_id ] = std::queue<uint64_t>();
-      _packet_queues.at( flow_id )->enque( p );
-      _timestamps.at( flow_id ).push( ++counter );
-    }
+    enque_packet( p, flow_id );
   } else {
     printf( " Dropping packet of type %d, drop_probability is %f\n", pkt_type, drop_probability );
     drop( p );
@@ -103,6 +93,8 @@ void SFD::enque(Packet *p)
 
 Packet* SFD::deque()
 {
+  /* Implements pure virtual function Queue::deque() */
+
   uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
     printf( "Using Fcfs \n");
@@ -124,7 +116,8 @@ Packet* SFD::deque()
   }
 }
 
-uint64_t SFD::fcfs_scheduler( void ) {
+uint64_t SFD::fcfs_scheduler( void ) 
+{
   /* Implement FIFO by looking at arrival time of HOL pkt */
   typedef std::pair<uint64_t,std::queue<uint64_t>> FlowTs;
   auto flow_compare = [&] (const FlowTs & T1, const FlowTs &T2 )
@@ -134,7 +127,8 @@ uint64_t SFD::fcfs_scheduler( void ) {
   return std::min_element( _timestamps.begin(), _timestamps.end(), flow_compare ) -> first;
 }
 
-uint64_t SFD::random_scheduler( void ) {
+uint64_t SFD::random_scheduler( void ) 
+{
   /* Implement Random scheduler */
   typedef std::pair<uint64_t,PacketQueue*> FlowQ;
   std::vector<FlowQ> available_flows( _packet_queues.size() );
@@ -144,6 +138,19 @@ uint64_t SFD::random_scheduler( void ) {
   available_flows.erase( filter_end, available_flows.end() );
   return ( available_flows.empty() ) ? ( uint64_t ) -1 :
                                        available_flows.at( _rand_scheduler->uniform( (int)available_flows.size() ) ).first;
+}
+
+void SFD::enque_packet( Packet* p, uint64_t flow_id ) 
+{
+  if ( _packet_queues.find( flow_id )  != _packet_queues.end() ) {
+    _packet_queues.at( flow_id )->enque( p );
+    _timestamps.at( flow_id ).push( ++_counter );
+  } else {
+    _packet_queues[ flow_id ] = new PacketQueue();
+    _timestamps[ flow_id ] = std::queue<uint64_t>();
+    _packet_queues.at( flow_id )->enque( p );
+    _timestamps.at( flow_id ).push( ++_counter );
+  }
 }
 
 uint64_t SFD::hash(Packet* pkt)
@@ -221,12 +228,12 @@ double SFD::est_fair_share()
   for ( auto &user_share : current_share ) {
     final_share[ user_share.first ] = current_share[ user_share.first ];
   }
+
   /* Determine fair share rate as max over all allocations */
   auto arg_max = std::max_element( final_share.begin(), final_share.end(), 
                  [&] (const std::pair<uint64_t,double> & p1, const std::pair<uint64_t,double> &p2 )
                  { return p1.second < p2.second ;} );
   return arg_max->second ;
-
 }
 
 bool SFD::should_drop( double prob )
