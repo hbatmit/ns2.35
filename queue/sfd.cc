@@ -24,7 +24,10 @@ int SFD::command(int argc, const char*const* argv)
 }
 
 SFD::SFD( double capacity ) :
-  _counter( 0.0 ),
+  _packet_queues( std::map<uint64_t,PacketQueue*>() ),
+  _timestamps( std::map<uint64_t,std::queue<uint64_t>> () ),
+  _counter( 0 ),
+  _scheduler( &_packet_queues , &_timestamps ),
   _rate_estimator( 0.0, 0.0, 0.0 )
 {
   bind("_iter", &_iter );
@@ -36,18 +39,11 @@ SFD::SFD( double capacity ) :
   fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f, _headroom %f \n", _iter, _capacity, _qdisc, _K, _headroom );
   _dropper = new RNG();
   _queue_picker = new RNG();
-  if ( _qdisc == QDISC_RAND ) {
-    printf( "Using Rand \n");
-    _rand_scheduler = new RNG();
-  } else {
-    printf( "Using Fcfs \n");
-  }
+  _scheduler.set_iter( _iter );
+  _scheduler.set_qdisc( _qdisc );
   for (int i=1; i < _iter ; i++ ) {
     _dropper->reset_next_substream();
     _queue_picker->reset_next_substream();
-    if ( _qdisc == QDISC_RAND ) {
-     _rand_scheduler->reset_next_substream();
-    }
   }
   _rate_estimator = SfdRateEstimator( _K, _headroom, _capacity );
 }
@@ -110,9 +106,9 @@ Packet* SFD::deque()
   /* Implements pure virtual function Queue::deque() */
   uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
-    current_flow = fcfs_scheduler();
+    current_flow = _scheduler.fcfs_scheduler();
   } else if ( _qdisc == QDISC_RAND ) {
-    current_flow = random_scheduler();
+    current_flow = _scheduler.random_scheduler();
   } else {
     assert( false );
   }
@@ -144,30 +140,6 @@ uint64_t SFD::longest_queue( void )
   /* Pick one at random */
   auto max_elem = all_max_flows.at( _queue_picker->uniform( (int) all_max_flows.size() ) ).first;
   return max_elem;
-}
-
-uint64_t SFD::fcfs_scheduler( void )
-{
-  /* Implement FIFO by looking at arrival time of HOL pkt */
-  typedef std::pair<uint64_t,std::queue<uint64_t>> FlowTs;
-  auto flow_compare = [&] (const FlowTs & T1, const FlowTs &T2 )
-                       { if (T1.second.empty()) return false;
-                         else if(T2.second.empty()) return true;
-                         else return T1.second.front() < T2.second.front() ; };
-  return std::min_element( _timestamps.begin(), _timestamps.end(), flow_compare ) -> first;
-}
-
-uint64_t SFD::random_scheduler( void )
-{
-  /* Implement Random scheduler */
-  typedef std::pair<uint64_t,PacketQueue*> FlowQ;
-  std::vector<FlowQ> available_flows( _packet_queues.size() );
-  auto filter_end = std::remove_copy_if( _packet_queues.begin(), _packet_queues.end(),
-                                         available_flows.begin(),
-                                         [&] (const FlowQ &T) { return T.second->length()==0; } );
-  available_flows.erase( filter_end, available_flows.end() );
-  return ( available_flows.empty() ) ? ( uint64_t ) -1 :
-                                       available_flows.at( _rand_scheduler->uniform( (int)available_flows.size() ) ).first;
 }
 
 void SFD::enque_packet( Packet* p, uint64_t flow_id )

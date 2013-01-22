@@ -9,6 +9,7 @@
 #include "rng.h"
 #include "flow-stats.h"
 #include "sfd-rate-estimator.h"
+#include "sfd-scheduler.h"
 
 /*
  * Stochastic Fair Dropping : Variation of AFD
@@ -43,14 +44,10 @@ class SFD : public Queue {
     int _iter;
     uint64_t longest_queue( void );
 
-    /* Random scheduler, one for whole queue, pick _iter^{th} substream for RNG */
-    RNG* _rand_scheduler;
-    uint64_t random_scheduler( void );
-
-    /* Fcfs scheduler, use timestamps */
+    /* Scheduler */
     std::map<uint64_t,std::queue<uint64_t>> _timestamps;
-    uint64_t fcfs_scheduler( void );
     uint64_t _counter;
+    SfdScheduler _scheduler;
 
     /* Hash from packet to flow */
     uint64_t hash( Packet *p );
