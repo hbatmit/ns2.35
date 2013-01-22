@@ -1,5 +1,4 @@
 #include "sfd.h"
-#include <math.h>
 #include "rng.h"
 #include <stdint.h>
 #include <algorithm>
@@ -25,7 +24,8 @@ int SFD::command(int argc, const char*const* argv)
 }
 
 SFD::SFD( double capacity ) :
-  _counter( 0.0 )
+  _counter( 0.0 ),
+  _rate_estimator( 0.0, 0.0, 0.0 )
 {
   bind("_iter", &_iter );
   bind( "_capacity", &_capacity );
@@ -33,9 +33,7 @@ SFD::SFD( double capacity ) :
   bind("_K", &_K );
   bind("_headroom", &_headroom );
   /* Restrict advertised capacity right here */
-  printf( "Using head_room of %f \n", _headroom );
-  _capacity = _capacity * (1 - _headroom);
-  fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f \n", _iter, _capacity, _qdisc, _K );
+  fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f, _headroom %f \n", _iter, _capacity, _qdisc, _K, _headroom );
   _dropper = new RNG();
   _queue_picker = new RNG();
   if ( _qdisc == QDISC_RAND ) {
@@ -51,6 +49,7 @@ SFD::SFD( double capacity ) :
      _rand_scheduler->reset_next_substream();
     }
   }
+  _rate_estimator = SfdRateEstimator( _K, _headroom, _capacity );
 }
 
 void SFD::enque(Packet *p)
@@ -68,24 +67,22 @@ void SFD::enque(Packet *p)
 
   /* Estimate arrival rate */
   double now = Scheduler::instance().clock();
-  double arrival_rate = est_flow_rate( flow_id, now, p );
+  double arrival_rate = _rate_estimator.est_flow_rate( flow_id, now, p );
   printf( " Time %f : Arrival rate estimate for flow %lu, src:%u, dst:%u is %f \n",
           now, flow_id, (int)(hdr_ip::access(p)->saddr()), (int)(hdr_ip::access(p)->daddr()), arrival_rate);
 
   /* Estimate fair share */
-  _fair_share = est_fair_share() ;
+  auto _fair_share = _rate_estimator.est_fair_share() ;
   printf( " Time %f : Fair share estimate is %f\n", now, _fair_share );
 
-  /* Check if the link is congested */
-  typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
-  double total_ingress = std::accumulate( _flow_stats.begin(), _flow_stats.end(), 0.0,
-                         [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._flow_rate ;} );
+  /* Estimate total ingress rate to check if the link is congested */
+  double total_ingress = _rate_estimator.est_ingress_rate();
 
   /* Extract protocol (TCP vs UDP) from the header */
   hdr_cmn* hdr  = hdr_cmn::access(p);
   packet_t pkt_type   = hdr->ptype();
   double drop_probability = 0;
-  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) and ( total_ingress >= _capacity ) ) {
+  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) and ( total_ingress >= _rate_estimator.est_virtual_egress_rate() ) ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   }
 
@@ -190,83 +187,6 @@ uint64_t SFD::hash(Packet* pkt)
 {
   hdr_ip *iph=hdr_ip::access(pkt);
   return ( iph->flowid() ); // modulo a large prime
-}
-
-double SFD::est_flow_rate( uint64_t flow_id, double now, Packet *p )
-{
-  /* Extract packet length in bits from the header */
-  double interarrival_time = now - _flow_stats[ flow_id ]._last_arrival;
-  hdr_cmn* hdr  = hdr_cmn::access(p);
-  uint32_t packet_size   = hdr->size() << 3;
-
-  /* If you have simultaneous arrivals, coalesce packets */
-  if ( interarrival_time == 0 ) {
-    _flow_stats[ flow_id ]._acc_pkt_size += packet_size;
-    if ( _flow_stats[ flow_id ]._flow_rate ) {
-      return  _flow_stats[ flow_id ]._flow_rate ;
-    } else {
-      /* first packet, init. rate */
-      return ( _flow_stats[ flow_id ]._flow_rate = _fair_share );
-    }
-  } else {
-    packet_size += _flow_stats[ flow_id ]._acc_pkt_size;
-    _flow_stats[ flow_id ]._acc_pkt_size = 0;
-  }
-
-  /* Apply EWMA with exponential weight, and update _last_arrival */
-  _flow_stats[ flow_id ]._last_arrival = now;
-  _flow_stats[ flow_id ]._flow_rate =
-    (1.0 - exp(-interarrival_time/_K))*(double )packet_size/interarrival_time + exp(-interarrival_time/_K)*_flow_stats[ flow_id ]._flow_rate;
-
-  return _flow_stats[ flow_id ]._flow_rate;
-}
-
-double SFD::est_fair_share()
-{
-  /* Estimate fair share rate based on desired individual rates */
-  std::map<uint64_t,double> desired;
-  std::map<uint64_t,double> current_share;
-  std::map<uint64_t,double> final_share;
-
-  for ( auto it = _flow_stats.begin(); it != _flow_stats.end(); it++ ) {
-    auto flow_id = it->first;
-    auto flow_rate = it->second._flow_rate;
-    desired[ flow_id ] = flow_rate;
-    current_share[ flow_id ] = 0;
-  }
-  auto capacity = _capacity ;
-
-  /* First, determine all the allocations */
-  while ( (!current_share.empty()) and (capacity > DBL_MIN ) ) {
-    auto total_shares = current_share.size();
-    auto unit_share   = capacity / total_shares ;
-    std::list<uint64_t> user_list;
-    for ( auto it = current_share.begin(); it != current_share.end(); it++ )
-      user_list.push_back( it->first );
-    for ( auto &user : user_list ) {
-      auto fair_share = unit_share ;
-      current_share[ user ] += fair_share;
-      if ( current_share[ user ] >= desired[ user ] ) {
-        auto spare_capacity = current_share[user] - desired[ user ];
-        final_share[ user ] = desired[ user ];
-        current_share.erase( current_share.find( user ) );
-        capacity = capacity + spare_capacity - fair_share ;
-      } else {
-        capacity = capacity - fair_share;
-      }
-    }
-  }
-
-  /* finalize allocations */
-  for ( auto &user_share : current_share ) {
-    final_share[ user_share.first ] = current_share[ user_share.first ];
-  }
-
-  /* Determine fair share rate as max over all allocations */
-  auto arg_max = std::max_element( final_share.begin(), final_share.end(),
-                 [&] (const std::pair<uint64_t,double> & p1, const std::pair<uint64_t,double> &p2 )
-                 { return p1.second < p2.second ;} );
-  return arg_max->second ;
 }
 
 bool SFD::should_drop( double prob )

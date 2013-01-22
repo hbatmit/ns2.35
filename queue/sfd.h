@@ -8,6 +8,7 @@
 #include <queue>
 #include "rng.h"
 #include "flow-stats.h"
+#include "sfd-rate-estimator.h"
 
 /*
  * Stochastic Fair Dropping : Variation of AFD
@@ -23,8 +24,10 @@ class SFD : public Queue {
     /* Queuing discipline */
     int _qdisc;
 
-    /* Link Capacity */
+    /* Tcl accessible SFD parameters */
     double _capacity;
+    double  _K; /* default : 200 ms */
+    double  _headroom; /* default : 0.05 */
 
     /* Underlying per flow FIFOs and enque wrapper */
     std::map<uint64_t,PacketQueue*> _packet_queues;
@@ -52,15 +55,8 @@ class SFD : public Queue {
     /* Hash from packet to flow */
     uint64_t hash( Packet *p );
 
-    /* Per flow stats for rate estimation (borrowed from CSFQ) */
-    std::map<uint64_t,FlowStats> _flow_stats;
-    double  _K; /* default : 200 ms */
-    double  _headroom; /* default : 0.05 */
-    double est_flow_rate( uint64_t flow_id, double now, Packet* p );
-
-    /* Fair share rate of link */
-    double est_fair_share() ;
-    double _fair_share;
+    /* Rate Estimator */
+    SfdRateEstimator _rate_estimator;
 
     /* Probabilistic dropping */
     bool should_drop( double prob );
