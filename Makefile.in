@@ -218,7 +218,8 @@ OBJ_CC = \
 	tools/flowmon.o tools/loss-monitor.o \
 	queue/queue.o queue/drop-tail.o \
 	adc/simple-intserv-sched.o queue/red.o queue/codel.o queue/sfqcodel.o \
-        queue/sfd.o queue/cell-link.o \
+        queue/sfd.o queue/flow-stats.o queue/cell-link.o \
+        queue/sfd-rate-estimator.o queue/sfd-scheduler.o \
         link/poisson-link.o link/brownian-link.o \
 	queue/semantic-packetqueue.o queue/semantic-red.o \
 	tcp/ack-recons.o \
