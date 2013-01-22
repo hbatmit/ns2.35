@@ -1632,3 +1632,7 @@ Agent/MDART set etxMetric_ true
 # Cellular link defaults
 CellLink set EWMA_SLOTS 10
 CellLink set TIME_SLOT_DURATION 0.00167
+
+# BrownianLink defaults
+DelayLink/BrownianLink set _min_rate 1000000
+DelayLink/BrownianLink set _max_rate 10000000

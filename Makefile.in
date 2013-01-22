@@ -219,7 +219,7 @@ OBJ_CC = \
 	queue/queue.o queue/drop-tail.o \
 	adc/simple-intserv-sched.o queue/red.o queue/codel.o queue/sfqcodel.o \
         queue/sfd.o queue/cell-link.o \
-        link/poisson-link.o \
+        link/poisson-link.o link/brownian-link.o \
 	queue/semantic-packetqueue.o queue/semantic-red.o \
 	tcp/ack-recons.o \
 	queue/sfq.o queue/fq.o queue/drr.o queue/srr.o queue/cbq.o \

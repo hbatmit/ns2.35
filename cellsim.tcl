@@ -63,6 +63,7 @@ if { $bottleneck_qdisc == "SFD" } {
   set sfd_qdisc  [ lindex $argv 2 ]
   Queue/SFD set _qdisc [ expr [ string equal $sfd_qdisc "fcfs" ] == 1 ? 0 : 1 ]
   Queue/SFD set _K [ expr [ lindex $argv 3 ] ]
+  Queue/SFD set _headroom 0.05
 }
 
 # DRR defaults for simulation
@@ -151,7 +152,13 @@ for { set i 0 } { $i < $num_tcp } {incr i } {
 if { $is_poisson == "poisson"} {
   source link/poisson.tcl
   DelayLink/PoissonLink set _iter $iter
+} elseif { $is_poisson == "brownian" } {
+  source link/brownian.tcl
+  DelayLink/BrownianLink set _iter $iter
+  DelayLink/BrownianLink set _min_rate 1000000
+  DelayLink/BrownianLink set _max_rate 10000000
 }
+
 $ns duplex-link $left_router $right_router [ bw_parse $bottleneck_bw ] $bottleneck_latency $bottleneck_qdisc
 
 # open a file for tracing bottleneck link alone
