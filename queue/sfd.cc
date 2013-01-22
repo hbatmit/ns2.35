@@ -25,6 +25,7 @@ int SFD::command(int argc, const char*const* argv)
 
 SFD::SFD( double capacity ) :
   _packet_queues( std::map<uint64_t,PacketQueue*>() ),
+  _dropper( SfdDropper( &_packet_queues ) ),
   _timestamps( std::map<uint64_t,std::queue<uint64_t>> () ),
   _counter( 0 ),
   _scheduler( &_packet_queues , &_timestamps ),
@@ -35,16 +36,10 @@ SFD::SFD( double capacity ) :
   bind("_qdisc", &_qdisc );
   bind("_K", &_K );
   bind("_headroom", &_headroom );
-  /* Restrict advertised capacity right here */
   fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f, _headroom %f \n", _iter, _capacity, _qdisc, _K, _headroom );
-  _dropper = new RNG();
-  _queue_picker = new RNG();
+  _dropper.set_iter( _iter );
   _scheduler.set_iter( _iter );
   _scheduler.set_qdisc( _qdisc );
-  for (int i=1; i < _iter ; i++ ) {
-    _dropper->reset_next_substream();
-    _queue_picker->reset_next_substream();
-  }
   _rate_estimator = SfdRateEstimator( _K, _headroom, _capacity );
 }
 
@@ -83,12 +78,12 @@ void SFD::enque(Packet *p)
   }
 
   /* Toss a coin and drop */
-  if ( !should_drop( drop_probability ) ) {
+  if ( !_dropper.should_drop( drop_probability ) ) {
     printf( " Time %f : Not dropping packet of type %d , from flow %lu drop_probability is %f\n", now, pkt_type, flow_id, drop_probability );
     enque_packet( p, flow_id );
   } else {
     /* find longest queue  and drop from front*/
-    uint64_t drop_flow = longest_queue();
+    uint64_t drop_flow = _dropper.longest_queue();
     printf( " Time %f : Dropping packet of type %d, from flow %lu drop_probability is %f\n", now, pkt_type, drop_flow, drop_probability );
     enque_packet( p, flow_id );
     Packet* head = _packet_queues.at( drop_flow )->deque();
@@ -123,25 +118,6 @@ Packet* SFD::deque()
   }
 }
 
-uint64_t SFD::longest_queue( void )
-{
-  /* Find maximum queue length */
-  typedef std::pair<uint64_t,PacketQueue*> FlowQ;
-  auto flow_compare = [&] (const FlowQ & T1, const FlowQ &T2 )
-                       { return T1.second->length() < T2.second->length() ; };
-  auto max_len=std::max_element( _packet_queues.begin(), _packet_queues.end(), flow_compare )->second->length();
-
-  /* Find all flows that have the maximum queue length */
-  std::vector<FlowQ> all_max_flows( _packet_queues.size() );
-  auto filter_end =  std::remove_copy_if( _packet_queues.begin(), _packet_queues.end(), all_max_flows.begin(),
-                       [&] (const FlowQ &T ) { return T.second->length() != max_len ; } );
-  all_max_flows.erase( filter_end, all_max_flows.end() );
-
-  /* Pick one at random */
-  auto max_elem = all_max_flows.at( _queue_picker->uniform( (int) all_max_flows.size() ) ).first;
-  return max_elem;
-}
-
 void SFD::enque_packet( Packet* p, uint64_t flow_id )
 {
   if ( _packet_queues.find( flow_id )  != _packet_queues.end() ) {
@@ -158,11 +134,5 @@ void SFD::enque_packet( Packet* p, uint64_t flow_id )
 uint64_t SFD::hash(Packet* pkt)
 {
   hdr_ip *iph=hdr_ip::access(pkt);
-  return ( iph->flowid() ); // modulo a large prime
-}
-
-bool SFD::should_drop( double prob )
-{
-  /* Toss a biased coin */
-  return _dropper->next_double() <= prob ;
+  return ( iph->flowid() );
 }

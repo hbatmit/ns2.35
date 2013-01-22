@@ -10,6 +10,8 @@
 #include "flow-stats.h"
 #include "sfd-rate-estimator.h"
 #include "sfd-scheduler.h"
+#include "sfd-dropper.h"
+
 
 /*
  * Stochastic Fair Dropping : Variation of AFD
@@ -17,32 +19,22 @@
  * with the TCP loss equation.
  */
 
-#define QDISC_FCFS 0
-#define QDISC_RAND 1
-
 class SFD : public Queue {
   private :
-    /* Queuing discipline */
-    int _qdisc;
 
     /* Tcl accessible SFD parameters */
-    double _capacity;
-    double  _K; /* default : 200 ms */
+    int _qdisc;        /* Queuing discipline */
+    double _capacity;  /* Capacity */
+    double  _K;        /* default : 200 ms */
     double  _headroom; /* default : 0.05 */
+    int _iter;         /* random seed */
 
     /* Underlying per flow FIFOs and enque wrapper */
     std::map<uint64_t,PacketQueue*> _packet_queues;
     void enque_packet( Packet* p, uint64_t flow_id );
 
-    /* Random dropping :
-       Toss a coin
-       Pick one of the longest queues at random
-       Drop from front of that queue
-     */
-    RNG* _dropper ;
-    RNG* _queue_picker;
-    int _iter;
-    uint64_t longest_queue( void );
+    /* Random dropper */
+    SfdDropper _dropper;
 
     /* Scheduler */
     std::map<uint64_t,std::queue<uint64_t>> _timestamps;
@@ -54,9 +46,6 @@ class SFD : public Queue {
 
     /* Rate Estimator */
     SfdRateEstimator _rate_estimator;
-
-    /* Probabilistic dropping */
-    bool should_drop( double prob );
 
   public :
     SFD( double capacity );
