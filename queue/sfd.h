@@ -10,8 +10,8 @@
 #include "flow-stats.h"
 
 /*
- * Stochastic Fair Dropping : Variation of AFD 
- * where drop rates for TCP are set in accordance 
+ * Stochastic Fair Dropping : Variation of AFD
+ * where drop rates for TCP are set in accordance
  * with the TCP loss equation.
  */
 
@@ -44,7 +44,7 @@ class SFD : public Queue {
     RNG* _rand_scheduler;
     uint64_t random_scheduler( void );
 
-    /* Fcfs scheduler, use timestamps */ 
+    /* Fcfs scheduler, use timestamps */
     std::map<uint64_t,std::queue<uint64_t>> _timestamps;
     uint64_t fcfs_scheduler( void );
     uint64_t _counter;
@@ -63,11 +63,11 @@ class SFD : public Queue {
     double _fair_share;
 
     /* Probabilistic dropping */
-    bool should_drop( double prob ); 
+    bool should_drop( double prob );
 
   public :
     SFD( double capacity );
-    int command(int argc, const char*const* argv); 
+    int command(int argc, const char*const* argv);
 
     /* inherited functions from queue */
     void enque( Packet *p );

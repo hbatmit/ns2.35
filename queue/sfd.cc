@@ -13,7 +13,7 @@ static class SFDClass : public TclClass {
     }
 } class_sfd;
 
-int SFD::command(int argc, const char*const* argv) 
+int SFD::command(int argc, const char*const* argv)
 {
   if (argc == 3) {
     if (!strcmp(argv[1], "capacity")) {
@@ -26,8 +26,8 @@ int SFD::command(int argc, const char*const* argv)
 
 SFD::SFD( double capacity ) :
   _counter( 0.0 )
-{ 
-  bind("_iter", &_iter ); 
+{
+  bind("_iter", &_iter );
   bind( "_capacity", &_capacity );
   bind("_qdisc", &_qdisc );
   bind("_K", &_K );
@@ -58,7 +58,7 @@ void SFD::enque(Packet *p)
   /* Implements pure virtual function Queue::enque() */
 
   /* Compute flow_id using hash */
-  uint64_t flow_id = hash( p ); 
+  uint64_t flow_id = hash( p );
 
   /* If it's an ACK, simply enque */
   if (hdr_cmn::access(p)->ptype() == PT_ACK ) {
@@ -82,14 +82,14 @@ void SFD::enque(Packet *p)
                          [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._flow_rate ;} );
 
   /* Extract protocol (TCP vs UDP) from the header */
-  hdr_cmn* hdr  = hdr_cmn::access(p); 
+  hdr_cmn* hdr  = hdr_cmn::access(p);
   packet_t pkt_type   = hdr->ptype();
   double drop_probability = 0;
   if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) and ( total_ingress >= _capacity ) ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   }
 
-  /* Toss a coin and drop */  
+  /* Toss a coin and drop */
   if ( !should_drop( drop_probability ) ) {
     printf( " Time %f : Not dropping packet of type %d , from flow %lu drop_probability is %f\n", now, pkt_type, flow_id, drop_probability );
     enque_packet( p, flow_id );
@@ -149,7 +149,7 @@ uint64_t SFD::longest_queue( void )
   return max_elem;
 }
 
-uint64_t SFD::fcfs_scheduler( void ) 
+uint64_t SFD::fcfs_scheduler( void )
 {
   /* Implement FIFO by looking at arrival time of HOL pkt */
   typedef std::pair<uint64_t,std::queue<uint64_t>> FlowTs;
@@ -160,7 +160,7 @@ uint64_t SFD::fcfs_scheduler( void )
   return std::min_element( _timestamps.begin(), _timestamps.end(), flow_compare ) -> first;
 }
 
-uint64_t SFD::random_scheduler( void ) 
+uint64_t SFD::random_scheduler( void )
 {
   /* Implement Random scheduler */
   typedef std::pair<uint64_t,PacketQueue*> FlowQ;
@@ -173,7 +173,7 @@ uint64_t SFD::random_scheduler( void )
                                        available_flows.at( _rand_scheduler->uniform( (int)available_flows.size() ) ).first;
 }
 
-void SFD::enque_packet( Packet* p, uint64_t flow_id ) 
+void SFD::enque_packet( Packet* p, uint64_t flow_id )
 {
   if ( _packet_queues.find( flow_id )  != _packet_queues.end() ) {
     _packet_queues.at( flow_id )->enque( p );
@@ -192,14 +192,14 @@ uint64_t SFD::hash(Packet* pkt)
   return ( iph->flowid() ); // modulo a large prime
 }
 
-double SFD::est_flow_rate( uint64_t flow_id, double now, Packet *p ) 
+double SFD::est_flow_rate( uint64_t flow_id, double now, Packet *p )
 {
   /* Extract packet length in bits from the header */
   double interarrival_time = now - _flow_stats[ flow_id ]._last_arrival;
-  hdr_cmn* hdr  = hdr_cmn::access(p); 
+  hdr_cmn* hdr  = hdr_cmn::access(p);
   uint32_t packet_size   = hdr->size() << 3;
- 
-  /* If you have simultaneous arrivals, coalesce packets */ 
+
+  /* If you have simultaneous arrivals, coalesce packets */
   if ( interarrival_time == 0 ) {
     _flow_stats[ flow_id ]._acc_pkt_size += packet_size;
     if ( _flow_stats[ flow_id ]._flow_rate ) {
@@ -215,13 +215,13 @@ double SFD::est_flow_rate( uint64_t flow_id, double now, Packet *p )
 
   /* Apply EWMA with exponential weight, and update _last_arrival */
   _flow_stats[ flow_id ]._last_arrival = now;
-  _flow_stats[ flow_id ]._flow_rate = 
+  _flow_stats[ flow_id ]._flow_rate =
     (1.0 - exp(-interarrival_time/_K))*(double )packet_size/interarrival_time + exp(-interarrival_time/_K)*_flow_stats[ flow_id ]._flow_rate;
 
   return _flow_stats[ flow_id ]._flow_rate;
 }
 
-double SFD::est_fair_share() 
+double SFD::est_fair_share()
 {
   /* Estimate fair share rate based on desired individual rates */
   std::map<uint64_t,double> desired;
@@ -244,7 +244,7 @@ double SFD::est_fair_share()
     for ( auto it = current_share.begin(); it != current_share.end(); it++ )
       user_list.push_back( it->first );
     for ( auto &user : user_list ) {
-      auto fair_share = unit_share ; 
+      auto fair_share = unit_share ;
       current_share[ user ] += fair_share;
       if ( current_share[ user ] >= desired[ user ] ) {
         auto spare_capacity = current_share[user] - desired[ user ];
@@ -263,7 +263,7 @@ double SFD::est_fair_share()
   }
 
   /* Determine fair share rate as max over all allocations */
-  auto arg_max = std::max_element( final_share.begin(), final_share.end(), 
+  auto arg_max = std::max_element( final_share.begin(), final_share.end(),
                  [&] (const std::pair<uint64_t,double> & p1, const std::pair<uint64_t,double> &p2 )
                  { return p1.second < p2.second ;} );
   return arg_max->second ;
