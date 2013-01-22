@@ -24,12 +24,6 @@ int SFD::command(int argc, const char*const* argv)
   return Queue::command(argc, argv);
 }
 
-FlowStats::FlowStats() :
-  _last_arrival( 0.0 ),
-  _acc_pkt_size( 0.0 ),
-  _flow_rate( 0.0 )
-{}
-
 SFD::SFD( double capacity ) :
   _counter( 0.0 )
 { 

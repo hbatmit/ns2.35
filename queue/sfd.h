@@ -7,6 +7,7 @@
 #include <list>
 #include <queue>
 #include "rng.h"
+#include "flow-stats.h"
 
 /*
  * Stochastic Fair Dropping : Variation of AFD 
@@ -16,15 +17,6 @@
 
 #define QDISC_FCFS 0
 #define QDISC_RAND 1
-
-class FlowStats {
-  public :
-    double _last_arrival ;
-    double _acc_pkt_size;
-    double _flow_rate;
-    double _last_drop_prob;
-    FlowStats();
-};
 
 class SFD : public Queue {
   private :
