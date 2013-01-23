@@ -214,10 +214,10 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set state($i) OFF
     set curtime($i) 0.0
     set ontime($i) 0.0;         # total time spent in the "on" phase
-    if {$i % 2 == 1} {
+    if {[expr $i % 2] == 1} {
         $ns at 0.0 "$src($i) start"
         set state($i) ON
-#        puts "$curtime($i): Turning on $i"
+        puts "$curtime($i): Turning on $i"
     }
         
     while {$curtime($i) < $opt(simtime)} {
@@ -231,12 +231,12 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set curtime($i) $nexttime
         if { $state($i) == "OFF" } {
             $ns at $curtime($i) "$src($i) start"
-#            puts "$curtime($i): Turning on $i"
+            puts "$curtime($i): Turning on $i"
             set state($i) ON
         } else {
             set ontime($i) [expr $ontime($i) + $lastepoch]
             $ns at $curtime($i) "$src($i) stop"
-#            puts "$curtime($i): Turning off $i"
+            puts "$curtime($i): Turning off $i"
             set state($i) OFF
         }
     }
