@@ -4,6 +4,7 @@
 # Create a simulator object
 set ns [ new Simulator ]
 
+unset opt
 # Clean up procedures 
 proc finish { sim_object trace_file } {
   $sim_object flush-trace
@@ -32,38 +33,65 @@ proc finish { sim_object trace_file } {
 #  tcp_client_node(n)                                          tcp_server_node(n)
 
 
-# read bandwidths from config file
+# read default bandwidths from config file
 source configuration.tcl
 
-# get iteration number from cmd line
-set iter [ expr [ lindex $argv 0 ] ]
-set is_poisson [ lindex $argv 1 ]
+# Override them using the command line if desired
+
+proc Usage {} {
+  global opt argv0
+  foreach name [ array names opt ] {
+    puts -nonewline " \[-"
+    puts -nonewline [ format "%20s" $name ]
+    puts -nonewline " :\t"
+    puts -nonewline [ format "%15.15s"  $opt($name) ]
+    puts -nonewline "\]\n"
+  }
+}
+
+proc Getopt {} {
+  global opt argc argv argv0
+  if {$argc == 0} {
+    puts "Usage : $argv0 \n"
+    Usage
+    exit 1
+  }
+  for {set i 0} {$i < $argc} {incr i} {
+    set key [lindex $argv $i]
+    if ![string match {-*} $key] continue
+    set key [string range $key 1 end]
+    set val [lindex $argv [incr i]]
+    set opt($key) $val
+  }
+}
+
+Getopt
+Usage
 
 # create left_router and right_router
 set left_router  [ $ns node ]
 set right_router [ $ns node ]
 
 ## Set CoDel/sfqCoDel control parameters 
-if { $bottleneck_qdisc == "CoDel" } {
-  Queue/CoDel    set target_   [ delay_parse $codel_target ]
-  Queue/CoDel    set interval_ [ delay_parse $codel_interval ]
+if { $opt(bottleneck_qdisc) == "CoDel" } {
+  Queue/CoDel    set target_   [ delay_parse $opt(codel_target) ]
+  Queue/CoDel    set interval_ [ delay_parse $opt(codel_interval) ]
 }
 
-if { $bottleneck_qdisc == "sfqCoDel" } {
-  Queue/sfqCoDel set target_   [ delay_parse $codel_target ]
-  Queue/sfqCoDel set interval_ [ delay_parse $codel_interval ]
+if { $opt(bottleneck_qdisc) == "sfqCoDel" } {
+  Queue/sfqCoDel set target_   [ delay_parse $opt(codel_target) ]
+  Queue/sfqCoDel set interval_ [ delay_parse $opt(codel_interval) ]
   Queue/sfqCoDel set d_exp_    0.0
   Queue/sfqCoDel set curq_     0
 }
 
 # Set link capacity for SFD
-if { $bottleneck_qdisc == "SFD" } {
-  Queue/SFD set _capacity [ bw_parse $bottleneck_bw ]
-  Queue/SFD set _iter $iter
-  set sfd_qdisc  [ lindex $argv 2 ]
-  Queue/SFD set _qdisc [ expr [ string equal $sfd_qdisc "fcfs" ] == 1 ? 0 : 1 ]
-  Queue/SFD set _K [ expr [ lindex $argv 3 ] ]
-  Queue/SFD set _headroom 0.05
+if { $opt(bottleneck_qdisc) == "SFD" } {
+  Queue/SFD set _capacity [ bw_parse $opt(bottleneck_bw) ]
+  Queue/SFD set _iter $opt(iter)
+  Queue/SFD set _qdisc [ expr [ string equal $opt(sfd_qdisc) "fcfs" ] == 1 ? 0 : 1 ]
+  Queue/SFD set _K $opt(_K)
+  Queue/SFD set _headroom $opt(headroom)
 }
 
 # DRR defaults for simulation
@@ -74,10 +102,10 @@ Queue/DRR set mask_ 0
 
 set counter 0
 # CBR/UDP clients
-for { set i 0 } { $i < $num_udp } { incr i } {
+for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Create node
   set udp_client_node($i) [ $ns node ]
-  $ns duplex-link $udp_client_node($i) $left_router [ bw_parse $ingress_bw ] $ingress_latency DropTail
+  $ns duplex-link $udp_client_node($i) $left_router [ bw_parse $opt(ingress_bw) ] $opt(ingress_latency) DropTail
   
   # Create UDP Agents 
   set udp_client($i) [ new Agent/UDP ]
@@ -93,17 +121,17 @@ for { set i 0 } { $i < $num_udp } { incr i } {
 
   # Set packetSize_ and related parameters.
   $cbr_client($i) set packetSize_ 1000
-  puts "UDP rate $cbr_rate"
-  $cbr_client($i) set rate_   [ bw_parse $cbr_rate ]
+  puts "UDP rate $opt(cbr_rate)"
+  $cbr_client($i) set rate_   [ bw_parse $opt(cbr_rate) ]
   $cbr_client($i) set random_     0
   $ns at 0.0 "$cbr_client($i) start"
 }
 
 # CBR/UDP servers
-for { set i 0 } { $i < $num_udp } { incr i } {
+for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Create node
   set udp_server_node($i) [ $ns node ]
-  $ns duplex-link $right_router $udp_server_node($i) [ bw_parse $egress_bw ]  $egress_latency DropTail
+  $ns duplex-link $right_router $udp_server_node($i) [ bw_parse $opt(egress_bw) ]  $opt(egress_latency) DropTail
 
   # Create Application Sinks
   set udp_server($i) [ new Agent/Null ]
@@ -114,10 +142,10 @@ for { set i 0 } { $i < $num_udp } { incr i } {
 }
 
 # FTP/TCP clients
-for { set i 0 } { $i < $num_tcp } { incr i } {
+for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create node
   set tcp_client_node($i) [ $ns node ]
-  $ns duplex-link $tcp_client_node($i) $left_router [ bw_parse $ingress_bw ] $ingress_latency DropTail
+  $ns duplex-link $tcp_client_node($i) $left_router [ bw_parse $opt(ingress_bw) ] $opt(ingress_latency) DropTail
 
   # Create TCP Agents
   set tcp_client($i) [ new Agent/TCP/Linux ]
@@ -135,10 +163,10 @@ for { set i 0 } { $i < $num_tcp } { incr i } {
 }
 
 # FTP/TCP traffic servers
-for { set i 0 } { $i < $num_tcp } {incr i } {
+for { set i 0 } { $i < $opt(num_tcp) } {incr i } {
   # Create node
   set tcp_server_node($i) [ $ns node ]
-  $ns duplex-link $right_router $tcp_server_node($i) [ bw_parse $egress_bw ]  $egress_latency DropTail
+  $ns duplex-link $right_router $tcp_server_node($i) [ bw_parse $opt(egress_bw) ]  $opt(egress_latency) DropTail
 
   # Create server sinks for FTP
   set tcp_server($i) [ new Agent/TCPSink/Sack1 ]
@@ -149,22 +177,27 @@ for { set i 0 } { $i < $num_tcp } {incr i } {
 }
 
 # connect routers by a bottleneck link, with a queue discipline (qdisc)
-if { $is_poisson == "poisson"} {
+if { $opt(link_type) == "poisson"} {
   source link/poisson.tcl
-  DelayLink/PoissonLink set _iter $iter
-} elseif { $is_poisson == "brownian" } {
+  DelayLink/PoissonLink set _iter $opt(iter)
+} elseif { $opt(link_type) == "brownian" } {
   source link/brownian.tcl
-  DelayLink/BrownianLink set _iter $iter
+  DelayLink/BrownianLink set _iter $opt(iter)
   DelayLink/BrownianLink set _min_rate 1000000
   DelayLink/BrownianLink set _max_rate 10000000
+} elseif { $opt(link_type) == "deterministic" } {
+  puts "Link type determinstic"
+} else {
+  puts "Invalid link type"
+  exit 5
 }
 
-$ns duplex-link $left_router $right_router [ bw_parse $bottleneck_bw ] $bottleneck_latency $bottleneck_qdisc
+$ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
 
 # open a file for tracing bottleneck link alone
 set trace_file [ open cellsim.tr w ]
 $ns trace-queue $left_router $right_router $trace_file
 
 # Run simulation
-$ns at $duration "finish $ns $trace_file"
+$ns at $opt(duration) "finish $ns $trace_file"
 $ns run
