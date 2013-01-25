@@ -14,6 +14,8 @@
 #include "random.h"
 #include "template.h"
 
+#include "remy/whiskertree.hh"
+
 /* Rational TCP with Tahoe */
 class RationalTcpAgent : public virtual TcpAgent {
 public:

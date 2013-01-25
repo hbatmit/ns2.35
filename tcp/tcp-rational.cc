@@ -105,7 +105,7 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 		ackcount = 1;
 	}
 	newack(pkt);		// updates RTT to set RTO properly, etc.
-	maxseq_ = max(maxseq_, highest_ack_);
+	maxseq_ = ::max(maxseq_, highest_ack_);
 	update_cwnd(last_rtt);
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {

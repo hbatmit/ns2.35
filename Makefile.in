@@ -79,7 +79,7 @@ LIB	= \
 	@V_LIBS@ \
 	@V_LIB_X11@ \
 	@V_LIB@ \
-	-lm @LIBS@
+	-lm -lprotobuf @LIBS@
 #	-L@libdir@ \
 
 CFLAGS	+= $(CCOPT) $(DEFINE) -std=c++0x
@@ -193,6 +193,7 @@ OBJ_CC = \
 	common/messpass.o common/tp.o common/tpm.o apps/worm.o \
 	tcp/tcp.o tcp/tcp-sink.o tcp/tcp-reno.o \
 	tcp/tcp-newreno.o tcp/tcp-rational.o tcp/tcp-fast.o \
+	tcp/remy/dna.pb.o tcp/remy/memory.o tcp/remy/memoryrange.o tcp/remy/whisker.o tcp/remy/whiskertree.o \
 	tcp/tcp-vegas.o tcp/tcp-rbp.o tcp/tcp-full.o tcp/rq.o \
 	baytcp/tcp-full-bay.o baytcp/ftpc.o baytcp/ftps.o \
 	tcp/scoreboard.o tcp/scoreboard-rq.o tcp/tcp-sack1.o tcp/tcp-fack.o \
