@@ -33,8 +33,11 @@ public:
 	virtual void recv_newack_helper(Packet* pkt);
 	virtual double initial_window();
 	virtual void update_cwnd( const RemyPacket packet );
+	virtual void timeout_nonrtx( int tno );
+	virtual void output( int seqno, int reason ) { _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
 
 protected:
+	double _last_send_time;
 	int count_bytes_acked_;
 };
 
@@ -52,6 +55,7 @@ public:
 	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
 	virtual double initial_window() {return RationalTcpAgent::initial_window();}
 	virtual void update_cwnd( const RemyPacket packet ) {RationalTcpAgent::update_cwnd(packet);}
+	virtual void output( int seqno, int reason ) { _last_send_time = Scheduler::instance().clock(); RenoTcpAgent::output( seqno, reason ); }
 };
 
 /* 
@@ -67,6 +71,7 @@ public:
 	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
 	virtual double initial_window() {return RationalTcpAgent::initial_window();}
 	virtual void update_cwnd( const RemyPacket packet ) {RationalTcpAgent::update_cwnd(packet);}
+	virtual void output( int seqno, int reason ) { _last_send_time = Scheduler::instance().clock(); NewRenoTcpAgent::output( seqno, reason ); }
 };
 
 #endif

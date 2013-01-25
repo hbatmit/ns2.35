@@ -30,7 +30,7 @@ set opt(nsrc) 2;                # number of sources in experiment
 set opt(tcp) TCP/Reno
 set opt(sink) TCPSink
 set opt(app) FTP
-set opt(pktsize) 1460
+set opt(pktsize) 1210
 set opt(rcvwin) 130
 
 # topology parameters
@@ -46,8 +46,8 @@ set opt(accessdelay) 1ms;       # latency of access link
 set opt(seed) 0
 set opt(onrand) Exponential
 set opt(offrand) Exponential
-set opt(onavg) 20.0;              # mean on and off time
-set opt(offavg) 20.0;              # mean on and off time
+set opt(onavg) 1.0;              # mean on and off time
+set opt(offavg) 1.0;              # mean on and off time
 
 # simulator parameters
 set opt(simtime) 1000.0;        # total simulated time
@@ -217,7 +217,7 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
     if {[expr $i % 2] == 1} {
         $ns at 0.0 "$src($i) start"
         set state($i) ON
-        puts "$curtime($i): Turning on $i"
+#        puts "$curtime($i): Turning on $i"
     }
         
     while {$curtime($i) < $opt(simtime)} {
@@ -231,12 +231,12 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set curtime($i) $nexttime
         if { $state($i) == "OFF" } {
             $ns at $curtime($i) "$src($i) start"
-            puts "$curtime($i): Turning on $i"
+#            puts "$curtime($i): Turning on $i"
             set state($i) ON
         } else {
             set ontime($i) [expr $ontime($i) + $lastepoch]
             $ns at $curtime($i) "$src($i) stop"
-            puts "$curtime($i): Turning off $i"
+#            puts "$curtime($i): Turning off $i"
             set state($i) OFF
         }
     }

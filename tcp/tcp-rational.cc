@@ -18,6 +18,7 @@ RationalTcpAgent::RationalTcpAgent()
 	: _whiskers( NULL ),
 	  _memory(),
 	  _intersend_time( 0.0 ),
+	  _last_send_time( 0 ),
 	  count_bytes_acked_( 0 )
 {
 	bind_bool("count_bytes_acked_", &count_bytes_acked_);
@@ -51,9 +52,6 @@ RationalTcpAgent::RationalTcpAgent()
 
 	/* store whiskers */
 	_whiskers = new WhiskerTree( tree );
-
-	/* tune */
-	maxburst_ = 0;
 }
 
 RationalTcpAgent::~RationalTcpAgent()
@@ -108,9 +106,17 @@ RationalTcpAgent::send_helper(int maxburst)
 	 * we wouldn't get here if TCP_TIMER_BURSTSEND were pending,
 	 * so we do not need an explicit check here.
 	 */
-	if (t_seqno_ <= highest_ack_ + window() && t_seqno_ < curseq_) {
-		assert( _intersend_time != 0.0 );
-		burstsnd_timer_.resched( .001 * _intersend_time );
+
+	/* schedule wakeup */
+	if ( t_seqno_ <= highest_ack_ + window() && t_seqno_ < curseq_ ) {
+		const double now( Scheduler::instance().clock() );
+		const double time_since_last_send( now - _last_send_time );
+		const double wait_time( _intersend_time - time_since_last_send );
+		if ( wait_time <= 0 ) {
+			burstsnd_timer_.resched( 0 );
+		} else {
+			burstsnd_timer_.resched( wait_time );
+		}
 	}
 }
 
@@ -120,9 +126,19 @@ RationalTcpAgent::send_helper(int maxburst)
 void
 RationalTcpAgent::send_idle_helper() 
 {
-	_memory.reset();
-	cwnd_ = 1;
-	_intersend_time = 0.0;
+	/* tune */
+	maxburst_ = 1;
+
+	assert( _intersend_time != 0.0 );
+	const double now( Scheduler::instance().clock() );
+	const double time_since_last_send( now - _last_send_time );
+	const double wait_time( _intersend_time - time_since_last_send );
+
+	if ( wait_time <= .0001 ) {
+		return;
+	} else {
+		burstsnd_timer_.resched( wait_time );
+	}
 }
 
 /*
@@ -176,6 +192,26 @@ RationalTcpAgent::update_cwnd( const RemyPacket packet )
 
 	const Whisker & current_whisker( _whiskers->use_whisker( _memory ) );
 
-	cwnd_ = current_whisker.window( cwnd_ );
-	_intersend_time = current_whisker.intersend();
+	assert( cwnd_ > 0 );
+
+	unsigned int new_cwnd = current_whisker.window( (unsigned int)cwnd_ );
+
+	if ( new_cwnd > 1024 ) {
+		new_cwnd = 1024;
+	}
+
+	cwnd_ = new_cwnd;
+	_intersend_time = .001 * current_whisker.intersend();
+
+	fprintf( stderr, "cwnd now %u, intersend_time now %f\n", new_cwnd, _intersend_time );
+}
+
+void
+RationalTcpAgent::timeout_nonrtx( int tno )
+{
+	if ( tno == TCP_TIMER_DELSND ) {
+		send_much( 1, TCP_REASON_TIMEOUT, maxburst_ );
+	} else if ( tno == TCP_TIMER_BURSTSND ) {
+		send_much( 1, TCP_REASON_TIMEOUT, maxburst_ );
+	}
 }
