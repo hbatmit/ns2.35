@@ -7,6 +7,8 @@ set ns [ new Simulator ]
 unset opt
 # Clean up procedures 
 proc finish { sim_object trace_file } {
+  global ns left_router right_router
+  [ [ $ns link $left_router $right_router ] link ] total
   $sim_object flush-trace
   close $trace_file
   exit 0
@@ -183,8 +185,11 @@ if { $opt(link_type) == "poisson"} {
 } elseif { $opt(link_type) == "brownian" } {
   source link/brownian.tcl
   DelayLink/BrownianLink set _iter $opt(iter)
-  DelayLink/BrownianLink set _min_rate 1000000
-  DelayLink/BrownianLink set _max_rate 10000000
+  # Min rate 80 MTU sized packets per second or ~ 1mbps
+  DelayLink/BrownianLink set _min_rate 100
+  # Max rate 800 MTU sized packets per second or ~ 10mbps
+  DelayLink/BrownianLink set _max_rate 100.1
+  DelayLink/BrownianLink set _duration $opt(duration)
 } elseif { $opt(link_type) == "deterministic" } {
   puts "Link type determinstic"
 } else {
