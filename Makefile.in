@@ -49,6 +49,7 @@ TEST	= test
 RM	= rm -f
 MV      = mv
 PERL	= @PERL@
+PROTOC  = protoc
 
 # for diffusion
 #DIFF_INCLUDES = "./diffusion3/main ./diffusion3/lib ./diffusion3/nr ./diffusion3/ns"
@@ -105,6 +106,10 @@ NSLIB   = @NSLIB@
 NSX	= nsx
 NSE	= nse
 NSTK = nstk
+
+# Protobufs for Remy
+%.pb.cc: %.proto
+	$(PROTOC) --cpp_out=. $<
 
 # To allow conf/makefile.win overwrite this macro
 # We will set these two macros to empty in conf/makefile.win since VC6.0
