@@ -34,8 +34,10 @@ BLANK	= # make a blank space.  DO NOT add anything to this line
 
 # The following will be redefined under Windows (see WIN32 lable below)
 CC	= @CC@
-CPP	= @CXX@
-LINK	= $(CPP)
+CXX	= @CXX@
+#CPP	= @CXX@
+#LINK	= $(CPP)
+LINK	= $(CXX)
 LINK_SHLIB = @SHLIB_LD@
 MKDEP	= ./conf/mkdep
 TCLSH	= @V_TCLSH@
@@ -83,7 +85,9 @@ LIB	= \
 	-lm -lprotobuf @LIBS@
 #	-L@libdir@ \
 
-CFLAGS	+= $(CCOPT) $(DEFINE) -std=c++0x
+CFLAGS	+= $(CCOPT) $(DEFINE) 
+#CXXFLAGS += -std=c++0x
+CXXFLAGS += $(CCOPT) $(DEFINE) -std=gnu++0x
 
 # Explicitly define compilation rules since SunOS 4's make doesn't like gcc.
 # Also, gcc does not remove the .o before forking 'as', which can be a
@@ -92,7 +96,9 @@ CFLAGS	+= $(CCOPT) $(DEFINE) -std=c++0x
 
 .cc.o:
 	@rm -f $@
-	$(CPP) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
+#	$(CPP) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
+#	$(CXX) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
+	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
 
 .c.o:
 	@rm -f $@
@@ -108,7 +114,7 @@ NSE	= nse
 NSTK = nstk
 
 # Protobufs for Remy
-%.pb.cc: %.proto
+%.pb.h: %.proto
 	$(PROTOC) --cpp_out=. $<
 
 # To allow conf/makefile.win overwrite this macro
