@@ -18,17 +18,20 @@
 
 /* Rational TCP with Tahoe */
 class RationalTcpAgent : public virtual TcpAgent {
+private:
+	const WhiskerTree *_whiskers;
+
 public:
-	RationalTcpAgent() : count_bytes_acked_(0)
-	{
-		bind_bool("count_bytes_acked_", &count_bytes_acked_);
-	}
+	RationalTcpAgent();
+	~RationalTcpAgent();
+
 	/* helper functions */
 	virtual void send_helper(int maxburst);
 	virtual void send_idle_helper();
 	virtual void recv_newack_helper(Packet* pkt);
 	virtual double initial_window();
 	virtual void update_cwnd(double last_rtt);
+
 protected:
 	int count_bytes_acked_;
 };

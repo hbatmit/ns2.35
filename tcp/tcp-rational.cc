@@ -5,7 +5,57 @@
  * January 2013.
  */
 
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "tcp-rational.h"
+
+RationalTcpAgent::RationalTcpAgent()
+	: count_bytes_acked_( 0 ),
+	  _whiskers( NULL )
+{
+	bind_bool("count_bytes_acked_", &count_bytes_acked_);
+
+	/* get whisker filename */
+	const char *filename = getenv( "WHISKERS" );
+	if ( !filename ) {
+		fprintf( stderr, "RemyTCP: Missing WHISKERS environment variable.\n" );
+		throw 1;
+	}
+
+	/* open file */
+	int fd = open( filename, O_RDONLY );
+	if ( fd < 0 ) {
+		perror( "open" );
+		throw 1;
+	}
+
+	/* parse whisker definition */
+	RemyBuffers::WhiskerTree tree;
+	if ( !tree.ParseFromFileDescriptor( fd ) ) {
+		fprintf( stderr, "RemyTCP: Could not parse whiskers in \"%s\".\n", filename );
+		throw 1;
+	}
+
+	/* close file */
+	if ( ::close( fd ) < 0 ) {
+		perror( "close" );
+		throw 1;
+	}
+
+	/* store whiskers */
+	_whiskers = new WhiskerTree( tree );
+}
+
+RationalTcpAgent::~RationalTcpAgent()
+{
+	if ( _whiskers ) {
+		delete _whiskers;
+	}
+}
 
 static class RationalTcpClass : public TclClass {
 public:
