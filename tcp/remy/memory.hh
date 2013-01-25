@@ -32,7 +32,7 @@ public:
   void reset( void ) { _rec_send_ewma = _rec_rec_ewma = _rtt_ratio = _last_tick_sent = _last_tick_received = _min_rtt = 0; }
 
   void packet_sent( const RemyPacket & packet __attribute((unused)) ) {}
-  void packets_received( const std::vector< RemyPacket > & packets, const unsigned int flow_id );
+  void packets_received( const std::vector< RemyPacket > & packets );
   void advance_to( const unsigned int tickno __attribute((unused)) ) {}
 
   bool operator>=( const Memory & other ) const { return (_rec_send_ewma >= other._rec_send_ewma) && (_rec_rec_ewma >= other._rec_rec_ewma) && (_rtt_ratio >= other._rtt_ratio); }

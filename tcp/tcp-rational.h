@@ -20,6 +20,8 @@
 class RationalTcpAgent : public virtual TcpAgent {
 private:
 	const WhiskerTree *_whiskers;
+	Memory _memory;
+	double _intersend_time;
 
 public:
 	RationalTcpAgent();
@@ -30,7 +32,7 @@ public:
 	virtual void send_idle_helper();
 	virtual void recv_newack_helper(Packet* pkt);
 	virtual double initial_window();
-	virtual void update_cwnd(double last_rtt);
+	virtual void update_cwnd( const RemyPacket packet );
 
 protected:
 	int count_bytes_acked_;
@@ -49,7 +51,7 @@ public:
 	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
 	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
 	virtual double initial_window() {return RationalTcpAgent::initial_window();}
-	virtual void update_cwnd(double last_rtt) {RationalTcpAgent::update_cwnd(last_rtt);}
+	virtual void update_cwnd( const RemyPacket packet ) {RationalTcpAgent::update_cwnd(packet);}
 };
 
 /* 
@@ -64,7 +66,7 @@ public:
 	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
 	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
 	virtual double initial_window() {return RationalTcpAgent::initial_window();}
-	virtual void update_cwnd(double last_rtt) {RationalTcpAgent::update_cwnd(last_rtt);}
+	virtual void update_cwnd( const RemyPacket packet ) {RationalTcpAgent::update_cwnd(packet);}
 };
 
 #endif

@@ -10,12 +10,15 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "tcp-rational.h"
 
 RationalTcpAgent::RationalTcpAgent()
-	: count_bytes_acked_( 0 ),
-	  _whiskers( NULL )
+	: _whiskers( NULL ),
+	  _memory(),
+	  _intersend_time( 0.0 ),
+	  count_bytes_acked_( 0 )
 {
 	bind_bool("count_bytes_acked_", &count_bytes_acked_);
 
@@ -48,6 +51,9 @@ RationalTcpAgent::RationalTcpAgent()
 
 	/* store whiskers */
 	_whiskers = new WhiskerTree( tree );
+
+	/* tune */
+	maxburst_ = 0;
 }
 
 RationalTcpAgent::~RationalTcpAgent()
@@ -88,19 +94,9 @@ public:
 double
 RationalTcpAgent::initial_window()
 {
-	// This is just a copy of the relevant parts of the default TCP.
-	if (wnd_init_option_ == 1) {
-		return (wnd_init_);
-	} else {
-		// do iw according to Internet draft
- 		if (size_ <= 1095) {
-			return (4.0);
-	 	} else if (size_ < 2190) {
-			return (3.0);
-		} else {
-			return (2.0);
-		}
-	}
+	const Whisker & initial_whisker( _whiskers->use_whisker( _memory ) );
+	cwnd_ = initial_whisker.window( 0 );
+	return cwnd_;
 }
 
 void 
@@ -113,7 +109,8 @@ RationalTcpAgent::send_helper(int maxburst)
 	 * so we do not need an explicit check here.
 	 */
 	if (t_seqno_ <= highest_ack_ + window() && t_seqno_ < curseq_) {
-		burstsnd_timer_.resched(t_srtt_*maxburst_/window());
+		assert( _intersend_time != 0.0 );
+		burstsnd_timer_.resched( .001 * _intersend_time );
 	}
 }
 
@@ -123,7 +120,9 @@ RationalTcpAgent::send_helper(int maxburst)
 void
 RationalTcpAgent::send_idle_helper() 
 {
-
+	_memory.reset();
+	cwnd_ = 1;
+	_intersend_time = 0.0;
 }
 
 /*
@@ -156,7 +155,7 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	}
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = ::max(maxseq_, highest_ack_);
-	update_cwnd(last_rtt);
+	update_cwnd( RemyPacket( 1000 * tcph->ts_echo(), 1000 * now ) );
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
 		closed_ = 1;
@@ -170,20 +169,13 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
  * aggressively when delay rises.
  */
 void 
-RationalTcpAgent::update_cwnd(double last_rtt)
+RationalTcpAgent::update_cwnd( const RemyPacket packet )
 {
-	double srtt =  (t_srtt_ >> T_SRTT_BITS) * tcp_tick_;
-	if (last_rtt > 2*srtt) {
-		// reduce cwnd 
-		double extratime = last_rtt - srtt;
-		double extra = (cwnd_/srtt)*extratime;
-		printf("Reducing cwnd from %.2f ", (double)cwnd_);
-		cwnd_ -= (cwnd_/srtt)*extratime/2;
-		if (cwnd_ < 1) {
-			cwnd_ = 1;
-		}
-		printf("to %.2f srtt %.3f last_rtt %.3g\n", (double)cwnd_, (double)srtt, (double)last_rtt);
-	} else {
-		opencwnd();
-	}
+	std::vector< RemyPacket > packets( 1, packet );
+	_memory.packets_received( packets );
+
+	const Whisker & current_whisker( _whiskers->use_whisker( _memory ) );
+
+	cwnd_ = current_whisker.window( cwnd_ );
+	_intersend_time = current_whisker.intersend();
 }

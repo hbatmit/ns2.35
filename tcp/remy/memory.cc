@@ -7,13 +7,9 @@ using namespace std;
 
 static const double alpha = 1.0 / 8.0;
 
-void Memory::packets_received( const vector< RemyPacket > & packets, const unsigned int flow_id )
+void Memory::packets_received( const vector< RemyPacket > & packets )
 {
   for ( const auto &x : packets ) {
-    if ( x.flow_id != flow_id ) {
-      continue;
-    }
-
     const unsigned int rtt = x.tick_received - x.tick_sent;
     if ( _last_tick_sent == 0 || _last_tick_received == 0 ) {
       _last_tick_sent = x.tick_sent;
