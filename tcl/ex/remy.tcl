@@ -56,7 +56,7 @@ set opt(tr) remyout;            # output trace in opt(tr).out
 
 # utility and scoring
 set opt(alpha) 1.0
-set opt(tracewhisk) "all"
+set opt(tracewhisk) "none"
 
 proc Usage {} {
     global opt argv0
@@ -115,7 +115,11 @@ proc create-sources-sinks {} {
 
         if { [string range $opt(tcp) 0 11] == "TCP/Rational"} {
             if { $opt(tracewhisk) == "all" || $opt(tracewhisk) == $i } {
-                $tcpsrc set tracewhisk_ True
+                $tcpsrc set tracewhisk_ 1
+                puts "tracing ON for connection $i: $opt(tracewhisk)"
+            } else {
+                $tcpsrc set tracewhisk_ 0
+                puts "tracing OFF for connection $i: $opt(tracewhisk)"
             }
         }
         $tcpsrc set window_ $opt(rcvwin)
