@@ -154,7 +154,6 @@ RationalTcpAgent::send_idle_helper()
 	/* we want to pace each packet */
 	maxburst_ = 1;
 
-	assert( _intersend_time != 0.0 );
 	const double time_since_last_send( now - _last_send_time );
 	const double wait_time( _intersend_time - time_since_last_send );
 
@@ -215,8 +214,6 @@ void
 RationalTcpAgent::update_cwnd_and_pacing( void )
 {
 	const Whisker & current_whisker( _whiskers->use_whisker( _memory ) );
-
-	assert( cwnd_ > 0 );
 
 	unsigned int new_cwnd = current_whisker.window( (unsigned int)cwnd_ );
 
