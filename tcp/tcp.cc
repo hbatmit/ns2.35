@@ -108,7 +108,6 @@ TcpAgent::TcpAgent()
 void
 TcpAgent::delay_bind_init_all()
 {
-
         // Defaults for bound variables should be set in ns-default.tcl.
         delay_bind_init_one("window_");
         delay_bind_init_one("windowInit_");

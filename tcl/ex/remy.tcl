@@ -41,13 +41,14 @@ set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
 set opt(accessdelay) 1ms;       # latency of access link
 
-
 # random on-off times for sources
 set opt(seed) 0
 set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 1.0;              # mean on and off time
 set opt(offavg) 1.0;              # mean on and off time
+set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
+set opt(bytime) 1;                # "on" is by time, not bytes
 
 # simulator parameters
 set opt(simtime) 1000.0;        # total simulated time
@@ -55,6 +56,7 @@ set opt(tr) remyout;            # output trace in opt(tr).out
 
 # utility and scoring
 set opt(alpha) 1.0
+set opt(tracewhisk) "all"
 
 proc Usage {} {
     global opt argv0
@@ -76,9 +78,6 @@ proc Getopt {} {
         if [string match {-[A-z]*} $val] {
             incr i -1
             continue
-        }
-        switch $key {
-            qmax { set opt($key) Queue/$val }
         }
     }
 }
@@ -112,6 +111,12 @@ proc create-sources-sinks {} {
         if { [info exists linuxcc] } { 
             $ns at 0.0 "$tcpsrc select_ca $linuxcc"
             $ns at 0.0 "$tcpsrc set_ca_default_param linux debug_level 2"
+        }
+
+        if { [string range $opt(tcp) 0 11] == "TCP/Rational"} {
+            if { $opt(tracewhisk) == "all" || $opt(tracewhisk) == $i } {
+                $tcpsrc set tracewhisk_ True
+            }
         }
         $tcpsrc set window_ $opt(rcvwin)
         $tcpsrc set packetSize_ $opt(pktsize)
@@ -160,15 +165,22 @@ LoggingApp instproc init {id} {
     eval $self next
 }
 
-LoggingApp instproc recv {bytes} {
+LoggingApp instproc recv {bytes } {
     $self instvar nbytes_ connid_ cumrtt_ numsamples_
-    global ns tp
+    global ns opt tp 
 
     set nbytes_ [expr $nbytes_ + $bytes]
-    set rtt_ [expr [[lindex $tp($connid_) 0] set rtt_] * [[lindex $tp($connid_) 0] set tcpTick_]]
+    set tcp_sender [lindex $tp($connid_) 0]
+    set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
     if {$rtt_ > 0} {
         set cumrtt_ [expr $rtt_  + $cumrtt_]
         set numsamples_ [expr $numsamples_ + 1]
+    }
+    if {$opt(bytime) != 1} {
+        if { $nbytes_ == $maxbytes } {
+            $self results
+            $ns at $now "$tcpsender stop"
+        }
     }
     return nbytes_
 }
@@ -176,6 +188,57 @@ LoggingApp instproc recv {bytes} {
 LoggingApp instproc results { } {
     $self instvar nbytes_ cumrtt_ numsamples_
     return [list $nbytes_ $cumrtt_ $numsamples_]
+}
+
+proc do_by_time {i} {        
+    global ns opt curtime state off_ranvar on_ranvar state ontime src
+    
+    while {$curtime($i) < $opt(simtime)} {
+        if {$state($i) == "OFF"} {
+            set r [$off_ranvar($i) value]
+        } else {
+            set r [$on_ranvar($i) value]
+        }
+
+        set nexttime [expr $curtime($i) + $r]
+        set lastepoch [expr $nexttime - $curtime($i)]
+        set curtime($i) $nexttime
+        if { $state($i) == "OFF" } {
+            $ns at $curtime($i) "$src($i) start"
+#            puts "$curtime($i): Turning on $i"
+            set state($i) ON
+        } else {
+            set ontime($i) [expr $ontime($i) + $lastepoch]
+            $ns at $curtime($i) "$src($i) stop"
+#            puts "$curtime($i): Turning off $i"
+            set state($i) OFF
+        }
+    }
+}
+proc do_by_bytes {i} {        
+    global ns opt curtime state off_ranvar on_ranvar state ontime src
+
+    while {$curtime($i) < $opt(simtime)} {
+        if {$state($i) == "OFF"} {
+            set r [$off_ranvar($i) value]
+        } else {
+            set r [$on_ranvar($i) value]
+        }
+
+        set nexttime [expr $curtime($i) + $r]
+        set lastepoch [expr $nexttime - $curtime($i)]
+        set curtime($i) $nexttime
+        if { $state($i) == "OFF" } {
+            $ns at $curtime($i) "$src($i) start"
+#            puts "$curtime($i): Turning on $i"
+            set state($i) ON
+        } else {
+            set ontime($i) [expr $ontime($i) + $lastepoch]
+            $ns at $curtime($i) "$src($i) stop"
+#            puts "$curtime($i): Turning off $i"
+            set state($i) OFF
+        }
+    }
 }
 
 ## MAIN ##
@@ -205,7 +268,11 @@ create-sources-sinks
 
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set on_ranvar($i) [new RandomVariable/$opt(onrand)]
-    $on_ranvar($i) set avg_ $opt(onavg)
+    if { $opt(bytime) } {
+        $on_ranvar($i) set avg_ $opt(onavg)
+    } else {
+        $on_ranvar($i) set avg_ $opt(avgbytes)
+    }
     set off_ranvar($i) [new RandomVariable/$opt(offrand)]
     $off_ranvar($i) set avg_ $opt(offavg)
 }
@@ -219,28 +286,14 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set state($i) ON
 #        puts "$curtime($i): Turning on $i"
     }
-        
-    while {$curtime($i) < $opt(simtime)} {
-        if {$state($i) == "OFF"} {
-            set r [$off_ranvar($i) value]
-        } else {
-            set r [$on_ranvar($i) value]
-        }
-        set nexttime [expr $curtime($i) + $r]
-        set lastepoch [expr $nexttime - $curtime($i)]
-        set curtime($i) $nexttime
-        if { $state($i) == "OFF" } {
-            $ns at $curtime($i) "$src($i) start"
-#            puts "$curtime($i): Turning on $i"
-            set state($i) ON
-        } else {
-            set ontime($i) [expr $ontime($i) + $lastepoch]
-            $ns at $curtime($i) "$src($i) stop"
-#            puts "$curtime($i): Turning off $i"
-            set state($i) OFF
-        }
+
+    if { $opt(bytime) } {
+        do_by_time $i
+    } else {
+        do_by_bytes $i
     }
 }
+
 
 if { [info exists linuxcc] } {
     puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"

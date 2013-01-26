@@ -1123,6 +1123,7 @@ Agent/TCP/Reno/Asym set g_ 0.125
 Agent/TCP/Newreno/Asym set g_ 0.125
 
 Agent/TCP/Rational set count_bytes_acked_ 1
+Agent/TCP/Rational set tracewhisk_ 0
 
 # RFC793eduTcp -- 19990820, fcela@acm.org
 Agent/TCP/RFC793edu set add793expbackoff_  true 

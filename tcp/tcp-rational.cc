@@ -61,6 +61,25 @@ RationalTcpAgent::~RationalTcpAgent()
 	}
 }
 
+void
+RationalTcpAgent::delay_bind_init_all()
+{
+	TcpAgent::delay_bind_init_all();
+        reset();
+}
+
+int
+RationalTcpAgent::delay_bind_dispatch(const char *varName, const char *localName, 
+				   TclObject *tracer)
+{
+        if (delay_bind(varName, localName, "tracewhisk_", &tracewhisk_, tracer))  {
+		printf ("binding tracewhisk\n");
+		return TCL_OK;
+	}
+        return TcpAgent::delay_bind_dispatch(varName, localName, tracer);
+}
+
+
 static class RationalTcpClass : public TclClass {
 public:
 	RationalTcpClass() : TclClass("Agent/TCP/Rational") {}
@@ -208,6 +227,9 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 
 	cwnd_ = new_cwnd;
 	_intersend_time = .001 * current_whisker.intersend();
+	if (tracewhisk_) {
+		fprintf( stderr, "mem: ... cwnd now %u, intersend_time now %f\n", new_cwnd, _intersend_time );
+	}
 
 	//	fprintf( stderr, "cwnd now %u, intersend_time now %f\n", new_cwnd, _intersend_time );
 }

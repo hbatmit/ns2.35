@@ -38,6 +38,9 @@ public:
 	virtual void update_cwnd_and_pacing( void );
 
 protected:
+	virtual void delay_bind_init_all();
+	virtual int delay_bind_dispatch(const char *varName, const char *localName, TclObject *tracer);
+	int tracewhisk_;	// trace whiskers?
 	double _last_send_time;
 	int count_bytes_acked_;
 };
