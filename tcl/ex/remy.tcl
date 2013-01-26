@@ -56,7 +56,7 @@ set opt(tr) remyout;            # output trace in opt(tr).out
 
 # utility and scoring
 set opt(alpha) 1.0
-set opt(tracewhisk) "none"
+set opt(tracewhisk) "none";     # give a connection ID to print for that flow, or give "all"
 
 proc Usage {} {
     global opt argv0
@@ -225,11 +225,11 @@ proc do_by_bytes {i} {
     while {$curtime($i) < $opt(simtime)} {
         if {$state($i) == "OFF"} {
             set r [$off_ranvar($i) value]
+            set nexttime [expr $curtime($i) + $r]
         } else {
-            set r [$on_ranvar($i) value]
+            set b [$on_ranvar($i) value]
         }
 
-        set nexttime [expr $curtime($i) + $r]
         set lastepoch [expr $nexttime - $curtime($i)]
         set curtime($i) $nexttime
         if { $state($i) == "OFF" } {
@@ -285,8 +285,10 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set state($i) OFF
     set curtime($i) 0.0
     set ontime($i) 0.0;         # total time spent in the "on" phase
+    # start the odd-numbered connections
     if {[expr $i % 2] == 1} {
-        $ns at 0.0 "$src($i) start"
+        set start [expr $i/114.0]; # want to desynchronize start times a bit
+        $ns at $start "$src($i) start"
         set state($i) ON
 #        puts "$curtime($i): Turning on $i"
     }
