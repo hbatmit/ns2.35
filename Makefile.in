@@ -411,7 +411,7 @@ SUBDIRS=\
 
 BUILD_NSE = @build_nse@
 
-all: $(NS) $(BUILD_NSE) $(NSTK) all-recursive Makefile
+all: tcp/remy/dna.pb.h $(NS) $(BUILD_NSE) $(NSTK) all-recursive Makefile
 
 
 all-recursive:
