@@ -2,6 +2,7 @@
 #define MEMORY_HH
 
 #include <vector>
+#include <string>
 
 #include "packet.hh"
 #include "dna.pb.h"
@@ -40,6 +41,8 @@ public:
   bool operator==( const Memory & other ) const { return (_rec_send_ewma == other._rec_send_ewma) && (_rec_rec_ewma == _rec_rec_ewma) && (_rtt_ratio == other._rtt_ratio); }
 
   Memory( const RemyBuffers::Memory & dna );
+
+  std::string str( void ) const;
 };
 
 #endif

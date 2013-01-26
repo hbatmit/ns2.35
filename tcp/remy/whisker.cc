@@ -1,6 +1,4 @@
-#include <assert.h>
-#include <math.h>
-#include <algorithm>
+#include <stdio.h>
 
 #include "whisker.hh"
 
@@ -12,4 +10,12 @@ Whisker::Whisker( const RemyBuffers::Whisker & dna )
     _intersend( dna.intersend() ),
     _domain( dna.domain() )
 {
+}
+
+string Whisker::str( void ) const
+{
+  char tmp[ 256 ];
+  snprintf( tmp, 256, "{%s} => (win=%d + (%f * win), intersend=%.2f ms)",
+            _domain.str().c_str(), _window_increment, _window_multiple, _intersend );
+  return tmp;
 }

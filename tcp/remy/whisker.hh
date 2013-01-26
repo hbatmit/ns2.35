@@ -1,6 +1,8 @@
 #ifndef WHISKER_HH
 #define WHISKER_HH
 
+#include <string>
+
 #include "memoryrange.hh"
 #include "dna.pb.h"
 
@@ -18,6 +20,7 @@ public:
   const MemoryRange & domain( void ) const { return _domain; }
 
   Whisker( const RemyBuffers::Whisker & dna );
+  std::string str( void ) const;
 };
 
 #endif

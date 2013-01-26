@@ -1,6 +1,8 @@
 #ifndef MEMORYRANGE_HH
 #define MEMORYRANGE_HH
 
+#include <string>
+
 #include "memory.hh"
 #include "dna.pb.h"
 
@@ -18,6 +20,8 @@ public:
   bool operator==( const MemoryRange & other ) const;
 
   MemoryRange( const RemyBuffers::MemoryRange & dna );
+
+  std::string str( void ) const;
 };
 
 #endif

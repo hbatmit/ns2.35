@@ -17,3 +17,12 @@ MemoryRange::MemoryRange( const RemyBuffers::MemoryRange & dna )
     _upper( dna.upper() )
 {
 }
+
+string MemoryRange::str( void ) const
+{
+  char tmp[ 256 ];
+  snprintf( tmp, 256, "(lo=<%s>, hi=<%s>)",
+            _lower.str().c_str(),
+            _upper.str().c_str() );
+  return tmp;
+}

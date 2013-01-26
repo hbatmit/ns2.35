@@ -92,8 +92,8 @@ public:
 double
 RationalTcpAgent::initial_window()
 {
-	const Whisker & initial_whisker( _whiskers->use_whisker( _memory ) );
-	cwnd_ = initial_whisker.window( 0 );
+	_memory.reset();
+	update_cwnd_and_pacing();
 	return cwnd_;
 }
 
@@ -106,13 +106,6 @@ RationalTcpAgent::send_helper(int maxburst)
 	 * we wouldn't get here if TCP_TIMER_BURSTSEND were pending,
 	 * so we do not need an explicit check here.
 	 */
-
-	if ( t_seqno_ == curseq_ ) {
-		_memory.reset();
-		_intersend_time = 0.0;
-		cwnd_ = 0;
-		return;
-	}
 
 	/* schedule wakeup */
 	if ( t_seqno_ <= highest_ack_ + window() && t_seqno_ < curseq_ ) {
@@ -133,11 +126,17 @@ RationalTcpAgent::send_helper(int maxburst)
 void
 RationalTcpAgent::send_idle_helper() 
 {
-	/* tune */
+	const double now( Scheduler::instance().clock() );
+
+	if ( now - _last_send_time > 0.2 ) {
+		/* timeout */
+		initial_window();
+	}
+
+	/* we want to pace each packet */
 	maxburst_ = 1;
 
 	assert( _intersend_time != 0.0 );
-	const double now( Scheduler::instance().clock() );
 	const double time_since_last_send( now - _last_send_time );
 	const double wait_time( _intersend_time - time_since_last_send );
 
@@ -178,7 +177,8 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	}
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = ::max(maxseq_, highest_ack_);
-	update_cwnd( RemyPacket( 1000 * tcph->ts_echo(), 1000 * now ) );
+	update_memory( RemyPacket( 1000 * tcph->ts_echo(), 1000 * now ) );
+	update_cwnd_and_pacing();
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
 		closed_ = 1;
@@ -186,17 +186,16 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	}
 }
 
-/*
- * A simple function to update cwnd using last_rtt; provided only for reference.
- * This function is highly conservative about delay, slowing down the rate 
- * aggressively when delay rises.
- */
 void 
-RationalTcpAgent::update_cwnd( const RemyPacket packet )
+RationalTcpAgent::update_memory( const RemyPacket packet )
 {
 	std::vector< RemyPacket > packets( 1, packet );
 	_memory.packets_received( packets );
+}
 
+void
+RationalTcpAgent::update_cwnd_and_pacing( void )
+{
 	const Whisker & current_whisker( _whiskers->use_whisker( _memory ) );
 
 	assert( cwnd_ > 0 );

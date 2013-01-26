@@ -11,7 +11,7 @@ const Whisker & WhiskerTree::use_whisker( const Memory & _memory ) const
   const Whisker * ret( whisker( _memory ) );
 
   if ( !ret ) {
-    fprintf( stderr, "ERROR: No whisker found.\n" );
+    fprintf( stderr, "ERROR: No whisker found for memory: %s\n", _memory.str().c_str() );
     exit( 1 );
   }
 
