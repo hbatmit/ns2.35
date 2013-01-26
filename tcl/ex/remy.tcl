@@ -35,8 +35,8 @@ set opt(rcvwin) 130
 
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
-set opt(bneck) 1Mb;             # bottleneck bandwidth (for some topos)
-set opt(accessrate) 10Mb;       # rate of access link src -> gw
+set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
+set opt(accessrate) 100Mb;       # rate of access link src -> gw
 set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
 set opt(accessdelay) 1ms;       # latency of access link

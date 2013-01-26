@@ -107,6 +107,13 @@ RationalTcpAgent::send_helper(int maxburst)
 	 * so we do not need an explicit check here.
 	 */
 
+	if ( t_seqno_ == curseq_ ) {
+		_memory.reset();
+		_intersend_time = 0.0;
+		cwnd_ = 0;
+		return;
+	}
+
 	/* schedule wakeup */
 	if ( t_seqno_ <= highest_ack_ + window() && t_seqno_ < curseq_ ) {
 		const double now( Scheduler::instance().clock() );
@@ -203,7 +210,7 @@ RationalTcpAgent::update_cwnd( const RemyPacket packet )
 	cwnd_ = new_cwnd;
 	_intersend_time = .001 * current_whisker.intersend();
 
-	fprintf( stderr, "cwnd now %u, intersend_time now %f\n", new_cwnd, _intersend_time );
+	//	fprintf( stderr, "cwnd now %u, intersend_time now %f\n", new_cwnd, _intersend_time );
 }
 
 void
