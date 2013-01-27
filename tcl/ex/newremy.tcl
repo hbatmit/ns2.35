@@ -121,7 +121,7 @@ LoggingApp instproc go { starttime } {
         } else {
             set endtime_ [$on_ranvar($connid_) value]; # in time
         }
-        puts "$starttime: Turning on $connid_ for $maxbytes_ bytes $endtime_ sec"
+#        puts "$starttime: Turning on $connid_ for $maxbytes_ bytes $endtime_ sec"
    } else {
         $self sched [expr $starttime - [$ns now]]
         set state_ OFF
@@ -153,7 +153,7 @@ LoggingApp instproc recv { bytes } {
         }
         set ontime [expr [$ns now] - $laststart_]
         if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
-            puts "[$ns now]: Turning off $connid_"
+#            puts "[$ns now]: Turning off $connid_"
             $ns at [$ns now] "$src($connid_) stop"
             $stats($connid_) update $nbytes_ $ontime $cumrtt_ $numsamples_
             set nbytes_ 0
@@ -168,7 +168,7 @@ LoggingApp instproc recv { bytes } {
                     set endtime_ [$on_ranvar($connid_) value]; # in time
                 }
                 $ns at $nexttime "$src($connid_) start"; # schedule next start
-                puts "$nexttime: Turning on $connid_ for $maxbytes_ bytes $endtime_ s"
+#                puts "$nexttime: Turning on $connid_ for $maxbytes_ bytes $endtime_ s"
             }
         }
         return nbytes_
@@ -183,13 +183,12 @@ LoggingApp instproc results { } {
 Class StatCollector 
 
 StatCollector instproc init {id ctype} {
-    $self set connid_ id
-    $self set ctype_ ctype
+    $self set connid_ $id
+    $self set ctype_ $ctype;    # type of congestion control / tcp
     $self set numbytes_ 0
-    $self set ontime_ 0.0;        # total time connection was in ON state
+    $self set ontime_ 0.0;     # total time connection was in ON state
     $self set cumrtt_ 0.0
     $self set nsamples_ 0
-    $self set conntype_ ctype;    # type of cong ctrl or TCP alg
 }
 
 StatCollector instproc update {newbytes newtime cumrtt nsamples} {
@@ -199,8 +198,9 @@ StatCollector instproc update {newbytes newtime cumrtt nsamples} {
     set ontime_ [expr $ontime_ + $newtime]
     set cumrtt_ $cumrtt
     set nsamples_ $nsamples
-    puts "[$ns now]: updating stats for $connid_: $newbytes $newtime $cumrtt $nsamples"
-    puts "[$ns now]: updating stats for $connid_ TO: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
+#    puts "[$ns now]: updating stats for $connid_: $newbytes $newtime $cumrtt $nsamples"
+#    puts "[$ns now]: \tTO: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
+    showstats
 }
 
 StatCollector instproc results { } {
@@ -257,11 +257,9 @@ proc create-sources-sinks {} {
     }
 }
 
-proc finish {} {
-    global ns opt recvapp stats
-    global f
+proc showstats {} {
+    global ns opt stats
 
-    puts "ConnID\tMbytes\tMbits/s\tAvgRTT\tOn%\tUtility"
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set res [$stats($i) results]
         set totalbytes [lindex $res 0]
@@ -274,10 +272,21 @@ proc finish {} {
         } else {
             set avgrtt 0.0
         }
-        set throughput [expr 8.0 * $totalbytes / $totaltime]
-        set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
-        puts [ format "%d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility ]
+        if { $totaltime > 0.0 } {
+            set throughput [expr 8.0 * $totalbytes / $totaltime]
+            set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
+            puts [ format "%d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility ]
+        }
     }
+}
+
+proc finish {} {
+    global ns opt stats
+    global f
+    puts "------------"
+    puts "FINAL SCORES"
+    puts "------------"
+    showstats
 
 #    $ns flush-trace
 #    close $f
@@ -336,6 +345,8 @@ if { [info exists linuxcc] } {
 } else {
     puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 }
+
+puts "ConnID\tMbytes\tMbits/s\tAvgRTT\tOn%\tUtility"
 
 $ns at $opt(simtime) "finish"
 
