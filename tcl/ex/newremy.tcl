@@ -27,38 +27,9 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 
 source timer.tcl
 
-# source, sink, and app types
-set opt(nsrc) 2;                # number of sources in experiment
-set opt(tcp) TCP/Reno
-set opt(sink) TCPSink
-set opt(app) FTP
-set opt(pktsize) 1210
-set opt(rcvwin) 130
-
-# topology parameters
-set opt(gw) DropTail;           # queueing at bottleneck
-set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
-set opt(accessrate) 100Mb;       # rate of access link src -> gw
-set opt(maxq) 1000;             # max queue length at bottleneck
-set opt(delay) 49ms;            # total one-way delay in topology
-set opt(accessdelay) 1ms;       # latency of access link
-
-# random on-off times for sources
-set opt(seed) 0
-set opt(onrand) Exponential
-set opt(offrand) Exponential
-set opt(onavg) 1.0;              # mean on and off time
-set opt(offavg) 1.0;              # mean on and off time
-set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
-set opt(ontype) "time";           # valid options are "time" and "bytes"
-
-# simulator parameters
-set opt(simtime) 1000.0;        # total simulated time
-set opt(tr) remyout;            # output trace in opt(tr).out
-
-# utility and scoring
-set opt(alpha) 1.0
-set opt(tracewhisk) "none";     # give a connection ID to print for that flow, or give "all"
+set conffile remyconf/equisource.tcl
+source $conffile
+puts "Reading params from $conffile"
 
 proc Usage {} {
     global opt argv0
@@ -192,7 +163,7 @@ StatCollector instproc init {id ctype} {
 }
 
 StatCollector instproc update {newbytes newtime cumrtt nsamples} {
-    global ns
+    global ns opt
     $self instvar connid_ numbytes_ ontime_ cumrtt_ nsamples_
     incr numbytes_ $newbytes
     set ontime_ [expr $ontime_ + $newtime]
@@ -200,7 +171,9 @@ StatCollector instproc update {newbytes newtime cumrtt nsamples} {
     set nsamples_ $nsamples
 #    puts "[$ns now]: updating stats for $connid_: $newbytes $newtime $cumrtt $nsamples"
 #    puts "[$ns now]: \tTO: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
-    showstats
+    if { $opt(partialresults) } {
+        showstats
+    }
 }
 
 StatCollector instproc results { } {
@@ -212,12 +185,24 @@ StatCollector instproc results { } {
 # Create a simple dumbbell topology.
 #
 proc create-dumbbell-topology {bneckbw delay} {
-    global ns opt s gw d 
+    global ns opt s gw d accessdelay accessrate
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
 #        $ns duplex-link $s($i) $gw 10Mb 1ms DropTail
 #        $ns duplex-link $gw $d $bneckbw $delay DropTail
-        $ns duplex-link $s($i) $gw $opt(accessrate) $opt(accessdelay) $opt(gw)
-        $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
+        $ns duplex-link $s($i) $gw $accessrate($i) $accessdelay($i)) $opt(gw)
+        if { $opt(gw) == "XCP" } {
+            # not clear why the XCP code doesn't do this automatically
+            set lnk [$ns link $s($i) $gw]
+            set q [$lnk queue]
+            $q set-link-capacity [ [$lnk set link_] set bandwidth_ ]
+        }
+    }
+    $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
+    if { $opt(gw) == "XCP" } {
+        # not clear why the XCP code doesn't do this automatically
+        set lnk [$ns link $gw $d]
+        set q [$lnk queue]
+        $q set-link-capacity [ [$lnk set link_] set bandwidth_ ]
     }
 }
 
@@ -250,7 +235,8 @@ proc create-sources-sinks {} {
         }
         $tcpsrc set window_ $opt(rcvwin)
         $tcpsrc set packetSize_ $opt(pktsize)
-        set src($i) [ $tcpsrc attach-app $opt(app) ]
+#        set src($i) [ $tcpsrc attach-app $opt(app) ]
+        set src($i) [ $tcpsrc attach-source $opt(app) ]
         set recvapp($i) [new LoggingApp $i]
         $recvapp($i) attach-agent $tcpsink
         $ns at 0.0 "$recvapp($i) start"
@@ -297,6 +283,11 @@ proc finish {} {
 ## MAIN ##
 
 Getopt
+if { $opt(gw) == "XCP" } {
+    remove-all-packet-headers       ; # removes all except common
+    add-packet-header Flags IP TCP XCP ; # hdrs reqd for validation
+}
+    
 if { $opt(seed) >= 0 } {
     ns-random $opt(seed)
 }
