@@ -27,9 +27,7 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 
 source timer.tcl
 
-set conffile remyconf/equisource.tcl
-source $conffile
-puts "Reading params from $conffile"
+set conffile remyconf/diffdelays.tcl
 
 proc Usage {} {
     global opt argv0
@@ -282,7 +280,11 @@ proc finish {} {
 
 ## MAIN ##
 
+source $conffile
+puts "Reading params from $conffile"
+
 Getopt
+
 if { $opt(gw) == "XCP" } {
     remove-all-packet-headers       ; # removes all except common
     add-packet-header Flags IP TCP XCP ; # hdrs reqd for validation
