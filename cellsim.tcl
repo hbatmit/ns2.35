@@ -182,6 +182,9 @@ for { set i 0 } { $i < $opt(num_tcp) } {incr i } {
 if { $opt(link_type) == "poisson"} {
   source link/poisson.tcl
   DelayLink/PoissonLink set _iter $opt(iter)
+} elseif { $opt(link_type) == "trace"} {
+  source link/trace.tcl
+  DelayLink/TraceLink set _iter $opt(iter)
 } elseif { $opt(link_type) == "brownian" } {
   source link/brownian.tcl
   DelayLink/BrownianLink set _iter $opt(iter)

@@ -23,7 +23,7 @@ class BrownianLink : public LinkDelay {
       std::vector<double> _pdos;             /* index: packet num, output: packet delivery time in s */
       RNG* _rejection_sampler;
       uint32_t _current_pkt_num;
-      uint32_t _bytes_dequeued;
+      uint32_t _bits_dequeued;
 
   public :
       /* constructor */

@@ -232,7 +232,7 @@ OBJ_CC = \
 	adc/simple-intserv-sched.o queue/red.o queue/codel.o queue/sfqcodel.o \
         queue/sfd.o queue/flow-stats.o queue/cell-link.o \
         queue/sfd-rate-estimator.o queue/sfd-scheduler.o queue/sfd-dropper.o \
-        link/poisson-link.o link/brownian-link.o \
+        link/poisson-link.o link/brownian-link.o link/trace-link.o \
 	queue/semantic-packetqueue.o queue/semantic-red.o \
 	tcp/ack-recons.o \
 	queue/sfq.o queue/fq.o queue/drr.o queue/srr.o queue/cbq.o \
