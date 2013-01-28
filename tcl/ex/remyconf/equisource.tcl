@@ -4,14 +4,14 @@ global opt
 
 # source, sink, and app types
 set opt(nsrc) 2;                # number of sources in experiment
-set opt(tcp) TCP/Reno
-set opt(sink) TCPSink
+set opt(tcp) TCP/Reno/XCP
+set opt(sink) TCPSink/XCPSink
 set opt(app) FTP
 set opt(pktsize) 1210
 set opt(rcvwin) 200
 
 # topology parameters
-set opt(gw) DropTail;           # queueing at bottleneck
+set opt(gw) XCP;           # queueing at bottleneck
 set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
 set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
