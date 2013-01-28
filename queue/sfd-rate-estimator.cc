@@ -11,6 +11,11 @@ SfdRateEstimator::SfdRateEstimator( double K, double headroom, double capacity )
 
 double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Packet *p )
 {
+  /* If packet is NULL, do nothing */
+  if ( p == NULL ) {
+    return _flow_stats[ flow_id ]._flow_arrival_rate;
+  }
+
   /* Extract packet length in bits from the header */
   double interarrival_time = now - _flow_stats[ flow_id ]._last_arrival;
   hdr_cmn* hdr  = hdr_cmn::access(p);
@@ -40,6 +45,11 @@ double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Pa
 
 double SfdRateEstimator::est_flow_service_rate( uint64_t flow_id, double now, Packet *p )
 {
+  /* If packet is NULL, do nothing */
+  if ( p == NULL ) {
+    return _flow_stats[ flow_id ]._flow_service_rate;
+  }
+
   /* Extract packet length in bits from the header */
   double interservice_time = now - _flow_stats[ flow_id ]._last_service;
   hdr_cmn* hdr  = hdr_cmn::access(p);

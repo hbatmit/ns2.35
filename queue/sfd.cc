@@ -148,6 +148,7 @@ void SFD::print_stats( double now )
   /* Queue sizes */
   printf(" Time %f : Q :  ", now );
   std::for_each( _packet_queues.begin(), _packet_queues.end(), [&] ( const std::pair<uint64_t,PacketQueue*> q ) { printf(" %lu %d ", q.first, q.second->length()); } );
+  printf("\n");
 
   /* Arrival, Service, fair share, and ingress rates */
   _rate_estimator.print_rates( now );
