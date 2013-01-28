@@ -232,7 +232,7 @@ proc create-sources-sinks {} {
             $ns at 0.0 "$tcpsrc set_ca_default_param linux debug_level 2"
         }
 
-        if { [string range $opt(tcp) 0 11] == "TCP/Rational"} {
+        if { [string first "Rational" $opt(tcp)] != -1 } {
             if { $opt(tracewhisk) == "all" || $opt(tracewhisk) == $i } {
                 $tcpsrc set tracewhisk_ 1
                 puts "tracing ON for connection $i: $opt(tracewhisk)"
