@@ -132,3 +132,23 @@ double SfdRateEstimator::est_virtual_egress_rate( void )
   /* TODO : Fix this to dynamically estimate and return later */
 
 }
+
+void SfdRateEstimator::print_rates( double now )
+{
+  typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
+  /* Arrival rates */
+  printf(" Time %f : A :  ", now );
+  std::for_each( _flow_stats.begin() , _flow_stats.end(), [&] ( const FlowStatsMap s ) { printf(" %lu %f ", s.first, s.second._flow_arrival_rate); } );
+  printf("\n");
+
+  /* Service rates */
+  printf(" Time %f : S :  ", now );
+  std::for_each( _flow_stats.begin() , _flow_stats.end(), [&] ( const FlowStatsMap s ) { printf(" %lu %f ", s.first, s.second._flow_service_rate); } );
+  printf("\n");
+
+  /* Fair share of link */
+  printf(" Time %f : F : %f \n", now, _fair_share );
+
+  /* Ingress Arrival rate */
+  printf(" Time %f : I : %f \n", now, est_ingress_rate() );
+}
