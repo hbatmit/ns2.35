@@ -38,6 +38,35 @@ double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Pa
   return _flow_stats[ flow_id ]._flow_arrival_rate;
 }
 
+double SfdRateEstimator::est_flow_service_rate( uint64_t flow_id, double now, Packet *p )
+{
+  /* Extract packet length in bits from the header */
+  double interservice_time = now - _flow_stats[ flow_id ]._last_service;
+  hdr_cmn* hdr  = hdr_cmn::access(p);
+  uint32_t packet_size   = hdr->size() << 3;
+
+  /* If you have simultaneous services, coalesce packets */
+  if ( interservice_time == 0 ) {
+    _flow_stats[ flow_id ]._acc_pkt_size += packet_size;
+    if ( _flow_stats[ flow_id ]._flow_service_rate ) {
+      return  _flow_stats[ flow_id ]._flow_service_rate ;
+    } else {
+      /* first packet, init. rate */
+      return ( _flow_stats[ flow_id ]._flow_service_rate = _fair_share );
+    }
+  } else {
+    packet_size += _flow_stats[ flow_id ]._acc_pkt_size;
+    _flow_stats[ flow_id ]._acc_pkt_size = 0;
+  }
+
+  /* Apply EWMA with exponential weight, and update _last_service */
+  _flow_stats[ flow_id ]._last_service = now;
+  _flow_stats[ flow_id ]._flow_service_rate =
+    (1.0 - exp(-interservice_time/_K))*(double )packet_size/interservice_time + exp(-interservice_time/_K)*_flow_stats[ flow_id ]._flow_service_rate;
+
+  return _flow_stats[ flow_id ]._flow_service_rate;
+}
+
 double SfdRateEstimator::est_ingress_rate( void )
 {
   /* Check if the link is congested */
