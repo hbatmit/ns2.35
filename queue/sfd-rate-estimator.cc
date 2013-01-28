@@ -132,7 +132,7 @@ double SfdRateEstimator::est_fair_share( void )
   auto arg_max = std::max_element( final_share.begin(), final_share.end(),
                  [&] (const std::pair<uint64_t,double> & p1, const std::pair<uint64_t,double> &p2 )
                  { return p1.second < p2.second ;} );
-  return arg_max->second ;
+  return ( _fair_share = arg_max->second ) ;
 }
 
 double SfdRateEstimator::est_virtual_egress_rate( void )
