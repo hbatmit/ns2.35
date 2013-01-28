@@ -83,7 +83,7 @@ void SFD::enque(Packet *p)
     enque_packet( p, flow_id );
   } else {
     /* find longest queue  and drop from front*/
-    uint64_t drop_flow = _dropper.longest_queue();
+    uint64_t drop_flow = flow_id ;
     printf( " Time %f : Dropping packet of type %d, from flow %lu drop_probability is %f\n", now, pkt_type, drop_flow, drop_probability );
     enque_packet( p, flow_id );
     Packet* head = _packet_queues.at( drop_flow )->deque();
