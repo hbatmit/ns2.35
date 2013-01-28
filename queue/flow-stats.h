@@ -9,7 +9,7 @@ class FlowStats {
   public :
     double _last_arrival ;
     double _acc_pkt_size;
-    double _flow_rate;
+    double _flow_arrival_rate;
     double _last_drop_prob;
     FlowStats();
 };

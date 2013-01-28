@@ -28,7 +28,7 @@ class SfdRateEstimator {
     SfdRateEstimator( double _K, double _headroom, double _capacity );
 
     /* Per flow arrival rate */
-    double est_flow_rate( uint64_t flow_id, double now, Packet* p );
+    double est_flow_arrival_rate( uint64_t flow_id, double now, Packet* p );
 
     /* Total ingress rate */
     double est_ingress_rate();

@@ -9,7 +9,7 @@ SfdRateEstimator::SfdRateEstimator( double K, double headroom, double capacity )
   _capacity( capacity )
 {}
 
-double SfdRateEstimator::est_flow_rate( uint64_t flow_id, double now, Packet *p )
+double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Packet *p )
 {
   /* Extract packet length in bits from the header */
   double interarrival_time = now - _flow_stats[ flow_id ]._last_arrival;
@@ -19,11 +19,11 @@ double SfdRateEstimator::est_flow_rate( uint64_t flow_id, double now, Packet *p 
   /* If you have simultaneous arrivals, coalesce packets */
   if ( interarrival_time == 0 ) {
     _flow_stats[ flow_id ]._acc_pkt_size += packet_size;
-    if ( _flow_stats[ flow_id ]._flow_rate ) {
-      return  _flow_stats[ flow_id ]._flow_rate ;
+    if ( _flow_stats[ flow_id ]._flow_arrival_rate ) {
+      return  _flow_stats[ flow_id ]._flow_arrival_rate ;
     } else {
       /* first packet, init. rate */
-      return ( _flow_stats[ flow_id ]._flow_rate = _fair_share );
+      return ( _flow_stats[ flow_id ]._flow_arrival_rate = _fair_share );
     }
   } else {
     packet_size += _flow_stats[ flow_id ]._acc_pkt_size;
@@ -32,10 +32,10 @@ double SfdRateEstimator::est_flow_rate( uint64_t flow_id, double now, Packet *p 
 
   /* Apply EWMA with exponential weight, and update _last_arrival */
   _flow_stats[ flow_id ]._last_arrival = now;
-  _flow_stats[ flow_id ]._flow_rate =
-    (1.0 - exp(-interarrival_time/_K))*(double )packet_size/interarrival_time + exp(-interarrival_time/_K)*_flow_stats[ flow_id ]._flow_rate;
+  _flow_stats[ flow_id ]._flow_arrival_rate =
+    (1.0 - exp(-interarrival_time/_K))*(double )packet_size/interarrival_time + exp(-interarrival_time/_K)*_flow_stats[ flow_id ]._flow_arrival_rate;
 
-  return _flow_stats[ flow_id ]._flow_rate;
+  return _flow_stats[ flow_id ]._flow_arrival_rate;
 }
 
 double SfdRateEstimator::est_ingress_rate( void )
@@ -43,7 +43,7 @@ double SfdRateEstimator::est_ingress_rate( void )
   /* Check if the link is congested */
   typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
   return std::accumulate( _flow_stats.begin(), _flow_stats.end(), 0.0,
-                         [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._flow_rate ;} );
+                         [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._flow_arrival_rate ;} );
 
 
 }
@@ -57,7 +57,7 @@ double SfdRateEstimator::est_fair_share( void )
 
   for ( auto it = _flow_stats.begin(); it != _flow_stats.end(); it++ ) {
     auto flow_id = it->first;
-    auto flow_rate = it->second._flow_rate;
+    auto flow_rate = it->second._flow_arrival_rate;
     desired[ flow_id ] = flow_rate;
     current_share[ flow_id ] = 0;
   }

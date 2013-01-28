@@ -58,7 +58,7 @@ void SFD::enque(Packet *p)
 
   /* Estimate arrival rate */
   double now = Scheduler::instance().clock();
-  double arrival_rate = _rate_estimator.est_flow_rate( flow_id, now, p );
+  double arrival_rate = _rate_estimator.est_flow_arrival_rate( flow_id, now, p );
   printf( " Time %f : Arrival rate estimate for flow %lu, src:%u, dst:%u is %f \n",
           now, flow_id, (int)(hdr_ip::access(p)->saddr()), (int)(hdr_ip::access(p)->daddr()), arrival_rate);
 
