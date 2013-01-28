@@ -21,7 +21,7 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
 }
 global accessrate
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
-    set accessrate($i) 20Mb;       # latency of access link
+    set accessrate($i) 1000Mb;       # speed of access link
 }
 
 # random on-off times for sources
