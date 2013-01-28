@@ -46,6 +46,7 @@
 
 class LinkDelay : public Connector {
  public:
+	uint64_t _bits_dequeued;
 	LinkDelay();
 	virtual void recv(Packet* p, Handler*);
 	void send(Packet* p, Handler*);

@@ -54,6 +54,7 @@ LinkDelay::LinkDelay()
 	  latest_time_(0),
 	  itq_(0)
 {
+	_bits_dequeued = 0;
 	bind_bw("bandwidth_", &bandwidth_);
 	bind_time("delay_", &delay_);
 	bind_bool("avoidReordering_", &avoidReordering_);
@@ -65,6 +66,10 @@ int LinkDelay::command(int argc, const char*const* argv)
 		if (strcmp(argv[1], "isDynamic") == 0) {
 			dynamic_ = 1;
 			itq_ = new PacketQueue();
+			return TCL_OK;
+		}
+		if ( strcmp(argv[1], "total" ) == 0 ) {
+			fprintf( stderr, " Total number of bytes is %lu \n", _bits_dequeued );
 			return TCL_OK;
 		}
 	} else if (argc == 6) {
@@ -106,6 +111,7 @@ void LinkDelay::recv(Packet* p, Handler* h)
 	} else {
 		s.schedule(target_, p, txt + delay_);
 	}
+	_bits_dequeued+= (8 * hdr_cmn::access(p)->size());
 	s.schedule(h, &intr_, txt);
 }
 

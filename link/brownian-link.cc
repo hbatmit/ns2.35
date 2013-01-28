@@ -14,7 +14,7 @@ int BrownianLink::command(int argc, const char*const* argv)
 {
   if (argc == 2) {
     if ( strcmp(argv[1], "total" ) == 0 ) {
-      fprintf( stderr, " Total number of bits is %lu \n", _total_bytes );
+      fprintf( stderr, " Total number of bits is %u \n", _bytes_dequeued );
       return TCL_OK;
     }
   }
@@ -32,7 +32,7 @@ BrownianLink::BrownianLink() :
   _pdos( std::vector<double> () ),
   _rejection_sampler( new RNG ),
   _current_pkt_num( 0 ),
-  _total_bytes( 0 )
+  _bytes_dequeued( 0 )
 {
   bind_bw("_min_rate",&_min_rate);
   bind_bw("_max_rate",&_max_rate);
@@ -91,5 +91,5 @@ void BrownianLink::recv( Packet* p, Handler* h)
   s.schedule(target_, p, _pdos.at( _current_pkt_num ) - s.clock() ); /* Propagation  delay */
   s.schedule(h, &intr_,  _pdos.at( _current_pkt_num ) - s.clock() ); /* Transmission delay */
   _current_pkt_num ++;
-  _total_bytes += (8 * hdr_cmn::access(p)->size());
+  _bytes_dequeued += (8 * hdr_cmn::access(p)->size());
 }
