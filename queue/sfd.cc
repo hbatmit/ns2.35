@@ -59,15 +59,15 @@ void SFD::enque(Packet *p)
   /* Estimate arrival rate */
   double now = Scheduler::instance().clock();
   double arrival_rate = _rate_estimator.est_flow_arrival_rate( flow_id, now, p );
-  printf( " Time %f : Arrival rate estimate for flow %lu, src:%u, dst:%u is %f \n",
-          now, flow_id, (int)(hdr_ip::access(p)->saddr()), (int)(hdr_ip::access(p)->daddr()), arrival_rate);
 
   /* Estimate fair share */
   auto _fair_share = _rate_estimator.est_fair_share() ;
-  printf( " Time %f : Fair share estimate is %f\n", now, _fair_share );
 
   /* Estimate total ingress rate to check if the link is congested */
   double total_ingress = _rate_estimator.est_ingress_rate();
+
+  /* Print everything */
+  print_stats( now );
 
   /* Extract protocol (TCP vs UDP) from the header */
   hdr_cmn* hdr  = hdr_cmn::access(p);
@@ -108,12 +108,18 @@ Packet* SFD::deque()
     assert( false );
   }
 
+  double now = Scheduler::instance().clock();
+
   if ( _packet_queues.find( current_flow ) != _packet_queues.end() ) {
     if ( !_timestamps.at( current_flow ).empty() ) {
       _timestamps.at( current_flow ).pop();
     }
-    return _packet_queues.at( current_flow )->deque();
+    Packet *p = _packet_queues.at( current_flow )->deque();
+    _rate_estimator.est_flow_service_rate( current_flow, now, p );
+    print_stats( now );
+    return p;
   } else {
+    print_stats( now );
     return 0; /* empty */
   }
 }
@@ -135,4 +141,14 @@ uint64_t SFD::hash(Packet* pkt)
 {
   hdr_ip *iph=hdr_ip::access(pkt);
   return ( iph->flowid() );
+}
+
+void SFD::print_stats( double now )
+{
+  /* Queue sizes */
+  printf(" Time %f : Q :  ", now );
+  std::for_each( _packet_queues.begin(), _packet_queues.end(), [&] ( const std::pair<uint64_t,PacketQueue*> q ) { printf(" %lu %d ", q.first, q.second->length()); } );
+
+  /* Arrival, Service, fair share, and ingress rates */
+  _rate_estimator.print_rates( now );
 }
