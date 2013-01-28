@@ -51,6 +51,9 @@ class SFD : public Queue {
     SFD( double capacity );
     int command(int argc, const char*const* argv);
 
+    /* print stats  */
+    void print_stats( double now );
+
     /* inherited functions from queue */
     void enque( Packet *p );
     Packet* deque();

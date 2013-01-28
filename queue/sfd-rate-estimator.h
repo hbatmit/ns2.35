@@ -12,6 +12,7 @@ class SfdRateEstimator {
      Wrapper class for all Rate Estimators
      in SFD. In particular, it estimates
      * Per flow arrival rate
+     * Per flow service rate
      * Total ingress rate
      * Fair share rate of link
    */
@@ -28,7 +29,10 @@ class SfdRateEstimator {
     SfdRateEstimator( double _K, double _headroom, double _capacity );
 
     /* Per flow arrival rate */
-    double est_flow_rate( uint64_t flow_id, double now, Packet* p );
+    double est_flow_arrival_rate( uint64_t flow_id, double now, Packet* p );
+
+    /* Per flow service rate */
+    double est_flow_service_rate( uint64_t flow_id, double now, Packet* p );
 
     /* Total ingress rate */
     double est_ingress_rate();
@@ -38,6 +42,9 @@ class SfdRateEstimator {
 
     /* Estimate Total Virtual egress rate */
     double est_virtual_egress_rate() ;
+
+    /* Print all rates */
+    void print_rates( double now );
 };
 
 #endif
