@@ -28,6 +28,9 @@ class TraceLink : public LinkDelay {
       /* Tcl command interface */
       virtual int command(int argc, const char*const* argv);
 
+      /* Populate PDOs based on a file */
+      void populate_pdos( std::string trace_file );
+
 };
 
 #endif
