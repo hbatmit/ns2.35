@@ -27,7 +27,7 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 
 source timer.tcl
 
-set conffile remyconf/diffdelays.tcl
+set conffile remyconf/equisource.tcl
 
 proc Usage {} {
     global opt argv0
@@ -183,24 +183,34 @@ StatCollector instproc results { } {
 # Create a simple dumbbell topology.
 #
 proc create-dumbbell-topology {bneckbw delay} {
-    global ns opt s gw d accessdelay accessrate
+    global ns opt s gw d accessrate accessdelay
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
 #        $ns duplex-link $s($i) $gw 10Mb 1ms DropTail
 #        $ns duplex-link $gw $d $bneckbw $delay DropTail
-        $ns duplex-link $s($i) $gw $accessrate($i) $accessdelay($i)) $opt(gw)
+        $ns duplex-link $s($i) $gw $accessrate($i) $accessdelay($i) $opt(gw)
+        $ns queue-limit $s($i) $gw $opt(maxq)
+        $ns queue-limit $gw $s($i) $opt(maxq)
         if { $opt(gw) == "XCP" } {
             # not clear why the XCP code doesn't do this automatically
             set lnk [$ns link $s($i) $gw]
             set q [$lnk queue]
             $q set-link-capacity [ [$lnk set link_] set bandwidth_ ]
+            set rlnk [$ns link $gw $s($i)]
+            set rq [$rlnk queue]
+            $rq set-link-capacity [ [$rlnk set link_] set bandwidth_ ]
         }
     }
     $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
+    $ns queue-limit $gw $d $opt(maxq)
+    $ns queue-limit $d $gw $opt(maxq)    
     if { $opt(gw) == "XCP" } {
         # not clear why the XCP code doesn't do this automatically
         set lnk [$ns link $gw $d]
         set q [$lnk queue]
         $q set-link-capacity [ [$lnk set link_] set bandwidth_ ]
+        set rlnk [$ns link $d $gw]
+        set rq [$rlnk queue]
+        $rq set-link-capacity [ [$rlnk set link_] set bandwidth_ ]
     }
 }
 
