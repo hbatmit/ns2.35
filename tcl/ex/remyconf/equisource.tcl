@@ -23,6 +23,7 @@ global accessrate
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set accessrate($i) 1000Mb;       # speed of access link
 }
+set opt(link) trace;
 
 # random on-off times for sources
 set opt(seed) 0
@@ -41,4 +42,3 @@ set opt(partialresults) false;   # show partial throughput, delay, and utility s
 # utility and scoring
 set opt(alpha) 1.0
 set opt(tracewhisk) "none";     # give a connection ID to print for that flow, or give "all"
-
