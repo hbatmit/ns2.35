@@ -29,7 +29,7 @@ int TraceLink::command(int argc, const char*const* argv)
 
 TraceLink::TraceLink() :
   LinkDelay(),
-  _trace_file( " " ),
+  _trace_file( "" ),
   _pdos( std::vector<double> () ),
   _current_pkt_num( 0 ),
   _bits_dequeued( 0 )
@@ -37,7 +37,7 @@ TraceLink::TraceLink() :
 
 void TraceLink::populate_pdos( std::string trace_file )
 {
-  assert( _trace_file != "" );
+  assert( _trace_file == "" );
   _trace_file =  trace_file;
   fprintf( stderr, "TraceLink : _trace_file : %s \n", _trace_file.c_str() );
   /* Read from file */
