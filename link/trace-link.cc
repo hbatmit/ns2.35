@@ -37,7 +37,7 @@ TraceLink::TraceLink() :
 
 void TraceLink::populate_pdos( std::string trace_file )
 {
-  assert( _trace_file == "" );
+  assert( _trace_file != "" );
   _trace_file =  trace_file;
   fprintf( stderr, "TraceLink : _trace_file : %s \n", _trace_file.c_str() );
   /* Read from file */
