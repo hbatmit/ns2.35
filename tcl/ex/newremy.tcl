@@ -183,7 +183,7 @@ StatCollector instproc results { } {
 # Create a simple dumbbell topology.
 #
 proc create-dumbbell-topology {bneckbw delay} {
-    global ns opt s gw d accessrate accessdelay
+    global ns opt s gw d accessrate accessdelay nshome
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
 #        $ns duplex-link $s($i) $gw 10Mb 1ms DropTail
 #        $ns duplex-link $gw $d $bneckbw $delay DropTail
@@ -200,7 +200,16 @@ proc create-dumbbell-topology {bneckbw delay} {
             $rq set-link-capacity [ [$rlnk set link_] set bandwidth_ ]
         }
     }
-    $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
+    if { $opt(link) == "trace" } {
+        source $nshome/link/trace.tcl
+        puts $nshome/link/tracedata/downlink-verizon4g.pps
+        $ns simplex-link $gw $d [ bw_parse $bneckbw ] $delay $opt(gw)
+        [ [ $ns link $gw $d ] link ] trace-file "$nshome/link/tracedata/downlink-verizon4g.pps"
+        $ns simplex-link $d $gw [ bw_parse $bneckbw ] $delay $opt(gw)
+        [ [ $ns link $d $gw ] link ] trace-file "$nshome/link/tracedata/uplink-verizon4g.pps"
+    } else {
+        $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
+    }
     $ns queue-limit $gw $d $opt(maxq)
     $ns queue-limit $d $gw $opt(maxq)    
     if { $opt(gw) == "XCP" } {
