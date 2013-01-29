@@ -34,7 +34,7 @@ set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "time" and "bytes"
 
 # simulator parameters
-set opt(simtime) 100.0;        # total simulated time
+set opt(simtime) 1000.0;        # total simulated time
 set opt(tr) remyout;            # output trace in opt(tr).out
 set opt(partialresults) false;   # show partial throughput, delay, and utility scores?
 
