@@ -8,7 +8,7 @@ set opt(tcp) TCP/Reno
 set opt(sink) TCPSink
 set opt(app) FTP
 set opt(pktsize) 1210
-set opt(rcvwin) 200
+set opt(rcvwin) 16384
 
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
@@ -21,15 +21,15 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
 }
 global accessrate
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
-    set accessrate($i) 20Mb;       # latency of access link
+    set accessrate($i) 1000Mb;       # latency of access link
 }
 
 # random on-off times for sources
 set opt(seed) 0
 set opt(onrand) Exponential
 set opt(offrand) Exponential
-set opt(onavg) 1.0;              # mean on and off time
-set opt(offavg) 1.0;              # mean on and off time
+set opt(onavg) 5.0;              # mean on and off time
+set opt(offavg) 5.0;              # mean on and off time
 set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "time" and "bytes"
 

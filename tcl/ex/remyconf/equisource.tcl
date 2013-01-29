@@ -7,8 +7,8 @@ set opt(nsrc) 2;                # number of sources in experiment
 set opt(tcp) TCP/Reno/XCP
 set opt(sink) TCPSink/XCPSink
 set opt(app) FTP
-set opt(pktsize) 1460
-set opt(rcvwin) 200
+set opt(pktsize) 1210
+set opt(rcvwin) 16384
 
 # topology parameters
 set opt(gw) XCP;           # queueing at bottleneck
@@ -23,14 +23,14 @@ global accessrate
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set accessrate($i) 1000Mb;       # speed of access link
 }
-set opt(link) trace;
+set opt(link) DropTail;
 
 # random on-off times for sources
 set opt(seed) 0
 set opt(onrand) Exponential
 set opt(offrand) Exponential
-set opt(onavg) 1.0;              # mean on and off time
-set opt(offavg) 1.0;              # mean on and off time
+set opt(onavg) 5.0;              # mean on and off time
+set opt(offavg) 5.0;              # mean on and off time
 set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "time" and "bytes"
 
