@@ -170,7 +170,7 @@ StatCollector instproc update {newbytes newtime cumrtt nsamples} {
 #    puts "[$ns now]: updating stats for $connid_: $newbytes $newtime $cumrtt $nsamples"
 #    puts "[$ns now]: \tTO: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
     if { $opt(partialresults) } {
-        showstats
+        showstats False
     }
 }
 
@@ -201,12 +201,11 @@ proc create-dumbbell-topology {bneckbw delay} {
         }
     }
     if { $opt(link) == "trace" } {
+        $ns simplex-link $d $gw [ bw_parse $bneckbw ] $delay $opt(gw)
+#        [ [ $ns link $d $gw ] link ] trace-file "$nshome/link/tracedata/uplink-verizon4g.pps"
         source $nshome/link/trace.tcl
-        puts $nshome/link/tracedata/downlink-verizon4g.pps
         $ns simplex-link $gw $d [ bw_parse $bneckbw ] $delay $opt(gw)
         [ [ $ns link $gw $d ] link ] trace-file "$nshome/link/tracedata/downlink-verizon4g.pps"
-        $ns simplex-link $d $gw [ bw_parse $bneckbw ] $delay $opt(gw)
-        [ [ $ns link $d $gw ] link ] trace-file "$nshome/link/tracedata/uplink-verizon4g.pps"
     } else {
         $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
     }
@@ -260,7 +259,7 @@ proc create-sources-sinks {} {
     }
 }
 
-proc showstats {} {
+proc showstats {final} {
     global ns opt stats
 
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
@@ -278,7 +277,11 @@ proc showstats {} {
         if { $totaltime > 0.0 } {
             set throughput [expr 8.0 * $totalbytes / $totaltime]
             set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
-            puts [ format "%d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility ]
+            if { $final == True } {
+                puts [ format "FINAL %d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility ]
+            } else {
+                puts [ format "- %d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility ]
+            }
         }
     }
 }
@@ -289,7 +292,7 @@ proc finish {} {
     puts "------------"
     puts "FINAL SCORES"
     puts "------------"
-    showstats
+    showstats True
 
 #    $ns flush-trace
 #    close $f
