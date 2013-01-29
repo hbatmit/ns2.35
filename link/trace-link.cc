@@ -53,7 +53,7 @@ void TraceLink::populate_pdos( std::string trace_file )
       break;
     }
     if ( !_pdos.empty() ) {
-      assert( ms >= _schedule.back() );
+      assert( ms >= _pdos.back() );
     }
     _pdos.push_back( (double)ms/1000.0 );
   }
