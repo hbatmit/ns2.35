@@ -62,12 +62,13 @@ void TraceLink::populate_pdos( std::string trace_file )
 
 void TraceLink::recv( Packet* p, Handler* h)
 {
+  assert( _trace_file != "" );
   Scheduler& s = Scheduler::instance();
   while (s.clock() > _pdos.at( _current_pkt_num ) ) {
     /* Missed opportunities */
     _current_pkt_num ++;
   }
-  printf( " Now: %e next packet at %f \n", s.clock(), _pdos.at( _current_pkt_num ) );
+  printf( " DIR: %s Now: %e next packet at %f \n", _trace_file.c_str(), s.clock(), _pdos.at( _current_pkt_num ) );
 
   s.schedule(target_, p, _pdos.at( _current_pkt_num ) - s.clock() ); /* Propagation  delay */
   s.schedule(h, &intr_,  _pdos.at( _current_pkt_num ) - s.clock() ); /* Transmission delay */
