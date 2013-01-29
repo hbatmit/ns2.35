@@ -7,7 +7,7 @@ set opt(nsrc) 2;                # number of sources in experiment
 set opt(tcp) TCP/Reno/XCP
 set opt(sink) TCPSink/XCPSink
 set opt(app) FTP
-set opt(pktsize) 1210
+set opt(pktsize) 1460
 set opt(rcvwin) 200
 
 # topology parameters
