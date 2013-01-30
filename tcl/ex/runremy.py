@@ -17,8 +17,8 @@ def runonce(proto, w, gateway, numconns, simtime, onoff, outfname):
     else:
         sink = 'TCPSink'
         
-    runstr = './newremy.tcl -tcp %s -sink %s -gw %s -simtime %d -ontime %s -offtime %s' % (proto, sink, gw, simtime, onoff, onoff)
-#    print runstr
+    runstr = './newremy.tcl -tcp %s -sink %s -gw %s -nsrc %d -simtime %d -ontime %s -offtime %s' % (proto, sink, gw, numconns, simtime, onoff, onoff)
+    print runstr
     fnull = open(os.devnull, "w") 
     fout = open(outfname, "ab")
     output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
