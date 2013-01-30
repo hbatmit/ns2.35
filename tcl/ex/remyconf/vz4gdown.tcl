@@ -24,7 +24,7 @@ set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
 set opt(offavg) 5.0;              # mean on and off time
-set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
+set opt(avgbytes) 100000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "time" and "bytes"
 
 # simulator parameters
