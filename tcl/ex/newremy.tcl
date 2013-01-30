@@ -360,7 +360,7 @@ if { [info exists linuxcc] } {
     puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 }
 
-puts "ConnID\tMbytes\tMbits/s\tAvgRTT\tOn%\tUtility"
+puts "\tConnID\tMbytes\tMbits/s\tAvgRTT\tOn%\tUtility"
 
 $ns at $opt(simtime) "finish"
 
