@@ -27,10 +27,8 @@ def runonce(proto, gateway, numconns, simtime, onoff, outfname):
 if not os.path.exists('./remy-results'):
     os.mkdir('./remy-results')
 simtime = 300
-simtime = 1
 maxconns = 32
-
-iterations = 2
+iterations = 10
 protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Newreno/Rational']
 #gwlist = {}
 #gwlist['RED'] = 'RED'
