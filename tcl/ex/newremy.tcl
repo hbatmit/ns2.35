@@ -27,7 +27,7 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 
 source timer.tcl
 
-set conffile remyconf/equisource.tcl
+set conffile remyconf/vz4gdown.tcl
 
 proc Usage {} {
     global opt argv0
@@ -205,7 +205,7 @@ proc create-dumbbell-topology {bneckbw delay} {
 #        [ [ $ns link $d $gw ] link ] trace-file "$nshome/link/tracedata/uplink-verizon4g.pps"
         source $nshome/link/trace.tcl
         $ns simplex-link $gw $d [ bw_parse $bneckbw ] $delay $opt(gw)
-        [ [ $ns link $gw $d ] link ] trace-file "$nshome/link/tracedata/downlink-verizon4g.pps"
+        [ [ $ns link $gw $d ] link ] trace-file $opt(linktrace)
     } else {
         $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
     }

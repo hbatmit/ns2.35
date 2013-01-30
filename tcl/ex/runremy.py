@@ -17,7 +17,7 @@ def runonce(fullname, proto, w, gateway, numconns, simtime, onoff, outfname):
     else:
         sink = 'TCPSink'
 
-    if fullname.find("CoDel"):
+    if fullname.find("CoDel") != -1:
         gw = "sfqCoDel"
         
     runstr = './newremy.tcl -tcp %s -sink %s -gw %s -onrand %s -offrand %s -ontime %s -offtime %s -nsrc %d -simtime %d' % (proto, sink, gw, w, w, onoff, onoff,  numconns, simtime)
