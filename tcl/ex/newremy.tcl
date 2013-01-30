@@ -323,7 +323,7 @@ if { $opt(seed) >= 0 } {
 set ns [new Simulator]
 
 Queue set limit_ $opt(maxq)
-RandomVariable/Pareto set shape_ 0.5
+#RandomVariable/Pareto set shape_ 0.5
 
 # if we don't set up tracing early, trace output isn't created!!
 #set f [open opt(tr).tr w]
