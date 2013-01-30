@@ -289,9 +289,6 @@ proc showstats {final} {
 proc finish {} {
     global ns opt stats
     global f
-    puts "------------"
-    puts "FINAL SCORES"
-    puts "------------"
     showstats True
 
 #    $ns flush-trace
@@ -356,8 +353,6 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
         $recvapp($i) go [$off_ranvar($i) value]
     }
 }
-
-puts "HERERERERE"
 
 if { [info exists linuxcc] } {
     puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
