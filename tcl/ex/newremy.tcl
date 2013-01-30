@@ -28,6 +28,7 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 source timer.tcl
 
 set conffile remyconf/vz4gdown.tcl
+#set conffile remyconf/equisource.tcl
 
 proc Usage {} {
     global opt argv0
@@ -56,7 +57,7 @@ proc Getopt {} {
 Class LoggingApp -superclass {Application Timer}
 
 LoggingApp instproc init {id} {
-    $self set connid_ $id
+    $self set srcid_ $id
     $self set nbytes_ 0
     $self set cumrtt_ 0.0
     $self set numsamples_ 0
@@ -78,19 +79,19 @@ LoggingApp instproc settype { } {
 
 # called at the start of the simulation for the first run
 LoggingApp instproc go { starttime } {
-    $self instvar maxbytes_ endtime_ laststart_ connid_ state_
+    $self instvar maxbytes_ endtime_ laststart_ srcid_ state_
     global ns opt src on_ranvar
 
     set laststart_ $starttime
-    $ns at $starttime "$src($connid_) start"    
+    $ns at $starttime "$src($srcid_) start"    
     if { $starttime >= [$ns now] } {
         set state_ ON
         if { $opt(ontype) == "bytes" } {
-            set maxbytes_ [$on_ranvar($connid_) value]; # in bytes
+            set maxbytes_ [$on_ranvar($srcid_) value]; # in bytes
         } else {
-            set endtime_ [$on_ranvar($connid_) value]; # in time
+            set endtime_ [$on_ranvar($srcid_) value]; # in time
         }
-#        puts "$starttime: Turning on $connid_ for $maxbytes_ bytes $endtime_ sec"
+#        puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ sec"
    } else {
         $self sched [expr $starttime - [$ns now]]
         set state_ OFF
@@ -102,8 +103,8 @@ LoggingApp instproc timeout {} {
 }
 
 LoggingApp instproc recv { bytes } {
-    # there's one of these objects for each src/dest (conn) pair 
-    $self instvar nbytes_ connid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_
+    # there's one of these objects for each src/dest pair 
+    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_
     global ns opt src tp on_ranvar off_ranvar stats
 
     if { $state_ == OFF } {
@@ -114,7 +115,7 @@ LoggingApp instproc recv { bytes } {
 
     if { $state_ == ON } {
         set nbytes_ [expr $nbytes_ + $bytes]
-        set tcp_sender [lindex $tp($connid_) 0]
+        set tcp_sender [lindex $tp($srcid_) 0]
         set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
         if {$rtt_ > 0.0} {
             set cumrtt_ [expr $rtt_  + $cumrtt_]
@@ -122,22 +123,22 @@ LoggingApp instproc recv { bytes } {
         }
         set ontime [expr [$ns now] - $laststart_]
         if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
-#            puts "[$ns now]: Turning off $connid_"
-            $ns at [$ns now] "$src($connid_) stop"
-            $stats($connid_) update $nbytes_ $ontime $cumrtt_ $numsamples_
+#            puts "[$ns now]: Turning off $srcid_"
+            $ns at [$ns now] "$src($srcid_) stop"
+            $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_
             set nbytes_ 0
             set state_ OFF
-            set nexttime [expr [$ns now] + [$off_ranvar($connid_) value]]; # stay off until nexttime
+            set nexttime [expr [$ns now] + [$off_ranvar($srcid_) value]]; # stay off until nexttime
             set laststart_ $nexttime
             if { $nexttime < $opt(simtime) } { 
                 # set up for next on period
                 if { $opt(ontype) == "bytes" } {
-                    set maxbytes_ [$on_ranvar($connid_) value]; # in bytes
+                    set maxbytes_ [$on_ranvar($srcid_) value]; # in bytes
                 } else {
-                    set endtime_ [$on_ranvar($connid_) value]; # in time
+                    set endtime_ [$on_ranvar($srcid_) value]; # in time
                 }
-                $ns at $nexttime "$src($connid_) start"; # schedule next start
-#                puts "$nexttime: Turning on $connid_ for $maxbytes_ bytes $endtime_ s"
+                $ns at $nexttime "$src($srcid_) start"; # schedule next start
+#                puts "$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
             }
         }
         return nbytes_
@@ -152,22 +153,24 @@ LoggingApp instproc results { } {
 Class StatCollector 
 
 StatCollector instproc init {id ctype} {
-    $self set connid_ $id
+    $self set srcid_ $id
     $self set ctype_ $ctype;    # type of congestion control / tcp
     $self set numbytes_ 0
     $self set ontime_ 0.0;     # total time connection was in ON state
     $self set cumrtt_ 0.0
     $self set nsamples_ 0
+    $self set nconns_ 0
 }
 
 StatCollector instproc update {newbytes newtime cumrtt nsamples} {
     global ns opt
-    $self instvar connid_ numbytes_ ontime_ cumrtt_ nsamples_
+    $self instvar srcid_ numbytes_ ontime_ cumrtt_ nsamples_ nconns_
     incr numbytes_ $newbytes
     set ontime_ [expr $ontime_ + $newtime]
     set cumrtt_ $cumrtt
     set nsamples_ $nsamples
-#    puts "[$ns now]: updating stats for $connid_: $newbytes $newtime $cumrtt $nsamples"
+    incr nconns_
+#    puts "[$ns now]: updating stats for $srcid_: $newbytes $newtime $cumrtt $nsamples"
 #    puts "[$ns now]: \tTO: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
     if { $opt(partialresults) } {
         showstats False
@@ -175,8 +178,8 @@ StatCollector instproc update {newbytes newtime cumrtt nsamples} {
 }
 
 StatCollector instproc results { } {
-    $self instvar numbytes_ ontime_ cumrtt_ nsamples_
-    return [list $numbytes_ $ontime_ $cumrtt_ $nsamples_]
+    $self instvar numbytes_ ontime_ cumrtt_ nsamples_ nconns_
+    return [list $numbytes_ $ontime_ $cumrtt_ $nsamples_ $nconns_]
 }
 
 #
@@ -268,6 +271,7 @@ proc showstats {final} {
         set totaltime [lindex $res 1]
         set totalrtt [lindex $res 2]
         set nsamples [lindex $res 3]
+        set nconns [lindex $res 4]
 
         if { $nsamples > 0.0 } {
             set avgrtt [expr 1000*$totalrtt/$nsamples]
@@ -278,9 +282,9 @@ proc showstats {final} {
             set throughput [expr 8.0 * $totalbytes / $totaltime]
             set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
             if { $final == True } {
-                puts [ format "FINAL %d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility ]
+                puts [ format "FINAL %d\t%.2f\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
             } else {
-                puts [ format "- %d\t%.2f\t%.2f\t%.1f\t%.0f\t%.2f" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility ]
+                puts [ format "- %d\t%.2f\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
             }
         }
     }
@@ -360,7 +364,7 @@ if { [info exists linuxcc] } {
     puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 }
 
-puts "\tConnID\tMbytes\tMbits/s\tAvgRTT\tOn%\tUtility"
+puts "\tSrcID\tMbytes\tMbits/s\tAvgRTT\tOn%\tUtility\tNumConns"
 
 $ns at $opt(simtime) "finish"
 
