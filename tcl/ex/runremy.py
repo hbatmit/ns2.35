@@ -27,9 +27,9 @@ def runonce(fullname, proto, w, gateway, nsrc, type, simtime, on, off, outfname)
     else:
         runstr = './newremy.tcl %s -tcp %s -sink %s -gw %s -ontype %s -onrand %s -ontime %d -offrand %s -offtime %s -nsrc %d -simtime %d' % (conffile, proto, sink, gw, type, w, on, w, off, nsrc, simtime)                
     print runstr
-#    fnull = open(os.devnull, "w") 
-#    fout = open(outfname, "ab")
-#    output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
+    fnull = open(os.devnull, "w") 
+    fout = open(outfname, "ab")
+    output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
     return
 
 if __name__ == '__main__':
