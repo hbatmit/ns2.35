@@ -15,14 +15,6 @@ set opt(gw) XCP;           # queueing at bottleneck
 set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
 set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
-global accessdelay
-for {set i 0} {$i < $opt(nsrc)} {incr i} {
-    set accessdelay($i) 1ms;       # latency of access link
-}
-global accessrate
-for {set i 0} {$i < $opt(nsrc)} {incr i} {
-    set accessrate($i) 1000Mb;       # speed of access link
-}
 set opt(link) DropTail;
 
 # random on-off times for sources
@@ -42,3 +34,15 @@ set opt(partialresults) false;   # show partial throughput, delay, and utility s
 # utility and scoring
 set opt(alpha) 1.0
 set opt(tracewhisk) "none";     # give a connection ID to print for that flow, or give "all"
+
+proc set_access_params { nsrc } {
+    global opt
+    global accessdelay
+    for {set i 0} {$i < $opt(nsrc)} {incr i} {
+        set accessdelay($i) 1ms;       # latency of access link
+    }
+    global accessrate
+    for {set i 0} {$i < $opt(nsrc)} {incr i} {
+        set accessrate($i) 1000Mb;       # speed of access link
+    }
+}

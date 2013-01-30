@@ -307,6 +307,10 @@ puts "Reading params from $conffile"
 
 Getopt
 
+puts "Num srcs $opt(nsrc)"
+
+set_access_params $opt(nsrc)
+
 if { $opt(gw) == "XCP" } {
     remove-all-packet-headers       ; # removes all except common
     add-packet-header Flags IP TCP XCP ; # hdrs reqd for validation

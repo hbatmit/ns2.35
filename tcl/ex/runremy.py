@@ -7,7 +7,7 @@ if os.uname()[0] == 'Darwin':
 import matplotlib.pyplot as p
 import numpy
 
-def runonce(proto, gateway, numconns, simtime, onoff, outfname):
+def runonce(proto, w, gateway, numconns, simtime, onoff, outfname):
     gw = gateway
     if proto.find("XCP") != -1:
         sink = 'TCPSink/XCPSink'
@@ -19,9 +19,9 @@ def runonce(proto, gateway, numconns, simtime, onoff, outfname):
         
     runstr = './newremy.tcl -tcp %s -sink %s -gw %s -simtime %d -ontime %s -offtime %s' % (proto, sink, gw, simtime, onoff, onoff)
 #    print runstr
-    fnull = open(os.devnull, "w") 
-    fout = open(outfname, "ab")
-    output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
+#    fnull = open(os.devnull, "w") 
+#    fout = open(outfname, "ab")
+#    output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
     return
 
 if not os.path.exists('./remy-results'):
@@ -46,5 +46,5 @@ for proto in protolist:
                 for i in xrange(iterations):
                     outfname = 'remy-results/%s.%s.nconn%d.onoff%d.simtime%d' % (proto.replace('/','-'), w, numconns, onoff, simtime)
                     print outfname
-                    runonce(proto, 'DropTail', numconns, simtime, onoff, outfname)
+                    runonce(proto, 'DropTail', w, numconns, simtime, onoff, outfname)
                 numconns = 2*numconns
