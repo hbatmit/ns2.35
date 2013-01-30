@@ -28,13 +28,15 @@ if not os.path.exists('./remy-results'):
     os.mkdir('./remy-results')
 simtime = 300
 maxconns = 32
-iterations = 10
-protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Newreno/Rational']
+iterations = 5
+#protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Newreno/Rational']
 #gwlist = {}
 #gwlist['RED'] = 'RED'
 #gwlist['XCP'] = 'XCP'
 #gwlist['CoDel'] = 'CoDel'
 #gwlist['sfqCoDel'] = 'sfqCoDel'
+
+protolist = [ sys.argv[1] ]                 # which transport protocol(s) are we using?
 onofftimes = [1, 5, 10]
 worktypes = ['Exponential', 'Pareto']
 
