@@ -27,8 +27,9 @@ def runonce(fullname, proto, w, gateway, numconns, simtime, onoff, outfname):
     output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
     return
 
-if not os.path.exists('./remy-results'):
-    os.mkdir('./remy-results')
+resdir = sys.argv[2]
+if not os.path.exists(resdir):
+    os.mkdir(resdir)
 simtime = 300
 maxconns = 32
 iterations = 5
@@ -52,7 +53,7 @@ for proto in protolist:
             numconns = 1
             while numconns <= maxconns:
                 for i in xrange(iterations):
-                    outfname = 'remy-results/%s.%s.nconn%d.onoff%d.simtime%d' % (fullname.replace('/','-'), w, numconns, onoff, simtime)
+                    outfname = '%s/%s.%s.nconn%d.onoff%d.simtime%d' % (resdir, fullname.replace('/','-'), w, numconns, onoff, simtime)
                     print outfname
                     runonce(fullname, proto, w, 'DropTail', numconns, simtime, onoff, outfname)
                 numconns = 2*numconns
