@@ -18,34 +18,35 @@ def runonce(proto, gateway, numconns, simtime, onoff, outfname):
         sink = 'TCPSink'
         
     runstr = './newremy.tcl -tcp %s -sink %s -gw %s -simtime %d -ontime %s -offtime %s' % (proto, sink, gw, simtime, onoff, onoff)
-    print runstr
+#    print runstr
     fnull = open(os.devnull, "w") 
-    fout = open(outfname, "w")
-    output = subprocess.call(runstr.split(), stdout=fout, stderr=fnull, shell=True)
-#    print output
+    fout = open(outfname, "ab")
+    output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
     return
 
+if not os.path.exists('./remy-results'):
+    os.mkdir('./remy-results')
 simtime = 300
-simtime = 10
+simtime = 1
 maxconns = 32
-maxconns = 1
-iterations = 10
-iterations = 1
-#protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Newreno/Rational']
-protolist = ['TCP/Newreno']
+
+iterations = 2
+protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Newreno/Rational']
 #gwlist = {}
 #gwlist['RED'] = 'RED'
 #gwlist['XCP'] = 'XCP'
 #gwlist['CoDel'] = 'CoDel'
 #gwlist['sfqCoDel'] = 'sfqCoDel'
-onofftimes = [1]
+onofftimes = [1, 5, 10]
+worktypes = ['Exponential', 'Pareto']
 
 for proto in protolist:
-    for onoff in onofftimes:
-        numconns = 1
-        while numconns <= maxconns:
-            for i in xrange(iterations):
-                outfname = '%s-nconn%d-onoff%d-simtime%d-iter%d' % (proto.replace('/','.'), numconns, onoff, simtime, i)
-                print outfname
-                runonce(proto, 'DropTail', numconns, simtime, onoff, outfname)
-            numconns = 2*numconns
+    for w in worktypes:
+        for onoff in onofftimes:
+            numconns = 1
+            while numconns <= maxconns:
+                for i in xrange(iterations):
+                    outfname = 'remy-results/%s.%s.nconn%d.onoff%d.simtime%d' % (proto.replace('/','-'), w, numconns, onoff, simtime)
+                    print outfname
+                    runonce(proto, 'DropTail', numconns, simtime, onoff, outfname)
+                numconns = 2*numconns
