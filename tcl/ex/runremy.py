@@ -7,7 +7,7 @@ if os.uname()[0] == 'Darwin':
 import matplotlib.pyplot as p
 import numpy
 
-def runonce(proto, w, gateway, numconns, simtime, onoff, outfname):
+def runonce(fullname, proto, w, gateway, numconns, simtime, onoff, outfname):
     gw = gateway
     if proto.find("XCP") != -1:
         sink = 'TCPSink/XCPSink'
@@ -16,6 +16,9 @@ def runonce(proto, w, gateway, numconns, simtime, onoff, outfname):
         sink = 'TCPSink/Sack1/DelAck'
     else:
         sink = 'TCPSink'
+
+    if fullname.find("CoDel"):
+        gw = "sfqCoDel"
         
     runstr = './newremy.tcl -tcp %s -sink %s -gw %s -onrand %s -offrand %s -ontime %s -offtime %s -nsrc %d -simtime %d' % (proto, sink, gw, w, w, onoff, onoff,  numconns, simtime)
     print runstr
@@ -41,12 +44,15 @@ onofftimes = [1, 5, 10]
 worktypes = ['Exponential', 'Pareto']
 
 for proto in protolist:
+    fullname = proto
+    if proto == "Cubic/sfqCoDel":
+        proto = "TCP/Linux/cubic"
     for w in worktypes:
         for onoff in onofftimes:
             numconns = 1
             while numconns <= maxconns:
                 for i in xrange(iterations):
-                    outfname = 'remy-results/%s.%s.nconn%d.onoff%d.simtime%d' % (proto.replace('/','-'), w, numconns, onoff, simtime)
+                    outfname = 'remy-results/%s.%s.nconn%d.onoff%d.simtime%d' % (fullname.replace('/','-'), w, numconns, onoff, simtime)
                     print outfname
-                    runonce(proto, w, 'DropTail', numconns, simtime, onoff, outfname)
+                    runonce(fullname, proto, w, 'DropTail', numconns, simtime, onoff, outfname)
                 numconns = 2*numconns
