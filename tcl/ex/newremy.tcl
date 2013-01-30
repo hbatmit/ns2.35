@@ -357,6 +357,8 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
     }
 }
 
+puts "HERERERERE"
+
 if { [info exists linuxcc] } {
     puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 } else {

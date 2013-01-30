@@ -17,7 +17,7 @@ def runonce(proto, w, gateway, numconns, simtime, onoff, outfname):
     else:
         sink = 'TCPSink'
         
-    runstr = './newremy.tcl -tcp %s -sink %s -gw %s -nsrc %d -simtime %d -ontime %s -offtime %s' % (proto, sink, gw, numconns, simtime, onoff, onoff)
+    runstr = './newremy.tcl -tcp %s -sink %s -gw %s -onrand %s -offrand %s -ontime %s -offtime %s -nsrc %d -simtime %d' % (proto, sink, gw, w, w, onoff, onoff,  numconns, simtime)
     print runstr
     fnull = open(os.devnull, "w") 
     fout = open(outfname, "ab")
@@ -46,5 +46,5 @@ for proto in protolist:
                 for i in xrange(iterations):
                     outfname = 'remy-results/%s.%s.nconn%d.onoff%d.simtime%d' % (proto.replace('/','-'), w, numconns, onoff, simtime)
                     print outfname
-                    runonce(proto, 'DropTail', w, numconns, simtime, onoff, outfname)
+                    runonce(proto, w, 'DropTail', numconns, simtime, onoff, outfname)
                 numconns = 2*numconns
