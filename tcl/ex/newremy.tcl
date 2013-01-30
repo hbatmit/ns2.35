@@ -27,7 +27,8 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 
 source timer.tcl
 
-set conffile remyconf/vz4gdown.tcl
+set conffile [lindex $argv 0]
+#set conffile remyconf/vz4gdown.tcl
 #set conffile remyconf/equisource.tcl
 
 proc Usage {} {
@@ -41,7 +42,7 @@ proc Usage {} {
 proc Getopt {} {
     global opt argc argv
 #    if {$argc == 0} Usage
-    for {set i 0} {$i < $argc} {incr i} {
+    for {set i 1} {$i < $argc} {incr i} {
         set key [lindex $argv $i]
         if ![string match {-*} $key] continue
         set key [string range $key 1 end]
@@ -282,9 +283,9 @@ proc showstats {final} {
             set throughput [expr 8.0 * $totalbytes / $totaltime]
             set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
             if { $final == True } {
-                puts [ format "FINAL %d\t%.2f\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
+                puts [ format "FINAL\t%d\t%d\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
             } else {
-                puts [ format "- %d\t%.2f\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i [expr $totalbytes/1000000] [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
+                puts [ format "-\t%d\t%d\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
             }
         }
     }
@@ -322,6 +323,7 @@ if { $opt(seed) >= 0 } {
 set ns [new Simulator]
 
 Queue set limit_ $opt(maxq)
+RandomVariable/Pareto set shape_ 0.5
 
 # if we don't set up tracing early, trace output isn't created!!
 #set f [open opt(tr).tr w]
@@ -364,7 +366,7 @@ if { [info exists linuxcc] } {
     puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 }
 
-puts "\tSrcID\tMbytes\tMbits/s\tAvgRTT\tOn%\tUtility\tNumConns"
+puts "\tSrcID\tBytes\tMbits/s\tAvgRTT\tOn%\tUtility\tNumConns"
 
 $ns at $opt(simtime) "finish"
 
