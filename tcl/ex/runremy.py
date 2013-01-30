@@ -19,9 +19,9 @@ def runonce(proto, w, gateway, numconns, simtime, onoff, outfname):
         
     runstr = './newremy.tcl -tcp %s -sink %s -gw %s -simtime %d -ontime %s -offtime %s' % (proto, sink, gw, simtime, onoff, onoff)
 #    print runstr
-#    fnull = open(os.devnull, "w") 
-#    fout = open(outfname, "ab")
-#    output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
+    fnull = open(os.devnull, "w") 
+    fout = open(outfname, "ab")
+    output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
     return
 
 if not os.path.exists('./remy-results'):
