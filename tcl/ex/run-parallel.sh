@@ -1,6 +1,6 @@
 #!/bin/sh
 
-export WHISKERS=home/hari/ns2.35/tcp/remy/rats/rat1.dna.35
+export WHISKERS=/home/hari/ns2.35/tcp/remy/rats/rat1.dna.35
 
 cd /home/hari/ns2.35/tcl/ex
 
