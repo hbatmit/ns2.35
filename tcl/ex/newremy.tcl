@@ -101,7 +101,7 @@ LoggingApp instproc go { starttime } {
                 set idx [expr [llength $flowcdf] - 1]
             }
             set maxbytes_ [expr 40 + [lindex $flowcdf $idx]]
-            puts "Flow len $maxbytes_"
+#            puts "Flow len $maxbytes_"
         }
         # puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ sec"
 
