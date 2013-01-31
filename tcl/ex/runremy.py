@@ -56,7 +56,7 @@ if __name__ == '__main__':
     # protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Rational', 'Cubic/sfqCoDel']
 
     protolist = config.proto.split() # which transport protocol(s) are we using?
-    onofftimes = [.0001]
+    onofftimes = [.001]
 #    avg_byte_list = [16000, 96000, 192000]
     avgbytes = 100000 # from Allman's March 2012 data and 2013 CCR paper
     worktypes = ['flowcdf']
