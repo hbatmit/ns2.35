@@ -12,7 +12,7 @@ set opt(rcvwin) 16384
 
 # topology parameters
 set opt(gw) XCP;           # queueing at bottleneck
-set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
+set opt(bneck) 1Mb;             # bottleneck bandwidth (for some topos)
 set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
 set opt(link) trace
