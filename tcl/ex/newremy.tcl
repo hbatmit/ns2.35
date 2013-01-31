@@ -251,6 +251,31 @@ proc create-sources-sinks {} {
         set opt(tcp) "TCP/Linux"
     }
 
+    if { $opt(tcp) == "DCTCP" } {
+        Agent/TCP set dctcp_ true
+        Agent/TCP set ecn_ 1
+        Agent/TCP set old_ecn_ 1
+        Agent/TCP set packetSize_ $opt(pktsize)
+        Agent/TCP/FullTcp set segsize_ $opt(pktsize)
+        Agent/TCP set window_ 1256
+        Agent/TCP set slow_start_restart_ false
+        Agent/TCP set tcpTick_ 0.01
+        Agent/TCP set minrto_ 0.2 ; # minRTO = 200ms
+        Agent/TCP set windowOption_ 0
+        Queue/RED set bytes_ false
+        Queue/RED set queue_in_bytes_ true
+        Queue/RED set mean_pktsize_ $opt(pktsize)
+        Queue/RED set setbit_ true
+        Queue/RED set gentle_ false
+        Queue/RED set q_weight_ 1.0
+        Queue/RED set mark_p_ 1.0
+        Queue/RED set thresh_ 65
+        Queue/RED set maxthresh_ 65
+        DelayLink set avoidReordering_ true
+        set opt(tcp) "TCP/Newreno"
+    }
+
+
     for {set i 0} {$i < $numsrc} {incr i} {
         set tp($i) [$ns create-connection-list $opt(tcp) $s($i) $opt(sink) $d $i]
         set tcpsrc [lindex $tp($i) 0]
