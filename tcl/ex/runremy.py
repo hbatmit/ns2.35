@@ -23,9 +23,9 @@ def runonce(fullname, proto, w, gateway, nsrc, type, simtime, on, off, outfname)
         gw = "sfqCoDel"
 
     if type == "bytes":
-        runstr = './newremy.tcl %s -tcp %s -sink %s -gw %s -ontype %s -onrand %s -avgbytes %d -offrand %s -offtime %s -nsrc %d -simtime %d' % (conffile, proto, sink, gw, type, w, on, w, off, nsrc, simtime)
+        runstr = './newremy.tcl %s -tcp %s -sink %s -gw %s -ontype %s -onrand %s -avgbytes %d -offrand %s -offavg %s -nsrc %d -simtime %d' % (conffile, proto, sink, gw, type, w, on, w, off, nsrc, simtime)
     else:
-        runstr = './newremy.tcl %s -tcp %s -sink %s -gw %s -ontype %s -onrand %s -ontime %d -offrand %s -offtime %s -nsrc %d -simtime %d' % (conffile, proto, sink, gw, type, w, on, w, off, nsrc, simtime)                
+        runstr = './newremy.tcl %s -tcp %s -sink %s -gw %s -ontype %s -onrand %s -onavg %d -offrand %s -offavg %s -nsrc %d -simtime %d' % (conffile, proto, sink, gw, type, w, on, w, off, nsrc, simtime)                
     print runstr
     fnull = open(os.devnull, "w") 
     fout = open(outfname, "ab")

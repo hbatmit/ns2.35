@@ -143,6 +143,7 @@ LoggingApp instproc recv { bytes } {
             set state_ OFF
             set nexttime [expr [$ns now] + [$off_ranvar($srcid_) value]]; # stay off until nexttime
             set laststart_ $nexttime
+            puts "off [expr $nexttime - [$ns now]]"
             if { $nexttime < $opt(simtime) } { 
                 # set up for next on period
                 if { $opt(ontype) == "bytes" } {
