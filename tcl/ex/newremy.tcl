@@ -96,9 +96,9 @@ LoggingApp instproc go { starttime } {
             $u_ set min_ 0.0
             $u_ set max_ 1.0
             set r [$u_ value]
-            set idx [expr int(1000000*$r)]
-            puts $idx
+            set idx [expr int(100000*$r)]
             puts $flowcdf
+            puts $idx
             set x [lindex $flowcdf $idx]
             puts $x
             set maxbytes_ [expr 40 + [ lindex $flowcdf $x]]
@@ -151,7 +151,7 @@ LoggingApp instproc recv { bytes } {
                     set endtime_ [$on_ranvar($srcid_) value]; # in time
                 } else {
                     set r [$u_ value]
-                    set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(1000000*$r)]]]
+                    set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
                 }
                 $ns at $nexttime "$src($srcid_) start"; # schedule next start
 #                puts "$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
