@@ -66,15 +66,15 @@ for my $nsrc ( keys %protos ) {
 
   open GNUPLOT, ">graph-$nsrc.gnu" or die;
 
-  $rttmin *= 0.9;
+  $rttmin *= 0.8;
   $rttmax *= 1.1;
-  $mbpsmin *= 0.9;
+  $mbpsmin *= 0.8;
   $mbpsmax *= 1.1;
 
   print GNUPLOT <<"HERE";
 set xrange [$rttmin:$rttmax] reverse
 set yrange [$mbpsmin:$mbpsmax]
-set logscale xy
+#set logscale xy
 
 set xlabel "RTT (ms)"
 set ylabel "Throughput (Mbps)"
