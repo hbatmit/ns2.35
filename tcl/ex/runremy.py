@@ -49,17 +49,17 @@ if __name__ == '__main__':
 
     conffile = config.remyconf
 
-    simtime = 300
-    maxsrcs = 32
-    iterations = 5
+    simtime = 100
+    maxsrcs = 16
+    iterations = 256
 
-    # protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Newreno/Rational', 'Cubic/sfqCoDel']
+    # protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Rational', 'Cubic/sfqCoDel']
 
     protolist = config.proto.split() # which transport protocol(s) are we using?
-    onofftimes = [1, 5, 10]
+    onofftimes = [.0001]
 #    avg_byte_list = [16000, 96000, 192000]
     avgbytes = 100000 # from Allman's March 2012 data and 2013 CCR paper
-    worktypes = ['Pareto', 'Exponential']
+    worktypes = ['flowcdf']
 
     for proto in protolist:
         fullname = proto
