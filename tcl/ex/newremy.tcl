@@ -62,6 +62,7 @@ LoggingApp instproc init {id} {
     $self set nbytes_ 0
     $self set cumrtt_ 0.0
     $self set numsamples_ 0
+    $self set u_ [new RandomVariable/Uniform]
     $self settype
     $self next
 }
@@ -80,8 +81,8 @@ LoggingApp instproc settype { } {
 
 # called at the start of the simulation for the first run
 LoggingApp instproc go { starttime } {
-    $self instvar maxbytes_ endtime_ laststart_ srcid_ state_
-    global ns opt src on_ranvar
+    $self instvar maxbytes_ endtime_ laststart_ srcid_ state_ u_
+    global ns opt src on_ranvar flowcdf
 
     set laststart_ $starttime
     $ns at $starttime "$src($srcid_) start"    
@@ -89,11 +90,22 @@ LoggingApp instproc go { starttime } {
         set state_ ON
         if { $opt(ontype) == "bytes" } {
             set maxbytes_ [$on_ranvar($srcid_) value]; # in bytes
-        } else {
+        } elseif  { $opt(ontype) == "time" } {
             set endtime_ [$on_ranvar($srcid_) value]; # in time
+        } else {
+            $u_ set min_ 0.0
+            $u_ set max_ 1.0
+            set r [$u_ value]
+            set idx [expr int(1000000*$r)]
+            puts $idx
+            puts $flowcdf
+            set x [lindex $flowcdf $idx]
+            puts $x
+            set maxbytes_ [expr 40 + [ lindex $flowcdf $x]]
         }
-#        puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ sec"
-   } else {
+        # puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ sec"
+
+    } else {
         $self sched [expr $starttime - [$ns now]]
         set state_ OFF
     }
@@ -105,8 +117,8 @@ LoggingApp instproc timeout {} {
 
 LoggingApp instproc recv { bytes } {
     # there's one of these objects for each src/dest pair 
-    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_
-    global ns opt src tp on_ranvar off_ranvar stats
+    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_
+    global ns opt src tp on_ranvar off_ranvar stats flowcdf
 
     if { $state_ == OFF } {
         if { [$ns now] >= $laststart_ } {
@@ -135,8 +147,11 @@ LoggingApp instproc recv { bytes } {
                 # set up for next on period
                 if { $opt(ontype) == "bytes" } {
                     set maxbytes_ [$on_ranvar($srcid_) value]; # in bytes
-                } else {
+                } elseif  { $opt(ontype) == "time" } {
                     set endtime_ [$on_ranvar($srcid_) value]; # in time
+                } else {
+                    set r [$u_ value]
+                    set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(1000000*$r)]]]
                 }
                 $ns at $nexttime "$src($srcid_) start"; # schedule next start
 #                puts "$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
@@ -329,6 +344,8 @@ Queue set limit_ $opt(maxq)
 #set f [open opt(tr).tr w]
 #$ns trace-all $f
 
+set flowfile flowcdf-allman-icsi.tcl
+
 # create sources, destinations, gateways
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set s($i) [$ns node]
@@ -343,8 +360,10 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
     set on_ranvar($i) [new RandomVariable/$opt(onrand)]
     if { $opt(ontype) == "time" } {
         $on_ranvar($i) set avg_ $opt(onavg)
-    } else {
-        $on_ranvar($i) set avg_ $opt(avgbytes)
+    } elseif { $opt(ontype) == "bytes" } {
+            $on_ranvar($i) set avg_ $opt(avgbytes)
+    } elseif { $opt(ontype) == "flowcdf" } {
+        source $flowfile
     }
     set off_ranvar($i) [new RandomVariable/$opt(offrand)]
     $off_ranvar($i) set avg_ $opt(offavg)
