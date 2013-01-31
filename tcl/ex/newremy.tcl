@@ -97,11 +97,10 @@ LoggingApp instproc go { starttime } {
             $u_ set max_ 1.0
             set r [$u_ value]
             set idx [expr int(100000*$r)]
-            puts $flowcdf
-            puts $idx
-            set x [lindex $flowcdf $idx]
-            puts $x
-            set maxbytes_ [expr 40 + [ lindex $flowcdf $x]]
+            if { $idx > [llength $flowcdf] } {
+                set idx [expr [llength $flowcdf] - 1]
+            }
+            set maxbytes_ [expr 40 + [lindex $flowcdf $idx]]
         }
         # puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ sec"
 
@@ -298,9 +297,9 @@ proc showstats {final} {
             set throughput [expr 8.0 * $totalbytes / $totaltime]
             set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
             if { $final == True } {
-                puts [ format "FINAL\t%d\t%d\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
+                puts [ format "FINAL\t%d\t%d\t%.3f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
             } else {
-                puts [ format "-\t%d\t%d\t%.2f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
+                puts [ format "-\t%d\t%d\t%.3f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
             }
         }
     }
