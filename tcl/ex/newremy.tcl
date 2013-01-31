@@ -152,7 +152,7 @@ LoggingApp instproc recv { bytes } {
                 } else {
                     set r [$u_ value]
                     set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
-                    puts "Flow len $maxbytes_"
+#                    puts "Flow len $maxbytes_"
                 }
                 $ns at $nexttime "$src($srcid_) start"; # schedule next start
 #                puts "$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
