@@ -59,7 +59,7 @@ if __name__ == '__main__':
     onofftimes = [.001]
 #    avg_byte_list = [16000, 96000, 192000]
     avgbytes = 100000 # from Allman's March 2012 data and 2013 CCR paper
-    worktypes = ['flowcdf']
+    worktypes = ['Exponential']
 
     for proto in protolist:
         fullname = proto
