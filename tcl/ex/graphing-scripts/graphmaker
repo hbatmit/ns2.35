@@ -1,0 +1,112 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+my $suffix = '.flowcdfon0.off0.simtime100';
+my $dir = '/home/hari/ns2.35/tcl/ex/Verizon-flowcdf';
+
+my %protos;
+my %nsrcs;
+
+for ( glob "$dir/*$suffix" ) {
+  my ($protocol) = m{\Q$dir\E/(.*?)\.};
+  my ($nsrc) = m{nconn(\d+)};
+
+  next if ( $protocol =~ m{XCP} );
+
+  $protos{ $nsrc }{ $protocol }{ filename } = $_;
+}
+
+mkdir( "/tmp/graphdir$suffix" ) or die "directory exists: $!";
+chdir( "/tmp/graphdir$suffix" ) or die "can't enter directory: $!";
+
+for my $nsrc ( keys %protos ) {
+
+  my ( $rttmin, $rttmax ) = ( 10000000000, -10000000000 );
+  my ( $mbpsmin, $mbpsmax ) = ( 10000000000, -10000000000 );
+
+  for my $protocol ( keys %{ $protos{ $nsrc } } ) {
+    # make clean data
+
+    my $filename = $protos{ $nsrc }{ $protocol }{ filename };
+    my ( $rtt_tot, $mbps_tot, $count );
+
+    open DATA, $filename or die "can't open $filename: !";
+    open ELLIPSE, "|/home/keithw/gradschool/ns2.35/tcl/ex/graphing-scripts/ellipsemaker > $protocol-$nsrc.ellipse" or die;
+    open RAWDATA, ">$protocol-$nsrc.pts" or die;
+    while ( <DATA> ) {
+      next unless m{^FINAL};
+      my ( $mbps, $rtt ) = (split /\s+/, $_)[ 3, 4 ];
+      print ELLIPSE "$rtt $mbps\n";
+      print RAWDATA "$rtt $mbps\n";
+      $count++;
+      $rtt_tot += $rtt;
+      $mbps_tot += $mbps;
+    }
+    close ELLIPSE or die;
+    close RAWDATA or die;
+
+    # find limits of ellipse
+    open ELLIPSEOUT, "$protocol-$nsrc.ellipse" or die;
+    while ( <ELLIPSEOUT> ) {
+      my ( $rtt, $mbps ) = split /\s+/, $_;
+      if ( $rtt > $rttmax ) { $rttmax = $rtt }
+      if ( $rtt < $rttmin ) { $rttmin = $rtt }
+      if ( $mbps > $mbpsmax ) { $mbpsmax = $mbps }
+      if ( $mbps < $mbpsmin ) { $mbpsmin = $mbps }
+    }
+    close ELLIPSEOUT or die;
+
+    $protos{ $nsrc }{ $protocol }{ means } = [ $rtt_tot / $count, $mbps_tot / $count ];
+  }
+
+  if ( $rttmin < 0 ) {
+    $rttmin = 1;
+  }
+
+  open GNUPLOT, ">graph-$nsrc.gnu" or die;
+
+  $rttmin *= 0.9;
+  $rttmax *= 1.1;
+  $mbpsmin *= 0.9;
+  $mbpsmax *= 1.1;
+
+  print GNUPLOT <<"HERE";
+set xrange [$rttmin:$rttmax] reverse
+set yrange [$mbpsmin:$mbpsmax]
+set logscale xy
+
+set xlabel "RTT (ms)"
+set ylabel "Throughput (Mbps)"
+set grid
+
+set title "Verizon downlink, Pareto 1.5 on bytes, nsrc $nsrc"
+
+unset key
+
+set terminal svg size 1024,768
+set output "graph-$nsrc.svg"
+HERE
+
+
+  my @plotcmd;
+  my @dotcmd;
+
+  my $protocount = 1;
+  for my $protocol ( keys %{ $protos{ $nsrc } } ) {
+    print GNUPLOT qq<set label "$protocol" at $protos{ $nsrc }{ $protocol }{ means }[ 0 ],$protos{ $nsrc }{ $protocol }{ means }[ 1 ] textcolor lt $protocount\n>;
+
+    push @plotcmd, qq<"$protocol-$nsrc.ellipse" with lines lt $protocount>;
+    push @dotcmd, qq<"$protocol-$nsrc.pts" with dots lt $protocount>;
+
+    $protocount++;
+  }
+
+  my $plotcmd = join ", ", @plotcmd, @dotcmd;
+  print GNUPLOT "plot $plotcmd\nset output\n";
+
+  close GNUPLOT or die;
+
+  system( "gnuplot -p graph-$nsrc.gnu" );
+  system( "inkscape --export-png=graph-$nsrc.png graph-$nsrc.svg" );
+}
