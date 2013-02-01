@@ -209,6 +209,9 @@ if { $opt(link_type) == "poisson"} {
   puts "Link type cellular"
   source ../../link/cell-link.tcl
   $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  [ [ $ns link $left_router $right_router ] queue ] attach-link [ [ $ns link $left_router $right_router ] link ]
+  [ [ $ns link $right_router $left_router ] queue ] attach-link [ [ $ns link $right_router $left_router ] link ]
+
 
 } else {
   puts "Invalid link type"

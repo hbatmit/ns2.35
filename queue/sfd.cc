@@ -18,6 +18,9 @@ int SFD::command(int argc, const char*const* argv)
     if (!strcmp(argv[1], "capacity")) {
      _capacity=atof(argv[2]);
      return (TCL_OK);
+    } else if (!strcmp(argv[1],"attach-link")) {
+     _link = (CellLink*) TclObject::lookup( argv[2] );
+     return (TCL_OK);
     }
   }
   return Queue::command(argc, argv);
@@ -41,7 +44,6 @@ SFD::SFD( double capacity ) :
   _scheduler.set_iter( _iter );
   _scheduler.set_qdisc( _qdisc );
   _rate_estimator = SfdRateEstimator( _K, _headroom, _capacity );
-  _link = static_cast<CellLink*>( target_ ); /* UGLY HACK, Fix this later */
 }
 
 void SFD::enque(Packet *p)
@@ -99,6 +101,9 @@ void SFD::enque(Packet *p)
 
 Packet* SFD::deque()
 {
+  /* get link rates and do something with it if required */
+  get_link_rates();
+
   /* Implements pure virtual function Queue::deque() */
   uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
