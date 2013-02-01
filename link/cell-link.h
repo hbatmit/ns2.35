@@ -17,6 +17,7 @@ class CellLink : public LinkDelay {
     std::vector<double> _average_rates;
     std::vector<RNG*>    _rate_generators;
     uint32_t _iter;
+    uint64_t _bits_dequeued;
 
   public :
     /* Constructor */
@@ -35,6 +36,8 @@ class CellLink : public LinkDelay {
     /* override the recv function from LinkDelay */
     virtual void recv( Packet* p, Handler* h);
 
+    /* Tcl interface */
+    int command(int argc, const char*const* argv);
 };
 
 #endif

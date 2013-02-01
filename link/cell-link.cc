@@ -10,7 +10,19 @@ static class CellLinkClass : public TclClass {
     }
 } class_cell_link;
 
-CellLink::CellLink()
+int CellLink::command(int argc, const char*const* argv)
+{
+  if (argc == 2) {
+    if ( strcmp(argv[1], "total" ) == 0 ) {
+      fprintf( stderr, " Total number of bits is %lu \n", _bits_dequeued );
+      return TCL_OK;
+    }
+  }
+  return LinkDelay::command( argc, argv );
+}
+
+CellLink::CellLink() :
+  _bits_dequeued( 0 )
 {
   bind( "_iter",&_iter );
   bind( "_num_users", &_num_users );
@@ -64,6 +76,7 @@ void CellLink::recv( Packet* p, Handler* h )
   double tx_time = 8. * hdr_cmn::access(p)->size() / tx_rate ;
   s.schedule(target_, p, tx_time + delay_ ); /* Propagation delay */
   s.schedule(h, &intr_,  tx_time ); /* Transmission delay */
+  _bits_dequeued += (8 * hdr_cmn::access(p)->size());
 
   /* Tick to get next set of rates */
   tick();
