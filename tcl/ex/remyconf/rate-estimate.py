@@ -1,11 +1,13 @@
 import sys
 fh=open(sys.argv[1])
 duration=int(sys.argv[2])
-BIN_INTERVAL=10                      # i.e number of ms in one bandwidth bin
-acc=[0]*duration*(1000/BIN_INTERVAL) # Create enough bins for 'duration' seconds of data
+BIN_INTERVAL=100                      # i.e number of ms in one bandwidth bin
+acc=[0]*(1+duration*(1000/BIN_INTERVAL)) # Create enough bins for 'duration' seconds of data
 
 for line in fh.readlines() :
   time=int(float(line.split()[0]));
+  if time > duration: break
+  print time, time/BIN_INTERVAL
   acc[(time/BIN_INTERVAL)]=acc[(time/BIN_INTERVAL)]+8*1500;
 
 for i in range(0,len(acc)) :

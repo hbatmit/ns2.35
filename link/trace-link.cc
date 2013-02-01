@@ -68,7 +68,7 @@ void TraceLink::recv( Packet* p, Handler* h)
     /* Missed opportunities */
     _current_pkt_num ++;
   }
-  //  printf( " DIR: %s Now: %e next packet at %f \n", _trace_file.c_str(), s.clock(), _pdos.at( _current_pkt_num ) );
+  printf( " DIR: %s Now: %e next packet at %f \n", _trace_file.c_str(), s.clock(), _pdos.at( _current_pkt_num ) );
 
   s.schedule(target_, p, _pdos.at( _current_pkt_num ) - s.clock() ); /* Propagation  delay */
   s.schedule(h, &intr_,  _pdos.at( _current_pkt_num ) - s.clock() ); /* Transmission delay */
