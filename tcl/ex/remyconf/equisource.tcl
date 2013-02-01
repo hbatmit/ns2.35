@@ -22,7 +22,7 @@ set opt(rcvwin) 16384
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
-set opt(maxq) 80;             # max queue length at bottleneck
+set opt(maxq) 100;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
 set opt(link) None
 

@@ -284,7 +284,6 @@ proc create-sources-sinks {} {
     }
 
     for {set i 0} {$i < $numsrc} {incr i} {
-
         if { $opt(cycle_protocols) == true } {
             set opt(tcp) [lindex $protocols [expr $i % $opt(nsrc)]]
             set opt(sink) [lindex $protosinks [expr $i % $opt(nsrc)]]
