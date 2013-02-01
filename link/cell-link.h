@@ -23,9 +23,6 @@ class CellLink : public LinkDelay {
     std::vector<double> _average_rates;
     std::vector<RNG*>    _rate_generators;
     uint32_t _iter;
-    uint32_t _current_slot;
-    double TIME_SLOT_DURATION; /* CDMA, 1.67 ms time slots */
-    uint32_t EWMA_SLOTS;
 
   public :
     /* Constructor */

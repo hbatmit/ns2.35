@@ -21,9 +21,7 @@ CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
   _rate_generators( std::vector<RNG*>( _num_users, new RNG() ) ),
   _iter( iteration_number )
 {
-  bind( "TIME_SLOT_DURATION", &TIME_SLOT_DURATION );
-  bind( "EWMA_SLOTS", &EWMA_SLOTS );
-  printf( "CellLink: TIME_SLOT_DURATION %f, EWMA_SLOTS %d , num_user %u, iter %u\n", TIME_SLOT_DURATION, EWMA_SLOTS, _num_users, _iter );
+  printf( "CellLink: _num_users %u, iter %u\n", _num_users, _iter );
   fflush( stdout );
   auto advance_substream = [&] ( RNG *r )
                            { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
@@ -32,7 +30,6 @@ CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
 
 void CellLink::tick()
 {
-  _current_slot++;
   generate_new_rates();
 }
 
