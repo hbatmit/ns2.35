@@ -6,15 +6,9 @@
 #include "cdma-rates.h"
 #include "delay.h"
 
-/* An implementation of a fading Cellular Link,
- * along with a proportionally fair scheduler .
- * Tcl script calls tick() at slot boundaries
- * tick() functionality :
- * --updates slot number
- * --generates new rates
- * --checks if the previous user's slots are exhausted
- * ----if so, pick a new user based on prop. fairness
- * --in either case, update EWMA average */
+/* An implementation of a multiuser Cellular Link.
+ * Each user has independent Poisson services.
+ */
 
 class CellLink : public LinkDelay {
   private:
@@ -33,9 +27,6 @@ class CellLink : public LinkDelay {
 
     /* Generate new rates from allowed rates */
     void generate_new_rates();
-
-    /* Is it time to revise the scheduling decision ? */
-    bool time_to_revise();
 
     /* Get current rates of all users for SFD::deque() to use.
        SFD could ignore this as well. */

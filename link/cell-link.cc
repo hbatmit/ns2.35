@@ -42,14 +42,6 @@ void CellLink::generate_new_rates()
                   rate_generator );
 }
 
-bool CellLink::time_to_revise()
-{
-  /* For now, schedule on all slots and make slots
-     big enough. TODO: Move to variable slots as in
-     Page 211 of Tse and Viswanath. */
-  return true;
-}
-
 std::vector<double> CellLink::get_current_rates()
 {
   return _current_rates;
