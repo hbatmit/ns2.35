@@ -6,6 +6,7 @@ global opt
 set opt(nsrc) 2;                # number of sources in experiment
 set opt(tcp) TCP/Reno
 set opt(sink) TCPSink
+set opt(cycle_protocols) false
 set opt(app) FTP
 set opt(pktsize) 1210
 set opt(rcvwin) 16384
