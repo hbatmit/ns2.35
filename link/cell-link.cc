@@ -6,23 +6,21 @@ static class CellLinkClass : public TclClass {
   public :
     CellLinkClass() : TclClass("DelayLink/CellLink") {}
     TclObject* create(int argc, const char*const* argv) {
-      if ( argc != 6 ) {
-        printf( " Invalid number of args to CellLink \n" );
-        exit(-1);
-      }
-      return ( new CellLink( atoi(argv[4]), atoi(argv[5]) ) );
+      return ( new CellLink() );
     }
 } class_cell_link;
 
-CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
-  _num_users( num_users ),
-  _current_rates( std::vector<double>( _num_users ) ),
-  _average_rates( std::vector<double>( _num_users ) ),
-  _rate_generators( std::vector<RNG*>( _num_users, new RNG() ) ),
-  _iter( iteration_number )
+CellLink::CellLink()
 {
+  bind( "_iter",&_iter );
+  bind( "_num_users", &_num_users );
   printf( "CellLink: _num_users %u, iter %u\n", _num_users, _iter );
   fflush( stdout );
+  assert( _num_users > 0 );
+  assert( _iter > 0 );
+  _current_rates = std::vector<double>( _num_users );
+  _average_rates = std::vector<double>( _num_users );
+  _rate_generators = std::vector<RNG*>( _num_users, new RNG() );
   auto advance_substream = [&] ( RNG *r )
                            { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
   std::for_each( _rate_generators.begin(), _rate_generators.end(), advance_substream );

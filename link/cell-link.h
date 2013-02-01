@@ -26,7 +26,7 @@ class CellLink : public LinkDelay {
 
   public :
     /* Constructor */
-    CellLink( uint32_t num_users, uint32_t iteration_number );
+    CellLink();
 
     /* Called by CellLink inside the body of recv() */
     void tick( void );
