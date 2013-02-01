@@ -21,16 +21,6 @@ int CellLink::command(int argc, const char*const* argv)
       tick();
       return TCL_OK;
     }
-    if ( !strcmp( argv[1], "TIME_SLOT_DURATION" ) ) {
-      Tcl& tcl = Tcl::instance();
-      tcl.resultf("%f",TIME_SLOT_DURATION);
-      return (TCL_OK);
-    }
-    if ( !strcmp( argv[1], "EWMA_SLOTS" ) ) {
-      Tcl &tcl = Tcl::instance();
-      tcl.resultf("%d",EWMA_SLOTS);
-      return (TCL_OK);
-    }
     if ( !strcmp( argv[1], "get_current_user" ) ) {
       Tcl &tcl = Tcl::instance();
       tcl.resultf("%d",get_current_user() );
@@ -42,7 +32,6 @@ int CellLink::command(int argc, const char*const* argv)
 
 CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
   _num_users( num_users ),
-  _current_user( uint32_t (-1) ),
   _current_rates( std::vector<double>( _num_users ) ),
   _average_rates( std::vector<double>( _num_users ) ),
   _rate_generators( std::vector<RNG*>( _num_users, new RNG() ) ),
@@ -52,7 +41,7 @@ CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
   bind( "EWMA_SLOTS", &EWMA_SLOTS );
   printf( "CellLink: TIME_SLOT_DURATION %f, EWMA_SLOTS %d , num_user %u, iter %u\n", TIME_SLOT_DURATION, EWMA_SLOTS, _num_users, _iter );
   fflush( stdout );
-  auto advance_substream = [&] ( RNG *r ) 
+  auto advance_substream = [&] ( RNG *r )
                            { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
   std::for_each( _rate_generators.begin(), _rate_generators.end(), advance_substream );
 }
@@ -61,16 +50,6 @@ void CellLink::tick()
 {
   _current_slot++;
   generate_new_rates();
-  bool schedule_now = time_to_revise();
-  if (schedule_now) {
-    _current_user = pick_user_to_schedule();
-    Tcl& tcl = Tcl::instance();
-    printf( "$link_handle set bandwidth_ %f for user %lu \n", _current_rates.at( _current_user ), _current_user  ); 
-    tcl.evalf("$link_handle set bandwidth_ %f", _current_rates.at( _current_user ) );
-    update_average_rates( _current_user );
-  } else {
-    update_average_rates( (uint32_t) -1 );
-  }
 }
 
 uint32_t CellLink::pick_user_to_schedule()
@@ -88,7 +67,7 @@ uint32_t CellLink::pick_user_to_schedule()
 void CellLink::generate_new_rates()
 {
   /* For now, generate new rates uniformly from allowed rates
-   * TODO: fix this to exponential or random walk 
+   * TODO: fix this to exponential or random walk
    * */
   auto rate_generator = [&] ( RNG *r ) { return ALLOWED_RATES[ r->uniform( (int)ALLOWED_RATES.size() )]; };
   std::transform( _rate_generators.begin(), _rate_generators.end(),
@@ -117,5 +96,27 @@ void CellLink::update_average_rates( uint32_t scheduled_user )
 
 uint32_t CellLink::get_current_user()
 {
-  return _current_user;
+  return pick_user_to_schedule();
+}
+
+void CellLink::recv( Packet* p, Handler* h )
+{
+  /* Get flow_id from packet */
+  hdr_ip *iph=hdr_ip::access( p );
+  auto flow_id = iph->flowid();
+
+  /* Find transmission rate for this flow */
+  auto tx_rate = _current_rates.at( flow_id );
+
+  /* Schedule transmission */
+  Scheduler& s = Scheduler::instance();
+  double tx_time = 8. * hdr_cmn::access(p)->size() / tx_rate ;
+  s.schedule(target_, p, tx_time + delay_ ); /* Propagation delay */
+  s.schedule(h, &intr_,  tx_time ); /* Transmission delay */
+
+  /* Update average rates */
+  update_average_rates( (uint32_t) flow_id );
+
+  /* Tick to get next set of rates */
+  tick();
 }
