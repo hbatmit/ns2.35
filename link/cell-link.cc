@@ -14,22 +14,6 @@ static class CellLinkClass : public TclClass {
     }
 } class_cell_link;
 
-int CellLink::command(int argc, const char*const* argv)
-{
-  if ( argc == 2 ) {
-    if ( !strcmp( argv[1], "tick" ) ) {
-      tick();
-      return TCL_OK;
-    }
-    if ( !strcmp( argv[1], "get_current_user" ) ) {
-      Tcl &tcl = Tcl::instance();
-      tcl.resultf("%d",get_current_user() );
-      return (TCL_OK);
-    }
-  }
-  return TclObject::command(argc,argv);
-}
-
 CellLink::CellLink( uint32_t num_users, uint32_t iteration_number ) :
   _num_users( num_users ),
   _current_rates( std::vector<double>( _num_users ) ),
@@ -83,20 +67,9 @@ bool CellLink::time_to_revise()
   return true;
 }
 
-void CellLink::update_average_rates( uint32_t scheduled_user )
+std::vector<double> CellLink::get_current_rates()
 {
-  for ( uint32_t i=0; i < _average_rates.size(); i++ ) {
-    if ( i == scheduled_user ) {
-     _average_rates[ i ] = ( 1.0 - 1.0/EWMA_SLOTS ) * _average_rates[ i ] + ( 1.0/ EWMA_SLOTS ) * _current_rates[ i ];
-    } else {
-     _average_rates[ i ] = ( 1.0 - 1.0/EWMA_SLOTS ) * _average_rates[ i ];
-    }
-  }
-}
-
-uint32_t CellLink::get_current_user()
-{
-  return pick_user_to_schedule();
+  return _current_rates;
 }
 
 void CellLink::recv( Packet* p, Handler* h )
@@ -113,9 +86,6 @@ void CellLink::recv( Packet* p, Handler* h )
   double tx_time = 8. * hdr_cmn::access(p)->size() / tx_rate ;
   s.schedule(target_, p, tx_time + delay_ ); /* Propagation delay */
   s.schedule(h, &intr_,  tx_time ); /* Transmission delay */
-
-  /* Update average rates */
-  update_average_rates( (uint32_t) flow_id );
 
   /* Tick to get next set of rates */
   tick();

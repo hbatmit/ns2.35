@@ -41,15 +41,9 @@ class CellLink : public LinkDelay {
     /* Is it time to revise the scheduling decision ? */
     bool time_to_revise();
 
-    /* Update EWMA filter for proportionally fair scheduler */
-    void update_average_rates( uint32_t scheduled_user );
-
-    /* Get current user whose packets could get sent out
-       on SFD::deque() . SFD could ignore this as well. */
-    uint32_t get_current_user();
-
-    /* Tcl interface */
-    int command(int argc, const char*const* argv);
+    /* Get current rates of all users for SFD::deque() to use.
+       SFD could ignore this as well. */
+    std::vector<double> get_current_rates();
 
     /* override the recv function from LinkDelay */
     virtual void recv( Packet* p, Handler* h);
