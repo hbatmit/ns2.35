@@ -116,7 +116,7 @@ LoggingApp instproc timeout {} {
     $self instvar srcid_ maxbytes_ endtime_
     global ns src
     $self recv 0
-    $self sched 0.001
+    $self sched 0.1
 }
 
 LoggingApp instproc recv { bytes } {
