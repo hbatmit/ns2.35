@@ -70,12 +70,12 @@ LoggingApp instproc init {id} {
 LoggingApp instproc settype { } {
     $self instvar endtime_ maxbytes_
     global opt
-    if { $opt(ontype) == "bytes" } {
-        $self set endtime_ $opt(simtime)
-        $self set maxbytes_ 0        
-    } else {
+    if { $opt(ontype) == "time" } {
         $self set maxbytes_ "infinity"; # not byte-limited
         $self set endtime_ 0
+    } else {
+        $self set endtime_ $opt(simtime)
+        $self set maxbytes_ 0        
     }
 }
 
