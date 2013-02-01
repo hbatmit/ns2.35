@@ -17,7 +17,7 @@ set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
 global accessdelay
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
-    set accessdelay($i) [expr 5*$i + 1]ms;       # latency of access link
+    set accessdelay($i) [expr 25*$i + 1]ms;       # latency of access link
 }
 global accessrate
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
