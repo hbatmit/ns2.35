@@ -251,7 +251,7 @@ proc create-dumbbell-topology {bneckbw delay} {
 }
 
 proc create-sources-sinks {} {
-    global ns opt s d src recvapp tp
+    global ns opt s d src recvapp tp protocols protosinks
 
     set numsrc $opt(nsrc)
     if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
@@ -283,8 +283,40 @@ proc create-sources-sinks {} {
         set opt(tcp) "TCP/Newreno"
     }
 
-
     for {set i 0} {$i < $numsrc} {incr i} {
+
+        if { $opt(cycle_protocols) == true } {
+            set opt(tcp) [lindex $protocols [expr $i % $opt(nsrc)]]
+            set opt(sink) [lindex $protosinks [expr $i % $opt(nsrc)]]
+            if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
+                set linuxcc [ string range $opt(tcp) 10 [string length $opt(tcp)] ]
+                set opt(tcp) "TCP/Linux"
+            }
+
+            if { $opt(tcp) == "DCTCP" } {
+                Agent/TCP set dctcp_ true
+                Agent/TCP set ecn_ 1
+                Agent/TCP set old_ecn_ 1
+                Agent/TCP set packetSize_ $opt(pktsize)
+                Agent/TCP/FullTcp set segsize_ $opt(pktsize)
+                Agent/TCP set window_ 1256
+                Agent/TCP set slow_start_restart_ false
+                Agent/TCP set tcpTick_ 0.01
+                Agent/TCP set minrto_ 0.2 ; # minRTO = 200ms
+                Agent/TCP set windowOption_ 0
+                Queue/RED set bytes_ false
+                Queue/RED set queue_in_bytes_ true
+                Queue/RED set mean_pktsize_ $opt(pktsize)
+                Queue/RED set setbit_ true
+                Queue/RED set gentle_ false
+                Queue/RED set q_weight_ 1.0
+                Queue/RED set mark_p_ 1.0
+                Queue/RED set thresh_ 65
+                Queue/RED set maxthresh_ 65
+                DelayLink set avoidReordering_ true
+                set opt(tcp) "TCP/Newreno"
+            }
+        }
         set tp($i) [$ns create-connection-list $opt(tcp) $s($i) $opt(sink) $d $i]
         set tcpsrc [lindex $tp($i) 0]
         set tcpsink [lindex $tp($i) 1]
@@ -424,10 +456,16 @@ for {set i 0} {$i < $opt(nsrc)} {incr i} {
     }
 }
 
-if { [info exists linuxcc] } {
-    puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+if { $opt(cycle_protocols) == true } {
+    for {set i 0} {$i < $opt(nsrc)} {incr i} {
+        puts "$i: [lindex $protocols $i]"
+    }
 } else {
-    puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+    if { [info exists linuxcc] } {
+        puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+    } else {
+        puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+    }
 }
 
 puts "     SrcID Bytes Mbits/s AvgRTT On% Utility NumConns"

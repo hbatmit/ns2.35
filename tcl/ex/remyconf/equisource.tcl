@@ -4,16 +4,25 @@ global opt
 
 # source, sink, and app types
 set opt(nsrc) 2;                # number of sources in experiment
-set opt(tcp) TCP/Reno/XCP
-set opt(sink) TCPSink/XCPSink
+set opt(tcp) TCP/Rational
+set opt(sink) TCPSink
+set opt(cycle_protocols) false
+set protocols [list TCP/Newreno TCP/Linux/compound]; # don't put Linux TCPs first on list
+set protosinks [list TCPSink TCPSink]
+set protocols [list TCP/Newreno TCP/Linux/cubic]
+set protosinks [list TCPSink TCPSink/Sack1/DelAck]
+set protocols [list TCP/Newreno TCP/Rational]
+set protocols [list TCP/Newreno/Rational TCP/Linux/cubic ]
+set protosinks [list TCPSink/Sack1 TCPSink/Sack1/DelAck]
+
 set opt(app) FTP
 set opt(pktsize) 1210
 set opt(rcvwin) 16384
 
 # topology parameters
-set opt(gw) XCP;           # queueing at bottleneck
+set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
-set opt(maxq) 1000;             # max queue length at bottleneck
+set opt(maxq) 80;             # max queue length at bottleneck
 set opt(delay) 49ms;            # total one-way delay in topology
 set opt(link) None
 
