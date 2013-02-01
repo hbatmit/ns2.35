@@ -377,7 +377,7 @@ if { $opt(gw) == "XCP" } {
 }
     
 if { $opt(seed) >= 0 } {
-    ns-random 0
+    ns-random $opt(seed)
 }
 
 set ns [new Simulator]
