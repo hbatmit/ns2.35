@@ -63,12 +63,13 @@ LoggingApp instproc init {id} {
     $self set cumrtt_ 0.0
     $self set numsamples_ 0
     $self set u_ [new RandomVariable/Uniform]
+    $self set offtotal_ 0.0
     $self settype
     $self next
 }
 
 LoggingApp instproc settype { } {
-    $self instvar endtime_ maxbytes_
+    $self instvar endtime_ maxbytes_ 
     global opt
     if { $opt(ontype) == "time" } {
         $self set maxbytes_ "infinity"; # not byte-limited
@@ -112,36 +113,44 @@ LoggingApp instproc go { starttime } {
 }
 
 LoggingApp instproc timeout {} {
-    $self go $laststart_
+    $self instvar srcid_ maxbytes_ endtime_
+    global ns src
+    $self recv 0
+    $self sched 0.001
 }
 
 LoggingApp instproc recv { bytes } {
     # there's one of these objects for each src/dest pair 
-    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_
+    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_ offtotal_
     global ns opt src tp on_ranvar off_ranvar stats flowcdf
 
     if { $state_ == OFF } {
         if { [$ns now] >= $laststart_ } {
+#            puts "[$ns now]: wasoff turning $srcid_ on for $maxbytes_"
             set state_ ON
         }
     }
-
+    
     if { $state_ == ON } {
-        set nbytes_ [expr $nbytes_ + $bytes]
-        set tcp_sender [lindex $tp($srcid_) 0]
-        set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
-        if {$rtt_ > 0.0} {
-            set cumrtt_ [expr $rtt_  + $cumrtt_]
-            set numsamples_ [expr $numsamples_ + 1]
+        if { $bytes > 0 } {
+            set nbytes_ [expr $nbytes_ + $bytes]
+            set tcp_sender [lindex $tp($srcid_) 0]
+            set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
+            if {$rtt_ > 0.0} {
+                set cumrtt_ [expr $rtt_  + $cumrtt_]
+                set numsamples_ [expr $numsamples_ + 1]
+            }
         }
         set ontime [expr [$ns now] - $laststart_]
         if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
-#            puts "[$ns now]: Turning off $srcid_"
+#            puts "[$ns now]: Turning off $srcid_ ontime $ontime"
             $ns at [$ns now] "$src($srcid_) stop"
             $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_
             set nbytes_ 0
             set state_ OFF
             set nexttime [expr [$ns now] + [$off_ranvar($srcid_) value]]; # stay off until nexttime
+            set offtotal_ [expr $offtotal_ + $nexttime - [$ns now]]
+#            puts "OFFTOTAL for src $srcid_ $offtotal_"
             set laststart_ $nexttime
             if { $nexttime < $opt(simtime) } { 
                 # set up for next on period
@@ -152,10 +161,9 @@ LoggingApp instproc recv { bytes } {
                 } else {
                     set r [$u_ value]
                     set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
-#                    puts "Flow len $maxbytes_"
                 }
-                $ns at $nexttime "$src($srcid_) start"; # schedule next start
-#                puts "$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
+                $ns at $nexttime: "$src($srcid_) start"; # schedule next start
+#                puts "@$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
             }
         }
         return nbytes_
@@ -333,8 +341,19 @@ proc showstats {final} {
 }
 
 proc finish {} {
-    global ns opt stats
+    global ns opt stats recvapp global
     global f
+
+    for {set i 0} {$i < $opt(nsrc)} {incr i} {
+        set rapp $recvapp($i)
+        set nbytes [$rapp set nbytes_]
+        set ontime [expr [$ns now] - [$rapp set laststart_] ]
+        set cumrtt [$rapp set cumrtt_]
+        set numsamples [$rapp set numsamples_]
+        set srcid [$rapp set srcid_]
+        $stats($srcid) update $nbytes $ontime $cumrtt $numsamples
+    }
+
     showstats True
 
 #    $ns flush-trace
@@ -358,7 +377,7 @@ if { $opt(gw) == "XCP" } {
 }
     
 if { $opt(seed) >= 0 } {
-    ns-random $opt(seed)
+    ns-random 0
 }
 
 set ns [new Simulator]
