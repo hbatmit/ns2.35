@@ -24,6 +24,9 @@ CellLink::CellLink()
   auto advance_substream = [&] ( RNG *r )
                            { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
   std::for_each( _rate_generators.begin(), _rate_generators.end(), advance_substream );
+
+  /* Tick once to start */
+  tick();
 }
 
 void CellLink::tick()
