@@ -332,9 +332,9 @@ proc showstats {final} {
             set throughput [expr 8.0 * $totalbytes / $totaltime]
             set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
             if { $final == True } {
-                puts [ format "FINAL\t%d\t%d\t%.3f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
+                puts [ format "FINAL %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
             } else {
-                puts [ format "-\t%d\t%d\t%.3f\t%.1f\t%.4f\t%.2f\t%d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
+                puts [ format "----- %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
             }
         }
     }
@@ -430,7 +430,7 @@ if { [info exists linuxcc] } {
     puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
 }
 
-puts "\tSrcID\tBytes\tMbits/s\tAvgRTT\tOn%\tUtility\tNumConns"
+puts "     SrcID Bytes Mbits/s AvgRTT On% Utility NumConns"
 
 $ns at $opt(simtime) "finish"
 
