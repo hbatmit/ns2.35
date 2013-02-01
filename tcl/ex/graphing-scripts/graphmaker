@@ -12,7 +12,7 @@ for ( glob "$dir/*$suffix" ) {
   my ($protocol) = m{\Q$dir\E/(.*?)\.};
   my ($nsrc) = m{nconn(\d+)};
 
-  next if ( $protocol =~ m{XCP} );
+#  next if ( $protocol =~ m{XCP} );
 
   $protos{ $nsrc }{ $protocol }{ filename } = $_;
 }
@@ -66,21 +66,21 @@ for my $nsrc ( keys %protos ) {
 
   open GNUPLOT, ">graph-$nsrc.gnu" or die;
 
-  $rttmin *= 0.9;
+  $rttmin *= 0.8;
   $rttmax *= 1.1;
-  $mbpsmin *= 0.9;
+  $mbpsmin *= 0.8;
   $mbpsmax *= 1.1;
 
   print GNUPLOT <<"HERE";
 set xrange [$rttmin:$rttmax] reverse
 set yrange [$mbpsmin:$mbpsmax]
-set logscale xy
+#set logscale xy
 
 set xlabel "RTT (ms)"
 set ylabel "Throughput (Mbps)"
 set grid
 
-set title "Verizon downlink, Pareto 1.5 on bytes, nsrc $nsrc"
+set title "Verizon downlink, Empirical distribution of flow lengths, nsrc $nsrc"
 
 unset key
 
@@ -94,7 +94,18 @@ HERE
 
   my $protocount = 1;
   for my $protocol ( keys %{ $protos{ $nsrc } } ) {
-    print GNUPLOT qq<set label "$protocol" at $protos{ $nsrc }{ $protocol }{ means }[ 0 ],$protos{ $nsrc }{ $protocol }{ means }[ 1 ] textcolor lt $protocount\n>;
+    my $nicename = $protocol;
+    $nicename =~ s{TCP-Rational}{RemyTCP};
+    $nicename =~ s{TCP-Vegas}{Vegas};
+    $nicename =~ s{Cubic-sfqCoDel}{CUBIC-over-sfqCoDel};
+    $nicename =~ s{TCP-Reno-XCP}{XCP-over-XCP};
+    $nicename =~ s{TCP-Newreno}{NewReno};
+    $nicename =~ s{TCP-Linux-cubic}{CUBIC};
+    $nicename =~ s{TCP-Linux-compound}{Compound};
+
+    $protos{ $nsrc }{ $protocol }{ means }[ 1 ] += .1;
+
+    print GNUPLOT qq<set label "$nicename" at $protos{ $nsrc }{ $protocol }{ means }[ 0 ],$protos{ $nsrc }{ $protocol }{ means }[ 1 ] textcolor lt $protocount\n>;
 
     push @plotcmd, qq<"$protocol-$nsrc.ellipse" with lines lt $protocount>;
     push @dotcmd, qq<"$protocol-$nsrc.pts" with dots lt $protocount>;
