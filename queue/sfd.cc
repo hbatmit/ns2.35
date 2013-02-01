@@ -41,6 +41,7 @@ SFD::SFD( double capacity ) :
   _scheduler.set_iter( _iter );
   _scheduler.set_qdisc( _qdisc );
   _rate_estimator = SfdRateEstimator( _K, _headroom, _capacity );
+  _link = static_cast<CellLink*>( target_ ); /* UGLY HACK, Fix this later */
 }
 
 void SFD::enque(Packet *p)

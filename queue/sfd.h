@@ -2,7 +2,7 @@
 #define ns_sfd_h
 
 #include <string.h>
-#include "queue.h"
+#include "link-aware-queue.h"
 #include <map>
 #include <list>
 #include <queue>
@@ -19,7 +19,7 @@
  * with the TCP loss equation.
  */
 
-class SFD : public Queue {
+class SFD : public LinkAwareQueue {
   private :
 
     /* Tcl accessible SFD parameters */
@@ -53,6 +53,9 @@ class SFD : public Queue {
 
     /* print stats  */
     void print_stats( double now );
+
+    /* inherited functions from LinkAwareQueue */
+    std::vector<double> get_link_rates() { return _link->get_current_rates(); }
 
     /* inherited functions from queue */
     void enque( Packet *p );
