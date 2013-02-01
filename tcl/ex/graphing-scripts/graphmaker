@@ -3,7 +3,7 @@
 use strict;
 
 my $suffix = '.flowcdfon0.off0.simtime100';
-my $dir = '/home/hari/ns2.35/tcl/ex/Verizon-flowcdf';
+my $dir = '/home/keithw/gradschool/remy-graphs/verizon-flowcdf/Verizon-all';
 
 my %protos;
 my %nsrcs;
@@ -12,13 +12,16 @@ for ( glob "$dir/*$suffix" ) {
   my ($protocol) = m{\Q$dir\E/(.*?)\.};
   my ($nsrc) = m{nconn(\d+)};
 
-#  next if ( $protocol =~ m{XCP} );
+  next if ( $protocol =~ m{XCP} );
+  next if ( $protocol =~ m{CoDel} );
+  next if ( $protocol =~ m{0_5} );
+  next if ( $protocol =~ m{2} );
 
   $protos{ $nsrc }{ $protocol }{ filename } = $_;
 }
 
-mkdir( "/tmp/graphdir$suffix" ) or die "directory exists: $!";
-chdir( "/tmp/graphdir$suffix" ) or die "can't enter directory: $!";
+mkdir( "$dir/graphdir" ) or die "directory exists: $!";
+chdir( "$dir/graphdir" ) or die "can't enter directory: $!";
 
 for my $nsrc ( keys %protos ) {
 
@@ -66,15 +69,16 @@ for my $nsrc ( keys %protos ) {
 
   open GNUPLOT, ">graph-$nsrc.gnu" or die;
 
-  $rttmin *= 0.8;
-  $rttmax *= 1.1;
-  $mbpsmin *= 0.8;
-  $mbpsmax *= 1.1;
+#  $rttmin *= 0.8;
+#  $rttmax *= 1.1;
+#  $mbpsmin *= 0.8;
+#  $mbpsmax *= 1.1;
 
   print GNUPLOT <<"HERE";
 set xrange [$rttmin:$rttmax] reverse
 set yrange [$mbpsmin:$mbpsmax]
-#set logscale xy
+#set logscale x 2
+#set logscale y 2
 
 set xlabel "RTT (ms)"
 set ylabel "Throughput (Mbps)"
@@ -103,12 +107,12 @@ HERE
     $nicename =~ s{TCP-Linux-cubic}{CUBIC};
     $nicename =~ s{TCP-Linux-compound}{Compound};
 
-    $protos{ $nsrc }{ $protocol }{ means }[ 1 ] += .1;
+#    $protos{ $nsrc }{ $protocol }{ means }[ 1 ] += .1;
 
     print GNUPLOT qq<set label "$nicename" at $protos{ $nsrc }{ $protocol }{ means }[ 0 ],$protos{ $nsrc }{ $protocol }{ means }[ 1 ] textcolor lt $protocount\n>;
 
     push @plotcmd, qq<"$protocol-$nsrc.ellipse" with lines lt $protocount>;
-    push @dotcmd, qq<"$protocol-$nsrc.pts" with dots lt $protocount>;
+#    push @dotcmd, qq<"$protocol-$nsrc.pts" with dots lt $protocount>;
 
     $protocount++;
   }
@@ -119,5 +123,5 @@ HERE
   close GNUPLOT or die;
 
   system( "gnuplot -p graph-$nsrc.gnu" );
-  system( "inkscape --export-png=graph-$nsrc.png graph-$nsrc.svg" );
+  system( "inkscape --export-png=graph-$nsrc.png -D graph-$nsrc.svg" );
 }
