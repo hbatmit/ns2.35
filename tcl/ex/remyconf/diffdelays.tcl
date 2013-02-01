@@ -14,7 +14,7 @@ set opt(rcvwin) 16384
 set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 10Mb;             # bottleneck bandwidth (for some topos)
 set opt(maxq) 1000;             # max queue length at bottleneck
-set opt(delay) 49ms;            # total one-way delay in topology
+set opt(delay) 24ms;            # total one-way delay in topology
 set opt(link) None
 
 # random on-off times for sources
@@ -38,7 +38,7 @@ set opt(tracewhisk) "none";     # give a connection ID to print for that flow, o
 proc set_access_params { nsrc } {
     global accessdelay
     for {set i 0} {$i < $nsrc} {incr i} {
-        set accessdelay($i) [expr 25*$i + 1]ms;       # latency of access link
+        set accessdelay($i) [expr 1 + 25*$i]ms;       # latency of access link
     }
     global accessrate
     for {set i 0} {$i < $nsrc} {incr i} {
