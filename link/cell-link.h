@@ -32,9 +32,6 @@ class CellLink : public LinkDelay {
     /* Called by simulator, every TIME_SLOT_DURATION on CellLink */
     void tick( void );
 
-    /* Find the user to schedule, using the proportional fair scheduler */
-    uint32_t pick_user_to_schedule();
-
     /* Generate new rates from allowed rates */
     void generate_new_rates();
 

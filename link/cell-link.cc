@@ -36,18 +36,6 @@ void CellLink::tick()
   generate_new_rates();
 }
 
-uint32_t CellLink::pick_user_to_schedule()
-{
-  std::vector<double> normalized_rates( _current_rates.size() );
-  std::transform( _current_rates.begin(), _current_rates.end(),
-                  _average_rates.begin(), normalized_rates.begin(),
-                  [&] ( const double & rate, const double & average)
-                  { return (average != 0 ) ? rate/average :  DBL_MAX ; } );
-                  /* If average is zero, schedule preferentially */
-  return std::distance( normalized_rates.begin(),
-                        std::max_element( normalized_rates.begin(), normalized_rates.end() ) );
-}
-
 void CellLink::generate_new_rates()
 {
   /* For now, generate new rates uniformly from allowed rates
