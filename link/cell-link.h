@@ -28,8 +28,10 @@ class CellLink : public LinkDelay {
     uint32_t EWMA_SLOTS;
 
   public :
+    /* Constructor */
     CellLink( uint32_t num_users, uint32_t iteration_number );
-    /* Called by simulator, every TIME_SLOT_DURATION on CellLink */
+
+    /* Called by CellLink inside the body of recv() */
     void tick( void );
 
     /* Generate new rates from allowed rates */

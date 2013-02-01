@@ -4,7 +4,7 @@
 
 static class CellLinkClass : public TclClass {
   public :
-    CellLinkClass() : TclClass("CellLink") {}
+    CellLinkClass() : TclClass("DelayLink/CellLink") {}
     TclObject* create(int argc, const char*const* argv) {
       if ( argc != 6 ) {
         printf( " Invalid number of args to CellLink \n" );
