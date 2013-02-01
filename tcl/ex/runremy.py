@@ -46,6 +46,8 @@ if __name__ == '__main__':
                       default = "TCP/Newreno", help = "protocol")
     parser.add_option("-t", "--type", type="string", dest="ontype",
                       default = "bytes", help = "by bytes or by seconds")
+    parser.add_option("-n", "--nsrc", type="int", dest="nsrc",
+                      default = 1, help = "nsrc")
     (config, args) = parser.parse_args()
 
     if not os.path.exists(config.resdir):
@@ -54,15 +56,14 @@ if __name__ == '__main__':
     conffile = config.remyconf
 
     simtime = 100
-    maxsrcs = 16
-    iterations = 256
+    iterations = 128
 
     # protolist = ['TCP/Newreno', 'TCP/Linux/cubic', 'TCP/Linux/compound', 'TCP/Vegas', 'TCP/Reno/XCP', 'TCP/Rational', 'Cubic/sfqCoDel']
 
     protolist = config.proto.split() # which transport protocol(s) are we using?
-    onofftimes = [.001]
+    onofftimes = [0.5]
 #    avg_byte_list = [16000, 96000, 192000]
-    avgbytes = 100000 # from Allman's March 2012 data and 2013 CCR paper
+    avgbytes = 250000 # from Allman's March 2012 data and 2013 CCR paper
     worktypes = ['Exponential']
 
     for proto in protolist:
@@ -71,8 +72,8 @@ if __name__ == '__main__':
             proto = "TCP/Linux/cubic"
         for wrk in worktypes:
             for onoff in onofftimes:
-                numsrcs = 1
-                while numsrcs <= maxsrcs:
+                numsrcs = config.nsrc
+                while numsrcs <= config.nsrc:
                     for i in xrange(iterations):
                         if config.ontype == "bytes":
                             outfname = '%s/%s.%s.nconn%d.%son%d.off%d.simtime%d' % (config.resdir, fullname.replace('/','-'), wrk, numsrcs, config.ontype, avgbytes, onoff, simtime)
