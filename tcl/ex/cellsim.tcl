@@ -180,19 +180,19 @@ for { set i 0 } { $i < $opt(num_tcp) } {incr i } {
 
 # connect routers by a bottleneck link, with a queue discipline (qdisc)
 if { $opt(link_type) == "poisson"} {
-  source link/poisson.tcl
+  source ../../link/poisson.tcl
   DelayLink/PoissonLink set _iter $opt(iter)
   $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
 
 } elseif { $opt(link_type) == "trace"} {
-  source link/trace.tcl
+  source ../../link/trace.tcl
   $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
   [ [ $ns link $left_router $right_router ] link ] trace-file "uplink.pps"
   $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
   [ [ $ns link $right_router $left_router ] link ] trace-file "downlink.pps"
 
 } elseif { $opt(link_type) == "brownian" } {
-  source link/brownian.tcl
+  source ../../link/brownian.tcl
   DelayLink/BrownianLink set _iter $opt(iter)
   # Min rate 80 MTU sized packets per second or ~ 1mbps
   DelayLink/BrownianLink set _min_rate 100
@@ -203,6 +203,11 @@ if { $opt(link_type) == "poisson"} {
 
 } elseif { $opt(link_type) == "deterministic" } {
   puts "Link type determinstic"
+  $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+
+} elseif { $opt(link_type) == "cellular" } {
+  puts "Link type cellular"
+  source ../../link/cell-link.tcl
   $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
 
 } else {
