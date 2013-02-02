@@ -45,6 +45,9 @@ class SfdScheduler {
     /* Schedule using Rand */
     uint64_t random_scheduler( void );
 
+    /* Schedule using Prop Fair */
+    uint64_t prop_fair_scheduler( const std::map<uint64_t,double> &, const std::map<uint64_t,double> & );
+
     /* setters */
     void set_qdisc( int qdisc ) ;
     void set_iter( int iter )   { _iter  = iter;  }

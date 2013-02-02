@@ -101,10 +101,14 @@ void SFD::enque(Packet *p)
 
 Packet* SFD::deque()
 {
-  /* get link rates and do something with it if required */
-  get_link_rates();
-
   /* Implements pure virtual function Queue::deque() */
+
+  /* Prop-fair scheduler : get current link rates */
+  auto current_link_rates = get_link_rates();
+
+  /* Prop-fair scheduler : get average service rates */
+  auto avg_service_rates  = _rate_estimator.get_service_rates();
+
   uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
     current_flow = _scheduler.fcfs_scheduler();
@@ -113,6 +117,9 @@ Packet* SFD::deque()
   } else {
     assert( false );
   }
+
+  /* Ask the proportionally fair scheduler for the flow */
+  current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
 
   double now = Scheduler::instance().clock();
 

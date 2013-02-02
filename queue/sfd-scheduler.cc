@@ -1,5 +1,6 @@
 #include "sfd-scheduler.h"
 #include <algorithm>
+#include <float.h>
 
 SfdScheduler::SfdScheduler( std::map<uint64_t,PacketQueue*> * packet_queues,
                             std::map<uint64_t,std::queue<uint64_t>> * timestamps ) :
@@ -31,6 +32,21 @@ uint64_t SfdScheduler::random_scheduler( void )
   available_flows.erase( filter_end, available_flows.end() );
   return ( available_flows.empty() ) ? ( uint64_t ) -1 :
                                        available_flows.at( _rand_scheduler->uniform( (int)available_flows.size() ) ).first;
+}
+
+uint64_t SfdScheduler::prop_fair_scheduler( const std::map<uint64_t,double> & current_link_rates, const std::map<uint64_t,double> & avg_service_rates )
+{
+  /* normalize rates to the average seen so far */
+  std::map<uint64_t,double> normalized_rates;
+  for ( auto it = current_link_rates.begin(); it != current_link_rates.end(); it++ ) {
+    auto flow = it->first;
+    normalized_rates[ flow ] = ( avg_service_rates.at( flow ) != 0 ) ? current_link_rates.at( flow )/avg_service_rates.at( flow ) : DBL_MAX ;
+  }
+
+  /* Pick the best proportionally fair rate, if avg is 0, schedule preferentially */
+  auto iter = std::max_element( normalized_rates.begin(), normalized_rates.end(),
+                              [&] (const std::pair<uint64_t,double> p1, const std::pair<uint64_t,double> p2 ) { return p1.second < p2.second; } );
+  return iter->first;
 }
 
 void SfdScheduler::set_qdisc( int qdisc )
