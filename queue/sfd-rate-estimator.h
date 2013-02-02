@@ -45,6 +45,9 @@ class SfdRateEstimator {
 
     /* Print all rates */
     void print_rates( double now );
+
+    /* get service rates */
+    std::map<uint64_t,double> get_service_rates();
 };
 
 #endif

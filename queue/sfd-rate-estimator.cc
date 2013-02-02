@@ -162,3 +162,14 @@ void SfdRateEstimator::print_rates( double now )
   /* Ingress Arrival rate */
   printf(" Time %f : I : %f \n", now, est_ingress_rate() );
 }
+
+std::map<uint64_t,double> SfdRateEstimator::get_service_rates( void )
+{
+  std::map<uint64_t,double> service_rates;
+  std::map<uint64_t,FlowStats>::iterator it;
+
+  for ( it = _flow_stats.begin(); it != _flow_stats.end(); it++ ) {
+    service_rates[ it->first ] = it->second._flow_service_rate ;
+  }
+  return service_rates;
+}
