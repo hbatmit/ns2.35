@@ -55,7 +55,7 @@ class SFD : public LinkAwareQueue {
     void print_stats( double now );
 
     /* inherited functions from LinkAwareQueue */
-    std::vector<double> get_link_rates() { return _link->get_current_rates(); }
+    std::map<uint64_t,double> get_link_rates();
 
     /* inherited functions from queue */
     void enque( Packet *p );

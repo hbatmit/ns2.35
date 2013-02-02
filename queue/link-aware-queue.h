@@ -3,7 +3,7 @@
 
 #include "queue.h"
 #include "cell-link.h"
-#include <vector>
+#include <map>
 
 class LinkAwareQueue : public Queue {
   protected :
@@ -11,7 +11,7 @@ class LinkAwareQueue : public Queue {
 
   public :
     /* constructor */
-    virtual std::vector<double> get_link_rates() = 0;
+    virtual std::map<uint64_t,double> get_link_rates() = 0;
 
 };
 

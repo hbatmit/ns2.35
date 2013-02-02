@@ -159,3 +159,15 @@ void SFD::print_stats( double now )
   /* Arrival, Service, fair share, and ingress rates */
   _rate_estimator.print_rates( now );
 }
+
+std::map<uint64_t,double> SFD::get_link_rates( void )
+{
+  auto link_rates = _link->get_current_rates();
+  std::map<uint64_t,PacketQueue*>::iterator q_it;
+  std::map<uint64_t,double> link_speeds;
+
+  for ( q_it = _packet_queues.begin(); q_it != _packet_queues.end(); q_it++ ) {
+    link_speeds[ q_it->first ]=link_rates[ q_it->first ];
+  }
+  return link_speeds;
+}
