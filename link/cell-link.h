@@ -14,7 +14,6 @@ class CellLink : public LinkDelay {
   private:
     uint32_t _num_users;
     std::vector<double> _current_rates;
-    std::vector<double> _average_rates;
     std::vector<RNG*>    _rate_generators;
     uint32_t _iter;
     uint64_t _bits_dequeued;

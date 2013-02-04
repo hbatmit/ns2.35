@@ -31,7 +31,6 @@ CellLink::CellLink() :
   assert( _num_users > 0 );
   assert( _iter > 0 );
   _current_rates = std::vector<double>( _num_users );
-  _average_rates = std::vector<double>( _num_users );
   _rate_generators = std::vector<RNG*>( _num_users, new RNG() );
   auto advance_substream = [&] ( RNG *r )
                            { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
