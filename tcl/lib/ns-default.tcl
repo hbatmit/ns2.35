@@ -1639,7 +1639,7 @@ Agent/MDART set macFailed_ true
 Agent/MDART set etxMetric_ true
 
 # Cellular link defaults
-DelayLink/CellLink set _num_users 100
+DelayLink/CellLink set _num_users 5
 DelayLink/CellLink set _iter      1
 
 # BrownianLink defaults
