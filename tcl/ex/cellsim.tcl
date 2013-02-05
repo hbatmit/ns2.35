@@ -5,7 +5,7 @@
 set ns [ new Simulator ]
 
 unset opt
-# Clean up procedures 
+# Clean up procedures
 proc finish { sim_object trace_file } {
   global ns left_router right_router
   [ [ $ns link $left_router $right_router ] link ] total
@@ -74,7 +74,7 @@ Usage
 set left_router  [ $ns node ]
 set right_router [ $ns node ]
 
-## Set CoDel/sfqCoDel control parameters 
+## Set CoDel/sfqCoDel control parameters
 if { $opt(bottleneck_qdisc) == "CoDel" } {
   Queue/CoDel    set target_   [ delay_parse $opt(codel_target) ]
   Queue/CoDel    set interval_ [ delay_parse $opt(codel_interval) ]
@@ -108,8 +108,8 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Create node
   set udp_client_node($i) [ $ns node ]
   $ns duplex-link $udp_client_node($i) $left_router [ bw_parse $opt(ingress_bw) ] $opt(ingress_latency) DropTail
-  
-  # Create UDP Agents 
+
+  # Create UDP Agents
   set udp_client($i) [ new Agent/UDP ]
   $ns attach-agent $udp_client_node($i) $udp_client($i)
 
