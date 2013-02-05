@@ -103,24 +103,23 @@ Packet* SFD::deque()
 {
   /* Implements pure virtual function Queue::deque() */
 
-  /* Prop-fair scheduler : get current link rates */
-  auto current_link_rates = get_link_rates();
-
-  /* Prop-fair scheduler : get average service rates */
-  auto avg_service_rates  = _rate_estimator.get_service_rates();
-
   uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
     current_flow = _scheduler.fcfs_scheduler();
   } else if ( _qdisc == QDISC_RAND ) {
     current_flow = _scheduler.random_scheduler();
+  } else if ( _qdisc == QDISC_PF ) {
+      /* Prop-fair scheduler : get current link rates */
+      auto current_link_rates = get_link_rates();
+      /* Prop-fair scheduler : get average service rates */
+      auto avg_service_rates  = _rate_estimator.get_service_rates();
+      /* Ask the proportionally fair scheduler for the flow */
+      current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
   } else {
     assert( false );
   }
 
-  /* Ask the proportionally fair scheduler for the flow */
-  current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
-
+ 
   double now = Scheduler::instance().clock();
 
   if ( _packet_queues.find( current_flow ) != _packet_queues.end() ) {
