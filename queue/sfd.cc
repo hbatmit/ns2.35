@@ -81,6 +81,7 @@ void SFD::enque(Packet *p)
   }
 
   /* Toss a coin and drop */
+  drop_probability=0.0;
   if ( !_dropper.should_drop( drop_probability ) ) {
     printf( " Time %f : Not dropping packet of type %d , from flow %lu drop_probability is %f\n", now, pkt_type, flow_id, drop_probability );
     enque_packet( p, flow_id );
@@ -103,7 +104,10 @@ Packet* SFD::deque()
 {
   /* Implements pure virtual function Queue::deque() */
 
-  uint64_t current_flow = (uint64_t)-1;
+  double now = Scheduler::instance().clock();
+  static uint64_t current_flow = (uint64_t)-1;
+  static uint32_t next_schedule= 0;
+
   if ( _qdisc == QDISC_FCFS ) {
     current_flow = _scheduler.fcfs_scheduler();
   } else if ( _qdisc == QDISC_RAND ) {
@@ -114,13 +118,13 @@ Packet* SFD::deque()
       /* Prop-fair scheduler : get average service rates */
       auto avg_service_rates  = _rate_estimator.get_service_rates();
       /* Ask the proportionally fair scheduler for the flow */
-      current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
+      if ( now > next_schedule ) {
+        current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
+        next_schedule++;
+      }
   } else {
     assert( false );
   }
-
- 
-  double now = Scheduler::instance().clock();
 
   if ( _packet_queues.find( current_flow ) != _packet_queues.end() ) {
     if ( !_timestamps.at( current_flow ).empty() ) {
