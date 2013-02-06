@@ -63,11 +63,17 @@ void SFD::enque(Packet *p)
   double now = Scheduler::instance().clock();
   double arrival_rate = _rate_estimator.est_flow_arrival_rate( flow_id, now, p );
 
-  /* Estimate fair share */
-  auto _fair_share = _rate_estimator.est_fair_share() ;
+  /* Estimate current EWMA link rate for flow. */
+  auto current_link_rates = get_link_rates();
 
-  /* Estimate total ingress rate to check if the link is congested */
-  double total_ingress = _rate_estimator.est_ingress_rate();
+  /* Check if flow has been seen earlier */
+  if ( current_link_rates.find( flow_id ) == current_link_rates.end() ) {
+    enque_packet( p, flow_id );
+    return;
+  }
+
+  /* Divide by number of active flows to get fair share */
+  auto _fair_share = ( _rate_estimator.est_flow_link_rate( flow_id, now, current_link_rates.at( flow_id ) ) )/_packet_queues.size();
 
   /* Print everything */
   print_stats( now );
@@ -76,12 +82,11 @@ void SFD::enque(Packet *p)
   hdr_cmn* hdr  = hdr_cmn::access(p);
   packet_t pkt_type   = hdr->ptype();
   double drop_probability = 0;
-  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) and ( total_ingress >= _rate_estimator.est_virtual_egress_rate() ) ) {
+  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   }
 
   /* Toss a coin and drop */
-  drop_probability=0.0;
   if ( !_dropper.should_drop( drop_probability ) ) {
     printf( " Time %f : Not dropping packet of type %d , from flow %lu drop_probability is %f\n", now, pkt_type, flow_id, drop_probability );
     enque_packet( p, flow_id );
