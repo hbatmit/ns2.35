@@ -9,6 +9,20 @@ SfdRateEstimator::SfdRateEstimator( double K, double headroom, double capacity )
   _capacity( capacity )
 {}
 
+double SfdRateEstimator::est_flow_link_rate( uint64_t flow_id, double now, double current_link_rate )
+{
+  /* Compute current link_update_interval */
+  double link_update_interval = now - _flow_stats[ flow_id ]._last_link_update;
+  assert( link_update_interval != 0 );
+
+  /* Apply EWMA */
+  _flow_stats[ flow_id ]._last_link_update = now;
+  _flow_stats[ flow_id ]._flow_link_rate =
+    (1.0 - exp(-link_update_interval/_K))*(double)current_link_rate +
+    exp(-link_update_interval/_K)*_flow_stats[ flow_id ]._flow_link_rate;
+  return _flow_stats[ flow_id ]._flow_link_rate;
+}
+
 double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Packet *p )
 {
   /* Extract packet length in bits from the header */
