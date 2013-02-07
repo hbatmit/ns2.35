@@ -55,11 +55,11 @@ class SFD : public LinkAwareQueue {
     void print_stats( double now );
 
     /* inherited functions from LinkAwareQueue */
-    virtual std::map<uint64_t,double> get_link_rates() override;
+    virtual std::map<uint64_t,double> get_link_rates();
 
     /* inherited functions from queue */
-    virtual void enque( Packet *p ) override;
-    virtual Packet* deque() override;
+    virtual void enque( Packet *p );
+    virtual Packet* deque();
 };
 
 #endif

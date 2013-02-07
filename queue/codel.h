@@ -76,7 +76,7 @@ class CoDelQueue : public LinkAwareQueue {
     TracedInt curq_;        // current qlen seen by arrivals
     TracedDouble d_exp_;    // delay seen by most recently dequeued packet
 
-    virtual std::map<uint64_t,double> get_link_rates( void ) override;
+    virtual std::map<uint64_t,double> get_link_rates( void );
   private:
     double control_law(double);
     dodequeResult dodeque();
