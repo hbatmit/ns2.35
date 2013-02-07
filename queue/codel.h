@@ -35,7 +35,7 @@
 #ifndef ns_codel_h
 #define ns_codel_h
 
-#include "queue.h"
+#include "link-aware-queue.h"
 #include <stdlib.h>
 #include "agent.h"
 #include "template.h"
@@ -44,7 +44,7 @@
 // we need a multi-valued return and C doesn't help
 struct dodequeResult { Packet* p; int ok_to_drop; };
 
-class CoDelQueue : public Queue {
+class CoDelQueue : public LinkAwareQueue {
   public:   
     CoDelQueue();
   protected:
@@ -76,6 +76,7 @@ class CoDelQueue : public Queue {
     TracedInt curq_;        // current qlen seen by arrivals
     TracedDouble d_exp_;    // delay seen by most recently dequeued packet
 
+    std::map<uint64_t,double> get_link_rates( void );
   private:
     double control_law(double);
     dodequeResult dodeque();
