@@ -18,12 +18,9 @@ int SFD::command(int argc, const char*const* argv)
     if (!strcmp(argv[1], "capacity")) {
      _capacity=atof(argv[2]);
      return (TCL_OK);
-    } else if (!strcmp(argv[1],"attach-link")) {
-     _link = (CellLink*) TclObject::lookup( argv[2] );
-     return (TCL_OK);
     }
   }
-  return Queue::command(argc, argv);
+  return LinkAwareQueue::command(argc, argv);
 }
 
 SFD::SFD( double capacity ) :
