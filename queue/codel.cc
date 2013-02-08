@@ -115,23 +115,17 @@ dodequeResult CoDelQueue::dodeque()
             // keep track of the max packet size.
             maxpacket_ = HDR_CMN(r.p)->size_;
 
-        // To span a large range of bandwidths, CoDel essentially runs two
-        // different AQMs in parallel. One is sojourn-time-based and takes
-        // effect when target_ is larger than the time it takes to send a
-        // TCP MSS packet. The 1st term of the "if" does this.
-        // The other is backlog-based and takes effect when the time to send an
-        // MSS packet is >= target_. The goal here is to keep the output link
-        // utilization high by never allowing the queue to get smaller than
-        // the amount that arrives in a typical interarrival time (one MSS-sized
-        // packet arriving spaced by the amount of time it takes to send such
-        // a packet on the bottleneck). The 2nd term of the "if" does this.
         if (d_exp_ < target_ || curq_ <= maxpacket_) {
             // went below - stay below for at least interval
             first_above_time_ = 0;
         } else {
             if (first_above_time_ == 0) {
-                // just went above from below. if still above at first_above_time,
-                // will say it’s ok to drop
+                //just went above from below.
+		// if still above at first_above_time, say it’s ok to drop
+	    // next 3 lines added by kmn (might better adjust count_ first?)
+	    if( (now - drop_next_) < 8*interval_ && count_ > 1) {
+	     first_above_time_ = control_law(now);
+	    } else
                 first_above_time_ = now + interval_;
             } else if (now >= first_above_time_) {
                 r.ok_to_drop = 1;
@@ -164,13 +158,21 @@ Packet* CoDelQueue::deque()
         // ‘while’ loop.
         while (now >= drop_next_ && dropping_) {
             drop(r.p);
-            ++count_;
             r = dodeque();
+	//in dropping state, drop elderly packets 
+	// doesn't seem to kick in except for extreme bw drops
+	// and question is how old is elderly?
+	//while (r.ok_to_drop && d_exp_ > 8*interval_) {
+	// drop(r.p);
+	// r = dodeque();
+	//}
             if (! r.ok_to_drop) {
                 // leave dropping state
                 dropping_ = 0;
             } else {
                 // schedule the next drop.
+	        ++count_;	//kmn -  only count one drop
+				//     moved from after drop(r.p) above
                 drop_next_ = control_law(drop_next_);
             }
         }
@@ -185,7 +187,18 @@ Packet* CoDelQueue::deque()
         // If min went above target close to when it last went below,
         // assume that the drop rate that controlled the queue on the
         // last cycle is a good starting point to control it now.
-        count_ = (count_ > 1 && now - drop_next_ < 16*interval_)? count_ - 1 : 1;
+	// Unfortunately, this is not easy to get at. "n*interval" is
+	// used to indicate "close to" and values from 2 - 16 have been
+	// used. A value of 8 has worked well. The count value doesn't
+	// decay well enough with this control law. Until a better one
+	// is devised, the below is a hack that appears to improve things.
+
+	if(count_ > 2 && now- drop_next_ < 8*interval_) {
+		count_ = count_ - 2;
+		// kmn decay tests
+		if(count_ > 126) count_ = 0.9844 * (count_ + 2);
+	} else
+		count_ = 1;
         drop_next_ = control_law(now);
     }
     return (r.p);
@@ -243,8 +256,7 @@ CoDelQueue::trace(TracedVar* v)
         if(*p == 'c') {
             sprintf(wrk, "c %g %d", t, int(*((TracedInt*) v)));
         } else if(*p == 'd') {
-            sprintf(wrk, "d %g %g %d %g", t, double(*((TracedDouble*) v)), count_,
-                    count_? control_law(0.)*1000.:0.);
+            sprintf(wrk, "d %g %g", t, double(*((TracedDouble*) v)));
         }
         int n = strlen(wrk);
         wrk[n] = '\n'; 
