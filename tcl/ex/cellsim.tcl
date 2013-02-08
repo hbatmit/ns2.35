@@ -5,7 +5,7 @@
 set ns [ new Simulator ]
 
 unset opt
-# Clean up procedures 
+# Clean up procedures
 proc finish { sim_object trace_file } {
   global ns left_router right_router
   [ [ $ns link $left_router $right_router ] link ] total
@@ -74,7 +74,7 @@ Usage
 set left_router  [ $ns node ]
 set right_router [ $ns node ]
 
-## Set CoDel/sfqCoDel control parameters 
+## Set CoDel/sfqCoDel control parameters
 if { $opt(bottleneck_qdisc) == "CoDel" } {
   Queue/CoDel    set target_   [ delay_parse $opt(codel_target) ]
   Queue/CoDel    set interval_ [ delay_parse $opt(codel_interval) ]
@@ -91,7 +91,16 @@ if { $opt(bottleneck_qdisc) == "sfqCoDel" } {
 if { $opt(bottleneck_qdisc) == "SFD" } {
   Queue/SFD set _capacity [ bw_parse $opt(bottleneck_bw) ]
   Queue/SFD set _iter $opt(iter)
-  Queue/SFD set _qdisc [ expr [ string equal $opt(sfd_qdisc) "fcfs" ] == 1 ? 0 : 1 ]
+  if { $opt(sfd_qdisc) == "fcfs" } {
+    Queue/SFD set _qdisc 0
+  } elseif { $opt(sfd_qdisc) == "rand" } {
+    Queue/SFD set _qdisc 1
+  } elseif { $opt(sfd_qdisc) == "pf"  } {
+    Queue/SFD set _qdisc 2
+  } else {
+    puts "Invalid SFD qdisc, exiting ... "
+    exit 2
+  }
   Queue/SFD set _K $opt(_K)
   Queue/SFD set _headroom $opt(headroom)
 }
@@ -108,8 +117,8 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Create node
   set udp_client_node($i) [ $ns node ]
   $ns duplex-link $udp_client_node($i) $left_router [ bw_parse $opt(ingress_bw) ] $opt(ingress_latency) DropTail
-  
-  # Create UDP Agents 
+
+  # Create UDP Agents
   set udp_client($i) [ new Agent/UDP ]
   $ns attach-agent $udp_client_node($i) $udp_client($i)
 
@@ -211,7 +220,6 @@ if { $opt(link_type) == "poisson"} {
   $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
   [ [ $ns link $left_router $right_router ] queue ] attach-link [ [ $ns link $left_router $right_router ] link ]
   [ [ $ns link $right_router $left_router ] queue ] attach-link [ [ $ns link $right_router $left_router ] link ]
-
 
 } else {
   puts "Invalid link type"

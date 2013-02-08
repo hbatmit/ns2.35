@@ -10,12 +10,23 @@
  * Each user has independent Poisson services.
  */
 
+class RateGen {
+  public:
+    RNG* _rng;
+    std::vector<double> _allowed_rates;
+
+    RateGen( std::vector<double> allowed_rates )
+    {
+      _rng = new RNG();
+      _allowed_rates = allowed_rates;
+    }
+};
+
 class CellLink : public LinkDelay {
   private:
     uint32_t _num_users;
-    std::vector<double> _current_rates;
-    std::vector<double> _average_rates;
-    std::vector<RNG*>    _rate_generators;
+    std::vector<double>  _current_rates;
+    std::vector<RateGen> _rate_generators;
     uint32_t _iter;
     uint64_t _bits_dequeued;
 

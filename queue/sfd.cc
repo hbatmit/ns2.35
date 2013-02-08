@@ -18,12 +18,9 @@ int SFD::command(int argc, const char*const* argv)
     if (!strcmp(argv[1], "capacity")) {
      _capacity=atof(argv[2]);
      return (TCL_OK);
-    } else if (!strcmp(argv[1],"attach-link")) {
-     _link = (CellLink*) TclObject::lookup( argv[2] );
-     return (TCL_OK);
     }
   }
-  return Queue::command(argc, argv);
+  return LinkAwareQueue::command(argc, argv);
 }
 
 SFD::SFD( double capacity ) :
@@ -63,11 +60,17 @@ void SFD::enque(Packet *p)
   double now = Scheduler::instance().clock();
   double arrival_rate = _rate_estimator.est_flow_arrival_rate( flow_id, now, p );
 
-  /* Estimate fair share */
-  auto _fair_share = _rate_estimator.est_fair_share() ;
+  /* Estimate current EWMA link rate for flow. */
+  auto current_link_rates = get_link_rates();
 
-  /* Estimate total ingress rate to check if the link is congested */
-  double total_ingress = _rate_estimator.est_ingress_rate();
+  /* Check if flow has been seen earlier */
+  if ( current_link_rates.find( flow_id ) == current_link_rates.end() ) {
+    enque_packet( p, flow_id );
+    return;
+  }
+
+  /* Divide by number of active flows to get fair share */
+  auto _fair_share = ( _rate_estimator.est_flow_link_rate( flow_id, now, current_link_rates.at( flow_id ) ) )/_packet_queues.size();
 
   /* Print everything */
   print_stats( now );
@@ -76,7 +79,7 @@ void SFD::enque(Packet *p)
   hdr_cmn* hdr  = hdr_cmn::access(p);
   packet_t pkt_type   = hdr->ptype();
   double drop_probability = 0;
-  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) and ( total_ingress >= _rate_estimator.est_virtual_egress_rate() ) ) {
+  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) ) {
     drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
   }
 
@@ -103,25 +106,27 @@ Packet* SFD::deque()
 {
   /* Implements pure virtual function Queue::deque() */
 
-  /* Prop-fair scheduler : get current link rates */
-  auto current_link_rates = get_link_rates();
+  double now = Scheduler::instance().clock();
+  static uint64_t current_flow = (uint64_t)-1;
+  static uint32_t next_schedule= 0;
 
-  /* Prop-fair scheduler : get average service rates */
-  auto avg_service_rates  = _rate_estimator.get_service_rates();
-
-  uint64_t current_flow = (uint64_t)-1;
   if ( _qdisc == QDISC_FCFS ) {
     current_flow = _scheduler.fcfs_scheduler();
   } else if ( _qdisc == QDISC_RAND ) {
     current_flow = _scheduler.random_scheduler();
+  } else if ( _qdisc == QDISC_PF ) {
+      /* Prop-fair scheduler : get current link rates */
+      auto current_link_rates = get_link_rates();
+      /* Prop-fair scheduler : get average service rates */
+      auto avg_service_rates  = _rate_estimator.get_service_rates();
+      /* Ask the proportionally fair scheduler for the flow */
+      if ( now > next_schedule ) {
+        current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
+        next_schedule++;
+      }
   } else {
     assert( false );
   }
-
-  /* Ask the proportionally fair scheduler for the flow */
-  current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
-
-  double now = Scheduler::instance().clock();
 
   if ( _packet_queues.find( current_flow ) != _packet_queues.end() ) {
     if ( !_timestamps.at( current_flow ).empty() ) {

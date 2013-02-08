@@ -10,8 +10,9 @@ class LinkAwareQueue : public Queue {
     CellLink* _link; /* Link in front of the queue */
 
   public :
-    /* constructor */
     virtual std::map<uint64_t,double> get_link_rates() = 0;
+
+    int command( int argc, const char*const* argv );
 
 };
 

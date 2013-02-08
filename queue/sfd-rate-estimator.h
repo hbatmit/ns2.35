@@ -34,6 +34,9 @@ class SfdRateEstimator {
     /* Per flow service rate */
     double est_flow_service_rate( uint64_t flow_id, double now, Packet* p );
 
+    /* Per flow link rate */
+    double est_flow_link_rate( uint64_t flow_id, double now, double current_link_rate );
+
     /* Total ingress rate */
     double est_ingress_rate();
 

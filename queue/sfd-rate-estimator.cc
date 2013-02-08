@@ -9,30 +9,44 @@ SfdRateEstimator::SfdRateEstimator( double K, double headroom, double capacity )
   _capacity( capacity )
 {}
 
+double SfdRateEstimator::est_flow_link_rate( uint64_t flow_id, double now, double current_link_rate )
+{
+  /* Compute current link_update_interval */
+  double link_update_interval = now - _flow_stats[ flow_id ]._last_link_update;
+  assert( link_update_interval != 0 );
+
+  /* Apply EWMA */
+  _flow_stats[ flow_id ]._last_link_update = now;
+  _flow_stats[ flow_id ]._flow_link_rate =
+    (1.0 - exp(-link_update_interval/_K))*(double)current_link_rate +
+    exp(-link_update_interval/_K)*_flow_stats[ flow_id ]._flow_link_rate;
+  return _flow_stats[ flow_id ]._flow_link_rate;
+}
+
 double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Packet *p )
 {
-  /* If packet is NULL, do nothing */
-  if ( p == NULL ) {
-    return _flow_stats[ flow_id ]._flow_arrival_rate;
-  }
-
   /* Extract packet length in bits from the header */
+  uint32_t packet_size = 0;
   double interarrival_time = now - _flow_stats[ flow_id ]._last_arrival;
-  hdr_cmn* hdr  = hdr_cmn::access(p);
-  uint32_t packet_size   = hdr->size() << 3;
+  if ( p != NULL ) {
+    hdr_cmn* hdr = hdr_cmn::access(p);
+    packet_size  = hdr->size() << 3;
+  } else {
+    packet_size  = 0;
+  }
 
   /* If you have simultaneous arrivals, coalesce packets */
   if ( interarrival_time == 0 ) {
-    _flow_stats[ flow_id ]._acc_pkt_size += packet_size;
+    _flow_stats[ flow_id ]._acc_arr_pkt_size += packet_size;
     if ( _flow_stats[ flow_id ]._flow_arrival_rate ) {
       return  _flow_stats[ flow_id ]._flow_arrival_rate ;
     } else {
       /* first packet, init. rate */
-      return ( _flow_stats[ flow_id ]._flow_arrival_rate = _fair_share );
+      return ( _flow_stats[ flow_id ]._flow_arrival_rate = 0.00001 );
     }
   } else {
-    packet_size += _flow_stats[ flow_id ]._acc_pkt_size;
-    _flow_stats[ flow_id ]._acc_pkt_size = 0;
+    packet_size += _flow_stats[ flow_id ]._acc_arr_pkt_size;
+    _flow_stats[ flow_id ]._acc_arr_pkt_size = 0;
   }
 
   /* Apply EWMA with exponential weight, and update _last_arrival */
@@ -45,28 +59,28 @@ double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Pa
 
 double SfdRateEstimator::est_flow_service_rate( uint64_t flow_id, double now, Packet *p )
 {
-  /* If packet is NULL, do nothing */
-  if ( p == NULL ) {
-    return _flow_stats[ flow_id ]._flow_service_rate;
-  }
-
   /* Extract packet length in bits from the header */
+  uint32_t packet_size = 0;
   double interservice_time = now - _flow_stats[ flow_id ]._last_service;
-  hdr_cmn* hdr  = hdr_cmn::access(p);
-  uint32_t packet_size   = hdr->size() << 3;
+  if ( p != NULL ) {
+    hdr_cmn* hdr = hdr_cmn::access(p);
+    packet_size  = hdr->size() << 3;
+  } else {
+    packet_size  = 0;
+  }
 
   /* If you have simultaneous services, coalesce packets */
   if ( interservice_time == 0 ) {
-    _flow_stats[ flow_id ]._acc_pkt_size += packet_size;
+    _flow_stats[ flow_id ]._acc_dep_pkt_size += packet_size;
     if ( _flow_stats[ flow_id ]._flow_service_rate ) {
       return  _flow_stats[ flow_id ]._flow_service_rate ;
     } else {
       /* first packet, init. rate */
-      return ( _flow_stats[ flow_id ]._flow_service_rate = _fair_share );
+      return ( _flow_stats[ flow_id ]._flow_service_rate = 0.00001 );
     }
   } else {
-    packet_size += _flow_stats[ flow_id ]._acc_pkt_size;
-    _flow_stats[ flow_id ]._acc_pkt_size = 0;
+    packet_size += _flow_stats[ flow_id ]._acc_dep_pkt_size;
+    _flow_stats[ flow_id ]._acc_dep_pkt_size = 0;
   }
 
   /* Apply EWMA with exponential weight, and update _last_service */
@@ -169,6 +183,7 @@ std::map<uint64_t,double> SfdRateEstimator::get_service_rates( void )
   std::map<uint64_t,FlowStats>::iterator it;
 
   for ( it = _flow_stats.begin(); it != _flow_stats.end(); it++ ) {
+    est_flow_service_rate( it->first, Scheduler::instance().clock(),NULL);
     service_rates[ it->first ] = it->second._flow_service_rate ;
   }
   return service_rates;

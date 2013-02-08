@@ -14,6 +14,7 @@
 
 #define QDISC_FCFS 0
 #define QDISC_RAND 1
+#define QDISC_PF   2
 
 class SfdScheduler {
   private :

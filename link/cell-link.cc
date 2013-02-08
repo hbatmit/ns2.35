@@ -22,6 +22,7 @@ int CellLink::command(int argc, const char*const* argv)
 }
 
 CellLink::CellLink() :
+  _rate_generators( std::vector<RateGen>() ),
   _bits_dequeued( 0 )
 {
   bind( "_iter",&_iter );
@@ -31,10 +32,11 @@ CellLink::CellLink() :
   assert( _num_users > 0 );
   assert( _iter > 0 );
   _current_rates = std::vector<double>( _num_users );
-  _average_rates = std::vector<double>( _num_users );
-  _rate_generators = std::vector<RNG*>( _num_users, new RNG() );
-  auto advance_substream = [&] ( RNG *r )
-                           { for ( uint32_t i=1; i < _iter ; i++ ) r->reset_next_substream();};
+  for ( uint32_t i=0; i < _num_users; i++ ) {
+    _rate_generators.push_back( RateGen ( ALLOWED_RATES[ i ] ) );
+  }
+  auto advance_substream = [&] ( RateGen r )
+                           { for ( uint32_t i=1; i < _iter ; i++ ) r._rng->reset_next_substream();};
   std::for_each( _rate_generators.begin(), _rate_generators.end(), advance_substream );
 
   /* Tick once to start */
@@ -51,7 +53,7 @@ void CellLink::generate_new_rates()
   /* For now, generate new rates uniformly from allowed rates
    * TODO: fix this to exponential or random walk
    * */
-  auto rate_generator = [&] ( RNG *r ) { return ALLOWED_RATES[ r->uniform( (int)ALLOWED_RATES.size() )]; };
+  auto rate_generator = [&] ( RateGen r ) { return r._allowed_rates[ r._rng->uniform( (int)r._allowed_rates.size() ) ]; };
   std::transform( _rate_generators.begin(), _rate_generators.end(),
                   _current_rates.begin(),
                   rate_generator );

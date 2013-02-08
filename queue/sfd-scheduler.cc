@@ -66,7 +66,9 @@ void SfdScheduler::set_qdisc( int qdisc )
     for (int i=1; i < _iter ; i++ ) {
       _rand_scheduler->reset_next_substream();
     }
-  } else {
+  } else if ( _qdisc == QDISC_FCFS ) {
     printf( "Using Fcfs \n");
+  } else if ( _qdisc == QDISC_PF ) {
+    printf( "Using Prop. Fair Scheduler \n");
   }
 }
