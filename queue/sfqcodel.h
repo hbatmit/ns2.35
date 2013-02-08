@@ -37,7 +37,7 @@
 #ifndef ns_sfqcodel_h
 #define ns_sfqcodel_h
 
-#include "queue.h"
+#include "link-aware-queue.h"
 #include <stdlib.h>
 #include "agent.h"
 #include "template.h"
@@ -67,7 +67,7 @@ struct dodequeResult { Packet* p; int ok_to_drop; };
         int src;    //to detect collisions keep track of actual src address
     } ;
 
-class sfqCoDelQueue : public Queue {
+class sfqCoDelQueue : public LinkAwareQueue {
   public:   
     sfqCoDelQueue();
   protected:
@@ -100,6 +100,7 @@ class sfqCoDelQueue : public Queue {
     TracedInt curq_;        // current qlen in bytes seen by arrivals
     TracedDouble d_exp_;    // delay seen by most recently dequeued packet
 
+    virtual std::map<uint64_t,double> get_link_rates( void );
   private:
     double control_law(double);
     dodequeResult dodeque(PacketQueue*);
