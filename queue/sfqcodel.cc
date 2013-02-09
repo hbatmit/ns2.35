@@ -307,10 +307,16 @@ bindesc* sfqCoDelQueue::readybin()
     //get the next scheduled bin that has a non-empty queue,
     // set the binsched_ to that bin,
     // if none,  return NULL
+    uint64_t scheduled_flow = 0;
+    if ( _link != nullptr ) {
+      scheduled_flow =  _link->prop_fair_scheduler();
+    } else {
+      return nullptr;
+    }
     if(binsched_ == NULL) return NULL;
     bindesc* b = binsched_;
 
-    while((b->q_)->length() == 0) {
+    while( ((b->q_)->length() == 0) or (b->index != scheduled_flow ) ) {
        //clean up, remove bin from schedule
        if(b->next == b) {
          //means this was the only bin on the schedule, so empty the schedule
