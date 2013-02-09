@@ -94,7 +94,7 @@ Packet* SFD::deque()
   /* Implements pure virtual function Queue::deque() */
 
   double now = Scheduler::instance().clock();
-  static uint64_t current_flow = (uint64_t)-1;
+  uint64_t current_flow = (uint64_t)-1;
 
   if ( _qdisc == QDISC_FCFS ) {
     current_flow = _scheduler.fcfs_scheduler();
