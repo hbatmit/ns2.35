@@ -8,40 +8,33 @@ static class SFDClass : public TclClass {
   public:
     SFDClass() : TclClass("Queue/SFD") {}
     TclObject* create(int, const char*const*) {
-      return (new SFD(0));
+      return (new SFD);
     }
 } class_sfd;
 
 int SFD::command(int argc, const char*const* argv)
 {
-  if (argc == 3) {
-    if (!strcmp(argv[1], "capacity")) {
-     _capacity=atof(argv[2]);
-     return (TCL_OK);
-    }
-  }
   return LinkAwareQueue::command(argc, argv);
 }
 
-SFD::SFD( double capacity ) :
+SFD::SFD() :
   LinkAwareQueue(),
   _packet_queues( std::map<uint64_t,PacketQueue*>() ),
   _dropper( SfdDropper( &_packet_queues ) ),
   _timestamps( std::map<uint64_t,std::queue<uint64_t>> () ),
   _counter( 0 ),
   _scheduler( &_packet_queues , &_timestamps ),
-  _rate_estimator( 0.0, 0.0, 0.0 )
+  _rate_estimator( 0.0, 0.0 )
 {
   bind("_iter", &_iter );
-  bind( "_capacity", &_capacity );
   bind("_qdisc", &_qdisc );
   bind("_K", &_K );
   bind("_headroom", &_headroom );
-  fprintf( stderr,  "SFD: _iter %d, _capacity %f, _qdisc %d , _K %f, _headroom %f \n", _iter, _capacity, _qdisc, _K, _headroom );
+  fprintf( stderr,  "SFD: _iter %d, _qdisc %d , _K %f, _headroom %f \n", _iter, _qdisc, _K, _headroom );
   _dropper.set_iter( _iter );
   _scheduler.set_iter( _iter );
   _scheduler.set_qdisc( _qdisc );
-  _rate_estimator = SfdRateEstimator( _K, _headroom, _capacity );
+  _rate_estimator = SfdRateEstimator( _K, _headroom );
 }
 
 void SFD::enque(Packet *p)
@@ -109,22 +102,11 @@ Packet* SFD::deque()
 
   double now = Scheduler::instance().clock();
   static uint64_t current_flow = (uint64_t)-1;
-  static uint32_t next_schedule= 0;
 
   if ( _qdisc == QDISC_FCFS ) {
     current_flow = _scheduler.fcfs_scheduler();
   } else if ( _qdisc == QDISC_RAND ) {
     current_flow = _scheduler.random_scheduler();
-  } else if ( _qdisc == QDISC_PF ) {
-      /* Prop-fair scheduler : get current link rates */
-      auto current_link_rates = get_link_rates();
-      /* Prop-fair scheduler : get average service rates */
-      auto avg_service_rates  = _rate_estimator.get_service_rates();
-      /* Ask the proportionally fair scheduler for the flow */
-      if ( now > next_schedule ) {
-        current_flow = _scheduler.prop_fair_scheduler( current_link_rates, avg_service_rates );
-        next_schedule++;
-      }
   } else {
     assert( false );
   }

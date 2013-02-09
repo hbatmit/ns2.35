@@ -24,7 +24,6 @@ class SFD : public LinkAwareQueue {
 
     /* Tcl accessible SFD parameters */
     int _qdisc;        /* Queuing discipline */
-    double _capacity;  /* Capacity */
     double  _K;        /* default : 200 ms */
     double  _headroom; /* default : 0.05 */
     int _iter;         /* random seed */
@@ -48,7 +47,7 @@ class SFD : public LinkAwareQueue {
     SfdRateEstimator _rate_estimator;
 
   public :
-    SFD( double capacity );
+    SFD();
     int command(int argc, const char*const* argv);
 
     /* print stats  */
