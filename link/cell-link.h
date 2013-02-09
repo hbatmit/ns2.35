@@ -11,7 +11,6 @@
 /* An implementation of a multiuser Cellular Link.
  * Each user has independent services.
  */
-
 class RateGen {
   public:
     RNG* _rng;
@@ -31,12 +30,9 @@ class CellLink : public LinkDelay {
     std::vector<RateGen> _rate_generators;
     uint32_t _iter;
     uint64_t _bits_dequeued;
-    std::map<uint64_t,FlowStats> _flow_stats;
-    double _K;
-    std::map<uint64_t,double> link_rates_as_map();
-    double _next_schedule;
     uint64_t _chosen_flow ;
-    static constexpr double SCHEDULING_SLOT_SECS = 1.0;
+    std::vector<double> _average_rates;
+    static const uint32_t EWMA_SLOTS = 10;
 
   public :
     /* Constructor */
@@ -58,8 +54,14 @@ class CellLink : public LinkDelay {
     /* Tcl interface */
     int command(int argc, const char*const* argv);
 
-    /* Link's own prop. fair scheduler */
+    /* Link's Prop. fair scheduler interface */
     uint64_t prop_fair_scheduler();
+
+    /* Prop. scheduler */
+    uint32_t pick_user_to_schedule();
+
+    /* Update averages */
+    void update_average_rates( uint32_t scheduled_user );
 
 };
 
