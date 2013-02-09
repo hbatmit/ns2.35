@@ -219,11 +219,20 @@ if { $opt(link_type) == "poisson"} {
 
 } elseif { $opt(link_type) == "cellular" } {
   puts "Link type cellular"
+  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
   source ../../link/cell-link.tcl
   $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
   [ [ $ns link $left_router $right_router ] queue ] attach-link [ [ $ns link $left_router $right_router ] link ]
 #  [ [ $ns link $right_router $left_router ] queue ] attach-link [ [ $ns link $right_router $left_router ] link ]
-  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
+
+  set cell_link [ [ $ns link $left_router $right_router ] link  ]
+  set slot_duration 0.2
+  set total_slots [ expr $opt(duration) / $slot_duration ]
+  puts "Total number of slots"
+  puts $total_slots
+  for { set tick 0 } { $tick < $total_slots } { incr tick } {
+  $ns at [ expr $slot_duration * $tick ] "$cell_link tick "
+  }
 
 } else {
   puts "Invalid link type"
