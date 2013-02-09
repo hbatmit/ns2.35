@@ -191,7 +191,8 @@ for { set i 0 } { $i < $opt(num_tcp) } {incr i } {
 if { $opt(link_type) == "poisson"} {
   source ../../link/poisson.tcl
   DelayLink/PoissonLink set _iter $opt(iter)
-  $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
 
 } elseif { $opt(link_type) == "trace"} {
   source ../../link/trace.tcl
@@ -208,11 +209,13 @@ if { $opt(link_type) == "poisson"} {
   # Max rate 800 MTU sized packets per second or ~ 10mbps
   DelayLink/BrownianLink set _max_rate 100.1
   DelayLink/BrownianLink set _duration $opt(duration)
-  $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
 
 } elseif { $opt(link_type) == "deterministic" } {
   puts "Link type determinstic"
-  $ns duplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
 
 } elseif { $opt(link_type) == "cellular" } {
   puts "Link type cellular"
