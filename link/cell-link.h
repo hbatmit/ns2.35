@@ -5,9 +5,11 @@
 #include "rng.h"
 #include "cdma-rates.h"
 #include "delay.h"
+#include "flow-stats.h"
+#include <map>
 
 /* An implementation of a multiuser Cellular Link.
- * Each user has independent Poisson services.
+ * Each user has independent services.
  */
 
 class RateGen {
@@ -29,6 +31,12 @@ class CellLink : public LinkDelay {
     std::vector<RateGen> _rate_generators;
     uint32_t _iter;
     uint64_t _bits_dequeued;
+    std::map<uint64_t,FlowStats> _flow_stats;
+    double _K;
+    std::map<uint64_t,double> link_rates_as_map();
+    double _next_schedule;
+    uint64_t _chosen_flow ;
+    static constexpr double SCHEDULING_SLOT_SECS = 1.0;
 
   public :
     /* Constructor */
@@ -42,13 +50,17 @@ class CellLink : public LinkDelay {
 
     /* Get current rates of all users for SFD::deque() to use.
        SFD could ignore this as well. */
-    std::vector<double> get_current_rates();
+    std::vector<double> get_current_rates() { return _current_rates; }
 
     /* override the recv function from LinkDelay */
     virtual void recv( Packet* p, Handler* h);
 
     /* Tcl interface */
     int command(int argc, const char*const* argv);
+
+    /* Link's own prop. fair scheduler */
+    uint64_t prop_fair_scheduler();
+
 };
 
 #endif

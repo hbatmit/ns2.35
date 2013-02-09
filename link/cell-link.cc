@@ -23,7 +23,10 @@ int CellLink::command(int argc, const char*const* argv)
 
 CellLink::CellLink() :
   _rate_generators( std::vector<RateGen>() ),
-  _bits_dequeued( 0 )
+  _bits_dequeued( 0 ),
+  _K( 0.2 ),
+  _next_schedule( 0 ),
+  _chosen_flow( 0 )
 {
   bind( "_iter",&_iter );
   bind( "_num_users", &_num_users );
@@ -59,11 +62,6 @@ void CellLink::generate_new_rates()
                   rate_generator );
 }
 
-std::vector<double> CellLink::get_current_rates()
-{
-  return _current_rates;
-}
-
 void CellLink::recv( Packet* p, Handler* h )
 {
   /* Get flow_id from packet */
@@ -80,6 +78,56 @@ void CellLink::recv( Packet* p, Handler* h )
   s.schedule(h, &intr_,  tx_time ); /* Transmission delay */
   _bits_dequeued += (8 * hdr_cmn::access(p)->size());
 
+  /* Add to _flow_stats if required */
+  if ( _flow_stats.find( flow_id ) == _flow_stats.end() ) {
+    _flow_stats[ flow_id ] = FlowStats( _K );
+  }
+
+  /* Update service rates for ALL flows */
+  _flow_stats[ flow_id ].est_service_rate( Scheduler::instance().clock(), p );
+  for ( auto f_it = _flow_stats.begin(); f_it != _flow_stats.end(); f_it ++ ) {
+    if ( f_it->first != flow_id ) {
+      _flow_stats[ f_it->first ].est_service_rate( Scheduler::instance().clock(), nullptr );
+    }
+  }
+
   /* Tick to get next set of rates */
   tick();
+}
+
+uint64_t CellLink::prop_fair_scheduler()
+{
+  auto now = Scheduler::instance().clock();
+  if ( now < _next_schedule ) {
+    return _chosen_flow;
+  } else {
+    auto current_link_rates = link_rates_as_map();
+    std::map<uint64_t,double> avg_service_rates;
+    for ( auto f_it = _flow_stats.begin(); f_it != _flow_stats.end(); f_it++ ) {
+      avg_service_rates[ f_it->first ] = f_it->second._link_est.get_rate();
+    }
+
+    /* normalize rates to the average seen so far */
+    std::map<uint64_t,double> normalized_rates;
+    for ( auto it = current_link_rates.begin(); it != current_link_rates.end(); it++ ) {
+      auto flow = it->first;
+      normalized_rates[ flow ] = ( avg_service_rates.at( flow ) != 0 ) ? current_link_rates.at( flow )/avg_service_rates.at( flow ) : DBL_MAX ;
+    }
+
+    /* Pick the best proportionally fair rate, if avg is 0, schedule preferentially */
+    auto iter = std::max_element( normalized_rates.begin(), normalized_rates.end(),
+                                [&] (const std::pair<uint64_t,double> p1, const std::pair<uint64_t,double> p2 ) { return p1.second < p2.second; } );
+    _next_schedule+=SCHEDULING_SLOT_SECS;
+    return (_chosen_flow = iter->first);
+  }
+}
+
+std::map<uint64_t,double> CellLink::link_rates_as_map( void )
+{
+  std::map<uint64_t,FlowStats>::iterator f_it;
+  std::map<uint64_t,double> link_speeds;
+  for ( f_it = _flow_stats.begin(); f_it != _flow_stats.end(); f_it++ ) {
+    link_speeds[ f_it->first ]=_current_rates[ f_it->first ];
+  }
+  return link_speeds;
 }
