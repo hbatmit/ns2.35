@@ -24,6 +24,7 @@ int SFD::command(int argc, const char*const* argv)
 }
 
 SFD::SFD( double capacity ) :
+  LinkAwareQueue(),
   _packet_queues( std::map<uint64_t,PacketQueue*>() ),
   _dropper( SfdDropper( &_packet_queues ) ),
   _timestamps( std::map<uint64_t,std::queue<uint64_t>> () ),
@@ -137,6 +138,7 @@ Packet* SFD::deque()
     print_stats( now );
     return p;
   } else {
+    _rate_estimator.est_flow_service_rate( current_flow, now, nullptr );
     print_stats( now );
     return 0; /* empty */
   }
