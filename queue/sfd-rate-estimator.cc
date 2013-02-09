@@ -11,84 +11,20 @@ SfdRateEstimator::SfdRateEstimator( double K, double headroom, double capacity )
 
 double SfdRateEstimator::est_flow_link_rate( uint64_t flow_id, double now, double current_link_rate )
 {
-  /* Compute current link_update_interval */
-  double link_update_interval = now - _flow_stats[ flow_id ]._last_link_update;
-  assert( link_update_interval != 0 );
-
-  /* Apply EWMA */
-  _flow_stats[ flow_id ]._last_link_update = now;
-  _flow_stats[ flow_id ]._flow_link_rate =
-    (1.0 - exp(-link_update_interval/_K))*(double)current_link_rate +
-    exp(-link_update_interval/_K)*_flow_stats[ flow_id ]._flow_link_rate;
-  return _flow_stats[ flow_id ]._flow_link_rate;
+  init_flow_stats( flow_id );
+  return _flow_stats.at( flow_id ).est_link_rate( now, current_link_rate );
 }
 
 double SfdRateEstimator::est_flow_arrival_rate( uint64_t flow_id, double now, Packet *p )
 {
-  /* Extract packet length in bits from the header */
-  uint32_t packet_size = 0;
-  double interarrival_time = now - _flow_stats[ flow_id ]._last_arrival;
-  if ( p != NULL ) {
-    hdr_cmn* hdr = hdr_cmn::access(p);
-    packet_size  = hdr->size() << 3;
-  } else {
-    packet_size  = 0;
-  }
-
-  /* If you have simultaneous arrivals, coalesce packets */
-  if ( interarrival_time == 0 ) {
-    _flow_stats[ flow_id ]._acc_arr_pkt_size += packet_size;
-    if ( _flow_stats[ flow_id ]._flow_arrival_rate ) {
-      return  _flow_stats[ flow_id ]._flow_arrival_rate ;
-    } else {
-      /* first packet, init. rate */
-      return ( _flow_stats[ flow_id ]._flow_arrival_rate = 0.00001 );
-    }
-  } else {
-    packet_size += _flow_stats[ flow_id ]._acc_arr_pkt_size;
-    _flow_stats[ flow_id ]._acc_arr_pkt_size = 0;
-  }
-
-  /* Apply EWMA with exponential weight, and update _last_arrival */
-  _flow_stats[ flow_id ]._last_arrival = now;
-  _flow_stats[ flow_id ]._flow_arrival_rate =
-    (1.0 - exp(-interarrival_time/_K))*(double )packet_size/interarrival_time + exp(-interarrival_time/_K)*_flow_stats[ flow_id ]._flow_arrival_rate;
-
-  return _flow_stats[ flow_id ]._flow_arrival_rate;
+  init_flow_stats( flow_id );
+  return _flow_stats.at( flow_id ).est_arrival_rate( now, p );
 }
 
 double SfdRateEstimator::est_flow_service_rate( uint64_t flow_id, double now, Packet *p )
 {
-  /* Extract packet length in bits from the header */
-  uint32_t packet_size = 0;
-  double interservice_time = now - _flow_stats[ flow_id ]._last_service;
-  if ( p != NULL ) {
-    hdr_cmn* hdr = hdr_cmn::access(p);
-    packet_size  = hdr->size() << 3;
-  } else {
-    packet_size  = 0;
-  }
-
-  /* If you have simultaneous services, coalesce packets */
-  if ( interservice_time == 0 ) {
-    _flow_stats[ flow_id ]._acc_dep_pkt_size += packet_size;
-    if ( _flow_stats[ flow_id ]._flow_service_rate ) {
-      return  _flow_stats[ flow_id ]._flow_service_rate ;
-    } else {
-      /* first packet, init. rate */
-      return ( _flow_stats[ flow_id ]._flow_service_rate = 0.00001 );
-    }
-  } else {
-    packet_size += _flow_stats[ flow_id ]._acc_dep_pkt_size;
-    _flow_stats[ flow_id ]._acc_dep_pkt_size = 0;
-  }
-
-  /* Apply EWMA with exponential weight, and update _last_service */
-  _flow_stats[ flow_id ]._last_service = now;
-  _flow_stats[ flow_id ]._flow_service_rate =
-    (1.0 - exp(-interservice_time/_K))*(double )packet_size/interservice_time + exp(-interservice_time/_K)*_flow_stats[ flow_id ]._flow_service_rate;
-
-  return _flow_stats[ flow_id ]._flow_service_rate;
+  init_flow_stats( flow_id );
+  return _flow_stats.at( flow_id ).est_service_rate( now, p );
 }
 
 double SfdRateEstimator::est_ingress_rate( void )
@@ -96,8 +32,7 @@ double SfdRateEstimator::est_ingress_rate( void )
   /* Check if the link is congested */
   typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
   return std::accumulate( _flow_stats.begin(), _flow_stats.end(), 0.0,
-                         [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._flow_arrival_rate ;} );
-
+                         [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._arr_est.get_rate() ;} );
 
 }
 
@@ -110,7 +45,7 @@ double SfdRateEstimator::est_fair_share( void )
 
   for ( auto it = _flow_stats.begin(); it != _flow_stats.end(); it++ ) {
     auto flow_id = it->first;
-    auto flow_rate = it->second._flow_arrival_rate;
+    auto flow_rate = it->second._arr_est.get_rate();
     desired[ flow_id ] = flow_rate;
     current_share[ flow_id ] = 0;
   }
@@ -162,12 +97,12 @@ void SfdRateEstimator::print_rates( double now )
   typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
   /* Arrival rates */
   printf(" Time %f : A :  ", now );
-  std::for_each( _flow_stats.begin() , _flow_stats.end(), [&] ( const FlowStatsMap s ) { printf(" %lu %f ", s.first, s.second._flow_arrival_rate); } );
+  std::for_each( _flow_stats.begin() , _flow_stats.end(), [&] ( const FlowStatsMap s ) { printf(" %lu %f ", s.first, s.second._arr_est.get_rate()); } );
   printf("\n");
 
   /* Service rates */
   printf(" Time %f : S :  ", now );
-  std::for_each( _flow_stats.begin() , _flow_stats.end(), [&] ( const FlowStatsMap s ) { printf(" %lu %f ", s.first, s.second._flow_service_rate); } );
+  std::for_each( _flow_stats.begin() , _flow_stats.end(), [&] ( const FlowStatsMap s ) { printf(" %lu %f ", s.first, s.second._ser_est.get_rate()); } );
   printf("\n");
 
   /* Fair share of link */
@@ -184,7 +119,15 @@ std::map<uint64_t,double> SfdRateEstimator::get_service_rates( void )
 
   for ( it = _flow_stats.begin(); it != _flow_stats.end(); it++ ) {
     est_flow_service_rate( it->first, Scheduler::instance().clock(),NULL);
-    service_rates[ it->first ] = it->second._flow_service_rate ;
+    service_rates[ it->first ] = it->second._ser_est.get_rate() ;
   }
   return service_rates;
+}
+
+void SfdRateEstimator::init_flow_stats( uint32_t flow_id  )
+{
+  if ( _flow_stats.find( flow_id ) == _flow_stats.end() ) {
+    printf(" Initializing FlowStats for flow %d \n", flow_id );
+    _flow_stats[ flow_id ] = FlowStats( _K );
+  }
 }

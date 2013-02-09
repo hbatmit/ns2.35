@@ -24,6 +24,9 @@ class SfdRateEstimator {
     double  _capacity; /* Link Capacity */
     double  _fair_share; /* Current fair share */
 
+    /* init. flow data structures */
+    void init_flow_stats( uint32_t flow_id );
+
   public :
     /* Constructor */
     SfdRateEstimator( double _K, double _headroom, double _capacity );
