@@ -36,12 +36,12 @@ class SFD : public LinkAwareQueue {
     SfdDropper _dropper;
 
     /* Scheduler */
-    std::map<uint64_t,std::queue<uint64_t>> _timestamps;
+    std::map<uint64_t,std::queue<uint64_t>> _timestamps; /* For FCFS */
     uint64_t _counter;
     SfdScheduler _scheduler;
 
     /* Hash from packet to flow */
-    uint64_t hash( Packet *p );
+    uint64_t hash( Packet *p ) { return ( hdr_ip::access(p) )->flowid(); };
 
     /* Rate Estimator */
     SfdRateEstimator _rate_estimator;

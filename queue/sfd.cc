@@ -44,12 +44,6 @@ void SFD::enque(Packet *p)
   /* Compute flow_id using hash */
   uint64_t flow_id = hash( p );
 
-  /* If it's an ACK, simply enque */
-  if (hdr_cmn::access(p)->ptype() == PT_ACK ) {
-   enque_packet(p, flow_id);
-   return;
-  }
-
   /* Estimate arrival rate */
   double now = Scheduler::instance().clock();
   double arrival_rate = _rate_estimator.est_flow_arrival_rate( flow_id, now, p );
@@ -63,7 +57,7 @@ void SFD::enque(Packet *p)
     return;
   }
 
-  /* Divide by number of active flows to get fair share */
+  /* Divide Avg. link rate by # of active flows to get fair share */
   auto _fair_share = ( _rate_estimator.est_flow_link_rate( flow_id, now, current_link_rates.at( flow_id ) ) )/_packet_queues.size();
 
   /* Print everything */
@@ -72,17 +66,16 @@ void SFD::enque(Packet *p)
   /* Extract protocol (TCP vs UDP) from the header */
   hdr_cmn* hdr  = hdr_cmn::access(p);
   packet_t pkt_type   = hdr->ptype();
-  double drop_probability = 0;
-  if ( ( pkt_type == PT_CBR or pkt_type == PT_TCP ) ) {
-    drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
-  }
+
+  /* Compute drop_probability */
+  double drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
 
   /* Toss a coin and drop */
   if ( !_dropper.should_drop( drop_probability ) ) {
     printf( " Time %f : Not dropping packet of type %d , from flow %lu drop_probability is %f\n", now, pkt_type, flow_id, drop_probability );
     enque_packet( p, flow_id );
   } else {
-    /* find longest queue  and drop from front*/
+    /* Drop from front of the same queue */
     uint64_t drop_flow = flow_id ;
     printf( " Time %f : Dropping packet of type %d, from flow %lu drop_probability is %f\n", now, pkt_type, drop_flow, drop_probability );
     enque_packet( p, flow_id );
@@ -128,6 +121,9 @@ Packet* SFD::deque()
 
 void SFD::enque_packet( Packet* p, uint64_t flow_id )
 {
+  /* Push into flow queue, if it doesn't exist create one.
+     Also push into _timestamps for FCFS */
+
   if ( _packet_queues.find( flow_id )  != _packet_queues.end() ) {
     _packet_queues.at( flow_id )->enque( p );
     _timestamps.at( flow_id ).push( ++_counter );
@@ -137,12 +133,6 @@ void SFD::enque_packet( Packet* p, uint64_t flow_id )
     _packet_queues.at( flow_id )->enque( p );
     _timestamps.at( flow_id ).push( ++_counter );
   }
-}
-
-uint64_t SFD::hash(Packet* pkt)
-{
-  hdr_ip *iph=hdr_ip::access(pkt);
-  return ( iph->flowid() );
 }
 
 void SFD::print_stats( double now )

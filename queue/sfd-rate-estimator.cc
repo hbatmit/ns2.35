@@ -28,7 +28,6 @@ double SfdRateEstimator::est_flow_service_rate( uint64_t flow_id, double now, Pa
 
 double SfdRateEstimator::est_ingress_rate( void )
 {
-  /* Check if the link is congested */
   typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
   return std::accumulate( _flow_stats.begin(), _flow_stats.end(), 0.0,
                          [&] ( const double &acc, const FlowStatsMap &f2 ) { return acc + f2.second._arr_est.get_rate() ;} );
