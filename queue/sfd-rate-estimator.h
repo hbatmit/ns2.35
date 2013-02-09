@@ -21,15 +21,13 @@ class SfdRateEstimator {
     std::map<uint64_t,FlowStats> _flow_stats;
     double  _K;        /* default : 200 ms */
     double  _headroom; /* default : 0.05 */
-    double  _capacity; /* Link Capacity */
-    double  _fair_share; /* Current fair share */
 
     /* init. flow data structures */
     void init_flow_stats( uint32_t flow_id );
 
   public :
     /* Constructor */
-    SfdRateEstimator( double _K, double _headroom, double _capacity );
+    SfdRateEstimator( double _K, double _headroom );
 
     /* Per flow arrival rate */
     double est_flow_arrival_rate( uint64_t flow_id, double now, Packet* p );
@@ -43,17 +41,9 @@ class SfdRateEstimator {
     /* Total ingress rate */
     double est_ingress_rate();
 
-    /* Fair share rate of link */
-    double est_fair_share() ;
-
-    /* Estimate Total Virtual egress rate */
-    double est_virtual_egress_rate() ;
-
     /* Print all rates */
     void print_rates( double now );
 
-    /* get service rates */
-    std::map<uint64_t,double> get_service_rates();
 };
 
 #endif
