@@ -104,7 +104,7 @@ double FlowStats::est_link_rate( double now, double current_link_rate )
 uint32_t FlowStats::get_pkt_size( Packet* p )
 {
   /* Extract packet length in bits from the header */
-  if ( p != NULL ) {
+  if ( p != nullptr ) {
     hdr_cmn* hdr = hdr_cmn::access(p);
     return ( hdr->size() << 3 );
   } else {
