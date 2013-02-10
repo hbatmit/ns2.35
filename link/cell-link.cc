@@ -82,7 +82,7 @@ void CellLink::recv( Packet* p, Handler* h )
   hdr_ip *iph=hdr_ip::access( p );
   auto flow_id = iph->flowid();
 
-  printf(" Time %f CellLink::recv on flow %lu, _chosen_flow is %lu \n", Scheduler::instance().clock(), flow_id, _chosen_flow );
+  printf(" Time %f CellLink::recv on flow %d, _chosen_flow is %lu \n", Scheduler::instance().clock(), flow_id, _chosen_flow );
   /* Find transmission rate for this flow */
   auto tx_rate = _current_rates.at( flow_id );
 
