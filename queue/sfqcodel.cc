@@ -316,6 +316,9 @@ bindesc* sfqCoDelQueue::readybin()
     if(binsched_ == NULL) return NULL;
     bindesc* b = binsched_;
 
+    if (bin_[scheduled_flow].q_->length()!=0 ) return &bin_[ scheduled_flow ];
+    else return nullptr;
+
     while( ((b->q_)->length() == 0) or (b->index != scheduled_flow ) ) {
        //clean up, remove bin from schedule
        if(b->next == b) {
