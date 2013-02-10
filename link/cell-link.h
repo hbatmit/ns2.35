@@ -30,9 +30,9 @@ class CellLink : public LinkDelay {
     std::vector<RateGen> _rate_generators;
     uint32_t _iter;
     uint64_t _bits_dequeued;
-    uint64_t _chosen_flow ;
+    std::vector<uint64_t> _chosen_flows ;
     std::vector<double> _average_rates;
-    static const uint32_t EWMA_SLOTS = 10;
+    static const uint32_t EWMA_SLOTS = 100;
 
   public :
     /* Constructor */
@@ -55,10 +55,10 @@ class CellLink : public LinkDelay {
     int command(int argc, const char*const* argv);
 
     /* Link's Prop. fair scheduler interface */
-    uint64_t prop_fair_scheduler();
+    std::vector<uint64_t> prop_fair_scheduler();
 
     /* Prop. scheduler */
-    uint32_t pick_user_to_schedule();
+    std::vector<uint64_t> pick_user_to_schedule();
 
     /* Update averages */
     void update_average_rates( uint32_t scheduled_user );

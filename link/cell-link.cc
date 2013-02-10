@@ -28,7 +28,7 @@ int CellLink::command(int argc, const char*const* argv)
 CellLink::CellLink() :
   _rate_generators( std::vector<RateGen>() ),
   _bits_dequeued( 0 ),
-  _chosen_flow( 0 )
+  _chosen_flows( std::vector<uint64_t>() )
 {
   bind( "_iter",&_iter );
   bind( "_num_users", &_num_users );
@@ -49,19 +49,35 @@ CellLink::CellLink() :
 void CellLink::tick()
 {
   generate_new_rates();
-  _chosen_flow = pick_user_to_schedule();
-  update_average_rates( _chosen_flow );
+  _chosen_flows = pick_user_to_schedule();
+  update_average_rates( _chosen_flows.at( 0 ) );
 }
 
-uint32_t CellLink::pick_user_to_schedule()
+std::vector<uint64_t> CellLink::pick_user_to_schedule()
 {
   std::vector<double> normalized_rates( _current_rates.size() );
   std::transform( _current_rates.begin(), _current_rates.end(),
                  _average_rates.begin(), normalized_rates.begin(),
                  [&] ( const double & rate, const double & average)
                  { return (average != 0 ) ? rate/average : DBL_MAX ; } );
-  return std::distance( normalized_rates.begin(),
-                       std::max_element( normalized_rates.begin(), normalized_rates.end() ) );
+
+  /* Create a vector of (flow id,normalized rate) tuples */
+  std::vector<std::pair<uint64_t,double>> normalized_rate_tuples( _current_rates.size() );
+  for ( auto i = 0; i < normalized_rate_tuples.size(); i++ ) {
+    normalized_rate_tuples[ i ] = std::make_pair( i, normalized_rates[ i ] );
+  }
+
+  /* Sort them in descending order of normalized_rates */
+  std::sort( normalized_rate_tuples.begin(), normalized_rate_tuples.end(),
+             [&] ( const std::pair<uint64_t,double> & p1, const std::pair<uint64_t,double> & p2 )
+             { return p1.second > p2.second; }
+           );
+
+  /* Return flow ids alone from sorted tuple vector */
+  std::vector<uint64_t> user_priorities( _current_rates.size() );
+  std::transform( normalized_rate_tuples.begin(), normalized_rate_tuples.end(), user_priorities.begin(),
+                  [&] ( const std::pair<uint64_t,double> &p ) { return p.first; } );
+  return user_priorities;
 }
 
 void CellLink::generate_new_rates()
@@ -77,12 +93,10 @@ void CellLink::generate_new_rates()
 
 void CellLink::recv( Packet* p, Handler* h )
 {
-  printf( " Chosen flow is %lu \n", _chosen_flow );
   /* Get flow_id from packet */
   hdr_ip *iph=hdr_ip::access( p );
   auto flow_id = iph->flowid();
 
-  printf(" Time %f CellLink::recv on flow %d, _chosen_flow is %lu \n", Scheduler::instance().clock(), flow_id, _chosen_flow );
   /* Find transmission rate for this flow */
   auto tx_rate = _current_rates.at( flow_id );
 
@@ -101,13 +115,12 @@ void CellLink::update_average_rates( uint32_t scheduled_user )
         printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i );
       _average_rates[ i ] = ( 1.0 - 1.0/EWMA_SLOTS ) * _average_rates[ i ] + ( 1.0/ EWMA_SLOTS ) * _current_rates[ i ];
     } else {
-        printf("Average rate is %f \n", _average_rates[ i ] );
       _average_rates[ i ] = ( 1.0 - 1.0/EWMA_SLOTS ) * _average_rates[ i ];
     }
   }
 }
 
-uint64_t CellLink::prop_fair_scheduler( void )
+std::vector<uint64_t> CellLink::prop_fair_scheduler( void )
 {
-  return _chosen_flow;
+  return _chosen_flows;
 }
