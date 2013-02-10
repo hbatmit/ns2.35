@@ -16,6 +16,7 @@ set opt(link_type)          deterministic
 set opt(sfd_qdisc)          fcfs
 set opt(_K)                 0.2
 set opt(headroom)           0.05
+set opt(cdma_slot_duration) 0.01
 
 # TCP parameters
 #bdp in packets, based on the nominal rtt

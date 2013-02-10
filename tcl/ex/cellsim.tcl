@@ -226,12 +226,11 @@ if { $opt(link_type) == "poisson"} {
 #  [ [ $ns link $right_router $left_router ] queue ] attach-link [ [ $ns link $right_router $left_router ] link ]
 
   set cell_link [ [ $ns link $left_router $right_router ] link  ]
-  set slot_duration 0.01
-  set total_slots [ expr $opt(duration) / $slot_duration ]
+  set total_slots [ expr $opt(duration) / $opt(cdma_slot_duration) ]
   puts "Total number of slots"
   puts $total_slots
   for { set tick 0 } { $tick < $total_slots } { incr tick } {
-  $ns at [ expr $slot_duration * $tick ] "$cell_link tick "
+  $ns at [ expr $opt(cdma_slot_duration) * $tick ] "$cell_link tick "
   }
 
 } else {
