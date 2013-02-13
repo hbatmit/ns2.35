@@ -211,7 +211,7 @@ QueueMonitor::printStats() {
 	char wrk[500];
 	int n;
 	double now = Scheduler::instance().clock();
-	sprintf(wrk, "q -t "TIME_FORMAT" -s %d -d %d -l %d -p %d", now, srcId_, dstId_, size_, pkts_);
+	sprintf(wrk, "q -t " TIME_FORMAT " -s %d -d %d -l %d -p %d", now, srcId_, dstId_, size_, pkts_);
 	n = strlen(wrk);
 	wrk[n] = '\n';
 	wrk[n+1] = 0;

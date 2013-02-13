@@ -356,7 +356,7 @@ void ErrorModel::trace_event(char *eventtype)
 	char *nwrk = et_->nbuffer();
 	if (wrk != 0)
 		sprintf(wrk,
-			"E "TIME_FORMAT" ErrModelTimer %p %s",
+			"E " TIME_FORMAT " ErrModelTimer %p %s",
 			et_->round(Scheduler::instance().clock()),   // time
 			this,
 			eventtype                    // event type
@@ -364,7 +364,7 @@ void ErrorModel::trace_event(char *eventtype)
 	
 	if (nwrk != 0)
 		sprintf(nwrk,
-			"E -t "TIME_FORMAT" ErrModelTimer %p %s",
+			"E -t " TIME_FORMAT " ErrModelTimer %p %s",
 			et_->round(Scheduler::instance().clock()),   // time
 			this,
 			eventtype                    // event type

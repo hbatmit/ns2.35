@@ -79,7 +79,7 @@ void MacSimple::trace_event(char *eventtype, Packet *p)
 
 	if (wrk != 0) 
 	{
-		sprintf(wrk, "E -t "TIME_FORMAT" %s %s %s",
+		sprintf(wrk, "E -t " TIME_FORMAT " %s %s %s",
 			et_->round(Scheduler::instance().clock()),
 			eventtype,
 			src_nodeaddr,
@@ -87,7 +87,7 @@ void MacSimple::trace_event(char *eventtype, Packet *p)
 	}
 	if (nwrk != 0)
 	{
-		sprintf(nwrk, "E -t "TIME_FORMAT" %s %s %s",
+		sprintf(nwrk, "E -t " TIME_FORMAT " %s %s %s",
 		et_->round(Scheduler::instance().clock()),
 		eventtype,
 		src_nodeaddr,
