@@ -198,11 +198,6 @@ if { $opt(link_type) == "cellular" } {
   # Attach the link to the qdisc
   [ [ $ns link $left_router $right_router ] queue ] attach-link [ [ $ns link $left_router $right_router ] link ]
 
-  set cell_link [ [ $ns link $left_router $right_router ] link  ]
-  set total_slots [ expr $opt(duration) / $opt(cdma_slot_duration) ]
-  puts "Total number of slots"
-  puts $total_slots
-
 } else {
   puts "Invalid link type"
   exit 5
