@@ -12,7 +12,7 @@ set opt(codel_target)       5ms
 set opt(codel_interval)     100ms
 set opt(cbr_rate)           10Mb
 set opt(iter)               1
-set opt(link_type)          deterministic
+set opt(link_type)          cellular
 set opt(sfd_qdisc)          fcfs
 set opt(_K)                 0.2
 set opt(headroom)           0.05

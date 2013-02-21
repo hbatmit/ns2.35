@@ -188,57 +188,26 @@ for { set i 0 } { $i < $opt(num_tcp) } {incr i } {
 }
 
 # connect routers by a bottleneck link, with a queue discipline (qdisc)
-if { $opt(link_type) == "poisson"} {
-  source ../../link/poisson.tcl
-  DelayLink/PoissonLink set _iter $opt(iter)
-  $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
-  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
-
-} elseif { $opt(link_type) == "trace"} {
-  source ../../link/trace.tcl
-  $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
-  [ [ $ns link $left_router $right_router ] link ] trace-file "uplink.pps"
-  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
-  [ [ $ns link $right_router $left_router ] link ] trace-file "downlink.pps"
-
-} elseif { $opt(link_type) == "brownian" } {
-  source ../../link/brownian.tcl
-  DelayLink/BrownianLink set _iter $opt(iter)
-  # Min rate 80 MTU sized packets per second or ~ 1mbps
-  DelayLink/BrownianLink set _min_rate 100
-  # Max rate 800 MTU sized packets per second or ~ 10mbps
-  DelayLink/BrownianLink set _max_rate 100.1
-  DelayLink/BrownianLink set _duration $opt(duration)
-  $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
-  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
-
-} elseif { $opt(link_type) == "deterministic" } {
-  puts "Link type determinstic"
-  $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
-  $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
-
-} elseif { $opt(link_type) == "cellular" } {
+if { $opt(link_type) == "cellular" } {
   puts "Link type cellular"
+  # one direction is trivial, no queuing or cellular links
   $ns simplex-link $right_router $left_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) DropTail
   source ../../link/cell-link.tcl
+  # setup a cellular link in the other direction
   $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  # Attach the link to the qdisc
   [ [ $ns link $left_router $right_router ] queue ] attach-link [ [ $ns link $left_router $right_router ] link ]
-#  [ [ $ns link $right_router $left_router ] queue ] attach-link [ [ $ns link $right_router $left_router ] link ]
 
   set cell_link [ [ $ns link $left_router $right_router ] link  ]
   set total_slots [ expr $opt(duration) / $opt(cdma_slot_duration) ]
   puts "Total number of slots"
   puts $total_slots
-  for { set tick 0 } { $tick < $total_slots } { incr tick } {
-  $ns at [ expr $opt(cdma_slot_duration) * $tick ] "$cell_link tick "
-  }
 
 } else {
   puts "Invalid link type"
   exit 5
 
 }
-
 
 # open a file for tracing bottleneck link alone
 set trace_file [ open cellsim.tr w ]
