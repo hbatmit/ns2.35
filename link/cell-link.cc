@@ -21,6 +21,7 @@ int CellLink::command(int argc, const char*const* argv)
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
       _activate_link_scheduler=true;
       resched(  _slot_duration );
+      tick();
       return TCL_OK;
     }
   }
