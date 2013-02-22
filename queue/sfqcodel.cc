@@ -309,7 +309,7 @@ bindesc* sfqCoDelQueue::readybin()
     // if none,  return NULL
     uint64_t flow_id;
     if ( _link != nullptr ) {
-      flow_id =  _link->pick_user_to_schedule();
+      flow_id =  _link->chosen_flow;
     } else {
       return nullptr;
     }
@@ -494,7 +494,7 @@ sfqCoDelQueue::trace(TracedVar* v)
 
 std::map<uint64_t,double> sfqCoDelQueue::get_current_link_rates( void ) const
 {
-  auto link_rates = _link->get_current_link_rates();
+  /* TODO: This is a Dummy placeholder for now */
   std::map<uint64_t,double> link_speeds;
   return link_speeds;
 }
