@@ -100,7 +100,8 @@ class sfqCoDelQueue : public LinkAwareQueue {
     TracedInt curq_;        // current qlen in bytes seen by arrivals
     TracedDouble d_exp_;    // delay seen by most recently dequeued packet
 
-    virtual std::map<uint64_t,double> get_link_rates( void );
+    virtual std::map<uint64_t,double> get_current_link_rates( void ) const override;
+    virtual std::vector<uint64_t> backlogged_flowids( void ) const override;
   private:
     double control_law(double);
     dodequeResult dodeque(PacketQueue*);

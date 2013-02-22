@@ -515,9 +515,22 @@ sfqCoDelQueue::trace(TracedVar* v)
     }
 }
 
-std::map<uint64_t,double> sfqCoDelQueue::get_link_rates( void )
+std::map<uint64_t,double> sfqCoDelQueue::get_current_link_rates( void ) const
 {
-  auto link_rates = _link->get_current_rates();
+  auto link_rates = _link->get_current_link_rates();
   std::map<uint64_t,double> link_speeds;
-  return link_speeds; /* TODO: Return something more sensible */
+  return link_speeds;
+}
+
+std::vector<uint64_t> sfqCoDelQueue::backlogged_flowids( void ) const
+{
+  std::vector<uint64_t> backlogged_flows;
+
+  for(int i=0; i<MAXBINS; i++) {
+   if ( bin_[i].q_->length() > 0 ) {
+    backlogged_flows.push_back( i );
+   }
+  }
+
+  return backlogged_flows;
 }
