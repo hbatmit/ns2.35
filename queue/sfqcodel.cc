@@ -316,7 +316,12 @@ bindesc* sfqCoDelQueue::readybin()
     if (flow_id == (uint64_t)-1) {
       return nullptr;
     } else {
-      return &bin_[ flow_id ];
+      if ( bin_[ flow_id ].q_->length() > 0 ) {
+        /* flow_id ran out of packets before its slots ended */
+        return &bin_[ flow_id ];
+      } else {
+        return nullptr;
+      }
     }
 }
 
