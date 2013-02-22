@@ -307,40 +307,17 @@ bindesc* sfqCoDelQueue::readybin()
     //get the next scheduled bin that has a non-empty queue,
     // set the binsched_ to that bin,
     // if none,  return NULL
-    std::vector<uint64_t> flow_list;
+    uint64_t flow_id;
     if ( _link != nullptr ) {
-      flow_list =  _link->prop_fair_scheduler();
+      flow_id =  _link->pick_user_to_schedule();
     } else {
       return nullptr;
     }
-    if(binsched_ == NULL) return NULL;
-    bindesc* b = binsched_;
-
-    for ( auto &scheduled_flow : flow_list ) {
-      if (bin_[scheduled_flow].q_->length()!=0 ) return &bin_[ scheduled_flow ];
+    if (flow_id == (uint64_t)-1) {
+      return nullptr;
+    } else {
+      return &bin_[ flow_id ];
     }
-    return nullptr;
-
-    while( ((b->q_)->length() == 0) ) {
-       //clean up, remove bin from schedule
-       if(b->next == b) {
-         //means this was the only bin on the schedule, so empty the schedule
-         b->next = NULL;
-         b->prev = NULL;
-	 b->on_sched_ = 0;
-         binsched_ = NULL;
-         return NULL;
-       } else {
-	 b->on_sched_ = 0;
-         binsched_ = b->next;
-         binsched_->prev = b->prev;
-         (b->prev)->next = binsched_;
-         b->next = b->prev = NULL;
-         b = binsched_;
-       }
-    }
-
-    return binsched_;
 }
 
 void sfqCoDelQueue::removebin(bindesc* b) {
