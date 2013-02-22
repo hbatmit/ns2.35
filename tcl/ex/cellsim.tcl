@@ -195,8 +195,13 @@ if { $opt(link_type) == "cellular" } {
   source ../../link/cell-link.tcl
   # setup a cellular link in the other direction
   $ns simplex-link $left_router $right_router [ bw_parse $opt(bottleneck_bw) ] $opt(bottleneck_latency) $opt(bottleneck_qdisc)
-  # Attach the link to the qdisc
-  [ [ $ns link $left_router $right_router ] queue ] attach-link [ [ $ns link $left_router $right_router ] link ]
+  # get link and queue
+  set cell_link  [ [ $ns link $left_router $right_router ] link  ]
+  set cell_queue [ [ $ns link $left_router $right_router ] queue ]
+  # Attach the link to the qdisc and vice versa
+  $cell_queue attach-link $cell_link
+  $cell_link attach-queue $cell_queue
+  $cell_link activate-link-scheduler
 
 } else {
   puts "Invalid link type"
