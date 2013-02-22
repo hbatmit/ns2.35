@@ -10,7 +10,7 @@ class CellLink;
 
 class LinkAwareQueue : public Queue {
   protected :
-    CellLink* _link; /* Link in front of the queue */
+    const CellLink* _link; /* Link in front of the queue */
 
   public :
     LinkAwareQueue() : Queue() {};
