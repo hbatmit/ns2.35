@@ -49,7 +49,7 @@ void SFD::enque(Packet *p)
   double arrival_rate = _rate_estimator.est_flow_arrival_rate( flow_id, now, p );
 
   /* Estimate current EWMA link rate for flow. */
-  auto current_link_rates = get_link_rates();
+  auto current_link_rates = get_current_link_rates();
 
   /* Check if flow has been seen earlier */
   if ( current_link_rates.find( flow_id ) == current_link_rates.end() ) {
@@ -146,14 +146,22 @@ void SFD::print_stats( double now )
   _rate_estimator.print_rates( now );
 }
 
-std::map<uint64_t,double> SFD::get_link_rates( void )
+std::map<uint64_t,double> SFD::get_current_link_rates( void ) const
 {
-  auto link_rates = _link->get_current_rates();
-  std::map<uint64_t,PacketQueue*>::iterator q_it;
+  auto link_rates = _link->get_current_link_rates();
   std::map<uint64_t,double> link_speeds;
 
-  for ( q_it = _packet_queues.begin(); q_it != _packet_queues.end(); q_it++ ) {
+  for ( auto q_it = _packet_queues.begin(); q_it != _packet_queues.end(); q_it++ ) {
     link_speeds[ q_it->first ]=link_rates[ q_it->first ];
   }
   return link_speeds;
+}
+
+std::vector<uint64_t> SFD::backlogged_flowids( void ) const
+{
+  std::vector<uint64_t> backlogged_flows;
+  for (auto it=_packet_queues.begin(); it!=_packet_queues.end(); it++) {
+    backlogged_flows.push_back( it->first );
+  }
+  return backlogged_flows;
 }

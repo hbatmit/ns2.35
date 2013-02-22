@@ -54,7 +54,8 @@ class SFD : public LinkAwareQueue {
     void print_stats( double now );
 
     /* inherited functions from LinkAwareQueue */
-    virtual std::map<uint64_t,double> get_link_rates();
+    virtual std::map<uint64_t,double> get_current_link_rates() const override;
+    virtual std::vector<uint64_t> backlogged_flowids( void ) const override;
 
     /* inherited functions from queue */
     virtual void enque( Packet *p );
