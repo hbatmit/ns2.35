@@ -231,6 +231,7 @@ OBJ_CC = \
 	queue/queue.o queue/drop-tail.o \
 	adc/simple-intserv-sched.o queue/red.o queue/codel.o queue/sfqcodel.o \
         queue/sfd.o queue/flow-stats.o queue/link-aware-queue.o link/cell-link.o \
+        queue/prop-fair.o \
         queue/sfd-rate-estimator.o queue/sfd-scheduler.o queue/sfd-dropper.o \
         link/poisson-link.o link/brownian-link.o link/trace-link.o \
 	queue/semantic-packetqueue.o queue/semantic-red.o \
