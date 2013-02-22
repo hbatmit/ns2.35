@@ -32,6 +32,9 @@ class PropFair : public LinkAwareQueue {
     /* Override Enque and deque functions from Queue */
     virtual void enque(Packet*) override;
     virtual Packet* deque() override;
+
+    /* Tcl cmd line interface */
+    virtual int command( int argc, const char*const* argv ) override;
 };
 
 #endif
