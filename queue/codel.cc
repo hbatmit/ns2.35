@@ -235,7 +235,7 @@ int CoDelQueue::command(int argc, const char*const* argv)
             }
         }
     }
-    return (LinkAwareQueue::command(argc, argv));
+    return (Queue::command(argc, argv));
 }
 
 // Routine called by TracedVar facility when variables change values.
@@ -263,11 +263,4 @@ CoDelQueue::trace(TracedVar* v)
         wrk[n+1] = 0;
         (void)Tcl_Write(tchan_, wrk, n+1);
     }
-}
-
-std::map<uint64_t,double> CoDelQueue::get_link_rates( void )
-{
-  auto link_rates = _link->get_current_rates();
-  std::map<uint64_t,double> link_speeds;
-  return link_speeds; /* TODO: Return something more sensible */
 }
