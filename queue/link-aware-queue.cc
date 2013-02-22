@@ -1,4 +1,4 @@
-#include "link-aware-queue.h"
+#include "queue/link-aware-queue.h"
 
 int LinkAwareQueue::command( int argc, const char*const* argv )
 {
