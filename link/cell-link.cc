@@ -36,7 +36,7 @@ int CellLink::command(int argc, const char*const* argv)
 CellLink::CellLink() :
   _rate_generators( std::vector<RateGen>() ),
   _bits_dequeued( 0 ),
-  _chosen_flow( 0 ),
+  chosen_flow( 0 ),
   _activate_link_scheduler( false ),
   _link_aware_queue( nullptr )
 {
@@ -60,11 +60,11 @@ CellLink::CellLink() :
 void CellLink::tick()
 {
   generate_new_rates();
-  _chosen_flow = pick_user_to_schedule();
-  update_average_rates( _chosen_flow );
+  chosen_flow = pick_user_to_schedule();
+  update_average_rates( chosen_flow );
 }
 
-uint64_t CellLink::pick_user_to_schedule()
+uint64_t CellLink::pick_user_to_schedule() const
 {
   /* First get the backlogged queues */
   std::vector<uint64_t> backlogged_flows = _link_aware_queue->backlogged_flowids();
@@ -109,7 +109,7 @@ void CellLink::recv( Packet* p, Handler* h )
 
   /* If you are using the link's scheduler, assert correctness */
   if (_activate_link_scheduler) {
-    assert( flow_id == _chosen_flow );
+    assert( flow_id == chosen_flow );
     if (tx_time + Scheduler::instance().clock() > _last_time + _slot_duration) {
       /* TODO:slice packet */;
     }

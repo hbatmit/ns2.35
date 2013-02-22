@@ -34,7 +34,6 @@ class CellLink : public LinkDelay, public TimerHandler {
     std::vector<RateGen> _rate_generators;
     uint32_t _iter;
     uint64_t _bits_dequeued;
-    uint64_t _chosen_flow ;
     std::vector<double> _average_rates;
     static const uint32_t EWMA_SLOTS = 100;
     bool     _activate_link_scheduler;
@@ -54,7 +53,7 @@ class CellLink : public LinkDelay, public TimerHandler {
 
     /* Get current rates of all users for SFD::deque() to use.
        SFD could ignore this as well. */
-    std::vector<double> get_current_link_rates() { return _current_link_rates; }
+    std::vector<double> get_current_link_rates() const { return _current_link_rates; }
 
     /* override the recv function from LinkDelay */
     virtual void recv( Packet* p, Handler* h) override;
@@ -66,7 +65,8 @@ class CellLink : public LinkDelay, public TimerHandler {
     int command(int argc, const char*const* argv);
 
     /* Prop. scheduler */
-    uint64_t pick_user_to_schedule();
+    uint64_t pick_user_to_schedule() const;
+    uint64_t chosen_flow ;
 
     /* Update averages */
     void update_average_rates( uint32_t scheduled_user );
