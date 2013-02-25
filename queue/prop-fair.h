@@ -18,9 +18,6 @@ class PropFair : public LinkAwareQueue {
     /* Override backlogged_flowids from LinkAwareQueue */
     virtual std::vector<uint64_t> backlogged_flowids( void ) const override;
 
-    /* Override get_current_link_rates from LinkAwareQueue */
-    virtual std::map<uint64_t,double> get_current_link_rates( void ) const override; 
-
   protected:
     /* Underlying per flow FIFOs and enque wrapper */
     std::map<uint64_t,PacketQueue*> _packet_queues;

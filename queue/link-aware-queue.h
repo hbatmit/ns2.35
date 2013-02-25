@@ -15,8 +15,6 @@ class LinkAwareQueue : public Queue {
   public :
     LinkAwareQueue() : Queue() {};
 
-    virtual std::map<uint64_t,double> get_current_link_rates( void ) const = 0;
-
     int command( int argc, const char*const* argv );
 
     virtual std::vector<uint64_t> backlogged_flowids( void ) const = 0;

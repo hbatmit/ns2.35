@@ -58,9 +58,3 @@ std::vector<uint64_t> PropFair::backlogged_flowids( void ) const
   }
   return backlogged_flows;
 }
-
-std::map<uint64_t,double> PropFair::get_current_link_rates( void ) const
-{
-  return std::map<uint64_t,double>();
-  /* Dummy, this function is not used anyway */
-}

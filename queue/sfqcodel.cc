@@ -497,13 +497,6 @@ sfqCoDelQueue::trace(TracedVar* v)
     }
 }
 
-std::map<uint64_t,double> sfqCoDelQueue::get_current_link_rates( void ) const
-{
-  /* TODO: This is a Dummy placeholder for now */
-  std::map<uint64_t,double> link_speeds;
-  return link_speeds;
-}
-
 std::vector<uint64_t> sfqCoDelQueue::backlogged_flowids( void ) const
 {
   std::vector<uint64_t> backlogged_flows;
