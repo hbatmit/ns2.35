@@ -115,7 +115,7 @@ void PropFair::update_mean_achieved_rates(uint32_t scheduled_user) {
 std::vector<uint32_t> PropFair::get_backlogged_users(void) const {
   std::vector<uint32_t> backlogged_user_list;
   for ( uint32_t i=0; i < num_users_; i++ ) {
-    if ( !user_queues_.at(i)->empty() ) {
+    if ( !((user_queues_.at(i))->empty()) ) {
       backlogged_user_list.push_back(i); 
     }
   } 
