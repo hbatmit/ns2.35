@@ -117,6 +117,8 @@ std::vector<uint32_t> PropFair::get_backlogged_users(void) const {
   for ( uint32_t i=0; i < num_users_; i++ ) {
     if ( !((user_queues_.at(i))->empty()) ) {
       backlogged_user_list.push_back(i); 
+    } else {
+      printf(" User_queue is empty at %d \n", i );
     }
   } 
   return backlogged_user_list;
