@@ -141,3 +141,8 @@ void DropTail::print_summarystats()
                 printf(" (in bytes)");
         printf(" time: %5.3f\n", total_time_);
 }
+
+bool DropTail::empty() const
+{
+  return (q_->byteLength() == 0);
+}

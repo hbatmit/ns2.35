@@ -58,6 +58,8 @@ class DropTail : public Queue {
 	~DropTail() {
 		delete q_;
 	}
+
+        virtual bool empty() const override;
   protected:
 	void reset();
 	int command(int argc, const char*const* argv); 
