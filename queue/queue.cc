@@ -236,3 +236,9 @@ void Queue::reset()
 		drop(p);
 }
 
+bool Queue::empty() const
+{
+  printf("Empty() not implemented \n");
+  exit(5);
+  return false;
+}
