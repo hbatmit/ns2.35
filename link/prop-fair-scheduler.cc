@@ -67,16 +67,16 @@ int PropFair::command(int argc, const char*const* argv) {
   if(argc == 4) {
     if(!strcmp(argv[1],"attach-queue")) {
       Queue* queue = (Queue*) TclObject::lookup(argv[ 2 ]);
-      uint32_t flow_id = atof(argv[ 3 ]);
-      user_queues_.at( flow_id ) = queue;
-      assert(user_queues_.at( flow_id )->blocked());
+      uint32_t user_id = atoi(argv[ 3 ]);
+      user_queues_.at( user_id ) = queue;
+      assert(user_queues_.at( user_id )->blocked());
       /* ensure blocked queues */
       return TCL_OK;
     }
     if(!strcmp(argv[1],"attach-link")) {
       LinkDelay* link = (LinkDelay*) TclObject::lookup(argv[ 2 ]);
-      uint32_t flow_id = atof(argv[ 3 ]);
-      user_links_.at( flow_id ) = link;
+      uint32_t user_id = atoi(argv[ 3 ]);
+      user_links_.at( user_id ) = link;
       return TCL_OK;
     }
   }
