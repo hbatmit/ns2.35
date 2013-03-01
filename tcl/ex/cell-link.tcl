@@ -114,6 +114,7 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   $ns connect $udp_client($i) $udp_server($i)
 }
 
+$pf_scheduler activate-link-scheduler
 # Run simulation
 $ns at $opt(duration) "finish $ns $trace_file"
 $ns run
