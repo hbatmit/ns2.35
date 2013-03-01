@@ -183,7 +183,7 @@ TapAgent::recvpkt()
 	double when = tstamp - now();
 
 	if (when > 0.0) {
-		TDEBUG5("%f: Tap(%s): DEFERRED PACKET %f secs, uid: "UID_PRINTF_FORMAT"\n",
+		TDEBUG5("%f: Tap(%s): DEFERRED PACKET %f secs, uid: " UID_PRINTF_FORMAT "\n",
 			now(), name(), when, p->uid_);
 		ch->timestamp() = when;
 		Scheduler::instance().schedule(target_, p, when);
