@@ -55,6 +55,14 @@ Usage
 # create basestation
 set basestation [ $ns node ]
 
+# Create PF scheduler
+set num_users [ expr $opt(num_udp) + $opt(num_tcp) ]
+puts "Num users is $num_users, cdma rates available for $opt(cdma_users) users "
+assert ( $num_users <= $opt(cdma_users) );
+PropFair set num_users_ $num_users
+PropFair set slot_duration_  0.00167
+set pf_scheduler [ new PropFair ]
+
 # Unique ID
 set counter 0
 
@@ -70,6 +78,7 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
 
   # set flow id
   $udp_client($i) set fid_ $counter
+  set fid($i) $counter
   set counter [ incr counter ]
 
   # Generate CBR traffic on UDP Agent
@@ -90,6 +99,13 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   set udp_server_node($i) [ $ns node ]
   $ns duplex-link $basestation $udp_server_node($i) [ bw_parse $opt(egress_bw) ]  $opt(egress_latency) $opt(bottleneck_qdisc)
 
+  # Attach queue and link to PF scheduler
+  set cell_link [ [ $ns link $basestation $udp_server_node($i) ] link ]
+  set cell_queue [ [ $ns link $basestation $udp_server_node($i) ] queue ]
+  puts "Adding user $fid($i) to PF "
+  $cell_queue set blocked_ 1
+  $pf_scheduler attach-queue $cell_queue $fid($i)
+  $pf_scheduler attach-link  $cell_link  $fid($i)
   # Create Application Sinks
   set udp_server($i) [ new Agent/Null ]
   $ns attach-agent $udp_server_node($i) $udp_server($i)
