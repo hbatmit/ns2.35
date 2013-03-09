@@ -610,8 +610,10 @@ tcl/lib/TAGS:	force
 		etags --append --lang=none -r '/^\([A-Z][^ \t]+\)[ \t]+\(instproc\|proc\)[ \t]+\([^ \t]+\)[ \t]+/\1::\3/' `cat .tcl_files`; \
 	)
 
+-include depend
 depend: $(SRC)
-	$(MKDEP) $(CFLAGS) $(INCLUDES) $(SRC) 2>&1 > /dev/null
+	$(CXX) -MM $(CFLAGS) $(INCLUDES) $(SRC) 2>&1 > dep.txt
+	cat dep.txt | python patch-depend.py $(SRC) > depend
 
 srctar:
 	@cwd=`pwd` ; dir=`basename $$cwd` ; \
