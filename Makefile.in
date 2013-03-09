@@ -104,6 +104,21 @@ CXXFLAGS += $(CCOPT) $(DEFINE) -std=gnu++0x
 	@rm -f $@
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $*.c
 
+%.d: %.cc
+	echo "Regenerating $@ from $<"
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CPPFLAGS) $(INCLUDES) $< > $@.$$$$; \
+	cat $@.$$$$ | python patch-depend.py $< > $@ \
+	set -x; \
+	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@
+
+%.d: %.c
+	echo "Regenerating $@ from $<"
+	@set -e; rm -f $@; \
+	$(CC) -MM $(CPPFLAGS) $(INCLUDES) $< > $@.$$$$; \
+        cat $@.$$$$ | python patch-depend.py $< > $@ \
+	set -x; \
+	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@
 
 GEN_DIR	= gen/
 LIB_DIR	= lib/
@@ -120,43 +135,7 @@ NSTK = nstk
 # To allow conf/makefile.win overwrite this macro
 # We will set these two macros to empty in conf/makefile.win since VC6.0
 # does not seem to support the STL in gcc 2.8 and up. 
-OBJ_STL = diffusion3/lib/nr/nr.o diffusion3/lib/dr.o \
-	diffusion3/filters/diffusion/one_phase_pull.o \
-	diffusion3/filters/diffusion/two_phase_pull.o \
-	diffusion3/lib/diffapp.o \
-	diffusion3/ns/diffagent.o diffusion3/ns/diffrtg.o \
-	diffusion3/ns/difftimer.o \
-	diffusion3/filter_core/filter_core.o \
-	diffusion3/filter_core/iolog.o \
-	diffusion3/filter_core/iostats.o \
-	diffusion3/lib/main/attrs.o \
-	diffusion3/lib/main/events.o \
-	diffusion3/lib/main/iodev.o \
-	diffusion3/lib/main/iohook.o \
-	diffusion3/lib/main/timers.o \
-	diffusion3/lib/main/message.o \
-	diffusion3/lib/main/tools.o \
-	diffusion3/apps/gear_examples/gear_common.o \
-	diffusion3/apps/gear_examples/gear_receiver.o \
-	diffusion3/apps/gear_examples/gear_sender.o \
-	diffusion3/apps/rmst_examples/rmst_sink.o \
-	diffusion3/apps/rmst_examples/rmst_source.o \
-	diffusion3/apps/ping/1pp_ping_sender.o \
-	diffusion3/apps/ping/1pp_ping_receiver.o \
-	diffusion3/apps/ping/2pp_ping_sender.o \
-	diffusion3/apps/ping/2pp_ping_receiver.o \
-	diffusion3/apps/ping/ping_common.o \
-	diffusion3/apps/ping/push_receiver.o \
-	diffusion3/apps/ping/push_sender.o \
-	diffusion3/filters/gear/gear_attr.o \
-	diffusion3/filters/gear/gear.o \
-	diffusion3/filters/gear/gear_tools.o \
-	diffusion3/filters/misc/log.o \
-	diffusion3/filters/misc/srcrt.o \
-	diffusion3/filters/misc/tag.o \
-	diffusion3/filters/rmst/rmst.o \
-	diffusion3/filters/rmst/rmst_filter.o \
-	delaybox/delaybox.o \
+OBJ_STL = delaybox/delaybox.o \
 	packmime/packmime_HTTP.o packmime/packmime_HTTP_rng.o \
 	packmime/packmime_OL.o packmime/packmime_OL_ranvar.o\
 	packmime/packmime_ranvar.o \
@@ -397,7 +376,12 @@ SRC =	$(OBJ_C:.o=.c) $(OBJ_CC:.o=.cc) \
 
 OBJ =	$(OBJ_C) $(OBJ_CC) $(OBJ_GEN) $(OBJ_COMPAT)
 
-CLEANFILES = ns nse nsx ns.dyn $(OBJ) $(OBJ_EMULATE_CC) \
+DEP1 = $(SRC:.c=.d)
+DEP = $(DEP1:.cc=.d)
+
+DEPINT = $(DEP:.d=.d*)
+
+CLEANFILES = ns nse nsx ns.dyn $(OBJ) $(DEPINT) $(OBJ_EMULATE_CC) \
 	$(OBJ_EMULATE_C) common/tclAppInit.o common/main-monolithic.o \
 	common/tkAppInit.o nstk \
 	$(GEN_DIR)* $(NS).core core core.$(NS) core.$(NSX) core.$(NSE) \
@@ -414,6 +398,7 @@ BUILD_NSE = @build_nse@
 
 all: tcp/remy/dna.pb.h $(NS) $(BUILD_NSE) $(NSTK) all-recursive Makefile
 
+-include $(DEP)
 
 all-recursive:
 	for i in $(SUBDIRS); do ( cd $$i; $(MAKE) all; ) done
@@ -609,11 +594,6 @@ tcl/lib/TAGS:	force
 		etags --lang=none -r '/^[ \t]*proc[ \t]+\([^ \t]+\)/\1/' `cat .tcl_files`; \
 		etags --append --lang=none -r '/^\([A-Z][^ \t]+\)[ \t]+\(instproc\|proc\)[ \t]+\([^ \t]+\)[ \t]+/\1::\3/' `cat .tcl_files`; \
 	)
-
--include depend
-depend: $(SRC)
-	$(CXX) -MM $(CFLAGS) $(INCLUDES) $(SRC) 2>&1 > dep.txt
-	cat dep.txt | python patch-depend.py $(SRC) > depend
 
 srctar:
 	@cwd=`pwd` ; dir=`basename $$cwd` ; \
