@@ -105,20 +105,20 @@ CXXFLAGS += $(CCOPT) $(DEFINE) -std=gnu++0x
 	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $*.c
 
 %.d: %.cc
-	echo "Regenerating $@ from $<"
-	@set -e; rm -f $@; \
+	echo "Regenerating $@ from $<"; \
+	set -e; rm -f $@; \
 	$(CC) -MM $(CPPFLAGS) $(INCLUDES) $< > $@.$$$$; \
-	cat $@.$$$$ | python patch-depend.py $< > $@ \
-	set -x; \
-	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@
+	cat $@.$$$$ | python patch-depend.py $< > $@; \
+	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@ ; \
+        rm $@.$$$$;
 
 %.d: %.c
-	echo "Regenerating $@ from $<"
-	@set -e; rm -f $@; \
+	echo "Regenerating $@ from $<"; \
+	set -e; rm -f $@; \
 	$(CC) -MM $(CPPFLAGS) $(INCLUDES) $< > $@.$$$$; \
-        cat $@.$$$$ | python patch-depend.py $< > $@ \
-	set -x; \
-	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@
+        cat $@.$$$$ | python patch-depend.py $< > $@; \
+	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@; \
+        rm $@.$$$$;
 
 GEN_DIR	= gen/
 LIB_DIR	= lib/
