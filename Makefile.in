@@ -98,27 +98,19 @@ CXXFLAGS += $(CCOPT) $(DEFINE) -std=gnu++0x
 	@rm -f $@
 #	$(CPP) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
 #	$(CXX) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
+	$(CXX) -MD -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc;
+	cp $*.d $*.P;
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	    -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	rm -f $*.d
 
 .c.o:
 	@rm -f $@
-	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $*.c
-
-%.d: %.cc
-	echo "Regenerating $@ from $<"; \
-	set -e; rm -f $@; \
-	$(CC) -MM $(CPPFLAGS) $(INCLUDES) $< > $@.$$$$; \
-	cat $@.$$$$ | python patch-depend.py $< > $@; \
-	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@ ; \
-        rm $@.$$$$;
-
-%.d: %.c
-	echo "Regenerating $@ from $<"; \
-	set -e; rm -f $@; \
-	$(CC) -MM $(CPPFLAGS) $(INCLUDES) $< > $@.$$$$; \
-        cat $@.$$$$ | python patch-depend.py $< > $@; \
-	sed -i 's,\($*\)\.o[ :]*,\1.o $@ : ,g' $@; \
-        rm $@.$$$$;
+	$(CC) -MD -c $(CFLAGS) $(INCLUDES) -o $@ $*.c
+	cp $*.d $*.P;
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	    -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	rm -f $*.d
 
 GEN_DIR	= gen/
 LIB_DIR	= lib/
@@ -376,12 +368,10 @@ SRC =	$(OBJ_C:.o=.c) $(OBJ_CC:.o=.cc) \
 
 OBJ =	$(OBJ_C) $(OBJ_CC) $(OBJ_GEN) $(OBJ_COMPAT)
 
-DEP1 = $(SRC:.c=.d)
-DEP = $(DEP1:.cc=.d)
+DEP1 = $(SRC:.c=.P)
+DEP = $(DEP1:.cc=.P)
 
-DEPINT = $(DEP:.d=.d*)
-
-CLEANFILES = ns nse nsx ns.dyn $(OBJ) $(DEPINT) $(OBJ_EMULATE_CC) \
+CLEANFILES = ns nse nsx ns.dyn $(OBJ) $(DEP) $(OBJ_EMULATE_CC) \
 	$(OBJ_EMULATE_C) common/tclAppInit.o common/main-monolithic.o \
 	common/tkAppInit.o nstk \
 	$(GEN_DIR)* $(NS).core core core.$(NS) core.$(NSX) core.$(NSE) \
