@@ -1,2 +1,7 @@
 *.o
 *.swp
+*.d*
+*.txt
+*.pb.cc
+*.tr
+*.tar.gz
