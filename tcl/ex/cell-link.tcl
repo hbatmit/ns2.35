@@ -56,7 +56,7 @@ Usage
 set basestation [ $ns node ]
 
 # Create PF scheduler
-set num_users [ expr $opt(num_udp) + $opt(num_tcp) ]
+set num_users [ expr $opt(num_udp) ]
 puts "Num users is $num_users, cdma rates available for $opt(cdma_users) users "
 assert ( $num_users <= $opt(cdma_users) );
 PropFair set num_users_ $num_users
