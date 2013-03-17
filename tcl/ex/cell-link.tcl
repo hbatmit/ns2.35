@@ -5,8 +5,7 @@
 set ns [ new Simulator ]
 
 # Tracing: DO NOT MOVE THIS BELOW
-set trace_file [ open cellsim.tr w ]
-$ns trace-all $trace_file
+set trace_file [ open cell-link.tr w ]
 
 # cmd line arguments
 unset opt
@@ -102,6 +101,10 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Attach queue and link to PF scheduler
   set cell_link [ [ $ns link $basestation $udp_server_node($i) ] link ]
   set cell_queue [ [ $ns link $basestation $udp_server_node($i) ] queue ]
+ 
+  # Attach trace_file to queue.
+  $ns trace-queue $basestation $udp_server_node($i) $trace_file
+
   puts "Adding user $fid($i) to PF "
   $cell_queue set blocked_ 1
   $pf_scheduler attach-queue $cell_queue $fid($i)
