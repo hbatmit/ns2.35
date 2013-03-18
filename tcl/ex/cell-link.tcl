@@ -60,6 +60,8 @@ puts "Num users is $num_users, cdma rates available for $opt(cdma_users) users "
 assert ( $num_users <= $opt(cdma_users) );
 PropFair set num_users_ $num_users
 PropFair set slot_duration_  0.00167
+Queue set unblock_on_resume_ 0
+Queue set blocked_ 1
 set pf_scheduler [ new PropFair ]
 
 # Unique ID
@@ -106,7 +108,6 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   $ns trace-queue $basestation $udp_server_node($i) $trace_file
 
   puts "Adding user $fid($i) to PF "
-  $cell_queue set blocked_ 1
   $pf_scheduler attach-queue $cell_queue $fid($i)
   $pf_scheduler attach-link  $cell_link  $fid($i)
   # Create Application Sinks
