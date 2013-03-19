@@ -81,9 +81,7 @@ void PacketQueue::remove(Packet* pkt, Packet *prev) //XXX: screwy
 }
 
 void QueueHandler::handle(Event*)
-{
-	queue_.resume();
-}
+{}
 
 Queue::~Queue() {
 }
