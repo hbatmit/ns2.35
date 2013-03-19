@@ -69,13 +69,9 @@ set counter 0
 
 # CBR/UDP clients
 for { set i 0 } { $i < $opt(num_udp) } { incr i } {
-  # Create node
-  set udp_client_node($i) [ $ns node ]
-  $ns duplex-link $udp_client_node($i) $basestation [ bw_parse $opt(ingress_bw) ] $opt(ingress_latency) $opt(bottleneck_qdisc)
-
   # Create UDP Agents
   set udp_client($i) [ new Agent/UDP ]
-  $ns attach-agent $udp_client_node($i) $udp_client($i)
+  $ns attach-agent $basestation $udp_client($i)
 
   # set flow id
   $udp_client($i) set fid_ $counter
@@ -98,7 +94,7 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
 for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Create node
   set udp_server_node($i) [ $ns node ]
-  $ns duplex-link $basestation $udp_server_node($i) [ bw_parse $opt(egress_bw) ]  $opt(egress_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $basestation $udp_server_node($i) [ bw_parse $opt(egress_bw) ]  $opt(egress_latency) $opt(bottleneck_qdisc)
 
   # Attach queue and link to PF scheduler
   set cell_link [ [ $ns link $basestation $udp_server_node($i) ] link ]
