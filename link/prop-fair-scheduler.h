@@ -9,20 +9,19 @@
 #include "rate-gen.h"
 #include "cdma-rates.h"
 
+/* Forward declarations */
+class PFSchedTimer;
+class PFTxTimer;
+
 /* 
-   PropFair implements an ensemble
+   PFScheduler implements an ensemble
    proportionally fair scheduler on top 
    of an ensemble of links.
-
-   It inherits from TimerHandler to fire off
-   a scheduling function periodically to pick
-   the next user to transmit.
  */
-
-class PropFair : public TimerHandler, public TclObject {
+class PFScheduler : public TclObject {
  public:
   /* Constructor */
-  PropFair();
+  PFScheduler();
 
   /* pick next user to schedule */
   uint32_t pick_user_to_schedule(void) const; 
@@ -33,10 +32,13 @@ class PropFair : public TimerHandler, public TclObject {
   /* EWMA_SLOTS */
   static const uint32_t EWMA_SLOTS = 100;
 
- private:
+  /* last time something was scheduled */
+  double last_time_;
+
   /* tick every slot_duration_ */
   void tick(void);
 
+ private:
   /* generate new rates, assume perfect information */
   void generate_new_rates(void);
 
@@ -45,9 +47,6 @@ class PropFair : public TimerHandler, public TclObject {
 
   /* get backlogged users */
   std::vector<uint32_t> get_backlogged_users(void) const;
-
-  /* expire function from TimerHandler */
-  virtual void expire(Event *e) override;
 
   /* slot duration */
   double slot_duration_;
@@ -58,14 +57,11 @@ class PropFair : public TimerHandler, public TclObject {
   /* chosen user */
   uint32_t chosen_user_;
 
-  /* last time something was scheduled */
-  double last_time_;
-
   /* per user queues */
-  std::vector<const Queue *> user_queues_;
+  std::vector<Queue *> user_queues_;
 
   /* per user links */
-  std::vector<const LinkDelay *> user_links_;
+  std::vector<LinkDelay *> user_links_;
 
   /* per user mean achieved rates */
   std::vector<double> mean_achieved_rates_;
@@ -75,6 +71,11 @@ class PropFair : public TimerHandler, public TclObject {
 
   /* per user rate generators */
   std::vector<RateGen> rate_generators_;
+
+  /* Timers */
+  PFTxTimer* tx_timer_;
+  PFSchedTimer* sched_timer_;
+
 };
 
 #endif

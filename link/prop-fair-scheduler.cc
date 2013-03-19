@@ -2,30 +2,35 @@
 #include <assert.h>
 #include <algorithm>
 #include "prop-fair-scheduler.h"
+#include "link/pf-sched-timer.h"
+#include "link/pf-tx-timer.h"
 
-static class PropFairClass : public TclClass {
+static class PFSchedulerClass : public TclClass {
  public :
-  PropFairClass() : TclClass("PropFair") {}
+  PFSchedulerClass() : TclClass("PFScheduler") {}
   TclObject* create(int argc, const char*const* argv) {
-    return (new PropFair());
+    return (new PFScheduler());
   }
 } class_prop_fair;
 
-PropFair::PropFair()
-    : slot_duration_(0.0),
+PFScheduler::PFScheduler()
+    : last_time_(0.0),
+      slot_duration_(0.0),
       num_users_(0),
       chosen_user_(0),
-      last_time_(0.0),
-      user_queues_( std::vector<const Queue*> () ),
-      user_links_( std::vector<const LinkDelay*> () ),
+      user_queues_( std::vector<Queue*> () ),
+      user_links_( std::vector<LinkDelay*> () ),
       mean_achieved_rates_( std::vector<double> () ),
       link_rates_( std::vector<double> () ),
-      rate_generators_( std::vector<RateGen> () ) {
+      rate_generators_( std::vector<RateGen> () ),
+      tx_timer_(new PFTxTimer(this)),
+      sched_timer_(new PFSchedTimer(this, slot_duration_)) {
   bind("num_users_", &num_users_);
   bind("slot_duration_", &slot_duration_);
+  sched_timer_ = new PFSchedTimer(this, slot_duration_);
   assert(num_users_ > 0);
-  user_queues_ = std::vector<const Queue*>(num_users_);
-  user_links_  = std::vector<const LinkDelay*>(num_users_);
+  user_queues_ = std::vector< Queue*>(num_users_);
+  user_links_  = std::vector<LinkDelay*>(num_users_);
   mean_achieved_rates_ = std::vector<double>(num_users_);
   link_rates_  = std::vector<double>(num_users_);
   rate_generators_ = std::vector<RateGen>(num_users_);
@@ -36,7 +41,7 @@ PropFair::PropFair()
   }
 }
 
-uint32_t PropFair::pick_user_to_schedule(void) const {
+uint32_t PFScheduler::pick_user_to_schedule(void) const {
   /* First get the backlogged users */
   std::vector<uint32_t> backlogged_users = get_backlogged_users();
 
@@ -56,10 +61,10 @@ uint32_t PropFair::pick_user_to_schedule(void) const {
 
 }
 
-int PropFair::command(int argc, const char*const* argv) {
+int PFScheduler::command(int argc, const char*const* argv) {
   if (argc == 2) {
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
-      resched( slot_duration_ );
+      sched_timer_->resched( slot_duration_ );
       tick();
       return TCL_OK;
     }
@@ -68,9 +73,9 @@ int PropFair::command(int argc, const char*const* argv) {
     if(!strcmp(argv[1],"attach-queue")) {
       Queue* queue = (Queue*) TclObject::lookup(argv[ 2 ]);
       uint32_t user_id = atoi(argv[ 3 ]);
-      user_queues_.at( user_id ) = queue;
-      assert(user_queues_.at( user_id )->blocked());
+      user_queues_.at(user_id) = queue;
       /* ensure blocked queues */
+      assert(user_queues_.at(user_id)->blocked());
       return TCL_OK;
     }
     if(!strcmp(argv[1],"attach-link")) {
@@ -83,13 +88,32 @@ int PropFair::command(int argc, const char*const* argv) {
   return TclObject::command( argc, argv );
 }
 
-void PropFair::tick(void) {
+void PFScheduler::tick(void) {
   generate_new_rates();
   chosen_user_ = pick_user_to_schedule();
-  update_mean_achieved_rates( chosen_user_ ); 
+  printf("chosen_user_ is %d \n", chosen_user_);
+  if (chosen_user_==-1) return;
+
+  /* Get one packet from chosen user */
+  Packet *p = user_queues_.at(chosen_user_)->deque();
+
+  /* Get queue_handler */
+  auto queue_handler = &user_queues_.at(chosen_user_)->qh_;
+
+  /* Get transmission time */
+  double txt = user_links_.at(chosen_user_)->txtime(p);
+
+  /* Get scheduler instance */
+  Scheduler& s = Scheduler::instance();
+
+  /* Check if packet txtime spills over into the next time slot. If so, slice it */
+  user_links_.at(chosen_user_)->recv(p, queue_handler);
+
+  /* In any case, update mean_achieved_rates_ */
+  update_mean_achieved_rates( chosen_user_ );
 }
 
-void PropFair::generate_new_rates(void) {
+void PFScheduler::generate_new_rates(void) {
   /* For now, generate new rates uniformly from allowed rates */
   /* By using these directly, we are assuming perfect information */
   auto rate_generator = [&] ( RateGen r )
@@ -101,7 +125,7 @@ void PropFair::generate_new_rates(void) {
 
 }
 
-void PropFair::update_mean_achieved_rates(uint32_t scheduled_user) {
+void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   for ( uint32_t i=0; i < mean_achieved_rates_.size(); i++ ) {
     if ( i == scheduled_user ) {
       printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i);
@@ -112,7 +136,7 @@ void PropFair::update_mean_achieved_rates(uint32_t scheduled_user) {
   }
 }
 
-std::vector<uint32_t> PropFair::get_backlogged_users(void) const {
+std::vector<uint32_t> PFScheduler::get_backlogged_users(void) const {
   std::vector<uint32_t> backlogged_user_list;
   for ( uint32_t i=0; i < num_users_; i++ ) {
     if ( !((user_queues_.at(i))->empty()) ) {
@@ -120,13 +144,6 @@ std::vector<uint32_t> PropFair::get_backlogged_users(void) const {
     } else {
       printf(" User_queue is empty at %d \n", i );
     }
-  } 
+  }
   return backlogged_user_list;
-}
-
-void PropFair::expire(Event *e) {
-  /* TimerHandler::expire */
-  tick();
-  resched( slot_duration_ );
-  last_time_ = Scheduler::instance().clock();
 }
