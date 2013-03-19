@@ -60,8 +60,6 @@ puts "Num users is $num_users, cdma rates available for $opt(cdma_users) users "
 assert ( $num_users <= $opt(cdma_users) );
 PropFair set num_users_ $num_users
 PropFair set slot_duration_  0.00167
-Queue set unblock_on_resume_ 0
-Queue set blocked_ 1
 set pf_scheduler [ new PropFair ]
 
 # Unique ID
@@ -99,7 +97,11 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Attach queue and link to PF scheduler
   set cell_link [ [ $ns link $basestation $udp_server_node($i) ] link ]
   set cell_queue [ [ $ns link $basestation $udp_server_node($i) ] queue ]
- 
+
+  # block queues
+  $cell_queue set blocked_ 1
+  $cell_queue set unblock_on_resume_ 0
+
   # Attach trace_file to queue.
   $ns trace-queue $basestation $udp_server_node($i) $trace_file
 
