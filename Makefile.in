@@ -203,6 +203,7 @@ OBJ_CC = \
 	adc/simple-intserv-sched.o queue/red.o queue/codel.o queue/sfqcodel.o \
         queue/sfd.o queue/flow-stats.o queue/link-aware-queue.o link/cell-link.o \
         link/prop-fair-scheduler.o link/rate-gen.o \
+        link/pf-sched-timer.o link/pf-tx-timer.o \
         queue/sfd-rate-estimator.o queue/sfd-scheduler.o queue/sfd-dropper.o \
         link/poisson-link.o link/brownian-link.o link/trace-link.o \
 	queue/semantic-packetqueue.o queue/semantic-red.o \
