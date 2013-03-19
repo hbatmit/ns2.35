@@ -58,9 +58,9 @@ set basestation [ $ns node ]
 set num_users [ expr $opt(num_udp) ]
 puts "Num users is $num_users, cdma rates available for $opt(cdma_users) users "
 assert ( $num_users <= $opt(cdma_users) );
-PropFair set num_users_ $num_users
-PropFair set slot_duration_  0.00167
-set pf_scheduler [ new PropFair ]
+PFScheduler set num_users_ $num_users
+PFScheduler set slot_duration_  0.00167
+set pf_scheduler [ new PFScheduler ]
 
 # Unique ID
 set counter 0
