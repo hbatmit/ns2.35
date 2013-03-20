@@ -39,6 +39,12 @@ class PFScheduler : public TclObject {
   /* tick every slot_duration_ */
   void tick(void);
 
+  /* Transmit packet */
+  static void transmit_pkt(PFScheduler* pf_sched, PFTxTimer* tx_timer);
+
+  /* Helper function, transmit after slicing (if reqd) */
+  static void slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user);
+
  private:
   /* generate new rates, assume perfect information */
   void generate_new_rates(void);

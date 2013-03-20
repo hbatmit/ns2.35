@@ -103,46 +103,12 @@ void PFScheduler::tick(void) {
   generate_new_rates();
   chosen_user_ = pick_user_to_schedule();
   printf(" chosen_user_ is %d @ %f \n", chosen_user_, Scheduler::instance().clock() );
-  if (chosen_user_==-1) return;
 
-  /* Get one packet from chosen user */
-  Packet *p = user_queues_.at(chosen_user_)->deque();
-
-  /* Get queue_handler */
-  auto queue_handler = &user_queues_.at(chosen_user_)->qh_;
-
-  /* Get transmission time */
-  double txt = user_links_.at(chosen_user_)->txtime(p);
-
-  /* Get scheduler instance */
-  Scheduler& s = Scheduler::instance();
-
-  /* Check if packet txtime spills over into the next time slot. If so, slice it */
-  if(txt+Scheduler::instance().clock() > current_slot_ + slot_duration_) {
-    printf(" PFScheduler::expire, Chosen_user %d, slicing %f bits \n",
-            chosen_user_,
-            (current_slot_+ slot_duration_ - Scheduler::instance().clock()) * 
-             user_links_.at(chosen_user_)->bandwidth() );
-    printf(" PFScheduler::expire, Chosen_user %d, remaining %f bits \n",
-            chosen_user_,
-            user_links_.at(chosen_user_)->bandwidth()*txt -
-            ((current_slot_+ slot_duration_ - Scheduler::instance().clock()) * 
-             user_links_.at(chosen_user_)->bandwidth()) );
-    /* TODO */
-  } else {
-    /* Send packet onward */
-    user_links_.at(chosen_user_)->recv(p, queue_handler);
-    /* Log */
-    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
-           chosen_user_,
-           user_links_.at(chosen_user_)->bandwidth()*txt,
-           Scheduler::instance().clock());
-    /* schedule next packet transmission */
-    tx_timer_->resched(txt);
-  }
-
-  /* In any case, update mean_achieved_rates_ */
+  /* Update mean_achieved_rates_ */
   update_mean_achieved_rates( chosen_user_ );
+
+  /* Transmit and reschedule yourself if required */
+  PFScheduler::transmit_pkt(this, this->tx_timer_);
 }
 
 void PFScheduler::generate_new_rates(void) {
@@ -178,4 +144,59 @@ std::vector<uint32_t> PFScheduler::get_backlogged_users(void) const {
     }
   }
   return backlogged_user_list;
+}
+
+void PFScheduler::transmit_pkt(PFScheduler* pf_sched, PFTxTimer* tx_timer ) {
+  /* Get chosen user */
+  uint32_t chosen_user = pf_sched->chosen_user_;
+
+  /* If no one was scheduled, return */
+  if (chosen_user==(uint32_t)-1) return;
+
+  /* Get one packet from chosen user */
+  Packet* p = pf_sched->user_queues_.at(chosen_user)->deque();
+
+  /* If p is nullptr return */
+  if (p==nullptr) {
+    return;
+  }
+
+  slice_and_transmit(pf_sched, tx_timer, p, chosen_user);
+
+}
+
+void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user) {
+  /* Get queue_handler */
+  auto queue_handler = &pf_sched->user_queues_.at(chosen_user)->qh_;
+
+  /* Get transmission time */
+  double txt = pf_sched->user_links_.at(chosen_user)->txtime(p);
+
+  /* Check if packet txtime spills over into the next time slot. If so, slice it */
+  if(txt+Scheduler::instance().clock() > pf_sched->current_slot_ + pf_sched->slot_duration_) {
+    printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n",
+            chosen_user,
+            (pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock()) * 
+            pf_sched->user_links_.at(chosen_user)->bandwidth() );
+
+    auto remaining_bits = pf_sched->user_links_.at(chosen_user)->bandwidth()*txt -
+                          ((pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
+                           * pf_sched->user_links_.at(chosen_user)->bandwidth());
+
+    printf(" PFTxTimer::expire, Chosen_user %d, remaining %f bits \n",
+            chosen_user,
+            remaining_bits);
+
+  } else {
+    /* Send packet onward */
+    pf_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
+    /* Log */
+    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
+           chosen_user,
+           pf_sched->user_links_.at(chosen_user)->bandwidth()*txt,
+           Scheduler::instance().clock());
+
+    /* schedule next packet transmission */
+    tx_timer->resched(txt);
+  }
 }
