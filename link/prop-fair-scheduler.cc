@@ -14,7 +14,7 @@ static class PFSchedulerClass : public TclClass {
 } class_prop_fair;
 
 PFScheduler::PFScheduler()
-    : last_time_(0.0),
+    : current_slot_(0.0),
       slot_duration_(0.0),
       num_users_(0),
       chosen_user_(0),
@@ -89,9 +89,20 @@ int PFScheduler::command(int argc, const char*const* argv) {
 }
 
 void PFScheduler::tick(void) {
+  /* Update current slot */
+  current_slot_=Scheduler::instance().clock();
+
+  /* cancel old transmission timer if required */
+  if ((tx_timer_->status() == TimerHandler::TIMER_PENDING) or
+      (tx_timer_->status() == TimerHandler::TIMER_HANDLING)) {
+    printf(" Cancelling Pending tx timers @%f, recving \n", Scheduler::instance().clock() );
+    tx_timer_->cancel();
+  }
+
+  /* generate new rates, assume immediate feedback */
   generate_new_rates();
   chosen_user_ = pick_user_to_schedule();
-  printf("chosen_user_ is %d \n", chosen_user_);
+  printf(" chosen_user_ is %d @ %f \n", chosen_user_, Scheduler::instance().clock() );
   if (chosen_user_==-1) return;
 
   /* Get one packet from chosen user */
@@ -107,7 +118,28 @@ void PFScheduler::tick(void) {
   Scheduler& s = Scheduler::instance();
 
   /* Check if packet txtime spills over into the next time slot. If so, slice it */
-  user_links_.at(chosen_user_)->recv(p, queue_handler);
+  if(txt+Scheduler::instance().clock() > current_slot_ + slot_duration_) {
+    printf(" PFScheduler::expire, Chosen_user %d, slicing %f bits \n",
+            chosen_user_,
+            (current_slot_+ slot_duration_ - Scheduler::instance().clock()) * 
+             user_links_.at(chosen_user_)->bandwidth() );
+    printf(" PFScheduler::expire, Chosen_user %d, remaining %f bits \n",
+            chosen_user_,
+            user_links_.at(chosen_user_)->bandwidth()*txt -
+            ((current_slot_+ slot_duration_ - Scheduler::instance().clock()) * 
+             user_links_.at(chosen_user_)->bandwidth()) );
+    /* TODO */
+  } else {
+    /* Send packet onward */
+    user_links_.at(chosen_user_)->recv(p, queue_handler);
+    /* Log */
+    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
+           chosen_user_,
+           user_links_.at(chosen_user_)->bandwidth()*txt,
+           Scheduler::instance().clock());
+    /* schedule next packet transmission */
+    tx_timer_->resched(txt);
+  }
 
   /* In any case, update mean_achieved_rates_ */
   update_mean_achieved_rates( chosen_user_ );

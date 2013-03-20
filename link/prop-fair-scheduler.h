@@ -19,6 +19,7 @@ class PFTxTimer;
    of an ensemble of links.
  */
 class PFScheduler : public TclObject {
+ friend class PFTxTimer;
  public:
   /* Constructor */
   PFScheduler();
@@ -33,7 +34,7 @@ class PFScheduler : public TclObject {
   static const uint32_t EWMA_SLOTS = 100;
 
   /* last time something was scheduled */
-  double last_time_;
+  double current_slot_;
 
   /* tick every slot_duration_ */
   void tick(void);
