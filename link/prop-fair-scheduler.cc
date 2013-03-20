@@ -4,6 +4,7 @@
 #include "prop-fair-scheduler.h"
 #include "link/pf-sched-timer.h"
 #include "link/pf-tx-timer.h"
+#include "common/agent.h"
 
 static class PFSchedulerClass : public TclClass {
  public :
@@ -24,7 +25,8 @@ PFScheduler::PFScheduler()
       link_rates_( std::vector<double> () ),
       rate_generators_( std::vector<RateGen> () ),
       tx_timer_(new PFTxTimer(this)),
-      sched_timer_(new PFSchedTimer(this, slot_duration_)) {
+      sched_timer_(new PFSchedTimer(this, slot_duration_)),
+      abeyance_(std::vector<Packet*>()) {
   bind("num_users_", &num_users_);
   bind("slot_duration_", &slot_duration_);
   sched_timer_ = new PFSchedTimer(this, slot_duration_);
@@ -34,6 +36,7 @@ PFScheduler::PFScheduler()
   mean_achieved_rates_ = std::vector<double>(num_users_);
   link_rates_  = std::vector<double>(num_users_);
   rate_generators_ = std::vector<RateGen>(num_users_);
+  abeyance_ = std::vector<Packet*>(num_users_);
   for ( uint32_t i=0; i < num_users_; i++ ) {
     rate_generators_.at( i ) = RateGen ( ALLOWED_RATES.at( i ) );
     link_rates_.at( i )=0.0;
@@ -74,6 +77,7 @@ int PFScheduler::command(int argc, const char*const* argv) {
       Queue* queue = (Queue*) TclObject::lookup(argv[ 2 ]);
       uint32_t user_id = atoi(argv[ 3 ]);
       user_queues_.at(user_id) = queue;
+      abeyance_.at(user_id) = nullptr;
       /* ensure blocked queues */
       assert(user_queues_.at(user_id)->blocked());
       return TCL_OK;
@@ -93,8 +97,7 @@ void PFScheduler::tick(void) {
   current_slot_=Scheduler::instance().clock();
 
   /* cancel old transmission timer if required */
-  if ((tx_timer_->status() == TimerHandler::TIMER_PENDING) or
-      (tx_timer_->status() == TimerHandler::TIMER_HANDLING)) {
+  if ((tx_timer_->status() == TIMER_PENDING) or (tx_timer_->status() == TimerHandler::TIMER_HANDLING)) {
     printf(" Cancelling Pending tx timers @%f, recving \n", Scheduler::instance().clock() );
     tx_timer_->cancel();
   }
@@ -154,18 +157,18 @@ void PFScheduler::transmit_pkt(PFScheduler* pf_sched, PFTxTimer* tx_timer ) {
   if (chosen_user==(uint32_t)-1) return;
 
   /* Get one packet from chosen user */
-  Packet* p = pf_sched->user_queues_.at(chosen_user)->deque();
-
-  /* If p is nullptr return */
+  /* First check abeyance_ */
+  Packet* p = pf_sched->abeyance_.at(chosen_user);
   if (p==nullptr) {
-    return;
+    /* Now check the main queue */
+    p = pf_sched->user_queues_.at(chosen_user)->deque();
+    if (p!=nullptr) slice_and_transmit(pf_sched, tx_timer, p, chosen_user, true);
+  } else {
+    slice_and_transmit(pf_sched, tx_timer, p, chosen_user, false);
   }
-
-  slice_and_transmit(pf_sched, tx_timer, p, chosen_user);
-
 }
 
-void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user) {
+void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user, bool transmit) {
   /* Get queue_handler */
   auto queue_handler = &pf_sched->user_queues_.at(chosen_user)->qh_;
 
@@ -183,18 +186,23 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
                           ((pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
                            * pf_sched->user_links_.at(chosen_user)->bandwidth());
 
-    printf(" PFTxTimer::expire, Chosen_user %d, remaining %f bits \n",
-            chosen_user,
-            remaining_bits);
-
+    /* TODO Actually send sliced packet  */
+    Agent dummy(PT_CBR);
+    Packet* p = dummy.allocpkt(remaining_bits / 8);
+    hdr_cmn::access(p)->size() = remaining_bits / 8;
+    pf_sched->abeyance_.at(chosen_user) = p;
   } else {
     /* Send packet onward */
-    pf_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
+    if(transmit) pf_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
     /* Log */
     printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
            chosen_user,
            pf_sched->user_links_.at(chosen_user)->bandwidth()*txt,
            Scheduler::instance().clock());
+
+    /* Delete old abeyance if required */
+    delete (pf_sched->abeyance_.at(chosen_user));
+    pf_sched->abeyance_.at(chosen_user) = nullptr;
 
     /* schedule next packet transmission */
     tx_timer->resched(txt);

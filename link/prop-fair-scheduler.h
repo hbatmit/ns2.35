@@ -43,7 +43,7 @@ class PFScheduler : public TclObject {
   static void transmit_pkt(PFScheduler* pf_sched, PFTxTimer* tx_timer);
 
   /* Helper function, transmit after slicing (if reqd) */
-  static void slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user);
+  static void slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user, bool transmit);
 
  private:
   /* generate new rates, assume perfect information */
@@ -83,6 +83,8 @@ class PFScheduler : public TclObject {
   PFTxTimer* tx_timer_;
   PFSchedTimer* sched_timer_;
 
+  /* Vector of abeyant packets */
+  std::vector<Packet*> abeyance_;
 };
 
 #endif
