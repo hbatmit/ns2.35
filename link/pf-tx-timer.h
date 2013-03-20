@@ -2,7 +2,7 @@
 #define LINK_PF_TX_TIMER_H
 
 #include "common/timer-handler.h"
-class PFScheduler;
+#include "link/prop-fair-scheduler.h"
 
 /*
    PFTxTimer inherits from TimerHandler
