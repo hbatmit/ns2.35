@@ -92,7 +92,7 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
 for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Create node
   set udp_server_node($i) [ $ns node ]
-  $ns simplex-link $basestation $udp_server_node($i) [ bw_parse $opt(egress_bw) ]  $opt(egress_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $basestation $udp_server_node($i) [ bw_parse $opt(bottleneck_bw) ]  $opt(bottleneck_latency) $opt(bottleneck_qdisc)
 
   # Attach queue and link to PF scheduler
   set cell_link [ [ $ns link $basestation $udp_server_node($i) ] link ]
