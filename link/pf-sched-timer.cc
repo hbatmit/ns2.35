@@ -11,5 +11,4 @@ void PFSchedTimer::expire(Event *e) {
   /* TimerHandler::expire */
   pf_sched_->tick();
   resched(slot_duration_);
-  pf_sched_->last_time_ = Scheduler::instance().clock();
 }
