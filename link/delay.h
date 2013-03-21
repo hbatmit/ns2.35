@@ -56,6 +56,7 @@ class LinkDelay : public Connector {
 		return (8. * hdr_cmn::access(p)->size() / bandwidth_);
 	}
 	double bandwidth() const { return bandwidth_; }
+        void set_bandwidth(double bandwidth) { bandwidth_ = bandwidth; }
 	void pktintran(int src, int group);
  protected:
 	int command(int argc, const char*const* argv);
