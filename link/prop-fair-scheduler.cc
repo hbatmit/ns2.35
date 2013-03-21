@@ -124,6 +124,10 @@ void PFScheduler::generate_new_rates(void) {
                  link_rates_.begin(),
                  rate_generator );
 
+  /* Update user_links_ */
+  for (uint32_t i=0; i<link_rates_.size(); i++) {
+    user_links_.at(i)->set_bandwidth(link_rates_.at(i));
+  }
 }
 
 void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
