@@ -180,11 +180,11 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
     printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n",
             chosen_user,
             (pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock()) * 
-            pf_sched->user_links_.at(chosen_user)->bandwidth() );
+            pf_sched->link_rates_.at(chosen_user));
 
-    auto remaining_bits = pf_sched->user_links_.at(chosen_user)->bandwidth()*txt -
+    auto remaining_bits = pf_sched->link_rates_.at(chosen_user)*txt -
                           ((pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
-                           * pf_sched->user_links_.at(chosen_user)->bandwidth());
+                           * pf_sched->link_rates_.at(chosen_user));
 
     /* TODO Actually send sliced packet  */
     Agent dummy(PT_CBR);
@@ -197,7 +197,7 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
     /* Log */
     printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
            chosen_user,
-           pf_sched->user_links_.at(chosen_user)->bandwidth()*txt,
+           pf_sched->link_rates_.at(chosen_user)*txt,
            Scheduler::instance().clock());
 
     /* Delete old abeyance if required */
