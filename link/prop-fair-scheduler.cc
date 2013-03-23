@@ -5,6 +5,7 @@
 #include "link/pf-sched-timer.h"
 #include "link/pf-tx-timer.h"
 #include "common/agent.h"
+#include "rtp.h"
 
 static class PFSchedulerClass : public TclClass {
  public :
@@ -181,14 +182,13 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
 
   /* Check if packet txtime spills over into the next time slot. If so, slice it */
   if(txt+Scheduler::instance().clock() > pf_sched->current_slot_ + pf_sched->slot_duration_) {
-    printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n",
-            chosen_user,
-            (pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock()) * 
-            pf_sched->link_rates_.at(chosen_user));
-
+    auto sliced_bits =(pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
+                      * pf_sched->link_rates_.at(chosen_user);
     auto remaining_bits = pf_sched->link_rates_.at(chosen_user)*txt -
                           ((pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
                            * pf_sched->link_rates_.at(chosen_user));
+    printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n",
+            chosen_user, sliced_bits);
 
     /* TODO Actually send sliced packet  */
     Agent dummy(PT_CBR);
