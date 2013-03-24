@@ -114,7 +114,10 @@ class QueueHandler : public Handler {
 public:
 	inline QueueHandler(Queue& q) : queue_(q) {}
 	void handle(Event*);
+	void deactivate() { active_queue_ = 0; }
+	void activate() { active_queue_ = 1; }
 private:
+	int active_queue_;
 	Queue& queue_;
 };
 
@@ -144,6 +147,8 @@ public:
 	double peak_utilization(void);
 	virtual ~Queue();
 	QueueHandler qh_;
+
+	int command(int argc, const char*const* argv);
 
 protected:
 	Queue();
