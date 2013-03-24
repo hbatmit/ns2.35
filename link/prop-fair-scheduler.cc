@@ -188,19 +188,17 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
     printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
 
     /* Slice packet */
-    Packet* sliced_pkt = p->copy();
-    hdr_cmn::access(sliced_pkt)->size()=floor(sliced_bits/8);
-    hdr_cmn::access(sliced_pkt)->ptype()=PT_CELLULAR;
+    Packet* sliced_pkt = hdr_cellular::slice(p, floor(sliced_bits/8));
 
     /* Find remnants of the packet */
     Packet *remnants = p->copy();
-    hdr_cmn::access(remnants)->size()=hdr_cmn::access(p)->size()-hdr_cmn::access(sliced_pkt)->size();
-    hdr_cmn::access(remnants)->ptype()=PT_CELLULAR;
+    auto remaining_bytes=hdr_cmn::access(p)->size()-hdr_cmn::access(sliced_pkt)->size();
 
-    /* Fill in the fields of sliced and remnant packet */
-    hdr_cellular::access(sliced_pkt)->last_fragment_=false;
-    hdr_cellular::access(remnants)->last_fragment_=true;
-
+    /* Fill in the fields of remnant packet to match sliced packet */
+    hdr_cellular::fill_in(remnants, remaining_bytes, true,
+                          hdr_cellular::access(sliced_pkt)->tunneled_type_,
+                          hdr_cellular::access(sliced_pkt)->original_size_);
+    
     /* Send slice and put remnants in abeyance */
     pf_sched->user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
     pf_sched->abeyance_.at(chosen_user) = remnants;
