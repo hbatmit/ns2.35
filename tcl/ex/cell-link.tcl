@@ -105,6 +105,9 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   # Infinite buffer
   $cell_queue set limit_ 1000000000
 
+  # Deactivate forward queue
+  $cell_queue deactivate_queue
+
   # Attach trace_file to queue.
   $ns trace-queue $basestation $udp_server_node($i) $trace_file
 
