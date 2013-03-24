@@ -5,6 +5,7 @@
 #include "link/pf-sched-timer.h"
 #include "link/pf-tx-timer.h"
 #include "common/agent.h"
+#include "link/cell_header.h"
 
 static class PFSchedulerClass : public TclClass {
  public :
@@ -197,10 +198,13 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
     /* Fill in the fields of sliced and remnant packet */
     *(hdr_ip::access(sliced_pkt))=*(hdr_ip::access(p));
     *(hdr_ip::access(remnants))=*(hdr_ip::access(p));
+    hdr_cellular::access(sliced_pkt)->last_fragment_=false;
+    hdr_cellular::access(remnants)->last_fragment_=true;
 
     /* Send slice and put remnants in abeyance */
     pf_sched->user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
     pf_sched->abeyance_.at(chosen_user) = remnants;
+
   } else {
     /* Send packet onward */
     pf_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
