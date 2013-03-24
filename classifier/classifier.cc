@@ -41,6 +41,7 @@ static const char rcsid[] =
 #include "config.h"
 #include "classifier.h"
 #include "packet.h"
+#include "link/cell_header.h"
 
 static class ClassifierClass : public TclClass {
 public:
@@ -150,6 +151,18 @@ void Classifier::recv(Packet* p, Handler*h)
 		Packet::free(p);
 		return;
 	}
+
+        /* ANIRUDH: Cellular Reassembly logic */
+        if (hdr_cmn::access(p)->ptype()==PT_CELLULAR) {
+          if (!hdr_cellular::access(p)->last_fragment_) {
+            /* Haven't yet received the last fragment */
+            Packet::free(p);
+            return;
+          } else {
+            hdr_cmn::access(p)->ptype()=hdr_cellular::access(p)->tunneled_type_;
+            hdr_cmn::access(p)->size() =hdr_cellular::access(p)->original_size_;
+          }
+        }
 	node->recv(p,h);
 }
 
