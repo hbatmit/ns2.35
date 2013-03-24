@@ -199,9 +199,11 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
     hdr_ip::access(sliced_pkt)->src()=hdr_ip::access(p)->src();
     hdr_ip::access(sliced_pkt)->dst()=hdr_ip::access(p)->dst();
     hdr_ip::access(sliced_pkt)->flowid()=hdr_ip::access(p)->flowid();
+    hdr_ip::access(sliced_pkt)->ttl()=hdr_ip::access(p)->ttl();
     hdr_ip::access(remnants)->src()=hdr_ip::access(p)->src();
     hdr_ip::access(remnants)->dst()=hdr_ip::access(p)->dst();
     hdr_ip::access(remnants)->flowid()=hdr_ip::access(p)->flowid();
+    hdr_ip::access(remnants)->ttl()=hdr_ip::access(p)->ttl();
 
     /* Send slice and put remnants in abeyance */
     pf_sched->user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
