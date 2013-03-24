@@ -5,7 +5,6 @@
 #include "link/pf-sched-timer.h"
 #include "link/pf-tx-timer.h"
 #include "common/agent.h"
-#include "rtp.h"
 
 static class PFSchedulerClass : public TclClass {
  public :
@@ -196,14 +195,8 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
     hdr_cmn::access(remnants)->size()=hdr_cmn::access(p)->size()-hdr_cmn::access(sliced_pkt)->size();
 
     /* Fill in the fields of sliced and remnant packet */
-    hdr_ip::access(sliced_pkt)->src()=hdr_ip::access(p)->src();
-    hdr_ip::access(sliced_pkt)->dst()=hdr_ip::access(p)->dst();
-    hdr_ip::access(sliced_pkt)->flowid()=hdr_ip::access(p)->flowid();
-    hdr_ip::access(sliced_pkt)->ttl()=hdr_ip::access(p)->ttl();
-    hdr_ip::access(remnants)->src()=hdr_ip::access(p)->src();
-    hdr_ip::access(remnants)->dst()=hdr_ip::access(p)->dst();
-    hdr_ip::access(remnants)->flowid()=hdr_ip::access(p)->flowid();
-    hdr_ip::access(remnants)->ttl()=hdr_ip::access(p)->ttl();
+    *(hdr_ip::access(sliced_pkt))=*(hdr_ip::access(p));
+    *(hdr_ip::access(remnants))=*(hdr_ip::access(p));
 
     /* Send slice and put remnants in abeyance */
     pf_sched->user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
