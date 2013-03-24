@@ -40,6 +40,7 @@ static const char rcsid[] =
 #include "delay.h"
 #include "mcast_ctrl.h"
 #include "ctrMcast.h"
+#include "link/cell_header.h"
 
 static class LinkDelayClass : public TclClass {
 public:
@@ -109,6 +110,17 @@ void LinkDelay::recv(Packet* p, Handler* h)
  		}
 
 	} else {
+                /* ANIRUDH: Cellular Reassembly logic */
+                if (hdr_cmn::access(p)->ptype()==PT_CELLULAR) {
+                  if (!hdr_cellular::access(p)->last_fragment_) {
+                    /* Haven't yet received the last fragment */
+                    Packet::free(p);
+                    return;
+                  } else {
+                    hdr_cmn::access(p)->ptype()=hdr_cellular::access(p)->tunneled_type_;
+                    hdr_cmn::access(p)->size() =hdr_cellular::access(p)->original_size_;
+                  }
+                }
 		s.schedule(target_, p, txt + delay_);
 	}
 	_bits_dequeued+= (8 * hdr_cmn::access(p)->size());
