@@ -188,16 +188,16 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
     printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
 
     /* Slice packet */
-    Packet* sliced_pkt = pf_sched->slicing_agent_.allocpkt();
+    Packet* sliced_pkt = p->copy();
     hdr_cmn::access(sliced_pkt)->size()=floor(sliced_bits/8);
+    hdr_cmn::access(sliced_pkt)->ptype()=PT_CELLULAR;
 
     /* Find remnants of the packet */
-    Packet *remnants = pf_sched->slicing_agent_.allocpkt();
+    Packet *remnants = p->copy();
     hdr_cmn::access(remnants)->size()=hdr_cmn::access(p)->size()-hdr_cmn::access(sliced_pkt)->size();
+    hdr_cmn::access(remnants)->ptype()=PT_CELLULAR;
 
     /* Fill in the fields of sliced and remnant packet */
-    *(hdr_ip::access(sliced_pkt))=*(hdr_ip::access(p));
-    *(hdr_ip::access(remnants))=*(hdr_ip::access(p));
     hdr_cellular::access(sliced_pkt)->last_fragment_=false;
     hdr_cellular::access(remnants)->last_fragment_=true;
 
