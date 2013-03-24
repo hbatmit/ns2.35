@@ -185,16 +185,15 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
   if(txt+Scheduler::instance().clock() > pf_sched->current_slot_ + pf_sched->slot_duration_) {
     auto sliced_bits =(pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
                       * pf_sched->link_rates_.at(chosen_user);
-    auto remaining_bits = hdr_cmn::access(p)->size()*8 - sliced_bits;
     printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
 
     /* Slice packet */
     Packet* sliced_pkt = pf_sched->slicing_agent_.allocpkt();
-    hdr_cmn::access(sliced_pkt)->size()=sliced_bits/8;
+    hdr_cmn::access(sliced_pkt)->size()=floor(sliced_bits/8);
 
     /* Find remnants of the packet */
     Packet *remnants = pf_sched->slicing_agent_.allocpkt();
-    hdr_cmn::access(remnants)->size()=remaining_bits/8;
+    hdr_cmn::access(remnants)->size()=hdr_cmn::access(p)->size()-hdr_cmn::access(sliced_pkt)->size();
 
     /* Fill in the fields of sliced and remnant packet */
     hdr_ip::access(sliced_pkt)->src()=hdr_ip::access(p)->src();
