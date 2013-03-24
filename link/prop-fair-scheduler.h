@@ -8,6 +8,7 @@
 #include "link/delay.h"
 #include "rate-gen.h"
 #include "cdma-rates.h"
+#include "common/agent.h"
 
 /* Forward declarations */
 class PFSchedTimer;
@@ -85,6 +86,9 @@ class PFScheduler : public TclObject {
 
   /* Vector of abeyant packets */
   std::vector<Packet*> abeyance_;
+
+  /* Slicing Agent */
+  Agent slicing_agent_;
 };
 
 #endif

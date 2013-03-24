@@ -27,7 +27,8 @@ PFScheduler::PFScheduler()
       rate_generators_( std::vector<RateGen> () ),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
-      abeyance_(std::vector<Packet*>()) {
+      abeyance_(std::vector<Packet*>()),
+      slicing_agent_(Agent(PT_CELLULAR)) {
   bind("num_users_", &num_users_);
   bind("slot_duration_", &slot_duration_);
   sched_timer_ = new PFSchedTimer(this, slot_duration_);
@@ -184,28 +185,29 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
   if(txt+Scheduler::instance().clock() > pf_sched->current_slot_ + pf_sched->slot_duration_) {
     auto sliced_bits =(pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
                       * pf_sched->link_rates_.at(chosen_user);
-    auto remaining_bits = pf_sched->link_rates_.at(chosen_user)*txt -
-                          ((pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
-                           * pf_sched->link_rates_.at(chosen_user));
-    printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n",
-            chosen_user, sliced_bits);
+    auto remaining_bits = hdr_cmn::access(p)->size()*8 - sliced_bits;
+    printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
 
-    /* TODO Actually send sliced packet  */
-    Agent dummy(PT_CBR);
-    Packet* p = dummy.allocpkt(remaining_bits / 8);
-    hdr_cmn::access(p)->size() = remaining_bits / 8;
-    pf_sched->abeyance_.at(chosen_user) = p;
+    /* Slice packet and send it  */
+    Packet* sliced_pkt = pf_sched->slicing_agent_.allocpkt();
+    hdr_cmn::access(sliced_pkt)->size()=sliced_bits/8;
+    pf_sched->user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
+
+    /* Put remaining bits in abeyance */
+    Packet *remnants = pf_sched->slicing_agent_.allocpkt();
+    hdr_cmn::access(remnants)->size()=remaining_bits/8;
+    pf_sched->abeyance_.at(chosen_user) = remnants;
   } else {
     /* Send packet onward */
-    if(transmit) pf_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
+    pf_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
+
     /* Log */
     printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
            chosen_user,
            pf_sched->link_rates_.at(chosen_user)*txt,
            Scheduler::instance().clock());
 
-    /* Delete old abeyance if required */
-    delete (pf_sched->abeyance_.at(chosen_user));
+    /* Reset old abeyance */
     pf_sched->abeyance_.at(chosen_user) = nullptr;
 
     /* schedule next packet transmission */
