@@ -14,6 +14,13 @@ static class SFDClass : public TclClass {
 
 int SFD::command(int argc, const char*const* argv)
 {
+  if (argc == 3) {
+    if (!strcmp(argv[1], "user_id")) {
+      user_id=atoi(argv[2]);
+      printf("Setting user_id to %d \n", user_id);
+      return TCL_OK;
+    }
+  }
   return LinkAwareQueue::command(argc, argv);
 }
 
@@ -27,8 +34,7 @@ SFD::SFD() :
   bind("_qdisc", &_qdisc );
   bind("_K", &_K );
   bind("_headroom", &_headroom );
-  bind("user_id", &user_id);
-  fprintf( stderr,  "SFD: _iter %d, _qdisc %d , _K %f, _headroom %f, user_id %d \n", _iter, _qdisc, _K, _headroom, user_id );
+  fprintf( stderr,  "SFD: _iter %d, _qdisc %d , _K %f, _headroom %f \n", _iter, _qdisc, _K, _headroom );
   _dropper.set_iter( _iter );
   _rate_estimator = SfdRateEstimator( _K, _headroom );
 }
@@ -42,16 +48,17 @@ void SFD::enque(Packet *p)
   double arrival_rate = _rate_estimator.est_flow_arrival_rate( user_id, now, p );
 
   /* Estimate current link rate with an EWMA filter. */
+  printf("User id is %d \n", user_id);
   auto current_link_rate = _rate_estimator.est_flow_link_rate(user_id, now, _link->bandwidth());
 
   /* Divide Avg. link rate by # of active flows to get fair share */
-  auto _fair_share = current_link_rate/5 /* TODO: Fix this */;
+  auto _fair_share = current_link_rate/_scheduler->num_users();
 
   /* Print everything */
   print_stats( now );
 
   /* Compute drop_probability */
-  double drop_probability = std::max( 0.0 , 1 - _fair_share/arrival_rate );
+  double drop_probability = (arrival_rate == 0) ? 0 : std::max( 0.0 , 1 - _fair_share/arrival_rate );
 
   /* Toss a coin and drop */
   if ( !_dropper.should_drop( drop_probability ) ) {
