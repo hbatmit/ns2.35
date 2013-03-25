@@ -1638,11 +1638,6 @@ Agent/PBC set modulationScheme 0
 Agent/MDART set macFailed_ true
 Agent/MDART set etxMetric_ true
 
-# Cellular link defaults
-DelayLink/CellLink set _num_users 5
-DelayLink/CellLink set _iter      1
-DelayLink/CellLink set _slot_duration 0.167
-
 # BrownianLink defaults
 DelayLink/BrownianLink set _min_rate 1000000
 DelayLink/BrownianLink set _max_rate 10000000
