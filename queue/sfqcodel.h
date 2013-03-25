@@ -1,8 +1,10 @@
 /*
  * sfqCodel - The Controlled-Delay Active Queue Management algorithm
- * combined with stochastic flow binning ("smart flow queuing" as
- * suggested by Jim Gettys)
- * Copyright (C) 2011-2012 Kathleen Nichols <nichols@pollere.com>
+ * Copyright (C) 2011-2013 Kathleen Nichols <nichols@pollere.com>
+ *
+ * Portions of this source code were developed under contract with Cable
+ * Television Laboratories, Inc.
+ *
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,12 +34,22 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * If using this module, add the following lines to tcl/lib/ns-default.tcl:
+ *
+ *
+ *	Queue/sfqCoDel set curq_ 0.0
+ *	Queue/sfqCoDel set d_exp_ 0.0
+ *	Queue/sfqCoDel set interval_ 0.1
+ *	Queue/sfqCoDel set target_ .005
+ *	Queue/sfqCoDel set maxbins_ 1024
+ *	Queue/sfqCoDel set quantum_ 0
  */
 
 #ifndef ns_sfqcodel_h
 #define ns_sfqcodel_h
 
-#include "link-aware-queue.h"
+#include "queue.h"
 #include <stdlib.h>
 #include "agent.h"
 #include "template.h"
@@ -59,17 +71,29 @@ struct dodequeResult { Packet* p; int ok_to_drop; };
         int count_;             // how many drops we've done since the last time
                             // we entered dropping state.
         int dropping_;          // = 1 if in dropping state.
+	int deficit_;		// for rounding on bytes
 
         int newflag;
 	int on_sched_;
         bindesc* prev;
         bindesc* next;
-        int src;    //to detect collisions keep track of actual src address
     } ;
 
-class sfqCoDelQueue : public LinkAwareQueue {
+class sfqCoDelQueue : public Queue {
   public:   
     sfqCoDelQueue();
+
+/* The following lines were added by CableLabs for their purposes but
+ * require other changes to ns-2 so are commented out for general use
+         //adding a length() method to allow for length queries - JRP
+    virtual int length() { return curlen_;}  // return number of pkts currently in
+                         // queue i.e. total occupancy of all bins
+
+        virtual int byteLength() { return curq_; }  // number of bytes
+                         // currently in all bins
+*/
+
+
   protected:
     // Stuff specific to the CoDel algorithm
     void enque(Packet* pkt);
@@ -89,7 +113,12 @@ class sfqCoDelQueue : public LinkAwareQueue {
 
     int maxpacket_;         // largest packet we've seen so far (this should be
                             // the link's MTU but that's not available in NS)
+int mtu_max_;
     int curlen_;	    // the total occupancy of all bins in packets
+    int maxbinid_;	    // id of bin with the most pkts
+    int maxbins_;	    // for tcl override of MAXBINS (can only make smaller)
+    int quantum_;	    // for rounding by bytes - set to 1510 in tcl file
+    int isolate_;	    // for isolating cbrs. To isolate, set to 1, default 0
 
     // NS-specific junk
     int command(int argc, const char*const* argv);
@@ -100,13 +129,12 @@ class sfqCoDelQueue : public LinkAwareQueue {
     TracedInt curq_;        // current qlen in bytes seen by arrivals
     TracedDouble d_exp_;    // delay seen by most recently dequeued packet
 
-    virtual std::vector<uint64_t> backlogged_flowids( void ) const override;
   private:
     double control_law(double);
     dodequeResult dodeque(PacketQueue*);
     unsigned int hash(Packet*);
     bindesc* readybin();
-    void removebin(bindesc*);
+    bindesc* removebin(bindesc*);
 };
 
 #endif
