@@ -66,7 +66,7 @@
 #include "delay.h"
 #include "sfqcodel.h"
 
-#include "docsislink.h"
+//#include "docsislink.h"
 
 static class sfqCoDelClass : public TclClass {
   public:
