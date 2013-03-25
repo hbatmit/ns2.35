@@ -85,12 +85,14 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create node
   set tcp_server_node($i) [ $ns node ]
-  $ns duplex-link $basestation $tcp_server_node($i) [ bw_parse $opt(bottleneck_bw) ]  $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $basestation $tcp_server_node($i) [ bw_parse $opt(bottleneck_bw) ]  $opt(bottleneck_latency) $opt(bottleneck_qdisc)
+  $ns simplex-link $tcp_server_node($i) $basestation [ bw_parse $opt(bottleneck_bw) ]  $opt(bottleneck_latency) DropTail
 
   # Attach queue and link to PF scheduler
   set cell_link [ [ $ns link $basestation $tcp_server_node($i) ] link ]
   set cell_queue [ [ $ns link $basestation $tcp_server_node($i) ] queue ]
 
+  # All the non-standard queue neutering:
   # block queues
   $cell_queue set blocked_ 1
   $cell_queue set unblock_on_resume_ 0
@@ -100,6 +102,13 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 
   # Deactivate forward queue
   $cell_queue deactivate_queue
+
+  # Set user id
+  if { $opt(bottleneck_qdisc) == "SFD" } {
+    $cell_queue user_id $i
+    $cell_queue attach-link $cell_link
+    $cell_queue attach-sched $pf_scheduler
+  }
 
   # Attach trace_file to queue.
   $ns trace-queue $basestation $tcp_server_node($i) $trace_file
@@ -116,6 +125,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   $ns connect $tcp_client($i) $tcp_server($i)
 }
 
+# Activate PF scheduler
 $pf_scheduler activate-link-scheduler
 # Run simulation
 $ns at $opt(duration) "finish $ns $trace_file"
