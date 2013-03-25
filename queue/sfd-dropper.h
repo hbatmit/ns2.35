@@ -13,18 +13,12 @@
 
 class SfdDropper {
   private :
-    std::map<uint64_t,PacketQueue*> const * _packet_queues;
     RNG* _pkt_dropper;
-    RNG* _queue_picker;
     int _iter;
 
   public :
     /* constructor */
-    SfdDropper( std::map<uint64_t,PacketQueue*>* packet_queues );
-
-    /* Pick one of the longest queues,
-       breaking ties at random */
-    uint64_t longest_queue( void );
+    SfdDropper();
 
     /* Calc drop_probability using fair share equation */
     double drop_probability( double fair_share, double arrival_rate );
