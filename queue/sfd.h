@@ -48,6 +48,7 @@ class SFD : public LinkAwareQueue {
     /* inherited functions from queue */
     virtual void enque( Packet *p ) override;
     virtual Packet* deque() override;
+    virtual bool empty() const { return (_packet_queue->byteLength() == 0); }
 };
 
 #endif
