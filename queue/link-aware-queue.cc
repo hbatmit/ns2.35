@@ -4,7 +4,7 @@ int LinkAwareQueue::command( int argc, const char*const* argv )
 {
   if(argc==3) {
     if(!strcmp(argv[1],"attach-link")) {
-      _link=(CellLink*) TclObject::lookup( argv[2] );
+      _link=(LinkDelay*) TclObject::lookup( argv[2] );
       return TCL_OK;
     }
   }
