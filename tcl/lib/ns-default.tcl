@@ -83,7 +83,7 @@ Integrator set lasty_ 0.0
 Integrator set sum_ 0.0
 
 # 10->50 to be like ns-1
-Queue set limit_ 50
+Queue set limit_ 1000000000
 Queue set blocked_ false
 Queue set unblock_on_resume_ true
 
