@@ -201,7 +201,7 @@ OBJ_CC = \
 	tools/flowmon.o tools/loss-monitor.o \
 	queue/queue.o queue/drop-tail.o \
 	adc/simple-intserv-sched.o queue/red.o queue/codel.o queue/sfqcodel.o \
-        queue/sfd.o queue/flow-stats.o queue/link-aware-queue.o link/cell-link.o \
+        queue/sfd.o queue/flow-stats.o queue/link-aware-queue.o \
         link/prop-fair-scheduler.o link/rate-gen.o \
         link/pf-sched-timer.o link/pf-tx-timer.o \
         link/cell_header.o \
