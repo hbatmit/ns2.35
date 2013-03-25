@@ -46,6 +46,9 @@ class PFScheduler : public TclObject {
   /* Helper function, transmit after slicing (if reqd) */
   static void slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user, bool transmit);
 
+  /* Number of users */
+  uint32_t num_users(void) const { return num_users_; }
+
  private:
   /* generate new rates, assume perfect information */
   void generate_new_rates(void);
