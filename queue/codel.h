@@ -75,6 +75,7 @@ class CoDelQueue : public Queue {
     Tcl_Channel tchan_;     // place to write trace records
     TracedInt curq_;        // current qlen seen by arrivals
     TracedDouble d_exp_;    // delay seen by most recently dequeued packet
+    bool empty() const;
 
   private:
     double control_law(double);

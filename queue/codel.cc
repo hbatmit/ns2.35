@@ -264,3 +264,8 @@ CoDelQueue::trace(TracedVar* v)
         (void)Tcl_Write(tchan_, wrk, n+1);
     }
 }
+
+bool CoDelQueue::empty() const
+{
+  return (q_->byteLength()==0);
+}
