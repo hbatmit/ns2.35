@@ -18,7 +18,6 @@ double EwmaEstimator::update( double now, double current_rate )
 {
   /* Ensure some time has passed since last update */
   auto inter_update_interval = now - _last_update;
-  assert( inter_update_interval > 0 );
 
   /* Apply EWMA */
   _last_update = now;
