@@ -782,6 +782,7 @@ int LinuxTcpAgent::command(int argc, const char*const* argv)
 		printf("%s %s %s\n", argv[0], argv[1], argv[2]);
 		if (install_congestion_control(argv[2])==FALSE) {
 			printf("Error: do not find %s as a congestion control algorithm\n", argv[2]);
+                        exit(-5);
 			cong_ops_manager.dump();
 		}
 		return (TCL_OK);
@@ -790,6 +791,7 @@ int LinuxTcpAgent::command(int argc, const char*const* argv)
 		printf("%s %s %s %s %s\n", argv[0], argv[1], argv[2], argv[3], argv[4]);
 		if (!paramManager.set_param(argv[2], argv[3], atoi(argv[4]))) {
 			printf("Error: do not find %s as a parameter for congestion control algorithm %s\n", argv[3], argv[2]);
+                        exit(-5);
 		};
 		return (TCL_OK);
 	};
@@ -798,6 +800,7 @@ int LinuxTcpAgent::command(int argc, const char*const* argv)
 		int res;
 		if (!paramManager.get_param(argv[2], argv[3], &res)) {
 			printf("Error: do not find %s as a parameter for congestion control algorithm %s\n", argv[3], argv[2]);
+                        exit(-5);
 		} else {
 			printf("tcp_%s.%s = %d\n", argv[2], argv[3], res);
 		};
@@ -807,6 +810,7 @@ int LinuxTcpAgent::command(int argc, const char*const* argv)
 		printf("%s %s %s %s %s\n", argv[0], argv[1], argv[2], argv[3], argv[4]);
 		if (!paramManager.set_default_param(argv[2], argv[3], atoi(argv[4]))) {
 			printf("Error: do not find %s as a parameter for congestion control algorithm %s\n", argv[3], argv[2]);
+                        exit(-5);
 		};
 		return (TCL_OK);
 	};
@@ -815,6 +819,7 @@ int LinuxTcpAgent::command(int argc, const char*const* argv)
 		int res;
 		if (!paramManager.get_default_param(argv[2], argv[3], &res)) {
 			printf("Error: do not find %s as a parameter for congestion control algorithm %s\n", argv[3], argv[2]);
+                        exit(-5);
 		} else {
 			printf("tcp_%s.%s = %d\n", argv[2], argv[3], res);
 		};
@@ -824,6 +829,7 @@ int LinuxTcpAgent::command(int argc, const char*const* argv)
 		printf("%s %s %s\n", argv[0], argv[1], argv[2]);
 		if (!paramManager.query_param(argv[2])) {
 			printf("Error: %s is not a congestion control algorithm or has no parameter\n", argv[2]);
+                        exit(-5);
 		};
 		return (TCL_OK);
 	};
