@@ -3,9 +3,8 @@
 #include <list>
 #include <float.h>
 
-SfdRateEstimator::SfdRateEstimator( double K, double headroom ) :
-  _K( K ),
-  _headroom( headroom )
+SfdRateEstimator::SfdRateEstimator( double K ) :
+  _K( K )
 {}
 
 double SfdRateEstimator::est_flow_link_rate( uint64_t flow_id, double now, double current_link_rate )

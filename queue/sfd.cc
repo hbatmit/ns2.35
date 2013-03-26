@@ -28,15 +28,14 @@ SFD::SFD() :
   LinkAwareQueue(),
   _packet_queue( new PacketQueue() ),
   _dropper(),
-  _rate_estimator( 0.0, 0.0 )
+  _rate_estimator( 0.0 )
 {
   bind("_iter", &_iter );
-  bind("_qdisc", &_qdisc );
   bind("_K", &_K );
   bind("_headroom", &_headroom );
-  fprintf( stderr,  "SFD: _iter %d, _qdisc %d , _K %f, _headroom %f \n", _iter, _qdisc, _K, _headroom );
+  fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f \n", _iter, _K, _headroom );
   _dropper.set_iter( _iter );
-  _rate_estimator = SfdRateEstimator( _K, _headroom );
+  _rate_estimator = SfdRateEstimator( _K );
 }
 
 void SFD::enque(Packet *p)
@@ -48,11 +47,11 @@ void SFD::enque(Packet *p)
   double arrival_rate = _rate_estimator.est_flow_arrival_rate( user_id, now, p );
 
   /* Estimate current link rate with an EWMA filter. */
-  printf("User id is %d \n", user_id);
   auto current_link_rate = _rate_estimator.est_flow_link_rate(user_id, now, _link->bandwidth());
-
+  
   /* Divide Avg. link rate by # of active flows to get fair share */
-  auto _fair_share = current_link_rate/_scheduler->num_users();
+  auto _fair_share = (current_link_rate * (1-_headroom)) / _scheduler->num_users();
+  printf("User id is %d, _fair_share is %f \n", user_id, _fair_share);
 
   /* Print everything */
   print_stats( now );

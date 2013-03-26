@@ -20,14 +20,13 @@ class SfdRateEstimator {
     /* Per flow stats for rate estimation (borrowed from CSFQ) */
     std::map<uint64_t,FlowStats> _flow_stats;
     double  _K;        /* default : 200 ms */
-    double  _headroom; /* default : 0.05 */
 
     /* init. flow data structures */
     void init_flow_stats( uint32_t flow_id );
 
   public :
     /* Constructor */
-    SfdRateEstimator( double _K, double _headroom );
+    SfdRateEstimator( double _K );
 
     /* Per flow arrival rate */
     double est_flow_arrival_rate( uint64_t flow_id, double now, Packet* p );
