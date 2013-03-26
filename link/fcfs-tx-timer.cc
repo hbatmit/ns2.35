@@ -8,5 +8,5 @@ FcfsTxTimer::FcfsTxTimer(FcfsScheduler * fcfs_sched)
       fcfs_sched_(fcfs_sched) {}
 
 void FcfsTxTimer::expire(Event *e) {
-    FcfsScheduler::transmit_pkt(fcfs_sched_, fcfs_sched_->tx_timer_);
+    fcfs_sched_->transmit_pkt();
 }

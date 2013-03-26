@@ -28,7 +28,7 @@ class FcfsScheduler : public EnsembleScheduler {
   virtual int command(int argc, const char*const* argv) override;
 
   /* Transmit packet */
-  static void transmit_pkt(FcfsScheduler* pf_sched, FcfsTxTimer* tx_timer);
+  void transmit_pkt();
 
   /* Timers */
   FcfsTxTimer* tx_timer_;

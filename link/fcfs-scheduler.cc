@@ -42,39 +42,39 @@ int FcfsScheduler::command(int argc, const char*const* argv) {
   return EnsembleScheduler::command(argc, argv);
 }
 
-void FcfsScheduler::transmit_pkt(FcfsScheduler* fcfs_sched, FcfsTxTimer* tx_timer ) {
+void FcfsScheduler::transmit_pkt() {
   /* Update rates */
-  fcfs_sched->generate_new_rates();
+  generate_new_rates();
 
   /* Get chosen user */
-  uint32_t chosen_user = fcfs_sched->pick_user_to_schedule();
+  uint32_t chosen_user = pick_user_to_schedule();
 
   /* If no one was scheduled, return */
   if (chosen_user==(uint32_t)-1) {
     /* Check every FALLBACK_INTERVAL at least */
-    tx_timer->resched(FALLBACK_INTERVAL);
+    tx_timer_->resched(FALLBACK_INTERVAL);
     return;
   }
 
   /* Get one packet from chosen user */
-  Packet *p = fcfs_sched->user_queues_.at(chosen_user)->deque();
+  Packet *p = user_queues_.at(chosen_user)->deque();
   assert(p!=nullptr);
 
   /* Get queue_handler */
-  auto queue_handler = &fcfs_sched->user_queues_.at(chosen_user)->qh_;
+  auto queue_handler = &user_queues_.at(chosen_user)->qh_;
 
   /* Get transmission time */
-  double txt = fcfs_sched->user_links_.at(chosen_user)->txtime(p);
+  double txt = user_links_.at(chosen_user)->txtime(p);
 
   /* Send packet onward */
-  fcfs_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
+  user_links_.at(chosen_user)->recv(p, queue_handler);
 
   /* Log */
   printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
          chosen_user,
-         fcfs_sched->link_rates_.at(chosen_user)*txt,
+         link_rates_.at(chosen_user)*txt,
          Scheduler::instance().clock());
 
   /* schedule next packet transmission */
-  tx_timer->resched(txt);
+  tx_timer_->resched(txt);
 }
