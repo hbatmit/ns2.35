@@ -36,6 +36,8 @@ int FcfsScheduler::command(int argc, const char*const* argv) {
   if (argc == 2) {
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
       tx_timer_->resched( FALLBACK_INTERVAL );
+      /* generate rates to start with */
+      generate_new_rates();
       return TCL_OK;
     }
   }

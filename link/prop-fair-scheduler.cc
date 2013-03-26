@@ -39,6 +39,8 @@ int PFScheduler::command(int argc, const char*const* argv) {
   if (argc == 2) {
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
       sched_timer_->resched( slot_duration_ );
+      /* generate rates to start with */
+      generate_new_rates();
       tick();
       return TCL_OK;
     }
