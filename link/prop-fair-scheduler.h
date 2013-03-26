@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <vector>
-#include "common/timer-handler.h"
 #include "common/agent.h"
 #include "link/ensemble-scheduler.h"
 
