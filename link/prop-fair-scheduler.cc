@@ -31,22 +31,15 @@ PFScheduler::PFScheduler()
   abeyance_ = std::vector<Packet*>(num_users_);
   for ( uint32_t i=0; i < num_users_; i++ ) {
     mean_achieved_rates_.at( i )=0.0;
+    abeyance_.at(i) = nullptr;
   }
 }
+
 int PFScheduler::command(int argc, const char*const* argv) {
   if (argc == 2) {
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
       sched_timer_->resched( slot_duration_ );
       tick();
-      return TCL_OK;
-    }
-  }
-  if(argc == 4) {
-    if(!strcmp(argv[1],"attach-queue")) {
-      uint32_t user_id = atoi(argv[ 3 ]);
-      abeyance_.at(user_id) = nullptr;
-      /* delegate */
-      EnsembleScheduler::command(argc,argv);
       return TCL_OK;
     }
   }
