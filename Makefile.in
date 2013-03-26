@@ -206,6 +206,7 @@ OBJ_CC = \
         link/prop-fair-scheduler.o link/rate-gen.o \
         link/pf-sched-timer.o link/pf-tx-timer.o \
         link/cell_header.o \
+        link/fcfs-scheduler.o link/fcfs-tx-timer.o \
         queue/sfd-rate-estimator.o queue/sfd-scheduler.o queue/sfd-dropper.o \
         link/poisson-link.o link/brownian-link.o link/trace-link.o \
 	queue/semantic-packetqueue.o queue/semantic-red.o \
