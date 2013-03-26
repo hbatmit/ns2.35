@@ -134,7 +134,11 @@ public:
 	void unblock() { blocked_ = 0; }
 	void block() { blocked_ = 1; }
 	int limit() { return qlim_; }
+
+        /* Additions to support SFD etc */
         virtual bool empty() const;
+        virtual double get_hol() const;
+
 	int length() { return pq_->length(); }	/* number of pkts currently in
 						 * underlying packet queue */
 	int byteLength() { return pq_->byteLength(); }	/* number of bytes *

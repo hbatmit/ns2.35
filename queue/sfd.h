@@ -1,6 +1,7 @@
 #ifndef ns_sfd_h
 #define ns_sfd_h
 
+#include <float.h>
 #include <string.h>
 #include "link-aware-queue.h"
 #include <map>
@@ -48,7 +49,9 @@ class SFD : public LinkAwareQueue {
     /* inherited functions from queue */
     virtual void enque( Packet *p ) override;
     virtual Packet* deque() override;
-    virtual bool empty() const { return (_packet_queue->byteLength() == 0); }
+    virtual bool empty() const override { return (_packet_queue->byteLength() == 0); }
+    virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(_packet_queue->head())->timestamp(); }
+
 };
 
 #endif

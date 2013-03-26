@@ -251,7 +251,14 @@ void Queue::reset()
 
 bool Queue::empty() const
 {
-  printf("Empty() not implemented \n");
+  printf("Empty() not implemented. Aborting ... \n");
   exit(5);
+  return false;
+}
+
+double Queue::get_hol() const
+{
+  printf("get_hol() not implemented. Aboriting ... \n");
+  exit(6);
   return false;
 }
