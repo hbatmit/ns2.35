@@ -16,7 +16,6 @@ class PFTxTimer;
    of an ensemble of links.
  */
 class PFScheduler : public EnsembleScheduler {
- friend class PFTxTimer;
  public:
   /* Constructor */
   PFScheduler();
@@ -37,10 +36,10 @@ class PFScheduler : public EnsembleScheduler {
   void tick(void);
 
   /* Transmit packet */
-  static void transmit_pkt(PFScheduler* pf_sched, PFTxTimer* tx_timer);
+  void transmit_pkt();
 
   /* Helper function, transmit after slicing (if reqd) */
-  static void slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user, bool transmit);
+  void slice_and_transmit(Packet *p, uint32_t chosen_user);
 
  private:
   /* update mean achieved rates */

@@ -85,7 +85,7 @@ void PFScheduler::tick(void) {
   update_mean_achieved_rates( chosen_user_ );
 
   /* Transmit and reschedule yourself if required */
-  PFScheduler::transmit_pkt(this, this->tx_timer_);
+  transmit_pkt();
 }
 
 void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
@@ -99,36 +99,36 @@ void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   }
 }
 
-void PFScheduler::transmit_pkt(PFScheduler* pf_sched, PFTxTimer* tx_timer ) {
+void PFScheduler::transmit_pkt() {
   /* Get chosen user */
-  uint32_t chosen_user = pf_sched->chosen_user_;
+  uint32_t chosen_user = chosen_user_;
 
   /* If no one was scheduled, return */
   if (chosen_user==(uint32_t)-1) return;
 
   /* Get one packet from chosen user */
   /* First check abeyance_ */
-  Packet* p = pf_sched->abeyance_.at(chosen_user);
+  Packet* p = abeyance_.at(chosen_user);
   if (p==nullptr) {
     /* Now check the main queue */
-    p = pf_sched->user_queues_.at(chosen_user)->deque();
-    if (p!=nullptr) slice_and_transmit(pf_sched, tx_timer, p, chosen_user, true);
+    p = user_queues_.at(chosen_user)->deque();
+    if (p!=nullptr) slice_and_transmit(p, chosen_user);
   } else {
-    slice_and_transmit(pf_sched, tx_timer, p, chosen_user, false);
+    slice_and_transmit(p, chosen_user);
   }
 }
 
-void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user, bool transmit) {
+void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
   /* Get queue_handler */
-  auto queue_handler = &pf_sched->user_queues_.at(chosen_user)->qh_;
+  auto queue_handler = &user_queues_.at(chosen_user)->qh_;
 
   /* Get transmission time */
-  double txt = pf_sched->user_links_.at(chosen_user)->txtime(p);
+  double txt = user_links_.at(chosen_user)->txtime(p);
 
   /* Check if packet txtime spills over into the next time slot. If so, slice it */
-  if(txt+Scheduler::instance().clock() > pf_sched->current_slot_ + pf_sched->slot_duration_) {
-    auto sliced_bits =(pf_sched->current_slot_+ pf_sched->slot_duration_ - Scheduler::instance().clock())
-                      * pf_sched->link_rates_.at(chosen_user);
+  if(txt+Scheduler::instance().clock() > current_slot_ + slot_duration_) {
+    auto sliced_bits =(current_slot_+ slot_duration_ - Scheduler::instance().clock())
+                      * link_rates_.at(chosen_user);
     printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
 
     /* Slice packet */
@@ -144,23 +144,23 @@ void PFScheduler::slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer,
                           hdr_cellular::access(sliced_pkt)->original_size_);
     
     /* Send slice and put remnants in abeyance */
-    pf_sched->user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
-    pf_sched->abeyance_.at(chosen_user) = remnants;
+    user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
+    abeyance_.at(chosen_user) = remnants;
 
   } else {
     /* Send packet onward */
-    pf_sched->user_links_.at(chosen_user)->recv(p, queue_handler);
+    user_links_.at(chosen_user)->recv(p, queue_handler);
 
     /* Log */
     printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
            chosen_user,
-           pf_sched->link_rates_.at(chosen_user)*txt,
+           link_rates_.at(chosen_user)*txt,
            Scheduler::instance().clock());
 
     /* Reset old abeyance */
-    pf_sched->abeyance_.at(chosen_user) = nullptr;
+    abeyance_.at(chosen_user) = nullptr;
 
     /* schedule next packet transmission */
-    tx_timer->resched(txt);
+    tx_timer_->resched(txt);
   }
 }

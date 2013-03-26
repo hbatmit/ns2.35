@@ -70,7 +70,7 @@ void FcfsScheduler::transmit_pkt() {
   user_links_.at(chosen_user)->recv(p, queue_handler);
 
   /* Log */
-  printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
+  printf(" FcfsTxTimer::expire, Chosen_user %d, recving %f bits @ %f \n",
          chosen_user,
          link_rates_.at(chosen_user)*txt,
          Scheduler::instance().clock());

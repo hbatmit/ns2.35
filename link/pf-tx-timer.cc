@@ -7,5 +7,5 @@ PFTxTimer::PFTxTimer(PFScheduler * pf_sched)
       pf_sched_(pf_sched) {}
 
 void PFTxTimer::expire(Event *e) {
-    PFScheduler::transmit_pkt(pf_sched_, pf_sched_->tx_timer_);
+    pf_sched_->transmit_pkt();
 }
