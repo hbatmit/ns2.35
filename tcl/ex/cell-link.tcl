@@ -53,13 +53,24 @@ Usage
 # create basestation
 set basestation [ $ns node ]
 
-# Create PF scheduler
+# Determine number of users
 set num_users [ expr $opt(num_tcp) + $opt(num_udp)  ]
 puts "Num users is $num_users, cdma rates available for $opt(cdma_users) users "
 assert ( $num_users <= $opt(cdma_users) );
+
+# Change parameters for both schedulers */
+FcfsScheduler set num_users_ $num_users
 PFScheduler set num_users_ $num_users
 PFScheduler set slot_duration_  0.00167
-set pf_scheduler [ new PFScheduler ]
+if { $opt(ensemble_scheduler) == "pf" } {
+  set ensemble_scheduler [ new PFScheduler ]
+} elseif { $opt(ensemble_scheduler) == "fcfs" } {
+  set ensemble_scheduler [ new FcfsScheduler ]
+}
+
+# Set K and headroom for SFD
+Queue/SFD set _K $opt(_K)
+Queue/SFD set _headroom $opt(headroom)
 
 # Unique ID
 set counter 0
@@ -107,15 +118,15 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   if { $opt(bottleneck_qdisc) == "SFD" } {
     $cell_queue user_id $i
     $cell_queue attach-link $cell_link
-    $cell_queue attach-sched $pf_scheduler
+    $cell_queue attach-sched $ensemble_scheduler
   }
 
   # Attach trace_file to queue.
   $ns trace-queue $basestation $tcp_server_node($i) $trace_file
 
   puts "Adding user $fid($i) to PF "
-  $pf_scheduler attach-queue $cell_queue $fid($i)
-  $pf_scheduler attach-link  $cell_link  $fid($i)
+  $ensemble_scheduler attach-queue $cell_queue $fid($i)
+  $ensemble_scheduler attach-link  $cell_link  $fid($i)
 
   # Crate tcp sinks
   set tcp_server($i) [ new Agent/TCPSink/Sack1 ]
@@ -175,15 +186,15 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   if { $opt(bottleneck_qdisc) == "SFD" } {
     $cell_queue user_id $i
     $cell_queue attach-link $cell_link
-    $cell_queue attach-sched $pf_scheduler
+    $cell_queue attach-sched $ensemble_scheduler
   }
 
   # Attach trace_file to queue.
   $ns trace-queue $basestation $udp_server_node($i) $trace_file
 
   puts "Adding user $fid($i) to PF "
-  $pf_scheduler attach-queue $cell_queue $fid($i)
-  $pf_scheduler attach-link  $cell_link  $fid($i)
+  $ensemble_scheduler attach-queue $cell_queue $fid($i)
+  $ensemble_scheduler attach-link  $cell_link  $fid($i)
 
   # Create Application Sinks
   set udp_server($i) [ new Agent/Null ]
@@ -193,10 +204,8 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   $ns connect $udp_client($i) $udp_server($i)
 }
 
-
-
 # Activate PF scheduler
-$pf_scheduler activate-link-scheduler
+$ensemble_scheduler activate-link-scheduler
 # Run simulation
 $ns at $opt(duration) "finish $ns $trace_file"
 $ns run
