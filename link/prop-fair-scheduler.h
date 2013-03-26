@@ -4,11 +4,8 @@
 #include <stdint.h>
 #include <vector>
 #include "common/timer-handler.h"
-#include "queue/queue.h"
-#include "link/delay.h"
-#include "rate-gen.h"
-#include "cdma-rates.h"
 #include "common/agent.h"
+#include "link/ensemble-scheduler.h"
 
 /* Forward declarations */
 class PFSchedTimer;
@@ -19,16 +16,16 @@ class PFTxTimer;
    proportionally fair scheduler on top 
    of an ensemble of links.
  */
-class PFScheduler : public TclObject {
+class PFScheduler : public EnsembleScheduler {
  friend class PFTxTimer;
  public:
   /* Constructor */
   PFScheduler();
 
   /* pick next user to schedule */
-  uint32_t pick_user_to_schedule(void) const; 
+  virtual uint32_t pick_user_to_schedule(void) const override; 
 
-  /* Tcl interface : add links, and queues */
+  /* Tcl interface : activate scheduler */
   virtual int command(int argc, const char*const* argv) override;
 
   /* EWMA_SLOTS */
@@ -46,42 +43,18 @@ class PFScheduler : public TclObject {
   /* Helper function, transmit after slicing (if reqd) */
   static void slice_and_transmit(PFScheduler* pf_sched, PFTxTimer* tx_timer, Packet *p, uint32_t chosen_user, bool transmit);
 
-  /* Number of users */
-  uint32_t num_users(void) const { return num_users_; }
-
  private:
-  /* generate new rates, assume perfect information */
-  void generate_new_rates(void);
-
   /* update mean achieved rates */
   void update_mean_achieved_rates(uint32_t scheduled_user);
-
-  /* get backlogged users */
-  std::vector<uint32_t> get_backlogged_users(void) const;
 
   /* slot duration */
   double slot_duration_;
 
-  /* number of users */
-  uint32_t num_users_;
-
   /* chosen user */
   uint32_t chosen_user_;
 
-  /* per user queues */
-  std::vector<Queue *> user_queues_;
-
-  /* per user links */
-  std::vector<LinkDelay *> user_links_;
-
   /* per user mean achieved rates */
   std::vector<double> mean_achieved_rates_;
-
-  /* per user instantaneous link rates */
-  std::vector<double> link_rates_;
-
-  /* per user rate generators */
-  std::vector<RateGen> rate_generators_;
 
   /* Timers */
   PFTxTimer* tx_timer_;

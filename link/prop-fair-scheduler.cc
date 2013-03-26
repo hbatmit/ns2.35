@@ -16,34 +16,41 @@ static class PFSchedulerClass : public TclClass {
 } class_prop_fair;
 
 PFScheduler::PFScheduler()
-    : current_slot_(0.0),
+    : EnsembleScheduler(),
+      current_slot_(0.0),
       slot_duration_(0.0),
-      num_users_(0),
       chosen_user_(0),
-      user_queues_( std::vector<Queue*> () ),
-      user_links_( std::vector<LinkDelay*> () ),
       mean_achieved_rates_( std::vector<double> () ),
-      link_rates_( std::vector<double> () ),
-      rate_generators_( std::vector<RateGen> () ),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*>()),
       slicing_agent_(Agent(PT_CELLULAR)) {
-  bind("num_users_", &num_users_);
   bind("slot_duration_", &slot_duration_);
   sched_timer_ = new PFSchedTimer(this, slot_duration_);
-  assert(num_users_ > 0);
-  user_queues_ = std::vector< Queue*>(num_users_);
-  user_links_  = std::vector<LinkDelay*>(num_users_);
   mean_achieved_rates_ = std::vector<double>(num_users_);
-  link_rates_  = std::vector<double>(num_users_);
-  rate_generators_ = std::vector<RateGen>(num_users_);
   abeyance_ = std::vector<Packet*>(num_users_);
   for ( uint32_t i=0; i < num_users_; i++ ) {
-    rate_generators_.at( i ) = RateGen ( ALLOWED_RATES.at( i ) );
-    link_rates_.at( i )=0.0;
     mean_achieved_rates_.at( i )=0.0;
   }
+}
+int PFScheduler::command(int argc, const char*const* argv) {
+  if (argc == 2) {
+    if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
+      sched_timer_->resched( slot_duration_ );
+      tick();
+      return TCL_OK;
+    }
+  }
+  if(argc == 4) {
+    if(!strcmp(argv[1],"attach-queue")) {
+      uint32_t user_id = atoi(argv[ 3 ]);
+      abeyance_.at(user_id) = nullptr;
+      /* delegate */
+      EnsembleScheduler::command(argc,argv);
+      return TCL_OK;
+    }
+  }
+  return EnsembleScheduler::command(argc, argv);
 }
 
 uint32_t PFScheduler::pick_user_to_schedule(void) const {
@@ -64,34 +71,6 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
 
   return (it!=backlogged_users.end()) ? *it : (uint64_t)-1;
 
-}
-
-int PFScheduler::command(int argc, const char*const* argv) {
-  if (argc == 2) {
-    if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
-      sched_timer_->resched( slot_duration_ );
-      tick();
-      return TCL_OK;
-    }
-  }
-  if(argc == 4) {
-    if(!strcmp(argv[1],"attach-queue")) {
-      Queue* queue = (Queue*) TclObject::lookup(argv[ 2 ]);
-      uint32_t user_id = atoi(argv[ 3 ]);
-      user_queues_.at(user_id) = queue;
-      abeyance_.at(user_id) = nullptr;
-      /* ensure blocked queues */
-      assert(user_queues_.at(user_id)->blocked());
-      return TCL_OK;
-    }
-    if(!strcmp(argv[1],"attach-link")) {
-      LinkDelay* link = (LinkDelay*) TclObject::lookup(argv[ 2 ]);
-      uint32_t user_id = atoi(argv[ 3 ]);
-      user_links_.at( user_id ) = link;
-      return TCL_OK;
-    }
-  }
-  return TclObject::command( argc, argv );
 }
 
 void PFScheduler::tick(void) {
@@ -116,22 +95,6 @@ void PFScheduler::tick(void) {
   PFScheduler::transmit_pkt(this, this->tx_timer_);
 }
 
-void PFScheduler::generate_new_rates(void) {
-  /* For now, generate new rates uniformly from allowed rates */
-  /* By using these directly, we are assuming perfect information */
-  auto rate_generator = [&] ( RateGen r )
-                        { auto rnd_index = r.rng_->uniform((int)r.allowed_rates_.size());
-                          return r.allowed_rates_[ rnd_index ]; };
-  std::transform(rate_generators_.begin(), rate_generators_.end(),
-                 link_rates_.begin(),
-                 rate_generator );
-
-  /* Update user_links_ */
-  for (uint32_t i=0; i<link_rates_.size(); i++) {
-    user_links_.at(i)->set_bandwidth(link_rates_.at(i));
-  }
-}
-
 void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   for ( uint32_t i=0; i < mean_achieved_rates_.size(); i++ ) {
     if ( i == scheduled_user ) {
@@ -141,18 +104,6 @@ void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
       mean_achieved_rates_.at(i) = ( 1.0 - 1.0/EWMA_SLOTS ) * mean_achieved_rates_.at(i);
     }
   }
-}
-
-std::vector<uint32_t> PFScheduler::get_backlogged_users(void) const {
-  std::vector<uint32_t> backlogged_user_list;
-  for ( uint32_t i=0; i < num_users_; i++ ) {
-    if ( !((user_queues_.at(i))->empty()) ) {
-      backlogged_user_list.push_back(i); 
-    } else {
-      printf(" User_queue is empty at %d \n", i );
-    }
-  }
-  return backlogged_user_list;
 }
 
 void PFScheduler::transmit_pkt(PFScheduler* pf_sched, PFTxTimer* tx_timer ) {
