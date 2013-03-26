@@ -13,7 +13,6 @@ class FcfsTxTimer;
    of an ensemble of links
  */
 class FcfsScheduler : public EnsembleScheduler {
- friend FcfsTxTimer;
  public:
   /* FALLBACK_INTERVAL for tx_timer */
   static constexpr double FALLBACK_INTERVAL = 0.001;
