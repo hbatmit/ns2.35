@@ -987,3 +987,8 @@ void REDQueue::run_estimator(int nqueued, int m)
 
 void REDQueue::reportDrop(Packet *)
 {}
+
+bool REDQueue::empty() const
+{
+  return (q_->byteLength()==0);
+}
