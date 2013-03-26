@@ -6,7 +6,8 @@ set ns [ new Simulator ]
 
 # Tracing: DO NOT MOVE THIS BELOW
 set trace_file [ open cell-link.tr w ]
-# cmd line arguments
+
+# required for reading cmd line arguments
 unset opt
 
 # Clean up procedures
@@ -16,7 +17,7 @@ proc finish { sim_object trace_file } {
   exit 0
 }
 
-# read default bandwidths from config file
+# read default constants from config file
 source configuration.tcl
 
 # Override them using the command line if desired
@@ -78,7 +79,8 @@ set counter 0
 # TCP clients
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create UDP Agents
-  set tcp_client($i) [ new Agent/TCP ]
+  set tcp_client($i) [ new Agent/TCP/Linux ]
+  $tcp_client($i) select_ca cubic
   $ns attach-agent $basestation $tcp_client($i)
 
   # set flow id
@@ -204,7 +206,7 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   $ns connect $udp_client($i) $udp_server($i)
 }
 
-# Activate PF scheduler
+# Activate scheduler
 $ensemble_scheduler activate-link-scheduler
 # Run simulation
 $ns at $opt(duration) "finish $ns $trace_file"
