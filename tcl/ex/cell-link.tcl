@@ -62,7 +62,9 @@ assert ( $num_users <= $opt(cdma_users) );
 # Change parameters for both schedulers */
 FcfsScheduler set num_users_ $num_users
 PFScheduler set num_users_ $num_users
-PFScheduler set slot_duration_  0.00167
+PFScheduler set slot_duration_  $opt(cdma_slot_duration)
+PFScheduler set ewma_slots_ $opt(cdma_ewma_slots)
+
 if { $opt(ensemble_scheduler) == "pf" } {
   set ensemble_scheduler [ new PFScheduler ]
 } elseif { $opt(ensemble_scheduler) == "fcfs" } {

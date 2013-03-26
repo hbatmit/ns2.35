@@ -26,6 +26,7 @@ PFScheduler::PFScheduler()
       abeyance_(std::vector<Packet*>()),
       slicing_agent_(Agent(PT_CELLULAR)) {
   bind("slot_duration_", &slot_duration_);
+  bind("ewma_slots_", &ewma_slots_);
   sched_timer_ = new PFSchedTimer(this, slot_duration_);
   mean_achieved_rates_ = std::vector<double>(num_users_);
   abeyance_ = std::vector<Packet*>(num_users_);
@@ -57,7 +58,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
   std::transform(link_rates_.begin(), link_rates_.end(),
                  mean_achieved_rates_.begin(), normalized_rates.begin(),
                  [&] (const double & rate, const double & average)
-                 { return (average != 0 ) ? rate/average : DBL_MAX ; } );
+                 { auto norm = (average != 0 ) ? rate/average : DBL_MAX ; printf("Norm is %f \n", norm); return norm;} );
 
   /* Pick the highest normalized rates amongst them */
   auto it = std::max_element(backlogged_users.begin(), backlogged_users.end(),
@@ -94,9 +95,9 @@ void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   for ( uint32_t i=0; i < mean_achieved_rates_.size(); i++ ) {
     if ( i == scheduled_user ) {
       printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i);
-      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/EWMA_SLOTS ) * mean_achieved_rates_.at(i) + ( 1.0/EWMA_SLOTS ) * link_rates_.at(i);
+      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * link_rates_.at(i);
     } else {
-      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/EWMA_SLOTS ) * mean_achieved_rates_.at(i);
+      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i);
     }
   }
 }

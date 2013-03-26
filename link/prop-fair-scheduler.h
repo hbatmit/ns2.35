@@ -26,9 +26,6 @@ class PFScheduler : public EnsembleScheduler {
   /* Tcl interface : activate scheduler */
   virtual int command(int argc, const char*const* argv) override;
 
-  /* EWMA_SLOTS */
-  static const uint32_t EWMA_SLOTS = 100;
-
   /* last time something was scheduled */
   double current_slot_;
 
@@ -47,6 +44,9 @@ class PFScheduler : public EnsembleScheduler {
 
   /* slot duration */
   double slot_duration_;
+
+  /* ewma_slots */
+  uint32_t ewma_slots_;
 
   /* chosen user */
   uint32_t chosen_user_;
