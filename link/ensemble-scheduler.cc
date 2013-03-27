@@ -67,3 +67,21 @@ std::vector<uint32_t> EnsembleScheduler::get_backlogged_users(void) const {
   }
   return backlogged_user_list;
 }
+
+double EnsembleScheduler::agg_pf_throughput(void) const {
+  /* Simplified implementation assuming fixed link rates, TODO: Fix */
+  double agg_link_rate = 0.0;
+  for (uint32_t i=0; i < num_users_; i++) {
+    agg_link_rate += link_rates_.at(i);
+  }
+  return agg_link_rate/num_users_;
+}
+
+double EnsembleScheduler::agg_arrival_rate(void) const {
+  /* Ask each queue for it's own arrival rate */
+  double agg_arrival_rate = 0.0;
+  for (uint32_t i=0; i < num_users_; i++) {
+    agg_arrival_rate += user_queues_.at(i)->get_arrival_rate();
+  }
+  return agg_arrival_rate;
+}

@@ -22,6 +22,12 @@ class EnsembleScheduler : public TclObject {
   /* Number of users */
   uint32_t num_users(void) const { return num_users_; }
 
+  /* Aggregate arrival rate */
+  double agg_arrival_rate(void) const;
+
+  /* Aggregate total throughput by pf (or any other fairness criterion) */
+  double agg_pf_throughput(void) const;
+
  protected:
   /* number of users */
   uint32_t num_users_;
