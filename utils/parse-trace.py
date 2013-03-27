@@ -66,7 +66,7 @@ for line in fh.readlines() :
     else :
       drop_stats[ (src_addr, dst_addr, protocol) ] += pkt_size_bits;
 
-for pair in send_stats :
+for pair in sorted(send_stats.iterkeys()) :
   print "Pair :",pair
   print "sent :",send_stats[pair]/duration, "bits/second"
   if pair not in recv_stats :
@@ -86,5 +86,8 @@ for pair in send_stats :
 print>>sys.stderr,"Aggregate statistics"
 print>>sys.stderr,"Total throughput %.0f"%sum(flow_throughputs.values()), "bits/second"
 print>>sys.stderr,"Average",percentile_requested,"percentile %.0f"%(sum( flow_percentiles.values() )/len( flow_percentiles.values() )), "ms"
-print>>sys.stderr,"Throughput fairness",jain_fainess( flow_throughputs.values() )
+flow_utilization=[]
+for pair in flow_throughputs :
+  flow_utilization += [flow_throughputs[pair]/(1.0e6*pair[1])]
+print>>sys.stderr,"Throughput fairness",jain_fainess( flow_utilization )
 print>>sys.stderr,"Delay fairness", jain_fainess( map ( lambda x : 1.0/x , flow_percentiles.values() ) )
