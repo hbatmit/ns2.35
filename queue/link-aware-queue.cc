@@ -8,7 +8,7 @@ int LinkAwareQueue::command( int argc, const char*const* argv )
       return TCL_OK;
     }
     if(!strcmp(argv[1],"attach-sched")) {
-      _scheduler=(PFScheduler*) TclObject::lookup( argv[2] );
+      _scheduler=(EnsembleScheduler*) TclObject::lookup( argv[2] );
       return TCL_OK;
     }
   }
