@@ -44,6 +44,7 @@ proc Getopt {} {
     if ![string match {-*} $key] continue
     set key [string range $key 1 end]
     set val [lindex $argv [incr i]]
+    assert ( [ info exists opt($key)] );
     set opt($key) $val
   }
 }
