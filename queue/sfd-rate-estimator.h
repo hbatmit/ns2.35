@@ -38,10 +38,10 @@ class SfdRateEstimator {
     double est_flow_link_rate( uint64_t flow_id, double now, double current_link_rate );
 
     /* Total ingress rate */
-    double est_ingress_rate();
+    double est_ingress_rate() const;
 
     /* Print all rates */
-    void print_rates( double now );
+    void print_rates( double now ) const;
 
 };
 

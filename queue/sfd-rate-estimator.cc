@@ -25,7 +25,7 @@ double SfdRateEstimator::est_flow_service_rate( uint64_t flow_id, double now, Pa
   return _flow_stats.at( flow_id ).est_service_rate( now, p );
 }
 
-double SfdRateEstimator::est_ingress_rate( void )
+double SfdRateEstimator::est_ingress_rate( void ) const
 {
   typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
   return std::accumulate( _flow_stats.begin(), _flow_stats.end(), 0.0,
@@ -33,7 +33,7 @@ double SfdRateEstimator::est_ingress_rate( void )
 
 }
 
-void SfdRateEstimator::print_rates( double now )
+void SfdRateEstimator::print_rates( double now ) const
 {
   typedef std::pair<uint64_t,FlowStats> FlowStatsMap;
   /* Arrival rates */
