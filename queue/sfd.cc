@@ -59,14 +59,20 @@ void SFD::enque(Packet *p)
   /* Compute drop_probability */
   double drop_probability = (arrival_rate == 0) ? 0 : std::max( 0.0 , 1 - _fair_share/arrival_rate );
 
+  /* Check aggregate arrival rate and compare it to aggregate ideal pf throughput */
+  bool exceeded_capacity = _scheduler->agg_arrival_rate() > _scheduler->agg_pf_throughput() ;
+
+  /* Enque packet */
+  _packet_queue->enque( p );
+ 
   /* Toss a coin and drop */
   if ( !_dropper.should_drop( drop_probability ) ) {
     printf( " Time %f : Not dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
-    _packet_queue->enque( p );
+  } else if ( !exceeded_capacity ) {
+    printf( " Time %f : Not dropping packet, from flow %u agg ingress %f, less than capacity %f \n", now, user_id, _scheduler->agg_arrival_rate(), _scheduler->agg_pf_throughput() );
   } else {
     /* Drop from front of the same queue */
     printf( " Time %f : Dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
-    _packet_queue->enque(p);
     Packet* head = _packet_queue->deque();
     if (head != 0 ) {
         drop( head );
