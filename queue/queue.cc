@@ -248,6 +248,7 @@ void Queue::reset()
 	while ((p = deque()) != 0)
 		drop(p);
 }
+/* ANIRUDH: Queue interface widening to support tighter queue-scheduler coupling */
 
 bool Queue::empty() const
 {
@@ -260,5 +261,12 @@ double Queue::get_hol() const
 {
   printf("get_hol() not implemented. Aboriting ... \n");
   exit(6);
-  return false;
+  return -1.0;
+}
+
+double Queue::get_arrival_rate() const
+{
+  printf("get_arrival_rate() not implemented. Aborting ... \n");
+  exit(7);
+  return -1.0;
 }
