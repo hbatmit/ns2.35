@@ -41,6 +41,9 @@ class FlowStats {
     /* Get packet size */
     uint32_t get_pkt_size( Packet* p );
 
+    /* Print rates */
+    void print_rates(uint32_t flow_id, double now) const;
+
 };
 
 #endif

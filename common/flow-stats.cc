@@ -1,4 +1,4 @@
-#include "flow-stats.h"
+#include "common/flow-stats.h"
 
 FlowStats::FlowStats( double K ) :
   _first_arrival( -1 ),
@@ -110,4 +110,22 @@ uint32_t FlowStats::get_pkt_size( Packet* p )
   } else {
     return 0;
   }
+}
+
+void FlowStats::print_rates(uint32_t flow_id, double now) const
+{
+  /* Arrival rates */
+  printf(" Time %f : A :  ", now );
+  printf(" %lu %f ", flow_id, _arr_est.get_rate());
+  printf("\n");
+
+  /* Service rates */
+  printf(" Time %f : S :  ", now );
+  printf(" %lu %f ", flow_id, _ser_est.get_rate());
+  printf("\n");
+
+  /* Link rate of each user */
+  printf(" Time %f : F :  ", now );
+  printf(" %lu %f ", flow_id, _link_est.get_rate());
+  printf("\n");
 }
