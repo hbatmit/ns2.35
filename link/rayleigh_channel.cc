@@ -1,4 +1,5 @@
 #include "link/rayleigh_channel.h"
+#include "common/scheduler.h"
 
 RayleighChannel::RayleighChannel(double coherence_time, double noise_sigma)
     : iter_(0),
