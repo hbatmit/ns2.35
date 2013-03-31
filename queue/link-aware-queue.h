@@ -10,7 +10,7 @@
 class LinkAwareQueue : public Queue {
   protected :
     const LinkDelay* _link; /* Link in front of the queue */
-    const EnsembleScheduler* _scheduler; /* Cellular scheduler */
+    EnsembleScheduler* _scheduler; /* Cellular scheduler */
 
   public :
     LinkAwareQueue() : Queue() {};

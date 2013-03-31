@@ -7,7 +7,8 @@ EnsembleScheduler::EnsembleScheduler()
       user_queues_(std::vector<Queue*>()),
       user_links_(std::vector<LinkDelay*>()),
       link_rates_(std::vector<double>()),
-      rate_generators_(std::vector<RateGen>()) {
+      rate_generators_(std::vector<RateGen>()),
+      agg_rate_estimator_(K) {
   bind("num_users_", &num_users_);
   assert(num_users_ > 0);
   user_queues_ = std::vector< Queue*>(num_users_);
@@ -68,13 +69,15 @@ std::vector<uint32_t> EnsembleScheduler::get_backlogged_users(void) const {
   return backlogged_user_list;
 }
 
-double EnsembleScheduler::agg_pf_throughput(void) const {
-  /* Simplified implementation assuming fixed link rates, TODO: Fix */
+double EnsembleScheduler::agg_pf_throughput(void) {
+  /* Aggregate PF throughput, after EWMA */
   double agg_link_rate = 0.0;
   for (uint32_t i=0; i < num_users_; i++) {
     agg_link_rate += link_rates_.at(i);
   }
-  return agg_link_rate/num_users_;
+  auto pf_allocation = agg_link_rate/num_users_;
+  auto now = Scheduler::instance().clock();
+  return agg_rate_estimator_.est_flow_link_rate(0, now, pf_allocation);
 }
 
 double EnsembleScheduler::agg_arrival_rate(void) const {

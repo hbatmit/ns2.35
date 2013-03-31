@@ -7,6 +7,7 @@
 #include "link/delay.h"
 #include "link/rate-gen.h"
 #include "link/cdma-rates.h"
+#include "queue/sfd-rate-estimator.h"
 
 class EnsembleScheduler : public TclObject {
  public:
@@ -25,9 +26,11 @@ class EnsembleScheduler : public TclObject {
   /* Aggregate arrival rate */
   double agg_arrival_rate(void) const;
 
-  /* Aggregate total throughput by pf (or any other fairness criterion) */
-  double agg_pf_throughput(void) const;
+  /* Aggregate total throughput by pf (or other fairness criteria) */
+  double agg_pf_throughput(void);
 
+  /* K for rate estimation */
+  static constexpr double K = 0.200;
  protected:
   /* number of users */
   uint32_t num_users_;
@@ -43,6 +46,9 @@ class EnsembleScheduler : public TclObject {
 
   /* per user rate generators */
   std::vector<RateGen> rate_generators_;
+
+  /* aggregate rate estimator */
+  SfdRateEstimator agg_rate_estimator_;
 
   /* generate new rates, assume perfect information */
   void generate_new_rates(void);
