@@ -28,14 +28,14 @@ SFD::SFD() :
   LinkAwareQueue(),
   _packet_queue( new PacketQueue() ),
   _dropper(),
-  _rate_estimator( 0.0 )
+  _rate_estimator()
 {
   bind("_iter", &_iter );
   bind("_K", &_K );
   bind("_headroom", &_headroom );
   fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f \n", _iter, _K, _headroom );
   _dropper.set_iter( _iter );
-  _rate_estimator = SfdRateEstimator( _K );
+  _rate_estimator = FlowStats(_K);
 }
 
 void SFD::enque(Packet *p)
@@ -44,10 +44,10 @@ void SFD::enque(Packet *p)
 
   /* Estimate arrival rate with an EWMA filter */
   double now = Scheduler::instance().clock();
-  double arrival_rate = _rate_estimator.est_flow_arrival_rate( user_id, now, p );
+  double arrival_rate = _rate_estimator.est_arrival_rate(now, p);
 
   /* Estimate current link rate with an EWMA filter. */
-  auto current_link_rate = _rate_estimator.est_flow_link_rate(user_id, now, _link->bandwidth());
+  auto current_link_rate = _rate_estimator.est_link_rate(now, _link->bandwidth());
   
   /* Divide Avg. link rate by # of active flows to get fair share */
   auto _fair_share = (current_link_rate * (1-_headroom)) / _scheduler->num_users();
@@ -85,7 +85,7 @@ Packet* SFD::deque()
   /* Implements pure virtual function Queue::deque() */
   double now = Scheduler::instance().clock();
   Packet *p = _packet_queue->deque();
-  _rate_estimator.est_flow_service_rate( user_id, now, p );
+  _rate_estimator.est_service_rate(now, p);
   print_stats( now );
   return p;
 }
@@ -98,5 +98,5 @@ void SFD::print_stats( double now )
   printf("\n");
 
   /* Arrival, Service, fair share, and ingress rates */
-  _rate_estimator.print_rates( now );
+  _rate_estimator.print_rates(user_id, now);
 }

@@ -8,10 +8,8 @@
 #include <list>
 #include <queue>
 #include "rng.h"
-#include "flow-stats.h"
-#include "sfd-rate-estimator.h"
-#include "sfd-scheduler.h"
-#include "sfd-dropper.h"
+#include "common/flow-stats.h"
+#include "queue/sfd-dropper.h"
 
 
 /*
@@ -37,7 +35,7 @@ class SFD : public LinkAwareQueue {
     SfdDropper _dropper;
 
     /* Rate Estimator */
-    SfdRateEstimator _rate_estimator;
+    FlowStats _rate_estimator;
 
   public :
     SFD();
@@ -51,7 +49,7 @@ class SFD : public LinkAwareQueue {
     virtual Packet* deque() override;
     virtual bool empty() const override { return (_packet_queue->byteLength() == 0); }
     virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(_packet_queue->head())->timestamp(); }
-    virtual double get_arrival_rate() const override { return _rate_estimator.est_ingress_rate(); }
+    virtual double get_arrival_rate() const override { return _rate_estimator._arr_est.get_rate(); }
 
 };
 
