@@ -19,8 +19,8 @@ uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
   std::vector<uint32_t> backlogged_users = get_backlogged_users();
 
   /* Get user timestamps */
-  std::vector<double> hol_ts( link_rates_.size() );
-  for (uint32_t i=0; i < user_queues_.size(); i++ ) {
+  std::vector<double> hol_ts( num_users_ );
+  for (uint32_t i=0; i < num_users_ ; i++ ) {
     hol_ts.at(i) = user_queues_.at(i)->get_hol();
   }
   
@@ -37,7 +37,7 @@ int FcfsScheduler::command(int argc, const char*const* argv) {
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
       tx_timer_->resched( FALLBACK_INTERVAL );
       /* generate rates to start with */
-      generate_new_rates();
+      update_link_rate_estimate();
       return TCL_OK;
     }
   }
@@ -45,8 +45,8 @@ int FcfsScheduler::command(int argc, const char*const* argv) {
 }
 
 void FcfsScheduler::transmit_pkt() {
-  /* Update rates */
-  generate_new_rates();
+  /* Update link rate estimate */
+  update_link_rate_estimate();
 
   /* Get chosen user */
   uint32_t chosen_user = pick_user_to_schedule();
@@ -74,7 +74,7 @@ void FcfsScheduler::transmit_pkt() {
   /* Log */
   printf(" FcfsTxTimer::expire, Chosen_user %d, recving %f bits @ %f \n",
          chosen_user,
-         link_rates_.at(chosen_user)*txt,
+         user_links_.at(chosen_user)->bandwidth()*txt,
          Scheduler::instance().clock());
 
   /* schedule next packet transmission */

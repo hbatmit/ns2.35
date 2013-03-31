@@ -44,7 +44,9 @@ proc Getopt {} {
     if ![string match {-*} $key] continue
     set key [string range $key 1 end]
     set val [lindex $argv [incr i]]
+    puts "Parameter $key"
     assert ( [ info exists opt($key)] );
+    puts "Value $val"
     set opt($key) $val
   }
 }
@@ -57,8 +59,6 @@ set basestation [ $ns node ]
 
 # Determine number of users
 set num_users [ expr $opt(num_tcp) + $opt(num_udp)  ]
-puts "Num users is $num_users, cdma rates available for $opt(cdma_users) users "
-assert ( $num_users <= $opt(cdma_users) );
 
 # Change parameters for both schedulers
 FcfsScheduler set num_users_ $num_users
@@ -72,6 +72,12 @@ if { $opt(ensemble_scheduler) == "pf" } {
 } elseif { $opt(ensemble_scheduler) == "fcfs" } {
   set ensemble_scheduler [ new FcfsScheduler ]
 }
+
+# Create rate generator
+set rate_generator [ new EnsembleRateGenerator "link.trace" ]; 
+set users_in_trace [ $rate_generator get_users_ ]
+puts "Num users is $num_users, users_in_trace $users_in_trace users "
+assert ( $num_users == $users_in_trace );
 
 # Set _K and _headroom for SFD
 Queue/SFD set _K $opt(_K)
@@ -134,6 +140,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   puts "Adding user $fid($i) to scheduler"
   $ensemble_scheduler attach-queue $cell_queue $fid($i)
   $ensemble_scheduler attach-link  $cell_link  $fid($i)
+  $rate_generator attach-link $cell_link $fid($i)
 
   # Create tcp sinks
   set tcp_client($i) [ new Agent/TCPSink/Sack1 ]
@@ -202,6 +209,7 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
   puts "Adding user $fid($i) to scheduler "
   $ensemble_scheduler attach-queue $cell_queue $fid($i)
   $ensemble_scheduler attach-link  $cell_link  $fid($i)
+  $rate_generator attach-link $cell_link $fid($i)
 
   # Create Application Sinks
   set udp_client($i) [ new Agent/Null ]
@@ -213,6 +221,10 @@ for { set i 0 } { $i < $opt(num_udp) } { incr i } {
 
 # Activate scheduler
 $ensemble_scheduler activate-link-scheduler
+
+# Activate rate_generator
+$rate_generator activate-rate-generator
+
 # Run simulation
 $ns at $opt(duration) "finish $ns $trace_file"
 $ns run

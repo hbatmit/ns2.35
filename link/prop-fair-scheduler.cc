@@ -41,7 +41,7 @@ int PFScheduler::command(int argc, const char*const* argv) {
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
       sched_timer_->resched( slot_duration_ );
       /* generate rates to start with */
-      generate_new_rates();
+      update_link_rate_estimate();
       tick();
       return TCL_OK;
     }
@@ -79,8 +79,8 @@ void PFScheduler::tick(void) {
     tx_timer_->cancel();
   }
 
-  /* generate new rates, assume immediate feedback */
-  generate_new_rates();
+  /* Update link rates */
+  update_link_rate_estimate();
   chosen_user_ = pick_user_to_schedule();
   printf(" chosen_user_ is %d @ %f \n", chosen_user_, Scheduler::instance().clock() );
 
@@ -131,7 +131,7 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
   /* Check if packet txtime spills over into the next time slot. If so, slice it */
   if(txt+Scheduler::instance().clock() > current_slot_ + slot_duration_) {
     auto sliced_bits =(current_slot_+ slot_duration_ - Scheduler::instance().clock())
-                      * link_rates_.at(chosen_user);
+                      * user_links_.at(chosen_user)->bandwidth();
     printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
 
     /* Slice packet */
@@ -157,7 +157,7 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
     /* Log */
     printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
            chosen_user,
-           link_rates_.at(chosen_user)*txt,
+           user_links_.at(chosen_user)->bandwidth()*txt,
            Scheduler::instance().clock());
 
     /* Reset old abeyance */

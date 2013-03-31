@@ -7,16 +7,13 @@ EnsembleScheduler::EnsembleScheduler()
       user_queues_(std::vector<Queue*>()),
       user_links_(std::vector<LinkDelay*>()),
       link_rates_(std::vector<double>()),
-      rate_generators_(std::vector<RateGen>()),
       agg_rate_estimator_(K) {
   bind("num_users_", &num_users_);
   assert(num_users_ > 0);
   user_queues_ = std::vector< Queue*>(num_users_);
   user_links_  = std::vector<LinkDelay*>(num_users_);
   link_rates_  = std::vector<double>(num_users_);
-  rate_generators_ = std::vector<RateGen>(num_users_);
   for ( uint32_t i=0; i < num_users_; i++ ) {
-    rate_generators_.at( i ) = RateGen ( ALLOWED_RATES.at( i ) );
     link_rates_.at( i )=0.0;
   }
 }
@@ -39,22 +36,6 @@ int EnsembleScheduler::command(int argc, const char*const* argv) {
     }
   }
   return TclObject::command( argc, argv );
-}
-
-void EnsembleScheduler::generate_new_rates(void) {
-  /* For now, generate new rates uniformly from allowed rates */
-  /* By using these directly, we are assuming perfect information */
-  auto rate_generator = [&] ( RateGen r )
-                        { auto rnd_index = r.rng_->uniform((int)r.allowed_rates_.size());
-                          return r.allowed_rates_[ rnd_index ]; };
-  std::transform(rate_generators_.begin(), rate_generators_.end(),
-                 link_rates_.begin(),
-                 rate_generator );
-
-  /* Update user_links_ */
-  for (uint32_t i=0; i<link_rates_.size(); i++) {
-    user_links_.at(i)->set_bandwidth(link_rates_.at(i));
-  }
 }
 
 std::vector<uint32_t> EnsembleScheduler::get_backlogged_users(void) const {
@@ -87,4 +68,11 @@ double EnsembleScheduler::agg_arrival_rate(void) const {
     agg_arrival_rate += user_queues_.at(i)->get_arrival_rate();
   }
   return agg_arrival_rate;
+}
+
+void EnsembleScheduler::update_link_rate_estimate(void) {
+  /* Update link rate estimates, model feedback delay and/or noise here */
+  for (uint32_t i=0; i < num_users_; i++) {
+    link_rates_.at(i) = user_links_.at(i)->bandwidth();
+  }
 }

@@ -44,17 +44,14 @@ class EnsembleScheduler : public TclObject {
   /* per user instantaneous link rates */
   std::vector<double> link_rates_;
 
-  /* per user rate generators */
-  std::vector<RateGen> rate_generators_;
-
   /* aggregate rate estimator */
   SfdRateEstimator agg_rate_estimator_;
 
-  /* generate new rates, assume perfect information */
-  void generate_new_rates(void);
-
   /* get backlogged users */
   std::vector<uint32_t> get_backlogged_users(void) const;
+
+  /* update link rate estimate , model feedback delay and noise here */
+  void update_link_rate_estimate(void);
 };
 
 #endif
