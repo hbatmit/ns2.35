@@ -4,10 +4,9 @@
 #include <stdint.h>
 #include <vector>
 #include "queue/queue.h"
+#include "common/flow-stats.h"
 #include "link/delay.h"
 #include "link/rate-gen.h"
-#include "link/cdma-rates.h"
-#include "queue/sfd-rate-estimator.h"
 
 class EnsembleScheduler : public TclObject {
  public:
@@ -45,7 +44,7 @@ class EnsembleScheduler : public TclObject {
   std::vector<double> link_rates_;
 
   /* aggregate rate estimator */
-  SfdRateEstimator agg_rate_estimator_;
+  FlowStats agg_rate_estimator_;
 
   /* get backlogged users */
   std::vector<uint32_t> get_backlogged_users(void) const;

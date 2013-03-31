@@ -58,7 +58,7 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   }
   auto pf_allocation = agg_link_rate/num_users_;
   auto now = Scheduler::instance().clock();
-  return agg_rate_estimator_.est_flow_link_rate(0, now, pf_allocation);
+  return agg_rate_estimator_.est_link_rate(now, pf_allocation);
 }
 
 double EnsembleScheduler::agg_arrival_rate(void) const {
