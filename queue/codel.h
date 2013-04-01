@@ -36,6 +36,7 @@
 #define ns_codel_h
 
 #include "queue.h"
+#include <float.h>
 #include <stdlib.h>
 #include "agent.h"
 #include "template.h"
@@ -47,6 +48,8 @@ struct dodequeResult { Packet* p; int ok_to_drop; };
 class CoDelQueue : public Queue {
   public:   
     CoDelQueue();
+    virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(q_->head())->timestamp(); }
+
   protected:
     // Stuff specific to the CoDel algorithm
     void enque(Packet* pkt);
