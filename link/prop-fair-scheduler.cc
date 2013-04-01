@@ -53,6 +53,16 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
   /* First get the backlogged users */
   std::vector<uint32_t> backlogged_users = get_backlogged_users();
 
+  /* Check if there are additional abeyant users */
+  for (uint32_t i=0; i < num_users_; i++) {
+    if(abeyance_.at(i) != nullptr) {
+      if(std::find(backlogged_users.begin(), backlogged_users.end(), i) == backlogged_users.end()) {
+        printf("Adding one more abeyant user : %d \n", i);
+        backlogged_users.push_back(i);
+      }
+    }
+  }
+
   /* Normalize rates */
   std::vector<double> normalized_rates( link_rates_.size() );
   std::transform(link_rates_.begin(), link_rates_.end(),
