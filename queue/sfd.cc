@@ -47,7 +47,8 @@ void SFD::enque(Packet *p)
   double arrival_rate = _rate_estimator.est_arrival_rate(now, p);
 
   /* Estimate current link rate with an EWMA filter. */
-  auto current_link_rate = _rate_estimator.est_link_rate(now, _link->bandwidth());
+  _scheduler->update_link_rate_estimate();
+  auto current_link_rate = _rate_estimator.est_link_rate(now, _scheduler->get_link_rate_estimate(user_id));
   
   /* Divide Avg. link rate by # of active flows to get fair share */
   auto _fair_share = (current_link_rate * (1-_headroom)) / _scheduler->num_users();

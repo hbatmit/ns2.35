@@ -30,6 +30,12 @@ class EnsembleScheduler : public TclObject {
 
   /* K for rate estimation */
   static constexpr double K = 0.200;
+
+  /* update link rate estimate , model feedback delay and noise */
+  void update_link_rate_estimate(void);
+
+  double get_link_rate_estimate(int user_id) { return link_rates_.at(user_id); }
+
  protected:
   /* number of users */
   uint32_t num_users_;
@@ -48,9 +54,6 @@ class EnsembleScheduler : public TclObject {
 
   /* get backlogged users */
   std::vector<uint32_t> get_backlogged_users(void) const;
-
-  /* update link rate estimate , model feedback delay and noise here */
-  void update_link_rate_estimate(void);
 };
 
 #endif
