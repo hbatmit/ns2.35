@@ -85,8 +85,8 @@ LoggingApp instproc timeout {} {
 
 LoggingApp instproc recv { bytes } {
     # there's one of these objects for each src/dest pair 
-    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_ offtotal_ off_ranvar_
-    global ns opt src tp on_ranvar stats flowcdf
+    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_ offtotal_ off_ranvar_ on_ranvar_
+    global ns opt src tcp_senders stats flowcdf
 
     if { $state_ == OFF } {
         if { [$ns now] >= $laststart_ } {
@@ -98,7 +98,7 @@ LoggingApp instproc recv { bytes } {
     if { $state_ == ON } {
         if { $bytes > 0 } {
             set nbytes_ [expr $nbytes_ + $bytes]
-            set tcp_sender [lindex $tp($srcid_) 0]
+            set tcp_sender [lindex $tcp_senders($srcid_) 0]
             set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
             if {$rtt_ > 0.0} {
                 set cumrtt_ [expr $rtt_  + $cumrtt_]

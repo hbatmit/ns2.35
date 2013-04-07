@@ -4,6 +4,7 @@ set opt(bottleneck_bw)      10Mb
 set opt(bottleneck_latency) 20ms
 set opt(bottleneck_qdisc)   SFD
 set opt(duration)           100
+set opt(simtime)            $opt(duration)
 set opt(codel_target)       5ms
 set opt(codel_interval)     100ms
 set opt(cbr_rate)           10Mb
@@ -15,6 +16,8 @@ set opt(ensemble_scheduler) pf
 set opt(cdma_ewma_slots)    100
 set opt(congestion_control) cubic
 set opt(link_trace)         link.trace
+set opt(tcp)                TCP/Linux
+set opt(partialresults) false;   # show partial throughput, delay, and utility scores?
 
 # LoggingApp specific stuff
 set opt(onrand) Exponential
