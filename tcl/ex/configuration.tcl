@@ -16,6 +16,15 @@ set opt(cdma_ewma_slots)    100
 set opt(congestion_control) cubic
 set opt(link_trace)         link.trace
 
+# LoggingApp specific stuff
+set opt(onrand) Exponential
+set opt(offrand) Exponential
+set opt(onavg) 5.0;               # mean on and off time
+set opt(offavg) 5.0;              # mean on and off time
+set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
+set opt(ontype) "time";           # valid options are "time" and "bytes"
+set opt(app) FTP;
+
 # TCP parameters
 #bdp in packets, based on the nominal rtt
 set opt(psize) 1500
