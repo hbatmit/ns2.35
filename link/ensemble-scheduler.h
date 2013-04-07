@@ -20,7 +20,7 @@ class EnsembleScheduler : public TclObject {
   virtual int command(int argc, const char*const* argv) override;
 
   /* Number of users */
-  uint32_t num_users(void) const { return num_users_; }
+  uint32_t num_users(void) const { return get_backlogged_users().size(); }
 
   /* Aggregate arrival rate */
   double agg_arrival_rate(void) const;
