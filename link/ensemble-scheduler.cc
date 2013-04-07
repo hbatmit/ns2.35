@@ -44,7 +44,7 @@ std::vector<uint32_t> EnsembleScheduler::get_backlogged_users(void) const {
     if ( !((user_queues_.at(i))->empty()) ) {
       backlogged_user_list.push_back(i); 
     } else {
-      printf(" User_queue is empty at %d \n", i );
+//      printf(" User_queue is empty at %d \n", i );
     }
   }
   return backlogged_user_list;

@@ -72,10 +72,10 @@ void FcfsScheduler::transmit_pkt() {
   user_links_.at(chosen_user)->recv(p, queue_handler);
 
   /* Log */
-  printf(" FcfsTxTimer::expire, Chosen_user %d, recving %f bits @ %f \n",
-         chosen_user,
-         user_links_.at(chosen_user)->bandwidth()*txt,
-         Scheduler::instance().clock());
+//  printf(" FcfsTxTimer::expire, Chosen_user %d, recving %f bits @ %f \n",
+//         chosen_user,
+//         user_links_.at(chosen_user)->bandwidth()*txt,
+//         Scheduler::instance().clock());
 
   /* schedule next packet transmission */
   tx_timer_->resched(txt);

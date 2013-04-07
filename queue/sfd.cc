@@ -52,10 +52,10 @@ void SFD::enque(Packet *p)
   
   /* Divide Avg. link rate by # of active flows to get fair share */
   auto _fair_share = (current_link_rate * (1-_headroom)) / _scheduler->num_users();
-  printf("User id is %d, _fair_share is %f \n", user_id, _fair_share);
+  //printf("User id is %d, _fair_share is %f \n", user_id, _fair_share);
 
   /* Print everything */
-  print_stats( now );
+  //print_stats( now );
 
   /* Compute drop_probability */
   double drop_probability = (arrival_rate == 0) ? 0 : std::max( 0.0 , 1 - _fair_share/arrival_rate );
@@ -68,12 +68,12 @@ void SFD::enque(Packet *p)
  
   /* Toss a coin and drop */
   if ( !_dropper.should_drop( drop_probability ) ) {
-    printf( " Time %f : Not dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
+   // printf( " Time %f : Not dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
   } else if ( !exceeded_capacity ) {
-    printf( " Time %f : Not dropping packet, from flow %u agg ingress %f, less than capacity %f \n", now, user_id, _scheduler->agg_arrival_rate(), _scheduler->agg_pf_throughput() );
+   // printf( " Time %f : Not dropping packet, from flow %u agg ingress %f, less than capacity %f \n", now, user_id, _scheduler->agg_arrival_rate(), _scheduler->agg_pf_throughput() );
   } else {
     /* Drop from front of the same queue */
-    printf( " Time %f : Dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
+  //  printf( " Time %f : Dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
     Packet* head = _packet_queue->deque();
     if (head != 0 ) {
         drop( head );
@@ -87,7 +87,7 @@ Packet* SFD::deque()
   double now = Scheduler::instance().clock();
   Packet *p = _packet_queue->deque();
   _rate_estimator.est_service_rate(now, p);
-  print_stats( now );
+  //print_stats( now );
   return p;
 }
 
