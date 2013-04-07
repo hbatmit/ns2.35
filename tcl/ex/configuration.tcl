@@ -14,6 +14,7 @@ set opt(cdma_slot_duration) 0.00167
 set opt(ensemble_scheduler) pf
 set opt(cdma_ewma_slots)    100
 set opt(congestion_control) cubic
+set opt(link_trace)         link.trace
 
 # TCP parameters
 #bdp in packets, based on the nominal rtt

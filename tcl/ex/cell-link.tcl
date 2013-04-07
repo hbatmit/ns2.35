@@ -74,7 +74,7 @@ if { $opt(ensemble_scheduler) == "pf" } {
 }
 
 # Create rate generator
-set rate_generator [ new EnsembleRateGenerator "link.trace" ]; 
+set rate_generator [ new EnsembleRateGenerator $opt(link_trace) ]; 
 set users_in_trace [ $rate_generator get_users_ ]
 puts "Num users is $num_users, users_in_trace $users_in_trace users "
 assert ( $num_users == $users_in_trace );
