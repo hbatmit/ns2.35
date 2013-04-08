@@ -135,6 +135,7 @@ int mtu_max_;
     unsigned int hash(Packet*);
     bindesc* readybin();
     bindesc* removebin(bindesc*);
+    virtual bool empty() const override { return (bin_[0].q_->byteLength()==0); }
 };
 
 #endif
