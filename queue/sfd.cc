@@ -58,7 +58,7 @@ void SFD::enque(Packet *p)
   //print_stats( now );
 
   /* Compute drop_probability */
-  double drop_probability = pow((arrival_rate == 0) ? 0 : std::max( 0.0 , 1 - _fair_share/arrival_rate ), 0.2);
+  double drop_probability = (arrival_rate < _fair_share) ? 0.0 : 1.0 ;
 
   /* Check aggregate arrival rate and compare it to aggregate ideal pf throughput */
   bool exceeded_capacity = _scheduler->agg_arrival_rate() > _scheduler->agg_pf_throughput() ;
