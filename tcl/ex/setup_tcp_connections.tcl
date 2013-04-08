@@ -49,15 +49,22 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create tcp sinks
   set tcp_client($i) [ new Agent/TCPSink/Sack1 ]
   $ns attach-agent $tcp_client_node($i) $tcp_client($i)
-  set onoff_server($i) [new LoggingApp $fid($i)]
-  $onoff_server($i) attach-agent $tcp_client($i)
-  $ns at 0.0 "$onoff_server($i) start"
 
-  # start only the odd-numbered connections immediately
-  if { [expr $i % 2] == 0 } {
-    $onoff_server($i) go 0.0
+  # Create ON-OFF pattern if required
+
+  if { $opt(enable_on_off) == "true" } {
+    set onoff_server($i) [new LoggingApp $fid($i)]
+    $onoff_server($i) attach-agent $tcp_client($i)
+    $ns at 0.0 "$onoff_server($i) start"
+  
+    # start only the odd-numbered connections immediately
+    if { [expr $i % 2] == 0 } {
+      $onoff_server($i) go 0.0
+    } else {
+      $onoff_server($i) go [$onoff_server($i) sample_off_duration]
+    }
   } else {
-    $onoff_server($i) go [$onoff_server($i) sample_off_duration]
+    $ns at 0.0 "$src($fid($i)) start"
   }
 
   # Connect them to their sources
