@@ -54,9 +54,9 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   /* Aggregate PF throughput, after EWMA */
   double agg_link_rate = 0.0;
   for (uint32_t i=0; i < num_users_; i++) {
-    agg_link_rate += link_rates_.at(i);
+    if (!user_queues_.at(i)->empty()) agg_link_rate += link_rates_.at(i);
   }
-  auto pf_allocation = agg_link_rate/num_users_;
+  auto pf_allocation = agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users());
   auto now = Scheduler::instance().clock();
   return agg_rate_estimator_.est_link_rate(now, pf_allocation);
 }
