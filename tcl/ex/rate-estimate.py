@@ -1,7 +1,7 @@
 import sys
 fh=open(sys.argv[1])                       # filename for pps file
 duration=int(sys.argv[2])                  # duration to print rates in seconds
-BIN_INTERVAL=100                           # i.e number of ms in one bandwidth bin
+BIN_INTERVAL=int(sys.argv[3])              # i.e number of ms in one bandwidth bin
 acc=[0]*(1+((1000*duration)/BIN_INTERVAL)) # Create enough bins for 'duration' seconds of data. The 1000 is to convert ms to seconds.
 
 for line in fh.readlines() :
