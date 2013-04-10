@@ -1,9 +1,9 @@
 import sys
-fh=open(sys.argv[1])                       # filename for pps file
-duration=int(sys.argv[2])                  # duration to print rates in seconds
-BIN_INTERVAL=int(sys.argv[3])              # i.e number of ms in one bandwidth bin
+fh=sys.stdin                               # filename for pps file
+duration=int(sys.argv[1])                  # duration to print rates in seconds
+BIN_INTERVAL=int(sys.argv[2])              # i.e number of ms in one bandwidth bin
 acc=[0]*(1+((1000*duration)/BIN_INTERVAL)) # Create enough bins for 'duration' seconds of data. The 1000 is to convert ms to seconds.
-user_id=int(sys.argv[4])                   # User id to insert into link trace.
+user_id=int(sys.argv[3])                   # User id to insert into link trace.
 
 for line in fh.readlines() :
   time=int(float(line.split()[0]));      # time in trace file in ms
