@@ -53,7 +53,12 @@ void FcfsScheduler::transmit_pkt() {
 
   /* If no one was scheduled, return */
   if (chosen_user==(uint32_t)-1) {
-    /* Check every FALLBACK_INTERVAL at least */
+    tx_timer_->resched(FALLBACK_INTERVAL);
+    return;
+  }
+
+  /* If link rate is zero, return */
+  if (user_links_.at(chosen_user)->bandwidth()==0) {
     tx_timer_->resched(FALLBACK_INTERVAL);
     return;
   }
