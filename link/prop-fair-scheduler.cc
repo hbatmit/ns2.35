@@ -115,7 +115,10 @@ void PFScheduler::transmit_pkt() {
   uint32_t chosen_user = chosen_user_;
 
   /* If no one was scheduled, return */
-  if (chosen_user==(uint32_t)-1) return;
+  if (chosen_user == (uint32_t)-1) return;
+
+  /* If link rate is zero, return */
+  if (user_links_.at(chosen_user)->bandwidth() == 0) return;
 
   /* Get one packet from chosen user */
   /* First check abeyance_ */
