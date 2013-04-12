@@ -128,7 +128,7 @@ void LinkDelay::recv(Packet* p, Handler* h)
                 }
 		s.schedule(target_, p, txt + delay_);
 	}
-	_bits_dequeued+= (8 * hdr_cmn::access(p)->size());
+	_bits_dequeued += (8 * hdr_cmn::access(p)->size());
 	if (active_link_) s.schedule(h, &intr_, txt);
 }
 
