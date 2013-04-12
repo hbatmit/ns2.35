@@ -72,6 +72,7 @@ class LinkDelay : public Connector {
 	int avoidReordering_;	/* indicates whether or not to avoid
 				 *  reordering when link bandwidth or delay 
 				 *  changes */
+        bool active_link_;
 };
 
 #endif

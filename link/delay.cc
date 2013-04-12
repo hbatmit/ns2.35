@@ -53,7 +53,8 @@ public:
 LinkDelay::LinkDelay() 
 	: dynamic_(0), 
 	  latest_time_(0),
-	  itq_(0)
+	  itq_(0),
+          active_link_(true)
 {
 	_bits_dequeued = 0;
 	bind_bw("bandwidth_", &bandwidth_);
@@ -72,6 +73,10 @@ int LinkDelay::command(int argc, const char*const* argv)
 		if ( strcmp(argv[1], "total" ) == 0 ) {
 			fprintf( stderr, " Total number of bytes is %lu \n", _bits_dequeued );
 			return TCL_OK;
+		}
+		if (strcmp(argv[1], "deactivate_link") == 0) {
+			active_link_=false;	
+			return (TCL_OK);
 		}
 	} else if (argc == 6) {
 		if (strcmp(argv[1], "pktintran") == 0) {
@@ -124,7 +129,7 @@ void LinkDelay::recv(Packet* p, Handler* h)
 		s.schedule(target_, p, txt + delay_);
 	}
 	_bits_dequeued+= (8 * hdr_cmn::access(p)->size());
-	s.schedule(h, &intr_, txt);
+	if (active_link_) s.schedule(h, &intr_, txt);
 }
 
 void LinkDelay::send(Packet* p, Handler*)
