@@ -60,6 +60,9 @@ uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
   }
   assert(link_rate_changes_.empty());
   std::vector<uint32_t> unique_user_list;
+  std::vector<LinkRateEvent> link_rate_change_vector;
+
+  /* Populate event vector from file */
   while(1) {
     double ts, rate;
     uint32_t user_id;
@@ -67,15 +70,25 @@ uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
     if (num_matched != 3) {
       break;
     }
-    if (!link_rate_changes_.empty()) {
-      assert(ts >= link_rate_changes_.back().timestamp);
-    }
-
-    link_rate_changes_.push(LinkRateEvent(ts, user_id, rate));
+    link_rate_change_vector.push_back(LinkRateEvent(ts, user_id, rate));
     if (std::find(unique_user_list.begin(), unique_user_list.end(), user_id) == unique_user_list.end()) {
       unique_user_list.push_back(user_id);
     }
   }
+
+  /* Sort link_rate_change_vector */
+  std::sort(link_rate_change_vector.begin(), link_rate_change_vector.end(),
+            [&] (const LinkRateEvent &e1, const LinkRateEvent &e2)
+            { return e1.timestamp < e2.timestamp; });
+
+  /* Write into queue */
+  for (uint32_t i=0; i < link_rate_change_vector.size(); i++) {
+    if (!link_rate_changes_.empty()) {
+      assert(link_rate_change_vector.at(i).timestamp >= link_rate_changes_.back().timestamp);
+      link_rate_changes_.push(link_rate_change_vector.at(i));
+    }
+  }
+
   fclose(f);
   return unique_user_list.size();
 }
