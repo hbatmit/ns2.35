@@ -1,16 +1,23 @@
 import sys
 fh=sys.stdin                               # filename for pps file
-duration=int(sys.argv[1])                  # duration to print rates in seconds
-BIN_INTERVAL=int(sys.argv[2])              # i.e number of ms in one bandwidth bin
-acc=[0]*(1+((1000*duration)/BIN_INTERVAL)) # Create enough bins for 'duration' seconds of data. The 1000 is to convert ms to seconds.
-user_id=int(sys.argv[3])                   # User id to insert into link trace.
+start_time=int(sys.argv[1])                # start time for printing rates in seconds
+end_time=int(sys.argv[2])                  # end time for printing rates in seconds
+BIN_INTERVAL=int(sys.argv[3])              # i.e number of ms in one bandwidth bin
+acc=[0]*(1+((1000*end_time)/BIN_INTERVAL)) # Create enough bins for 'duration' seconds of data. The 1000 is to convert ms to seconds.
+user_id=int(sys.argv[4])                   # User id to insert into link trace.
 
 for line in fh.readlines() :
-  time=int(float(line.split()[0]));      # time in trace file in ms
-  if time > duration*1000 : break        # if it exceeds duration , break
-  acc[(time/BIN_INTERVAL)]=acc[(time/BIN_INTERVAL)]+8*1500;
+  time=int(float(line.split()[0]));        # time in trace file in ms
+  if( (time > end_time*1000) or (time < start_time*1000) ) :
+    continue                               # if it doesn't fall between start_time and end_time , continue
+  else :
+    acc[(time/BIN_INTERVAL)]=acc[(time/BIN_INTERVAL)]+8*1500;
 
 for i in range(0,len(acc)) :
-    print i*BIN_INTERVAL/1000.0,user_id,(acc[i]*1000.0/BIN_INTERVAL); # in bits per second
+    current_time = (i*BIN_INTERVAL/1000.0);
+    if ( (current_time >= start_time) and (current_time <= end_time) ) :
+      relative_time = current_time - start_time
+      print relative_time, user_id, (acc[i]*1000.0/BIN_INTERVAL);
+    # rate is in bits per second
     # time in ms is i*BIN_INTERVAL, divide by 1000 to get seconds
     # bandwidth for that bin is number of bits i.e acc[i] / number of seconds. number of seconds is BIN_INTERVAL/1000.
