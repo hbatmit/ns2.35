@@ -18,6 +18,13 @@ uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
   /* First get the backlogged users */
   std::vector<uint32_t> backlogged_users = get_backlogged_users();
 
+  /* Remove all users with link rates of zero */
+  backlogged_users.erase(
+      std::remove_if(backlogged_users.begin(), backlogged_users.end(),
+                     [&] (const uint32_t & user)
+                     { return user_links_.at(user)->bandwidth() == 0; }),
+      backlogged_users.end());
+
   /* Get user timestamps */
   std::vector<double> hol_ts( num_users_ );
   for (uint32_t i=0; i < num_users_ ; i++ ) {
