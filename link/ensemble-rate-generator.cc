@@ -85,8 +85,8 @@ uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
   for (uint32_t i=0; i < link_rate_change_vector.size(); i++) {
     if (!link_rate_changes_.empty()) {
       assert(link_rate_change_vector.at(i).timestamp >= link_rate_changes_.back().timestamp);
-      link_rate_changes_.push(link_rate_change_vector.at(i));
     }
+    link_rate_changes_.push(link_rate_change_vector.at(i));
   }
 
   fclose(f);
