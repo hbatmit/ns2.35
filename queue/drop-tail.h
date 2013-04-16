@@ -40,6 +40,7 @@
 #include <string.h>
 #include "queue.h"
 #include "config.h"
+#include <float.h>
 
 /*
  * A bounded, drop-tail queue
@@ -60,6 +61,7 @@ class DropTail : public Queue {
 	}
 
         virtual bool empty() const override;
+        virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(q_->head())->timestamp(); }
   protected:
 	void reset();
 	int command(int argc, const char*const* argv); 
