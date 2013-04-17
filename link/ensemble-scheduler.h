@@ -1,5 +1,5 @@
-#ifndef LINK_ENSEMBLE_SCHEDULER_H
-#define LINK_ENSEMBLE_SCHEDULER_H
+#ifndef LINK_ENSEMBLE_SCHEDULER_H_
+#define LINK_ENSEMBLE_SCHEDULER_H_
 
 #include <stdint.h>
 #include <vector>
@@ -12,7 +12,7 @@ class EnsembleScheduler : public TclObject {
  public:
   /* Constructor */
   EnsembleScheduler();
-  
+
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const = 0;
 
@@ -56,4 +56,4 @@ class EnsembleScheduler : public TclObject {
   std::vector<uint32_t> get_backlogged_users(void) const;
 };
 
-#endif
+#endif  // LINK_ENSEMBLE_SCHEDULER_H_

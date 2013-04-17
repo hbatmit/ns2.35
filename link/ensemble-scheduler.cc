@@ -13,14 +13,14 @@ EnsembleScheduler::EnsembleScheduler()
   user_queues_ = std::vector< Queue*>(num_users_);
   user_links_  = std::vector<LinkDelay*>(num_users_);
   link_rates_  = std::vector<double>(num_users_);
-  for ( uint32_t i=0; i < num_users_; i++ ) {
-    link_rates_.at( i )=0.0;
+  for ( uint32_t i = 0; i < num_users_; i++ ) {
+    link_rates_.at(i)=0.0;
   }
 }
 
 int EnsembleScheduler::command(int argc, const char*const* argv) {
-  if(argc == 4) {
-    if(!strcmp(argv[1],"attach-queue")) {
+  if (argc == 4) {
+    if (!strcmp(argv[1], "attach-queue")) {
       Queue* queue = (Queue*) TclObject::lookup(argv[ 2 ]);
       uint32_t user_id = atoi(argv[ 3 ]);
       user_queues_.at(user_id) = queue;
@@ -28,10 +28,10 @@ int EnsembleScheduler::command(int argc, const char*const* argv) {
       assert(user_queues_.at(user_id)->blocked());
       return TCL_OK;
     }
-    if(!strcmp(argv[1],"attach-link")) {
+    if (!strcmp(argv[1], "attach-link")) {
       LinkDelay* link = (LinkDelay*) TclObject::lookup(argv[ 2 ]);
       uint32_t user_id = atoi(argv[ 3 ]);
-      user_links_.at( user_id ) = link;
+      user_links_.at(user_id) = link;
       return TCL_OK;
     }
   }
@@ -40,9 +40,9 @@ int EnsembleScheduler::command(int argc, const char*const* argv) {
 
 std::vector<uint32_t> EnsembleScheduler::get_backlogged_users(void) const {
   std::vector<uint32_t> backlogged_user_list;
-  for ( uint32_t i=0; i < num_users_; i++ ) {
+  for ( uint32_t i = 0; i < num_users_; i++ ) {
     if ( !((user_queues_.at(i))->empty()) ) {
-      backlogged_user_list.push_back(i); 
+      backlogged_user_list.push_back(i);
     } else {
 //      printf(" User_queue is empty at %d \n", i );
     }
@@ -53,7 +53,7 @@ std::vector<uint32_t> EnsembleScheduler::get_backlogged_users(void) const {
 double EnsembleScheduler::agg_pf_throughput(void) {
   /* Aggregate PF throughput, after EWMA */
   double agg_link_rate = 0.0;
-  for (uint32_t i=0; i < num_users_; i++) {
+  for (uint32_t i = 0; i < num_users_; i++) {
     if (!user_queues_.at(i)->empty()) agg_link_rate += link_rates_.at(i);
   }
   auto pf_allocation = agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users());
@@ -64,7 +64,7 @@ double EnsembleScheduler::agg_pf_throughput(void) {
 double EnsembleScheduler::agg_arrival_rate(void) const {
   /* Ask each queue for it's own arrival rate */
   double agg_arrival_rate = 0.0;
-  for (uint32_t i=0; i < num_users_; i++) {
+  for (uint32_t i = 0; i < num_users_; i++) {
     agg_arrival_rate += user_queues_.at(i)->get_arrival_rate();
   }
   return agg_arrival_rate;
@@ -72,7 +72,7 @@ double EnsembleScheduler::agg_arrival_rate(void) const {
 
 void EnsembleScheduler::update_link_rate_estimate(void) {
   /* Update link rate estimates, model feedback delay and/or noise here */
-  for (uint32_t i=0; i < num_users_; i++) {
+  for (uint32_t i = 0; i < num_users_; i++) {
     link_rates_.at(i) = user_links_.at(i)->bandwidth();
   }
 }
