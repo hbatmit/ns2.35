@@ -46,7 +46,7 @@ class EnsembleScheduler : public TclObject {
   /* per user links */
   std::vector<LinkDelay *> user_links_;
 
-  /* per user instantaneous link rates */
+  /* per user current estimate of link rates */
   std::vector<double> link_rates_;
 
   /* aggregate rate estimator */
