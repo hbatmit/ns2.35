@@ -22,7 +22,6 @@ class SFD : public LinkAwareQueue {
   private :
 
     /* Tcl accessible SFD parameters */
-    int _qdisc;        /* Queuing discipline */
     double  _K;        /* default : 200 ms */
     double  _headroom; /* default : 0.05 */
     int _iter;         /* random seed */
