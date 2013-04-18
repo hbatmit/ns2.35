@@ -38,6 +38,7 @@
 #define ns_delay_h
 
 #include <assert.h>
+#include <map>
 
 #include "packet.h"
 #include "queue.h"
@@ -56,8 +57,9 @@ class LinkDelay : public Connector {
 		return (8. * hdr_cmn::access(p)->size() / bandwidth_);
 	}
 	double bandwidth() const { return bandwidth_; }
-        void set_bandwidth(double bandwidth) { bandwidth_ = bandwidth; }
+        void set_bandwidth(double bandwidth);
 	void pktintran(int src, int group);
+        double get_bw_in_past(double req_time);
  protected:
 	int command(int argc, const char*const* argv);
 	void reset();
@@ -73,6 +75,7 @@ class LinkDelay : public Connector {
 				 *  reordering when link bandwidth or delay 
 				 *  changes */
         bool active_link_;
+        std::map<double,double> bw_history; /* bandwidth history */
 };
 
 #endif

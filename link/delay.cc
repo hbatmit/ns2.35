@@ -197,3 +197,25 @@ void LinkDelay::pktintran(int src, int group)
 	}
         //printf ("%f %d %d %d %d\n", Scheduler::instance().clock(), total_[0], total_[1], total_[2],total_[3]);
 }
+
+void LinkDelay::set_bandwidth(double bandwidth) {
+  bandwidth_ = bandwidth;
+  auto now = Scheduler::instance().clock();
+  bw_history[now] = bandwidth;
+}
+
+double LinkDelay::get_bw_in_past(double req_time) {
+  /* Find the largest stored time less than equal to req_time */
+  
+  /* Find the first stored time strictly greater than req_time */
+  auto upperb = bw_history.upper_bound(req_time);
+  if (bw_history.empty()) {
+    /* No bandwidth has been explictly set yet */
+    return bandwidth();
+  } else if (upperb == bw_history.begin()) {
+    /* Smallest stored time is itself greater than req_time */
+    return upperb->second;
+  } else {
+    return (--upperb)->second;
+  }
+}
