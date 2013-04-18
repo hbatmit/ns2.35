@@ -117,7 +117,6 @@ proc attach_to_scheduler {scheduler user queue link} {
 # Setup SFD
 proc setup_sfd {queue user link scheduler} {
   $queue user_id $user
-  $queue attach-link $link
   $queue attach-sched $scheduler
 }
 

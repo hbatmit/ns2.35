@@ -3,7 +3,7 @@
 
 #include <float.h>
 #include <string.h>
-#include "link-aware-queue.h"
+#include "ensemble-aware-queue.h"
 #include <map>
 #include <list>
 #include <queue>
@@ -18,7 +18,7 @@
  * with the TCP loss equation.
  */
 
-class SFD : public LinkAwareQueue {
+class SFD : public EnsembleAwareQueue {
   private :
 
     /* Tcl accessible SFD parameters */

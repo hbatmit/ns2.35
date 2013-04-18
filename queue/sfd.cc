@@ -21,11 +21,11 @@ int SFD::command(int argc, const char*const* argv)
       return TCL_OK;
     }
   }
-  return LinkAwareQueue::command(argc, argv);
+  return EnsembleAwareQueue::command(argc, argv);
 }
 
 SFD::SFD() :
-  LinkAwareQueue(),
+  EnsembleAwareQueue(),
   _packet_queue( new PacketQueue() ),
   _dropper(),
   _rate_estimator()

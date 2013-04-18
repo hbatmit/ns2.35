@@ -1,19 +1,17 @@
-#ifndef LINK_AWARE_QUEUE_HH
-#define LINK_AWARE_QUEUE_HH
+#ifndef ENSEMBLE_AWARE_QUEUE_HH
+#define ENSEMBLE_AWARE_QUEUE_HH
 
 #include <map>
 #include <vector>
 #include "queue.h"
-#include "link/delay.h"
 #include "link/ensemble-scheduler.h"
 
-class LinkAwareQueue : public Queue {
+class EnsembleAwareQueue : public Queue {
   protected :
-    const LinkDelay* _link; /* Link in front of the queue */
     EnsembleScheduler* _scheduler; /* Cellular scheduler */
 
   public :
-    LinkAwareQueue() : Queue() {};
+    EnsembleAwareQueue() : Queue() {};
 
     int command( int argc, const char*const* argv );
 
