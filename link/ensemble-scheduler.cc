@@ -73,6 +73,6 @@ double EnsembleScheduler::agg_arrival_rate(void) const {
 void EnsembleScheduler::update_link_rate_estimate(void) {
   /* Update link rate estimates, model feedback delay and/or noise here */
   for (uint32_t i = 0; i < num_users_; i++) {
-    link_rates_.at(i) = user_links_.at(i)->bandwidth();
+    link_rates_.at(i) = user_links_.at(i)->get_bw_in_past(Scheduler::instance().clock());
   }
 }
