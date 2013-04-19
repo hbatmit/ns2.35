@@ -1,0 +1,5 @@
+Aggregate statistics
+Total throughput 10115703 bits/second
+Average 0.95 percentile 129 ms
+Throughput fairness 0.432749457987
+Delay fairness 0.960340326769
