@@ -7,35 +7,29 @@
 static class SFDClass : public TclClass {
   public:
     SFDClass() : TclClass("Queue/SFD") {}
-    TclObject* create(int, const char*const*) {
-      return (new SFD);
+    TclObject* create(int argc, const char*const* argv) {
+      return new SFD(atof(argv[4]), atof(argv[5]), atoi(argv[6]), atoi(argv[7]));
     }
 } class_sfd;
 
 int SFD::command(int argc, const char*const* argv)
 {
-  if (argc == 3) {
-    if (!strcmp(argv[1], "user_id")) {
-      user_id=atoi(argv[2]);
-      printf("Setting user_id to %d \n", user_id);
-      return TCL_OK;
-    }
-  }
   return EnsembleAwareQueue::command(argc, argv);
 }
 
-SFD::SFD() :
+SFD::SFD(double K, double headroom, uint32_t iter, uint32_t user_id) :
   EnsembleAwareQueue(),
+  _K(K),
+  _headroom(headroom),
+  _iter(iter),
+  _user_id(user_id),
   _packet_queue( new PacketQueue() ),
   _dropper(),
-  _rate_estimator()
+  _rate_estimator(FlowStats(_K))
 {
-  bind("_iter", &_iter );
-  bind("_K", &_K );
-  bind("_headroom", &_headroom );
-  fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f \n", _iter, _K, _headroom );
+  fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d \n",
+           _iter, _K, _headroom, _user_id );
   _dropper.set_iter( _iter );
-  _rate_estimator = FlowStats(_K);
 }
 
 void SFD::enque(Packet *p)
@@ -48,7 +42,7 @@ void SFD::enque(Packet *p)
 
   /* Estimate current link rate with an EWMA filter. */
   _scheduler->update_link_rate_estimate();
-  auto current_link_rate = _rate_estimator.est_link_rate(now, _scheduler->get_link_rate_estimate(user_id));
+  auto current_link_rate = _rate_estimator.est_link_rate(now, _scheduler->get_link_rate_estimate(_user_id));
   
   /* Divide Avg. link rate by # of active flows to get fair share */
   auto _fair_share = (current_link_rate * (1-_headroom)) / (_scheduler->num_active_users() == 0 ? 1 : _scheduler->num_active_users());
@@ -95,9 +89,9 @@ void SFD::print_stats( double now )
 {
   /* Queue sizes */
   printf(" Time %f : Q :  ", now );
-  printf(" %u %d ", user_id, _packet_queue->length());
+  printf(" %u %d ", _user_id, _packet_queue->length());
   printf("\n");
 
   /* Arrival, Service, fair share, and ingress rates */
-  _rate_estimator.print_rates(user_id, now);
+  _rate_estimator.print_rates(_user_id, now);
 }

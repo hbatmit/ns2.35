@@ -81,8 +81,12 @@ Queue/SFD set _headroom $opt(headroom)
 set counter 0
 
 # Link creation
-proc create_link {ns  bw latency sender receiver qdisc} {
-  $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
+proc create_link {ns  bw latency sender receiver qdisc user_id} {
+  if { $qdisc == "SFD" } {
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $opt(_K) $opt(headroom) $opt(iter) $user_id
+  } else {
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
+  }
   $ns simplex-link $receiver $sender [ bw_parse $bw ]  $latency DropTail
 }
 
@@ -109,8 +113,7 @@ proc attach_to_scheduler {scheduler user queue link} {
 }
 
 # Setup SFD
-proc setup_sfd {queue user link scheduler} {
-  $queue user_id $user
+proc setup_sfd {queue scheduler} {
   $queue attach-sched $scheduler
 }
 

@@ -22,10 +22,10 @@ class SFD : public EnsembleAwareQueue {
   private :
 
     /* Tcl accessible SFD parameters */
-    double  _K;        /* default : 200 ms */
-    double  _headroom; /* default : 0.05 */
-    int _iter;         /* random seed */
-    int user_id;       /* unique user_id */
+    const double  _K;        /* default : 200 ms */
+    const double  _headroom; /* default : 0.05 */
+    const uint32_t _iter;    /* random seed */
+    const uint32_t _user_id;  /* unique user_id */
 
     /* Underlying FIFO */
     PacketQueue* _packet_queue;
@@ -37,7 +37,7 @@ class SFD : public EnsembleAwareQueue {
     FlowStats _rate_estimator;
 
   public :
-    SFD();
+    SFD(double K, double headroom, uint32_t iter, uint32_t user_id);
     int command(int argc, const char*const* argv) override;
 
     /* print stats  */

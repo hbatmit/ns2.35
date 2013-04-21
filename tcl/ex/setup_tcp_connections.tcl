@@ -23,7 +23,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create node corresponding to mobile user
   set tcp_client_node($i) [ $ns node ]
-  create_link $ns $opt(bottleneck_bw) $opt(bottleneck_latency) $basestation $tcp_client_node($i) $opt(bottleneck_qdisc)
+  create_link $ns $opt(bottleneck_bw) $opt(bottleneck_latency) $basestation $tcp_client_node($i) $opt(bottleneck_qdisc) $fid($i) 
 
   # Get handles to link and queue
   set cell_link [ [ $ns link $basestation $tcp_client_node($i) ] link ]
@@ -34,7 +34,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 
   # Set user_id and other stuff for SFD
   if { $opt(bottleneck_qdisc) == "SFD" } {
-    setup_sfd $cell_queue $fid($i) $cell_link $ensemble_scheduler
+    setup_sfd $cell_queue $ensemble_scheduler
   }
 
   # Attach trace_file to queue.
