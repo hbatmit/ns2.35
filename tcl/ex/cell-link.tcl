@@ -73,17 +73,15 @@ set users_in_trace [ $rate_generator get_users_ ]
 puts "Num users is $num_users, users_in_trace $users_in_trace users "
 assert ( $num_users == $users_in_trace );
 
-# Set _K and _headroom for SFD
-Queue/SFD set _K $opt(_K)
-Queue/SFD set _headroom $opt(headroom)
-
 # Unique ID
 set counter 0
 
 # Link creation
 proc create_link {ns  bw latency sender receiver qdisc user_id} {
+  global opt
+  set q_args [ list $opt(_K) $opt(headroom) $opt(iter) $user_id ]
   if { $qdisc == "SFD" } {
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $opt(_K) $opt(headroom) $opt(iter) $user_id
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
   } else {
     $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
   }

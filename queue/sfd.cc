@@ -8,7 +8,13 @@ static class SFDClass : public TclClass {
   public:
     SFDClass() : TclClass("Queue/SFD") {}
     TclObject* create(int argc, const char*const* argv) {
-      return new SFD(atof(argv[4]), atof(argv[5]), atoi(argv[6]), atoi(argv[7]));
+      std::string q_args(argv[4]);
+      char* stripped_str = (char*) q_args.substr(1, q_args.size() - 2).c_str();
+      double K = atof(strtok(stripped_str, " "));
+      double headroom = atof(strtok(nullptr, " "));
+      double iter = atoi(strtok(nullptr," "));
+      double user_id = atoi(strtok(nullptr," ")); 
+      return new SFD(K, headroom, iter, user_id);
     }
 } class_sfd;
 
@@ -24,12 +30,11 @@ SFD::SFD(double K, double headroom, uint32_t iter, uint32_t user_id) :
   _iter(iter),
   _user_id(user_id),
   _packet_queue( new PacketQueue() ),
-  _dropper(),
+  _dropper(_iter),
   _rate_estimator(FlowStats(_K))
 {
   fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d \n",
            _iter, _K, _headroom, _user_id );
-  _dropper.set_iter( _iter );
 }
 
 void SFD::enque(Packet *p)
