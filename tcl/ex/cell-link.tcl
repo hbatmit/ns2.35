@@ -60,17 +60,11 @@ set basestation [ $ns node ]
 # Determine number of users
 set num_users [ expr $opt(num_tcp) + $opt(num_udp)  ]
 
-# Change parameters for both schedulers
-FcfsScheduler set num_users_ $num_users
-PFScheduler   set num_users_ $num_users
-PFScheduler   set slot_duration_  $opt(cdma_slot_duration)
-PFScheduler   set ewma_slots_ $opt(cdma_ewma_slots)
-
 # Pick appropriate ensemble_scheduler
 if { $opt(ensemble_scheduler) == "pf" } {
-  set ensemble_scheduler [ new PFScheduler ]
+  set ensemble_scheduler [ new PFScheduler $num_users 0.0 $opt(cdma_slot_duration) $opt(cdma_ewma_slots) ]
 } elseif { $opt(ensemble_scheduler) == "fcfs" } {
-  set ensemble_scheduler [ new FcfsScheduler ]
+  set ensemble_scheduler [ new FcfsScheduler $num_users 0.0 ]
 }
 
 # Create rate generator

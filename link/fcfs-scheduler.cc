@@ -6,12 +6,12 @@ static class FcfsSchedulerClass : public TclClass {
  public :
   FcfsSchedulerClass() : TclClass("FcfsScheduler") {}
   TclObject* create(int argc, const char*const* argv) {
-    return (new FcfsScheduler());
+    return (new FcfsScheduler(atoi(argv[4]), atof(argv[5])));
   }
 } class_fcfs;
 
-FcfsScheduler::FcfsScheduler()
-    : EnsembleScheduler(),
+FcfsScheduler::FcfsScheduler(uint32_t num_users, double feedback_delay)
+    : EnsembleScheduler(num_users, feedback_delay),
       tx_timer_(new FcfsTxTimer(this)) {}
 
 uint32_t FcfsScheduler::pick_user_to_schedule(void) const {

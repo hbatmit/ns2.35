@@ -2,20 +2,19 @@
 #include <algorithm>
 #include "link/ensemble-scheduler.h"
 
-EnsembleScheduler::EnsembleScheduler()
-    : num_users_(0),
-      user_queues_(std::vector<Queue*>()),
-      user_links_(std::vector<LinkDelay*>()),
-      link_rates_(std::vector<double>()),
+EnsembleScheduler::EnsembleScheduler(uint32_t num_users, double feedback_delay)
+    : num_users_(num_users),
+      feedback_delay_(feedback_delay),
+      user_queues_(std::vector<Queue*>(num_users_)),
+      user_links_(std::vector<LinkDelay*>(num_users_)),
+      link_rates_(std::vector<double>(num_users_)),
       agg_rate_estimator_(K) {
-  bind("num_users_", &num_users_);
   assert(num_users_ > 0);
-  user_queues_ = std::vector< Queue*>(num_users_);
-  user_links_  = std::vector<LinkDelay*>(num_users_);
-  link_rates_  = std::vector<double>(num_users_);
   for ( uint32_t i = 0; i < num_users_; i++ ) {
     link_rates_.at(i)=0.0;
   }
+  printf("EnsembleScheduler parameters num_users_ %d, feedback_delay %f \n",
+          num_users_, feedback_delay_);
 }
 
 int EnsembleScheduler::command(int argc, const char*const* argv) {
@@ -73,6 +72,6 @@ double EnsembleScheduler::agg_arrival_rate(void) const {
 void EnsembleScheduler::update_link_rate_estimate(void) {
   /* Update link rate estimates, model feedback delay and/or noise here */
   for (uint32_t i = 0; i < num_users_; i++) {
-    link_rates_.at(i) = user_links_.at(i)->get_bw_in_past(Scheduler::instance().clock());
+    link_rates_.at(i) = user_links_.at(i)->get_bw_in_past(Scheduler::instance().clock() - feedback_delay_);
   }
 }

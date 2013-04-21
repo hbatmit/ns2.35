@@ -18,7 +18,10 @@ class PFTxTimer;
 class PFScheduler : public EnsembleScheduler {
  public:
   /* Constructor */
-  PFScheduler();
+  PFScheduler(uint32_t num_users,
+              double feedback_delay,
+              double slot_duration,
+              uint32_t ewma_slots);
 
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const override; 
@@ -43,10 +46,10 @@ class PFScheduler : public EnsembleScheduler {
   void update_mean_achieved_rates(uint32_t scheduled_user);
 
   /* slot duration */
-  double slot_duration_;
+  const double slot_duration_;
 
   /* ewma_slots */
-  uint32_t ewma_slots_;
+  const uint32_t ewma_slots_;
 
   /* chosen user */
   uint32_t chosen_user_;

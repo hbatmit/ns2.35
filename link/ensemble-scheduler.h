@@ -11,7 +11,7 @@
 class EnsembleScheduler : public TclObject {
  public:
   /* Constructor */
-  EnsembleScheduler();
+  EnsembleScheduler(uint32_t num_users, double feedback_delay);
 
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const = 0;
@@ -39,6 +39,9 @@ class EnsembleScheduler : public TclObject {
  protected:
   /* number of users */
   uint32_t num_users_;
+
+  /* feedback delay in secs */
+  double feedback_delay_;
 
   /* per user queues */
   std::vector<Queue *> user_queues_;

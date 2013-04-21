@@ -11,22 +11,27 @@ static class PFSchedulerClass : public TclClass {
  public :
   PFSchedulerClass() : TclClass("PFScheduler") {}
   TclObject* create(int argc, const char*const* argv) {
-    return (new PFScheduler());
+    return (new PFScheduler(atoi(argv[4]),
+                            atof(argv[5]),
+                            atof(argv[6]),
+                            atoi(argv[7])));
   }
 } class_prop_fair;
 
-PFScheduler::PFScheduler()
-    : EnsembleScheduler(),
+PFScheduler::PFScheduler(uint32_t num_users,
+                         double feedback_delay,
+                         double slot_duration,
+                         uint32_t ewma_slots)
+    : EnsembleScheduler(num_users, feedback_delay),
       current_slot_(0.0),
-      slot_duration_(0.0),
+      slot_duration_(slot_duration),
+      ewma_slots_(ewma_slots),
       chosen_user_(0),
       mean_achieved_rates_( std::vector<double> () ),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*>()),
       slicing_agent_(Agent(PT_CELLULAR)) {
-  bind("slot_duration_", &slot_duration_);
-  bind("ewma_slots_", &ewma_slots_);
   sched_timer_ = new PFSchedTimer(this, slot_duration_);
   mean_achieved_rates_ = std::vector<double>(num_users_);
   abeyance_ = std::vector<Packet*>(num_users_);
@@ -34,6 +39,8 @@ PFScheduler::PFScheduler()
     mean_achieved_rates_.at( i )=0.0;
     abeyance_.at(i) = nullptr;
   }
+  printf("PFScheduler parameters slot_duration_ %f, ewma_slots_ %u \n",
+          slot_duration_, ewma_slots_);
 }
 
 int PFScheduler::command(int argc, const char*const* argv) {

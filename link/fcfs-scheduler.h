@@ -18,7 +18,7 @@ class FcfsScheduler : public EnsembleScheduler {
   static constexpr double FALLBACK_INTERVAL = 0.001;
 
   /* Constructor */
-  FcfsScheduler();
+  FcfsScheduler(uint32_t num_users, double feedback_delay);
 
   /* pick next user to scheduler */
   virtual uint32_t pick_user_to_schedule(void) const;
