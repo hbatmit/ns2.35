@@ -37,16 +37,16 @@ int EnsembleScheduler::command(int argc, const char*const* argv) {
   return TclObject::command( argc, argv );
 }
 
-std::vector<uint32_t> EnsembleScheduler::get_backlogged_users(void) const {
-  std::vector<uint32_t> backlogged_user_list;
+std::vector<uint32_t> EnsembleScheduler::get_feasible_users(void) const {
+  std::vector<uint32_t> feasible_user_list;
   for ( uint32_t i = 0; i < num_users_; i++ ) {
-    if ( !((user_queues_.at(i))->empty()) ) {
-      backlogged_user_list.push_back(i);
+    if ( (!(user_queues_.at(i)->empty())) and (link_rates_.at(i) != 0)) {
+      feasible_user_list.push_back(i);
     } else {
 //      printf(" User_queue is empty at %d \n", i );
     }
   }
-  return backlogged_user_list;
+  return feasible_user_list;
 }
 
 double EnsembleScheduler::agg_pf_throughput(void) {

@@ -20,7 +20,7 @@ class EnsembleScheduler : public TclObject {
   virtual int command(int argc, const char*const* argv) override;
 
   /* Number of users */
-  uint32_t num_active_users(void) const { return get_backlogged_users().size(); }
+  uint32_t num_active_users(void) const { return get_feasible_users().size(); }
 
   /* Aggregate arrival rate */
   double agg_arrival_rate(void) const;
@@ -55,8 +55,8 @@ class EnsembleScheduler : public TclObject {
   /* aggregate rate estimator */
   FlowStats agg_rate_estimator_;
 
-  /* get backlogged users */
-  std::vector<uint32_t> get_backlogged_users(void) const;
+  /* get feasible users i.e backlogged and non-zero link rate */
+  std::vector<uint32_t> get_feasible_users(void) const;
 };
 
 #endif  // LINK_ENSEMBLE_SCHEDULER_H_
