@@ -15,15 +15,8 @@ FcfsScheduler::FcfsScheduler(uint32_t num_users, double feedback_delay)
       tx_timer_(new FcfsTxTimer(this)) {}
 
 uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
-  /* First get the backlogged users */
-  std::vector<uint32_t> backlogged_users = get_backlogged_users();
-
-  /* Remove all users with link rates of zero */
-  backlogged_users.erase(
-      std::remove_if(backlogged_users.begin(), backlogged_users.end(),
-                     [&] (const uint32_t & user)
-                     { return link_rates_.at(user) == 0; }),
-      backlogged_users.end());
+  /* Get feasible users */
+  std::vector<uint32_t> feasible_users = get_feasible_users();
 
   /* Get user timestamps */
   std::vector<double> hol_ts( num_users_ );
@@ -32,11 +25,11 @@ uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
   }
   
   /* Pick the earliest ts amongst them */
-  auto it = std::min_element(backlogged_users.begin(), backlogged_users.end(),
+  auto it = std::min_element(feasible_users.begin(), feasible_users.end(),
                              [&] (const uint32_t &f1, const uint32_t &f2)
                              { return hol_ts.at(f1) < hol_ts.at(f2);});
 
-  return (it!=backlogged_users.end()) ? *it : (uint32_t)-1;
+  return (it!=feasible_users.end()) ? *it : (uint32_t)-1;
 }
 
 int FcfsScheduler::command(int argc, const char*const* argv) {
