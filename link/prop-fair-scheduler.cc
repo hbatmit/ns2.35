@@ -57,15 +57,15 @@ int PFScheduler::command(int argc, const char*const* argv) {
 }
 
 uint32_t PFScheduler::pick_user_to_schedule(void) const {
-  /* First get the backlogged users */
-  std::vector<uint32_t> backlogged_users = get_backlogged_users();
+  /* First get the feasible users */
+  std::vector<uint32_t> feasible_users = get_feasible_users();
 
   /* Check if there are additional abeyant users */
   for (uint32_t i=0; i < num_users_; i++) {
-    if(abeyance_.at(i) != nullptr) {
-      if(std::find(backlogged_users.begin(), backlogged_users.end(), i) == backlogged_users.end()) {
+    if( (abeyance_.at(i) != nullptr) and (link_rates_.at(i) != 0) ) {
+      if(std::find(feasible_users.begin(), feasible_users.end(), i) == feasible_users.end()) {
         printf("Adding one more abeyant user : %d \n", i);
-        backlogged_users.push_back(i);
+        feasible_users.push_back(i);
       }
     }
   }
@@ -78,11 +78,11 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                  { auto norm = (average != 0 ) ? rate/average : DBL_MAX ; printf("Norm is %f \n", norm); return norm;} );
 
   /* Pick the highest normalized rates amongst them */
-  auto it = std::max_element(backlogged_users.begin(), backlogged_users.end(),
+  auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
                              [&] (const uint64_t &f1, const uint64_t &f2)
                              { return normalized_rates.at( f1 ) < normalized_rates.at( f2 );});
 
-  return (it!=backlogged_users.end()) ? *it : (uint64_t)-1;
+  return (it!=feasible_users.end()) ? *it : (uint64_t)-1;
 
 }
 
@@ -125,7 +125,10 @@ void PFScheduler::transmit_pkt() {
   if (chosen_user == (uint32_t)-1) return;
 
   /* If link rate is zero, return */
-  if (user_links_.at(chosen_user)->bandwidth() == 0) return;
+  if (user_links_.at(chosen_user)->bandwidth() == 0) {
+    sched_timer_->resched(0.0);
+    return;
+  }
 
   /* Get one packet from chosen user */
   /* First check abeyance_ */
@@ -133,7 +136,11 @@ void PFScheduler::transmit_pkt() {
   if (p==nullptr) {
     /* Now check the main queue */
     p = user_queues_.at(chosen_user)->deque();
-    if (p!=nullptr) slice_and_transmit(p, chosen_user);
+    if (p!=nullptr) {
+      slice_and_transmit(p, chosen_user);
+    } else {
+      sched_timer_->resched(0.0);
+    }
   } else {
     slice_and_transmit(p, chosen_user);
   }
