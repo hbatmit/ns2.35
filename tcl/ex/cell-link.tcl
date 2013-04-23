@@ -12,6 +12,19 @@ unset opt
 
 # Clean up procedures
 proc finish { sim_object trace_file } {
+  global opt stats onoff_server num_users
+  if {$opt(enable_on_off) == "true"} {
+    for {set i 0} {$i < $num_users} {incr i} {
+      set rapp $onoff_server($i)
+      set nbytes [$rapp set nbytes_]
+      set ontime [expr [$sim_object now] - [$rapp set laststart_] ]
+      set cumrtt [$rapp set cumrtt_]
+      set numsamples [$rapp set numsamples_]
+      set srcid [$rapp set srcid_]
+      $stats($srcid) update $nbytes $ontime $cumrtt $numsamples
+      $stats($srcid) showstats True $srcid
+    }
+  }
   $sim_object flush-trace
   close $trace_file
   exit 0
