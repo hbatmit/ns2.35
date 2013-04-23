@@ -13,6 +13,31 @@ StatCollector instproc init {id ctype} {
     $self set nconns_ 0
 }
 
+StatCollector instproc showstats {final id} {
+  global opt
+  set res [$self results]
+  set totalbytes [lindex $res 0]
+  set totaltime [lindex $res 1]
+  set totalrtt [lindex $res 2]
+  set nsamples [lindex $res 3]
+  set nconns [lindex $res 4]
+
+  if { $nsamples > 0.0 } {
+      set avgrtt [expr 1000*$totalrtt/$nsamples]
+  } else {
+      set avgrtt 0.0
+  }
+  if { $totaltime > 0.0 } {
+      set throughput [expr 8.0 * $totalbytes / $totaltime]
+      set utility [expr log($throughput) - [expr log($avgrtt)]]
+      if { $final == True } {
+          puts [ format "FINAL id %d bytes %d mbps %.3f avgrtt %.1f on_percentage %.4f utility %.2f num_connections %d" $id $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(duration)] $utility $nconns ]
+      } else {
+          puts [ format "----- %d %d %.3f %.1f %.4f %.2f %d" $id $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
+      }
+  }
+}
+
 StatCollector instproc update {newbytes newtime cumrtt nsamples} {
     global ns opt
     $self instvar srcid_ numbytes_ ontime_ cumrtt_ nsamples_ nconns_
@@ -24,7 +49,7 @@ StatCollector instproc update {newbytes newtime cumrtt nsamples} {
 #    puts "[$ns now]: updating stats for $srcid_: $newbytes $newtime $cumrtt $nsamples"
 #    puts "[$ns now]: \tTO: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
     if { $opt(partialresults) } {
-        showstats False
+        $self showstats False
     }
 }
 
