@@ -80,7 +80,7 @@ for pair in sorted(send_stats.iterkeys()) :
   delay_stats[pair].sort();
   flow_throughputs[ pair ] = recv_stats[ pair ]/duration
   flow_percentiles[ pair ] = 1000*delay_stats[pair][int(percentile_requested*len(delay_stats[pair]))]
-  print percentile_requested," %ile delay :", flow_percentiles[ pair ],"ms"
+  print percentile_requested," %ile delay :", flow_percentiles[ pair ],"ms", "samples :",len(delay_stats[ pair ])
   print "====================\n"
 
 print>>sys.stderr,"Aggregate statistics"
