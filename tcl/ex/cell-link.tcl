@@ -19,9 +19,10 @@ proc finish { sim_object trace_file } {
       set nbytes [$rapp set nbytes_]
       set ontime [expr [$sim_object now] - [$rapp set laststart_] ]
       set cumrtt [$rapp set cumrtt_]
+      set rtt_samples [$rapp set rtt_samples_]
       set numsamples [$rapp set numsamples_]
       set srcid [$rapp set srcid_]
-      $stats($srcid) update $nbytes $ontime $cumrtt $numsamples
+      $stats($srcid) update $nbytes $ontime $cumrtt $numsamples $rtt_samples
       $stats($srcid) showstats True $srcid
     }
   }

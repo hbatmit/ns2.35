@@ -6,11 +6,12 @@ source timer.tcl
 Class LoggingApp -superclass {Application Timer}
 
 LoggingApp instproc init {id} {
-    $self instvar srcid_ nbytes_ cumrtt_ numsamples_ u_ offtotal_ on_ranvar_ off_ranvar_
+    $self instvar srcid_ nbytes_ cumrtt_ numsamples_ u_ offtotal_ on_ranvar_ off_ranvar_ rtt_samples_
     global opt
     $self set srcid_ $id
     $self set nbytes_ 0
     $self set cumrtt_ 0.0
+    $self set rtt_samples_ {}
     $self set numsamples_ 0
     $self set u_ [new RandomVariable/Uniform]
     $self set offtotal_ 0.0
@@ -85,7 +86,7 @@ LoggingApp instproc timeout {} {
 
 LoggingApp instproc recv { bytes } {
     # there's one of these objects for each src/dest pair 
-    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_ offtotal_ off_ranvar_ on_ranvar_
+    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_ offtotal_ off_ranvar_ on_ranvar_ rtt_samples_
     global ns opt src tcp_senders stats flowcdf
 
     if { $state_ == OFF } {
@@ -102,6 +103,7 @@ LoggingApp instproc recv { bytes } {
             set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
             if {$rtt_ > 0.0} {
                 set cumrtt_ [expr $rtt_  + $cumrtt_]
+                lappend rtt_samples_ $rtt_
                 set numsamples_ [expr $numsamples_ + 1]
             }
         }
@@ -109,7 +111,7 @@ LoggingApp instproc recv { bytes } {
         if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
 #            puts "[$ns now]: Turning off $srcid_ ontime $ontime"
             $ns at [$ns now] "$src($srcid_) stop"
-            $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_
+            $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_ $rtt_samples_
             set nbytes_ 0
             set state_ OFF
             set nexttime [expr [$ns now] + [$off_ranvar_ value]]; # stay off until nexttime
@@ -135,8 +137,8 @@ LoggingApp instproc recv { bytes } {
 }
 
 LoggingApp instproc results {} {
-    $self instvar nbytes_ cumrtt_ numsamples_
-    return [list $nbytes_ $cumrtt_ $numsamples_]
+    $self instvar nbytes_ cumrtt_ numsamples_ rtt_samples_
+    return [list $nbytes_ $cumrtt_ $numsamples_ $rtt_samples_]
 }
 
 LoggingApp instproc sample_off_duration {} {
