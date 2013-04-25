@@ -29,7 +29,7 @@ StatCollector instproc showstats {final id} {
   } else {
       set avgrtt 0.0
   }
-  set reqd_index [expr round ($nsamples * 0.95) ]
+  set reqd_index [expr round (floor ($nsamples * 0.95)) ]
   set sorted [lsort $all_rtt_samples]
   set rtt95th [expr [lindex $sorted $reqd_index] * 1000]
 
