@@ -32,7 +32,7 @@ double FlowStats::est_arrival_rate( double now, Packet *p )
       return 0;
     } else {
       auto initial_rate = _acc_arrivals/( now - _first_arrival );
-      printf( " K is %f, initial arrival rate is %f \n", _K, initial_rate);
+      fprintf(stderr, " K is %f, initial arrival rate is %f \n", _K, initial_rate);
       _arr_est = EwmaEstimator( _K, initial_rate, now );
       _acc_arrivals = 0;
       return _arr_est.get_rate();
@@ -70,7 +70,7 @@ double FlowStats::est_service_rate( double now, Packet *p )
       return 0;
     } else {
       auto initial_rate=_acc_services/( now - _first_service );
-      printf( " K is %f, initial service rate is %f \n", _K, initial_rate);
+      fprintf(stderr, " K is %f, initial service rate is %f \n", _K, initial_rate);
       _ser_est = EwmaEstimator( _K, initial_rate, now );
       _acc_services = 0;
       return _ser_est.get_rate();

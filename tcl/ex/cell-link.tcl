@@ -38,18 +38,18 @@ source configuration.tcl
 proc Usage {} {
   global opt argv0
   foreach name [ array names opt ] {
-    puts -nonewline " \[-"
-    puts -nonewline [ format "%20s" $name ]
-    puts -nonewline " :\t"
-    puts -nonewline [ format "%15.15s"  $opt($name) ]
-    puts -nonewline "\]\n"
+    puts -nonewline stderr " \[-"
+    puts -nonewline stderr [ format "%20s" $name ]
+    puts -nonewline stderr " :\t"
+    puts -nonewline stderr [ format "%15.15s"  $opt($name) ]
+    puts -nonewline stderr "\]\n"
   }
 }
 
 proc Getopt {} {
   global opt argc argv argv0
   if {$argc == 0} {
-    puts "Usage : $argv0 \n"
+    puts stderr "Usage : $argv0 \n"
     Usage
     exit 1
   }
@@ -58,9 +58,9 @@ proc Getopt {} {
     if ![string match {-*} $key] continue
     set key [string range $key 1 end]
     set val [lindex $argv [incr i]]
-    puts "Parameter $key"
+    puts stderr "Parameter $key"
     assert ( [ info exists opt($key)] );
-    puts "Value $val"
+    puts stderr "Value $val"
     set opt($key) $val
   }
 }
@@ -84,7 +84,7 @@ if { $opt(ensemble_scheduler) == "pf" } {
 # Create rate generator
 set rate_generator [ new EnsembleRateGenerator $opt(link_trace) ]; 
 set users_in_trace [ $rate_generator get_users_ ]
-puts "Num users is $num_users, users_in_trace $users_in_trace users "
+puts stderr "Num users is $num_users, users_in_trace $users_in_trace users "
 assert ( $num_users == $users_in_trace );
 
 # Unique ID
@@ -117,7 +117,7 @@ proc neuter_queue {queue} {
 
 # Add queue and link to ensemble scheduler
 proc attach_to_scheduler {scheduler user queue link} {
-  puts "Adding user $user to scheduler"
+  puts stderr "Adding user $user to scheduler"
   $scheduler attach-queue $queue $user
   $scheduler attach-link  $link  $user
   # Deactivate link

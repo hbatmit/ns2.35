@@ -15,8 +15,8 @@ EnsembleRateGenerator::EnsembleRateGenerator(std::string t_trace_file)
   link_rate_changes_ = std::queue<LinkRateEvent>();
   num_users_ = read_link_rate_trace();
   assert(num_users_>0);
-  printf("EnsembleRateGenerator, num_users_ %u, trace_file_ %s \n",
-         num_users_, trace_file_.c_str());
+  fprintf(stderr, "EnsembleRateGenerator, num_users_ %u, trace_file_ %s \n",
+          num_users_, trace_file_.c_str());
   user_links_ = std::vector<LinkDelay*>(num_users_);
 }
 

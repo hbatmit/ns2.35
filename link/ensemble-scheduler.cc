@@ -13,7 +13,7 @@ EnsembleScheduler::EnsembleScheduler(uint32_t num_users, double feedback_delay)
   for ( uint32_t i = 0; i < num_users_; i++ ) {
     link_rates_.at(i)=0.0;
   }
-  printf("EnsembleScheduler parameters num_users_ %d, feedback_delay %f \n",
+  fprintf( stderr, "EnsembleScheduler parameters num_users_ %d, feedback_delay %f \n",
           num_users_, feedback_delay_);
 }
 
