@@ -35,7 +35,7 @@ StatCollector instproc showstats {final id} {
 
   if { $totaltime > 0.0 } {
       set throughput [expr 8.0 * $totalbytes / $totaltime]
-      set utility [expr log($throughput) - [expr log($avgrtt)]]
+      set utility [expr log($throughput) - [expr log($rtt95th)]]
       if { $final == True } {
           puts [ format "FINAL id %d bytes %d mbps %.3f avgrtt %.1f rtt-95th %.1f on_percentage %.4f utility %.2f num_connections %d nsamples %d" $id $totalbytes [expr $throughput/1000000.0] $avgrtt $rtt95th [expr 100.0*$totaltime/$opt(duration)] $utility $nconns $nsamples ]
       } else {
