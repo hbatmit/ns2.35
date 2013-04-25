@@ -270,3 +270,10 @@ double Queue::get_arrival_rate() const
   exit(7);
   return -1.0;
 }
+
+double Queue::get_service_rate() const
+{
+  printf("get_service_rate() not implemented. Aborting ... \n");
+  exit(7);
+  return -1.0;
+}

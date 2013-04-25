@@ -139,6 +139,7 @@ public:
         virtual bool empty() const;
         virtual double get_hol() const;
         virtual double get_arrival_rate() const;
+        virtual double get_service_rate() const;
 
 	int length() { return pq_->length(); }	/* number of pkts currently in
 						 * underlying packet queue */

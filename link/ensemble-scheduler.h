@@ -25,6 +25,9 @@ class EnsembleScheduler : public TclObject {
   /* Aggregate arrival rate */
   double agg_arrival_rate(void) const;
 
+  /* Aggregate service rate */
+  double agg_service_rate(void) const;
+
   /* Aggregate total throughput by pf (or other fairness criteria) */
   double agg_pf_throughput(void);
 
