@@ -6,7 +6,7 @@ source timer.tcl
 Class LoggingApp -superclass {Application Timer}
 
 LoggingApp instproc init {id} {
-    $self instvar srcid_ nbytes_ cumrtt_ numsamples_ u_ offtotal_ on_ranvar_ off_ranvar_ rtt_samples_
+    $self instvar srcid_ nbytes_ cumrtt_ numsamples_ u_ offtotal_ on_ranvar_ off_ranvar_ rtt_samples_ flowfile
     global opt
     $self set srcid_ $id
     $self set nbytes_ 0
@@ -15,6 +15,9 @@ LoggingApp instproc init {id} {
     $self set numsamples_ 0
     $self set u_ [new RandomVariable/Uniform]
     $self set offtotal_ 0.0
+    
+    # Internet flow CDF distribution
+    $self set flowfile flowcdf-allman-icsi.tcl
 
     # Create exponential on/off RandomVariables
     $self set on_ranvar_  [new RandomVariable/$opt(onrand)]
