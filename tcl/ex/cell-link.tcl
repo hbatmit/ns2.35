@@ -34,7 +34,7 @@ proc finish { sim_object trace_file } {
 # read default constants from config file
 source configuration.tcl
 
-# Override them using the command line if desired
+# Print out Usage
 proc Usage {} {
   global opt argv0
   foreach name [ array names opt ] {
@@ -46,6 +46,7 @@ proc Usage {} {
   }
 }
 
+# Override defaults using the command line if desired
 proc Getopt {} {
   global opt argc argv argv0
   if {$argc == 0} {
