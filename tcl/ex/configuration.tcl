@@ -16,7 +16,7 @@ set opt(ensemble_scheduler) pf
 set opt(cdma_ewma_slots)    100
 set opt(congestion_control) cubic
 set opt(link_trace)         link.trace
-set opt(tcp)                TCP/Linux
+set opt(tcp)                TCP/Newreno
 set opt(partialresults) false;    # show partial throughput, delay, and utility scores?
 set opt(enable_on_off)  false;    # enable on off traffic iff required.
 
