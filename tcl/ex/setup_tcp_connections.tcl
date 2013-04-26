@@ -7,7 +7,9 @@ source stat_collector.tcl
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create TCP Agents
   set tcp_server($i) [ new Agent/$opt(tcp) ]
-  $tcp_server($i) select_ca $opt(congestion_control)
+  if {$opt(tcp) == "TCP/Linux"} {
+    $tcp_server($i) select_ca $opt(congestion_control)
+  }
   $ns attach-agent $basestation $tcp_server($i)
 
   # set flow id
