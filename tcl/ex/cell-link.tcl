@@ -17,12 +17,20 @@ proc finish { sim_object trace_file } {
     for {set i 0} {$i < $num_users} {incr i} {
       set rapp $onoff_server($i)
       set nbytes [$rapp set nbytes_]
-      set ontime [expr [$sim_object now] - [$rapp set laststart_] ]
+      if { [$rapp set state_] == "OFF" } {
+        set current_ontime 0.0
+      } else {
+        set current_ontime [expr [$sim_object now] - [$rapp set laststart_]]
+      }
+      if {$current_ontime < 0.0} {
+          puts "$current_ontime cannot be negative"
+          exit 5
+      }
       set cumrtt [$rapp set cumrtt_]
       set rtt_samples [$rapp set rtt_samples_]
       set numsamples [$rapp set numsamples_]
       set srcid [$rapp set srcid_]
-      $stats($srcid) update $nbytes $ontime $cumrtt $numsamples $rtt_samples
+      $stats($srcid) update $nbytes $current_ontime $cumrtt $numsamples $rtt_samples
       $stats($srcid) showstats True $srcid
     }
   }
