@@ -39,8 +39,8 @@ PFScheduler::PFScheduler(uint32_t num_users,
     mean_achieved_rates_.at( i )=0.0;
     abeyance_.at(i) = nullptr;
   }
-  printf("PFScheduler parameters slot_duration_ %f, ewma_slots_ %u \n",
-          slot_duration_, ewma_slots_);
+  fprintf(stderr, "PFScheduler parameters slot_duration_ %f, ewma_slots_ %u \n",
+                  slot_duration_, ewma_slots_);
 }
 
 int PFScheduler::command(int argc, const char*const* argv) {
@@ -64,7 +64,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
   for (uint32_t i=0; i < num_users_; i++) {
     if( (abeyance_.at(i) != nullptr) and (link_rates_.at(i) != 0) ) {
       if(std::find(feasible_users.begin(), feasible_users.end(), i) == feasible_users.end()) {
-        printf("Adding one more abeyant user : %d \n", i);
+        /* printf("Adding one more abeyant user : %d \n", i); */
         feasible_users.push_back(i);
       }
     }
@@ -75,7 +75,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
   std::transform(link_rates_.begin(), link_rates_.end(),
                  mean_achieved_rates_.begin(), normalized_rates.begin(),
                  [&] (const double & rate, const double & average)
-                 { auto norm = (average != 0 ) ? rate/average : DBL_MAX ; printf("Norm is %f \n", norm); return norm;} );
+                 { auto norm = (average != 0 ) ? rate/average : DBL_MAX ;/* printf("Norm is %f \n", norm); */ return norm;} );
 
   /* Pick the highest normalized rates amongst them */
   auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
@@ -109,7 +109,7 @@ void PFScheduler::tick(void) {
 void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   for ( uint32_t i=0; i < mean_achieved_rates_.size(); i++ ) {
     if ( i == scheduled_user ) {
-      printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i);
+      /* printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i); */
       mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * link_rates_.at(i);
     } else {
       mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i);
