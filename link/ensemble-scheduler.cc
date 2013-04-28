@@ -60,7 +60,7 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   return agg_rate_estimator_.est_link_rate(now, pf_allocation);
 }
 
-double EnsembleScheduler::agg_arrival_rate(void) const {
+double EnsembleScheduler::agg_arrival_rate(void) {
   /* Ask each queue for it's own arrival rate */
   double agg_arrival_rate = 0.0;
   for (uint32_t i = 0; i < num_users_; i++) {
@@ -69,7 +69,7 @@ double EnsembleScheduler::agg_arrival_rate(void) const {
   return agg_arrival_rate;
 }
 
-double EnsembleScheduler::agg_service_rate(void) const {
+double EnsembleScheduler::agg_service_rate(void) {
   /* Ask each queue for it's own service rate */
   double agg_service_rate = 0.0;
   for (uint32_t i = 0; i < num_users_; i++) {
@@ -77,6 +77,7 @@ double EnsembleScheduler::agg_service_rate(void) const {
   }
   return agg_service_rate;
 }
+
 void EnsembleScheduler::update_link_rate_estimate(void) {
   /* Update link rate estimates, model feedback delay and/or noise here */
   for (uint32_t i = 0; i < num_users_; i++) {

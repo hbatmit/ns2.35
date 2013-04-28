@@ -138,8 +138,8 @@ public:
         /* Additions to support SFD etc */
         virtual bool empty() const;
         virtual double get_hol() const;
-        virtual double get_arrival_rate() const;
-        virtual double get_service_rate() const;
+        virtual double get_arrival_rate();
+        virtual double get_service_rate();
 
 	int length() { return pq_->length(); }	/* number of pkts currently in
 						 * underlying packet queue */

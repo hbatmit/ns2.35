@@ -48,8 +48,8 @@ class SFD : public EnsembleAwareQueue {
     virtual Packet* deque() override;
     virtual bool empty() const override { return (_packet_queue->byteLength() == 0); }
     virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(_packet_queue->head())->timestamp(); }
-    virtual double get_arrival_rate() const override { return _rate_estimator._arr_est.get_rate(); }
-    virtual double get_service_rate() const override { return _rate_estimator._ser_est.get_rate(); }
+    virtual double get_arrival_rate() override { return _rate_estimator.est_arrival_rate(Scheduler::instance().clock(), nullptr); }
+    virtual double get_service_rate() override { return _rate_estimator.est_service_rate(Scheduler::instance().clock(), nullptr); }
 
 };
 

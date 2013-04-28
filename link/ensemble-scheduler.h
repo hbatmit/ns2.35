@@ -23,10 +23,10 @@ class EnsembleScheduler : public TclObject {
   uint32_t num_active_users(void) const { return get_feasible_users().size(); }
 
   /* Aggregate arrival rate */
-  double agg_arrival_rate(void) const;
+  double agg_arrival_rate(void);
 
   /* Aggregate service rate */
-  double agg_service_rate(void) const;
+  double agg_service_rate(void);
 
   /* Aggregate total throughput by pf (or other fairness criteria) */
   double agg_pf_throughput(void);
