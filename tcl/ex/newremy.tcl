@@ -379,6 +379,9 @@ proc finish {} {
         set rapp $recvapp($i)
         set nbytes [$rapp set nbytes_]
         set ontime [expr [$ns now] - [$rapp set laststart_] ]
+        if { $ontime < 0.0 } {
+            set $ontime 0.0
+        }
         set cumrtt [$rapp set cumrtt_]
         set numsamples [$rapp set numsamples_]
         set srcid [$rapp set srcid_]
