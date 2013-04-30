@@ -88,7 +88,7 @@ void DropTail::enque(Packet* p)
                 Queue::updateStats(qib_?q_->byteLength():q_->length());
 	}
 
-	int qlimBytes = qlim_ * mean_pktsize_;
+	uint32_t qlimBytes = qlim_ * mean_pktsize_;
 	if ((!qib_ && (q_->length() + 1) >= qlim_) ||
   	(qib_ && (q_->byteLength() + hdr_cmn::access(p)->size()) >= qlimBytes)){
 		// if the queue would overflow if we added this packet...
@@ -107,7 +107,7 @@ void DropTail::enque(Packet* p)
 //AG if queue size changes, we drop excessive packets...
 void DropTail::shrink_queue() 
 {
-        int qlimBytes = qlim_ * mean_pktsize_;
+        uint32_t qlimBytes = qlim_ * mean_pktsize_;
 	if (debug_)
 		printf("shrink-queue: time %5.2f qlen %d, qlim %d\n",
  			Scheduler::instance().clock(),
