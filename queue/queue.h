@@ -140,7 +140,7 @@ public:
         virtual double get_hol() const;
         virtual double get_arrival_rate();
         virtual double get_service_rate();
-
+        virtual double get_delay();
 	virtual int length() const { return pq_->length(); }	/* number of pkts currently in
 						 * underlying packet queue */
 	virtual int byteLength() const { return pq_->byteLength(); }	/* number of bytes *
