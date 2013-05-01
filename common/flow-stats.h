@@ -21,6 +21,7 @@ class FlowStats {
     EwmaEstimator _arr_est;
     EwmaEstimator _ser_est;
     EwmaEstimator _link_est;
+    EwmaEstimator _delay_est;
     double _K;
 
     /* Constructor */
@@ -37,6 +38,9 @@ class FlowStats {
 
     /* Estimate link rate */
     double est_link_rate( double now, double current_link_rate );
+
+    /* Estimate delay */
+    double est_delay( double now, double current_delay );
 
     /* Get packet size */
     uint32_t get_pkt_size( Packet* p );

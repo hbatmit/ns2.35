@@ -10,6 +10,7 @@ FlowStats::FlowStats( double K ) :
   _arr_est( EwmaEstimator() ),
   _ser_est( EwmaEstimator() ),
   _link_est( EwmaEstimator() ),
+  _delay_est( EwmaEstimator() ),
   _K( K )
 {}
 
@@ -35,13 +36,13 @@ double FlowStats::est_arrival_rate( double now, Packet *p )
       fprintf(stderr, " K is %f, initial arrival rate is %f \n", _K, initial_rate);
       _arr_est = EwmaEstimator( _K, initial_rate, now );
       _acc_arrivals = 0;
-      return _arr_est.get_rate();
+      return _arr_est.get_estimate();
     }
 
   } else {
     /* Run EWMA if you have seen more than two arrivals */
     if ( now == _arr_est._last_update ) {
-      return _arr_est.get_rate();
+      return _arr_est.get_estimate();
     } else {
       assert( now > _arr_est._last_update );
       auto current_rate = _acc_arrivals/ ( now - _arr_est._last_update );
@@ -73,13 +74,13 @@ double FlowStats::est_service_rate( double now, Packet *p )
       fprintf(stderr, " K is %f, initial service rate is %f \n", _K, initial_rate);
       _ser_est = EwmaEstimator( _K, initial_rate, now );
       _acc_services = 0;
-      return _ser_est.get_rate();
+      return _ser_est.get_estimate();
     }
 
   } else {
     /* Run EWMA if you have seen more than two services */
     if ( now == _ser_est._last_update ) {
-      return _ser_est.get_rate();
+      return _ser_est.get_estimate();
     } else {
       assert( now > _ser_est._last_update );
       auto current_rate = _acc_services/( now - _ser_est._last_update );
@@ -91,13 +92,25 @@ double FlowStats::est_service_rate( double now, Packet *p )
 
 double FlowStats::est_link_rate( double now, double current_link_rate )
 {
-  if ( _link_est.get_rate() == -1 ) {
+  if ( _link_est.get_estimate() == -1 ) {
     /* First rate, simply seed estimator */
     _link_est = EwmaEstimator( _K, current_link_rate, now );
-    return _link_est.get_rate();
+    return _link_est.get_estimate();
   } else {
     /* Apply EWMA */
     return _link_est.update( now, current_link_rate );
+  }
+}
+
+double FlowStats::est_delay( double now, double current_delay )
+{
+  if ( _delay_est.get_estimate() == -1 ) {
+    /* First delay, simply seed estimator */
+    _link_est = EwmaEstimator( _K, current_delay, now );
+    return _delay_est.get_estimate();
+  } else {
+    /* Apply EWMA */
+    return _delay_est.update( now, current_delay );
   }
 }
 
@@ -116,16 +129,22 @@ void FlowStats::print_rates(uint32_t flow_id, double now) const
 {
   /* Arrival rates */
   printf(" Time %f : A :  ", now );
-  printf(" %lu %f ", flow_id, _arr_est.get_rate());
+  printf(" %lu %f ", flow_id, _arr_est.get_estimate());
   printf("\n");
 
   /* Service rates */
   printf(" Time %f : S :  ", now );
-  printf(" %lu %f ", flow_id, _ser_est.get_rate());
+  printf(" %lu %f ", flow_id, _ser_est.get_estimate());
   printf("\n");
 
   /* Link rate of each user */
   printf(" Time %f : F :  ", now );
-  printf(" %lu %f ", flow_id, _link_est.get_rate());
+  printf(" %lu %f ", flow_id, _link_est.get_estimate());
   printf("\n");
+
+  /* Delay of each user */
+  printf(" Time %f : D :  ", now );
+  printf(" %lu %f ", flow_id, _delay_est.get_estimate());
+  printf("\n");
+
 }
