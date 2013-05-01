@@ -3,23 +3,23 @@
 
 class EwmaEstimator {
   private :
-    double _rate_estimate;
+    double _estimate;
     double _time_constant;
 
   public:
     double _last_update;
 
     /* Constructor */
-    EwmaEstimator( double K, double initial_rate, double initial_time );
+    EwmaEstimator( double K, double initial_value, double initial_time );
 
     /* Default Constructor */
     EwmaEstimator();
 
     /* Update with new values */
-    double update( double now, double current_rate );
+    double update( double now, double current_value );
 
-    /* Return rate */
-    double get_rate( void ) const;
+    /* Return estimate */
+    double get_estimate( void ) const;
 };
 
 #endif
