@@ -277,3 +277,10 @@ double Queue::get_service_rate()
   exit(7);
   return -1.0;
 }
+
+double Queue::get_delay()
+{
+  printf("get_service_rate() not implemented. Aborting ... \n");
+  exit(7);
+  return -1.0;
+}
