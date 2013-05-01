@@ -141,9 +141,9 @@ public:
         virtual double get_arrival_rate();
         virtual double get_service_rate();
 
-	int length() { return pq_->length(); }	/* number of pkts currently in
+	virtual int length() const { return pq_->length(); }	/* number of pkts currently in
 						 * underlying packet queue */
-	int byteLength() { return pq_->byteLength(); }	/* number of bytes *
+	virtual int byteLength() const { return pq_->byteLength(); }	/* number of bytes *
 						 * currently in packet queue */
 	/* mean utilization, decaying based on util_weight */
 	virtual double utilization (void);
