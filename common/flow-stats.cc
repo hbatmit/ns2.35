@@ -106,7 +106,7 @@ double FlowStats::est_delay( double now, double current_delay )
 {
   if ( _delay_est.get_estimate() == -1 ) {
     /* First delay, simply seed estimator */
-    _link_est = EwmaEstimator( _K, current_delay, now );
+    _delay_est = EwmaEstimator( _K, current_delay, now );
     return _delay_est.get_estimate();
   } else {
     /* Apply EWMA */
