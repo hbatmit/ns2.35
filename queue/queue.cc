@@ -280,7 +280,14 @@ double Queue::get_service_rate()
 
 double Queue::get_delay()
 {
-  printf("get_service_rate() not implemented. Aborting ... \n");
+  printf("get_delay() not implemented. Aborting ... \n");
   exit(7);
   return -1.0;
+}
+
+Packet* Queue::get_head() const
+{
+  printf("get_head() not implemented. Aborting ... \n");
+  exit(7);
+  return nullptr;
 }

@@ -145,6 +145,7 @@ public:
 						 * underlying packet queue */
 	virtual int byteLength() const { return pq_->byteLength(); }	/* number of bytes *
 						 * currently in packet queue */
+	virtual Packet* get_head() const; 
 	/* mean utilization, decaying based on util_weight */
 	virtual double utilization (void);
 
