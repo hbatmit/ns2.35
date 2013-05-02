@@ -42,12 +42,18 @@ class PFScheduler : public EnsembleScheduler {
   /* Helper function, transmit after slicing (if reqd) */
   void slice_and_transmit(Packet *p, uint32_t chosen_user);
 
+  static constexpr double delayK = 0.2;
  private:
   /* update mean achieved rates */
   void update_mean_achieved_rates(uint32_t scheduled_user);
 
   /* update mean delays */
   double est_delay(double now, double current_delay, uint32_t user_id);
+ 
+  /* Get latest delay estimate */
+  double get_delay(uint32_t user_id) const {
+    return delay_est_.at(user_id).get_estimate();
+  }
 
   /* slot duration */
   const double slot_duration_;
@@ -70,6 +76,9 @@ class PFScheduler : public EnsembleScheduler {
 
   /* Vector of abeyant packets */
   std::vector<Packet*> abeyance_;
+
+  /* Arrival timestamp of hol packets */
+  std::vector<double> hol_ts_;
 
   /* Slicing Agent */
   Agent slicing_agent_;

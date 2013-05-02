@@ -28,13 +28,16 @@ PFScheduler::PFScheduler(uint32_t num_users,
       ewma_slots_(ewma_slots),
       chosen_user_(0),
       mean_achieved_rates_(std::vector<double> (num_users_)),
+      delay_est_(std::vector<EwmaEstimator> (num_users_)),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*> (num_users_)),
+      hol_ts_(std::vector<double> (num_users_)),
       slicing_agent_(Agent(PT_CELLULAR)) {
   for ( uint32_t i=0; i < num_users_; i++ ) {
     mean_achieved_rates_.at( i )=0.0;
     abeyance_.at(i) = nullptr;
+    hol_ts_.at(i) = 0.0;
   }
   fprintf(stderr, "PFScheduler parameters slot_duration_ %f, ewma_slots_ %u \n",
                   slot_duration_, ewma_slots_);
@@ -75,12 +78,17 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                  { auto norm = (average != 0 ) ? rate/average : DBL_MAX/10000.0 ;/* printf("Norm is %f \n", norm); */ return norm;} );
 
   /* Pick the highest normalized rates amongst them */
-  auto abeyance_len = [&] (const Packet* tmp) { return (tmp != nullptr) ? hdr_cmn::access(tmp)->size() : 0;};
   auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
                              [&] (const uint64_t &f1, const uint64_t &f2)
-                             { uint32_t q1 = abeyance_len(abeyance_.at(f1)) + user_queues_.at(f1)->byteLength();
-                               uint32_t q2 = abeyance_len(abeyance_.at(f2)) + user_queues_.at(f2)->byteLength();
-                               return (normalized_rates.at(f1) * q1) < (normalized_rates.at(f2) * q2) ;});
+                             { double mean_delay1 = get_delay(f1);
+                               double mean_delay2 = get_delay(f2);
+                               if ((mean_delay1 == -1) or (mean_delay2 == -1)) {
+                                 mean_delay1 = 1;
+                                 mean_delay2 = 1;
+                               }
+                               fprintf(stderr, "Mean_delay 1 is %f, 2 is %f, \n",
+                                       mean_delay1, mean_delay2);
+                               return (normalized_rates.at(f1)*mean_delay1) < (normalized_rates.at(f2)*mean_delay2) ;});
 
   return (it!=feasible_users.end()) ? *it : (uint64_t)-1;
 
@@ -135,6 +143,8 @@ void PFScheduler::transmit_pkt() {
   Packet* p = abeyance_.at(chosen_user);
   if (p==nullptr) {
     /* Now check the main queue */
+    /* Get arrival ts of hol packet */
+    hol_ts_.at(chosen_user) = user_queues_.at(chosen_user)->get_hol();
     p = user_queues_.at(chosen_user)->deque();
     if (p!=nullptr) {
       slice_and_transmit(p, chosen_user);
@@ -154,7 +164,7 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
   double txt = user_links_.at(chosen_user)->txtime(p);
 
   /* Check if packet txtime spills over into the next time slot. If so, slice it */
-  if(txt+Scheduler::instance().clock() > current_slot_ + slot_duration_) {
+  if (txt+Scheduler::instance().clock() > current_slot_ + slot_duration_) {
     auto sliced_bits =(current_slot_+ slot_duration_ - Scheduler::instance().clock())
                       * user_links_.at(chosen_user)->bandwidth();
 //    printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
@@ -178,6 +188,9 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
   } else {
     /* Send packet onward */
     user_links_.at(chosen_user)->recv(p, queue_handler);
+    auto current_delay = Scheduler::instance().clock() + txt - hol_ts_.at(chosen_user);
+    assert(current_delay > 0);
+    est_delay(Scheduler::instance().clock(), current_delay, chosen_user);
 
     /* Log */
 //    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
@@ -196,7 +209,7 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
 double PFScheduler::est_delay( double now, double current_delay, uint32_t user_id ) {
   if ( delay_est_.at(user_id).get_estimate() == -1 ) {
     /* First delay, simply seed estimator */
-    delay_est_.at(user_id) = EwmaEstimator( K, current_delay, now );
+    delay_est_.at(user_id) = EwmaEstimator(delayK, current_delay, now);
     return delay_est_.at(user_id).get_estimate();
   } else {
     /* Apply EWMA */
