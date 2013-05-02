@@ -79,7 +79,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
 
   /* Pick the highest normalized rates amongst them */
   auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
-                             [&] (const uint64_t &f1, const uint64_t &f2)
+                             [&] (const uint32_t &f1, const uint32_t &f2)
                              { double mean_delay1 = get_delay(f1);
                                double mean_delay2 = get_delay(f2);
                                if ((mean_delay1 == -1) or (mean_delay2 == -1)) {
@@ -88,7 +88,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                                }
                                fprintf(stderr, "Mean_delay 1 is %f, 2 is %f, \n",
                                        mean_delay1, mean_delay2);
-                               return (normalized_rates.at(f1)*mean_delay1) < (normalized_rates.at(f2)*mean_delay2) ;});
+                               return (normalized_rates.at(f1)*(mean_delay1/hol_delay(f1))) < (normalized_rates.at(f2)*(mean_delay2/hol_delay(f2))) ;});
 
   return (it!=feasible_users.end()) ? *it : (uint64_t)-1;
 
@@ -215,4 +215,21 @@ double PFScheduler::est_delay( double now, double current_delay, uint32_t user_i
     /* Apply EWMA */
     return delay_est_.at(user_id).update( now, current_delay );
   }
+}
+
+double PFScheduler::hol_delay(uint32_t user_id) const {
+  double hol_arrival = 0.0;
+  double txtime = 0.0;
+  if (abeyance_.at(user_id) != nullptr) {
+    assert(hol_ts_.at(user_id)>=0);
+    hol_arrival = hol_ts_.at(user_id);
+    txtime = (8*hdr_cmn::access(abeyance_.at(user_id))->size())/get_link_rate_estimate(user_id);
+  } else {
+    assert(user_queues_.at(user_id)->get_hol()>=0);
+    hol_arrival = user_queues_.at(user_id)->get_hol();
+    txtime = (8*hdr_cmn::access(user_queues_.at(user_id)->get_head())->size())/get_link_rate_estimate(user_id);
+  }
+  double delay = Scheduler::instance().clock() - hol_arrival + txtime;
+  assert(delay > 0);
+  return delay;
 }

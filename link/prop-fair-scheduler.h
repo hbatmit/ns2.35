@@ -42,6 +42,9 @@ class PFScheduler : public EnsembleScheduler {
   /* Helper function, transmit after slicing (if reqd) */
   void slice_and_transmit(Packet *p, uint32_t chosen_user);
 
+  /* Get delay of head of line packet */
+  double hol_delay(uint32_t user_id) const;
+
   static constexpr double delayK = 0.2;
  private:
   /* update mean achieved rates */
