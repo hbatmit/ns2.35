@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <vector>
 #include "common/agent.h"
+#include "common/ewma-estimator.h"
 #include "link/ensemble-scheduler.h"
 
 /* Forward declarations */
@@ -45,6 +46,9 @@ class PFScheduler : public EnsembleScheduler {
   /* update mean achieved rates */
   void update_mean_achieved_rates(uint32_t scheduled_user);
 
+  /* update mean delays */
+  double est_delay(double now, double current_delay, uint32_t user_id);
+
   /* slot duration */
   const double slot_duration_;
 
@@ -56,6 +60,9 @@ class PFScheduler : public EnsembleScheduler {
 
   /* per user mean achieved rates */
   std::vector<double> mean_achieved_rates_;
+
+  /* per user mean delays */
+  std::vector<EwmaEstimator> delay_est_;
 
   /* Timers */
   PFTxTimer* tx_timer_;

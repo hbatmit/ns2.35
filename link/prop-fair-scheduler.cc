@@ -195,3 +195,14 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
     tx_timer_->resched(txt);
   }
 }
+
+double PFScheduler::est_delay( double now, double current_delay, uint32_t user_id ) {
+  if ( delay_est_.at(user_id).get_estimate() == -1 ) {
+    /* First delay, simply seed estimator */
+    delay_est_.at(user_id) = EwmaEstimator( K, current_delay, now );
+    return delay_est_.at(user_id).get_estimate();
+  } else {
+    /* Apply EWMA */
+    return delay_est_.at(user_id).update( now, current_delay );
+  }
+}
