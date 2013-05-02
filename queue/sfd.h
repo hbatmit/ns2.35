@@ -53,6 +53,7 @@ class SFD : public EnsembleAwareQueue {
     virtual double get_delay() override { return _rate_estimator.est_delay(Scheduler::instance().clock(), 0.0); }
     virtual int length() const override { return _packet_queue->length(); }
     virtual int byteLength() const override { return _packet_queue->byteLength(); }
+    virtual Packet* get_head() const override { return _packet_queue->head(); }
 
 };
 
