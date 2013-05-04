@@ -19,6 +19,7 @@ set opt(link_trace)         link.trace
 set opt(tcp)                TCP/Newreno
 set opt(partialresults) false;    # show partial throughput, delay, and utility scores?
 set opt(enable_on_off)  false;    # enable on off traffic iff required.
+set opt(seed)               1
 
 # LoggingApp specific stuff
 set opt(onrand) Exponential
