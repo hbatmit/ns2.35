@@ -6,3 +6,4 @@
 *.tr
 *.tar.gz
 *.P
+*.pb.h
