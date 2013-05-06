@@ -37,7 +37,10 @@ class EnsembleScheduler : public TclObject {
   /* update link rate estimate , model feedback delay and noise */
   void update_link_rate_estimate(void);
 
-  double get_link_rate_estimate(int user_id) const { return link_rates_.at(user_id); }
+  double get_link_rate_estimate(uint32_t user_id) const { return link_rates_.at(user_id); }
+
+  /* Get service rate of EnsembleScheduler, this is different from the service rate of Queue */
+  double get_service_rate(uint32_t user_id);
 
  protected:
   /* number of users */
