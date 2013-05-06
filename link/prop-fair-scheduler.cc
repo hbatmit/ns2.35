@@ -28,7 +28,7 @@ PFScheduler::PFScheduler(uint32_t num_users,
       ewma_slots_(ewma_slots),
       chosen_user_(0),
       mean_achieved_rates_(std::vector<double> (num_users_)),
-      delay_est_(std::vector<EwmaEstimator> (num_users_)),
+      flow_stats_(std::vector<FlowStats> (num_users_, FlowStats(time_constant))),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*> (num_users_)),
@@ -62,7 +62,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
 
   /* Check if there are additional abeyant users */
   for (uint32_t i=0; i < num_users_; i++) {
-    if( (abeyance_.at(i) != nullptr) and (link_rates_.at(i) != 0) ) {
+    if ((abeyance_.at(i) != nullptr) and (link_rates_.at(i) != 0)) {
       if(std::find(feasible_users.begin(), feasible_users.end(), i) == feasible_users.end()) {
         /* printf("Adding one more abeyant user : %d \n", i); */
         feasible_users.push_back(i);
@@ -185,7 +185,7 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
     user_links_.at(chosen_user)->recv(p, queue_handler);
     auto current_delay = Scheduler::instance().clock() + txt - hol_ts_.at(chosen_user);
     assert(current_delay > 0);
-    est_delay(Scheduler::instance().clock(), current_delay, chosen_user);
+    flow_stats_.at(chosen_user).est_delay(Scheduler::instance().clock(), current_delay);
 
     /* Log */
 //    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
@@ -198,17 +198,6 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
 
     /* schedule next packet transmission */
     tx_timer_->resched(txt);
-  }
-}
-
-double PFScheduler::est_delay( double now, double current_delay, uint32_t user_id ) {
-  if ( delay_est_.at(user_id).get_estimate() == -1 ) {
-    /* First delay, simply seed estimator */
-    delay_est_.at(user_id) = EwmaEstimator(delayK, current_delay, now);
-    return delay_est_.at(user_id).get_estimate();
-  } else {
-    /* Apply EWMA */
-    return delay_est_.at(user_id).update( now, current_delay );
   }
 }
 
