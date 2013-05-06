@@ -27,6 +27,9 @@ class PFScheduler : public EnsembleScheduler {
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const override; 
 
+  /* Service rate of scheduler */
+  virtual double get_service_rate(uint32_t user_id) override { return mean_achieved_rates_.at(user_id); }
+
   /* Tcl interface : activate scheduler */
   virtual int command(int argc, const char*const* argv) override;
 
@@ -44,8 +47,8 @@ class PFScheduler : public EnsembleScheduler {
 
   /* Get delay of head of line packet */
   double hol_delay(uint32_t user_id) const;
-
   static constexpr double delayK = 0.2;
+
  private:
   /* update mean achieved rates */
   void update_mean_achieved_rates(uint32_t scheduled_user);
