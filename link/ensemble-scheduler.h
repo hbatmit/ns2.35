@@ -16,6 +16,9 @@ class EnsembleScheduler : public TclObject {
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const = 0;
 
+  /* Get service rate of EnsembleScheduler, this is different from the service rate of Queue */
+  virtual double get_service_rate(uint32_t user_id) = 0;
+
   /* Tcl interface : add links and queues */
   virtual int command(int argc, const char*const* argv) override;
 
@@ -38,9 +41,6 @@ class EnsembleScheduler : public TclObject {
   void update_link_rate_estimate(void);
 
   double get_link_rate_estimate(uint32_t user_id) const { return link_rates_.at(user_id); }
-
-  /* Get service rate of EnsembleScheduler, this is different from the service rate of Queue */
-  double get_service_rate(uint32_t user_id);
 
  protected:
   /* number of users */

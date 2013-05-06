@@ -51,7 +51,7 @@ void SFD::enque(Packet *p)
   
   /* Divide Avg. link rate by # of active flows to get fair share */
   auto _fair_share = (current_link_rate * (1-_headroom)) / (_scheduler->num_active_users() == 0 ? 1 : _scheduler->num_active_users());
-  _fair_share = std::max(_fair_share, get_service_rate());
+  _fair_share = std::max(_fair_share, _scheduler->get_service_rate(_user_id));
   //printf("User id is %d, _fair_share is %f \n", user_id, _fair_share);
 
   /* Print everything */

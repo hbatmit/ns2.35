@@ -73,7 +73,7 @@ double EnsembleScheduler::agg_service_rate(void) {
   /* Ask each queue for it's own service rate */
   double agg_service_rate = 0.0;
   for (uint32_t i = 0; i < num_users_; i++) {
-    agg_service_rate += user_queues_.at(i)->get_service_rate();
+    agg_service_rate += get_service_rate(i);
   }
   return agg_service_rate;
 }
