@@ -78,17 +78,12 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                  { auto norm = (average != 0 ) ? rate/average : DBL_MAX/10000.0 ;/* printf("Norm is %f \n", norm); */ return norm;} );
 
   /* Pick the highest normalized rates amongst them */
+  auto abeyance_len = [&] (const Packet* tmp) { return (tmp != nullptr) ? hdr_cmn::access(tmp)->size() : 0;};
   auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
                              [&] (const uint32_t &f1, const uint32_t &f2)
-                             { double mean_delay1 = get_delay(f1);
-                               double mean_delay2 = get_delay(f2);
-                               if ((mean_delay1 == -1) or (mean_delay2 == -1)) {
-                                 mean_delay1 = 1;
-                                 mean_delay2 = 1;
-                               }
-                               fprintf(stderr, "Mean_delay 1 is %f, 2 is %f, \n",
-                                       mean_delay1, mean_delay2);
-                               return (normalized_rates.at(f1)*(mean_delay1/hol_delay(f1))) < (normalized_rates.at(f2)*(mean_delay2/hol_delay(f2))) ;});
+                             { uint32_t q1 = abeyance_len(abeyance_.at(f1)) + user_queues_.at(f1)->byteLength();
+                               uint32_t q2 = abeyance_len(abeyance_.at(f2)) + user_queues_.at(f2)->byteLength();
+                               return (normalized_rates.at(f1) * q1) < (normalized_rates.at(f2) * q2); });
 
   return (it!=feasible_users.end()) ? *it : (uint64_t)-1;
 
