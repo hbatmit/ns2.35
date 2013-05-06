@@ -23,6 +23,9 @@ class FcfsScheduler : public EnsembleScheduler {
   /* pick next user to scheduler */
   virtual uint32_t pick_user_to_schedule(void) const;
 
+  /* Service rate of scheduler */
+  virtual double get_service_rate(uint32_t user_id) override { /* TODO: Fix this */ assert(false); return -1.0; }
+
   /* Tcl interface : add links, and queues */
   virtual int command(int argc, const char*const* argv) override;
 
