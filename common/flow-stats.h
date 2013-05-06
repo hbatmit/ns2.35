@@ -27,9 +27,6 @@ class FlowStats {
     /* Constructor */
     FlowStats( double K );
 
-    /* Default constructor */
-    FlowStats() {};
-
     /* Estimate arrival rate */
     double est_arrival_rate( double now, Packet* p );
 
