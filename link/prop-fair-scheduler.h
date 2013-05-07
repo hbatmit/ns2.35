@@ -22,7 +22,8 @@ class PFScheduler : public EnsembleScheduler {
   PFScheduler(uint32_t num_users,
               double feedback_delay,
               double slot_duration,
-              uint32_t ewma_slots);
+              uint32_t ewma_slots,
+              double alpha);
 
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const override; 
@@ -61,6 +62,9 @@ class PFScheduler : public EnsembleScheduler {
 
   /* ewma_slots */
   const uint32_t ewma_slots_;
+
+  /* Max weight scheduling parameter alpha */
+  const double alpha_;
 
   /* chosen user */
   uint32_t chosen_user_;

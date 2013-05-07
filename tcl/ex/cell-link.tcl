@@ -85,7 +85,7 @@ set num_users [ expr $opt(num_tcp) + $opt(num_udp)  ]
 
 # Pick appropriate ensemble_scheduler
 if { $opt(ensemble_scheduler) == "pf" } {
-  set ensemble_scheduler [ new PFScheduler $num_users 0.0 $opt(cdma_slot_duration) $opt(cdma_ewma_slots) ]
+  set ensemble_scheduler [ new PFScheduler $num_users 0.0 $opt(cdma_slot_duration) $opt(cdma_ewma_slots) $opt(alpha) ]
 } elseif { $opt(ensemble_scheduler) == "fcfs" } {
   set ensemble_scheduler [ new FcfsScheduler $num_users 0.0 ]
 }

@@ -14,33 +14,31 @@ static class PFSchedulerClass : public TclClass {
     return (new PFScheduler(atoi(argv[4]),
                             atof(argv[5]),
                             atof(argv[6]),
-                            atoi(argv[7])));
+                            atoi(argv[7]),
+                            atof(argv[8])));
   }
 } class_prop_fair;
 
 PFScheduler::PFScheduler(uint32_t num_users,
                          double feedback_delay,
                          double slot_duration,
-                         uint32_t ewma_slots)
+                         uint32_t ewma_slots,
+                         double alpha)
     : EnsembleScheduler(num_users, feedback_delay),
       current_slot_(0.0),
       slot_duration_(slot_duration),
       ewma_slots_(ewma_slots),
+      alpha_(alpha),
       chosen_user_(0),
-      mean_achieved_rates_(std::vector<double> (num_users_)),
+      mean_achieved_rates_(std::vector<double> (num_users_, 0.0)),
       flow_stats_(std::vector<FlowStats> (num_users_, FlowStats(time_constant))),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
-      abeyance_(std::vector<Packet*> (num_users_)),
-      hol_ts_(std::vector<double> (num_users_)),
+      abeyance_(std::vector<Packet*> (num_users_, nullptr)),
+      hol_ts_(std::vector<double> (num_users_, 0.0)),
       slicing_agent_(Agent(PT_CELLULAR)) {
-  for ( uint32_t i=0; i < num_users_; i++ ) {
-    mean_achieved_rates_.at( i )=0.0;
-    abeyance_.at(i) = nullptr;
-    hol_ts_.at(i) = 0.0;
-  }
-  fprintf(stderr, "PFScheduler parameters slot_duration_ %f, ewma_slots_ %u \n",
-                  slot_duration_, ewma_slots_);
+  fprintf(stderr, "PFScheduler params slot_duration_ %f, ewma_slots_ %u, alpha_ %f \n",
+                  slot_duration_, ewma_slots_, alpha_);
 }
 
 int PFScheduler::command(int argc, const char*const* argv) {
@@ -75,7 +73,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
   std::transform(link_rates_.begin(), link_rates_.end(),
                  mean_achieved_rates_.begin(), normalized_rates.begin(),
                  [&] (const double & rate, const double & average)
-                 { auto norm = (average != 0 ) ? rate/average : DBL_MAX/10000.0 ;/* printf("Norm is %f \n", norm); */ return norm;} );
+                 { auto norm = (average != 0 ) ? rate/average : DBL_MAX;/* printf("Norm is %f \n", norm); */ return norm;} );
 
   /* Pick the highest normalized rates amongst them */
   auto abeyance_len = [&] (const Packet* tmp) { return (tmp != nullptr) ? hdr_cmn::access(tmp)->size() : 0;};
@@ -83,8 +81,15 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                              [&] (const uint32_t &f1, const uint32_t &f2)
                              { uint32_t q1 = abeyance_len(abeyance_.at(f1)) + user_queues_.at(f1)->byteLength();
                                uint32_t q2 = abeyance_len(abeyance_.at(f2)) + user_queues_.at(f2)->byteLength();
-                               return (normalized_rates.at(f1) * q1) < (normalized_rates.at(f2) * q2); });
-
+                               if (normalized_rates.at(f1) == DBL_MAX) {
+                                 return false; /* f1 > f2, so f1 < f2 is false */
+                               } else if (normalized_rates.at(f2) == DBL_MAX) {
+                                 return true;  /* f2 > f1, so f1 < f2 is true */
+                               } else {
+                                 return (normalized_rates.at(f1) * pow(q1, alpha_)) < (normalized_rates.at(f2) * pow(q2, alpha_));
+                               }
+                             }
+                            );
   return (it!=feasible_users.end()) ? *it : (uint64_t)-1;
 
 }
