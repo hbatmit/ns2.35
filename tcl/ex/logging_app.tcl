@@ -54,8 +54,8 @@ LoggingApp instproc go { starttime } {
     global ns opt src flowcdf
 
     set laststart_ $starttime
-    $ns at $starttime "$src($srcid_) start"    
-    if { $starttime >= [$ns now] } {
+    if { $starttime <= [$ns now] } {
+        # starttime is lesser than current time, so it's high time we started.
         set state_ ON
         if { $opt(ontype) == "bytes" } {
             set maxbytes_ [$on_ranvar_ value]; # in bytes
@@ -74,7 +74,10 @@ LoggingApp instproc go { starttime } {
         }
         # puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ sec"
 
+        $ns at [$ns now] "$src($srcid_) start"
+        # Start right away, because starttime was less than or equal to current time
     } else {
+        # It's not yet time to start, so schedule an alarm to wake up just before $starttime
         $self sched [expr $starttime - [$ns now]]
         set state_ OFF
     }
@@ -83,8 +86,9 @@ LoggingApp instproc go { starttime } {
 LoggingApp instproc timeout {} {
     $self instvar srcid_ maxbytes_ endtime_
     global ns src
-    $self recv 0
-    $self sched 0.1
+
+    # retry the go method now, it should be time to start
+    $self go [$ns now]
 }
 
 LoggingApp instproc recv { bytes } {
