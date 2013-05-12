@@ -36,7 +36,7 @@
 # $Header: /cvsroot/nsnam/ns-2/tcl/test/test-suite-mpls.tcl,v 1.6 2005/06/11 04:42:09 sfloyd Exp $
 
 remove-all-packet-headers       ; # removes all except common
-add-packet-header Flags IP RTP TCP MPLS LDP ; # hdrs reqd for validation test
+add-packet-header Flags rtProtoDV IP RTP TCP MPLS LDP ; # hdrs reqd for validation test
  
 # FOR UPDATING GLOBAL DEFAULTS:
 
