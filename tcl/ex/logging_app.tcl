@@ -84,9 +84,7 @@ LoggingApp instproc go { starttime } {
 }
 
 LoggingApp instproc timeout {} {
-    $self instvar srcid_ maxbytes_ endtime_
-    global ns src
-
+    global ns
     # retry the go method now, it should be time to start
     $self go [$ns now]
 }
