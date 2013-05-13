@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <string>
 #include "common/agent.h"
 #include "common/ewma-estimator.h"
 #include "link/ensemble-scheduler.h"
@@ -23,7 +24,8 @@ class PFScheduler : public EnsembleScheduler {
               double feedback_delay,
               double slot_duration,
               uint32_t ewma_slots,
-              double alpha);
+              double alpha,
+              std::string sub_qdisc);
 
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const override; 
@@ -65,6 +67,9 @@ class PFScheduler : public EnsembleScheduler {
 
   /* Max weight scheduling parameter alpha */
   const double alpha_;
+
+  /* Sub qdisc */
+  const std::string sub_qdisc_;
 
   /* chosen user */
   uint32_t chosen_user_;
