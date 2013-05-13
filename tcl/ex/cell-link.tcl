@@ -111,6 +111,9 @@ proc create_link {ns  bw latency sender receiver qdisc user_id} {
   $ns simplex-link $receiver $sender [ bw_parse $bw ]  $latency DropTail
 }
 
+# DropTail feedback queue, make sure you have sufficient buffering
+Queue set limit_ 10000
+
 # Neuter queue
 proc neuter_queue {queue} {
   # block queues
@@ -118,7 +121,7 @@ proc neuter_queue {queue} {
   $queue set unblock_on_resume_ 0
 
   # Infinite buffer
-  $queue set limit_ 1000000000
+  $queue set limit_ 10000
 
   # Deactivate forward queue
   $queue deactivate_queue
