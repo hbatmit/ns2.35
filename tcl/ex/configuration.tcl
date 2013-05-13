@@ -1,4 +1,3 @@
-set opt(num_udp)            1
 set opt(num_tcp)            1
 set opt(bottleneck_bw)      10Mb
 set opt(bottleneck_latency) 20ms

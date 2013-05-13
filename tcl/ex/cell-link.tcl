@@ -81,7 +81,7 @@ Usage
 set basestation [ $ns node ]
 
 # Determine number of users
-set num_users [ expr $opt(num_tcp) + $opt(num_udp)  ]
+set num_users $opt(num_tcp)
 
 # Pick appropriate ensemble_scheduler
 if { $opt(ensemble_scheduler) == "pf" } {
@@ -140,9 +140,6 @@ proc setup_sfd {queue scheduler} {
 
 # TCP connections
 source setup_tcp_connections.tcl
-
-# UDP connections
-source setup_udp_connections.tcl
 
 # Activate scheduler
 $ensemble_scheduler activate-link-scheduler
