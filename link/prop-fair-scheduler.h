@@ -48,8 +48,7 @@ class PFScheduler : public EnsembleScheduler {
   /* Helper function, transmit after slicing (if reqd) */
   void slice_and_transmit(Packet *p, uint32_t chosen_user);
 
-  /* Get delay of head of line packet */
-  double hol_delay(uint32_t user_id) const;
+  /* Time constant for FlowStats estimator */
   static constexpr double FLOW_EST_TIME_CONSTANT = 0.2;
 
  private:
@@ -86,9 +85,6 @@ class PFScheduler : public EnsembleScheduler {
 
   /* Vector of abeyant packets */
   std::vector<Packet*> abeyance_;
-
-  /* Arrival timestamp of hol packets */
-  std::vector<double> hol_ts_;
 
   /* Slicing Agent */
   Agent slicing_agent_;

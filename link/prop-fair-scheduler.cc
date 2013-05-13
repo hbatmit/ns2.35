@@ -38,7 +38,6 @@ PFScheduler::PFScheduler(uint32_t    t_num_users,
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*> (num_users_, nullptr)),
-      hol_ts_(std::vector<double> (num_users_, 0.0)),
       slicing_agent_(Agent(PT_CELLULAR)) {
   fprintf(stderr, "PFScheduler params slot_duration_ %f, ewma_slots_ %u, alpha_ %f \n",
                   slot_duration_, ewma_slots_, alpha_);
@@ -153,8 +152,6 @@ void PFScheduler::transmit_pkt() {
   Packet* p = abeyance_.at(chosen_user);
   if (p==nullptr) {
     /* Now check the main queue */
-    /* Get arrival ts of hol packet */
-    hol_ts_.at(chosen_user) = user_queues_.at(chosen_user)->get_hol();
     p = user_queues_.at(chosen_user)->deque();
     if (p!=nullptr) {
       slice_and_transmit(p, chosen_user);
@@ -198,10 +195,6 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
   } else {
     /* Send packet onward */
     user_links_.at(chosen_user)->recv(p, queue_handler);
-    auto current_delay = Scheduler::instance().clock() + txt - hol_ts_.at(chosen_user);
-    assert(current_delay > 0);
-    flow_stats_.at(chosen_user).est_delay(Scheduler::instance().clock(), current_delay);
-
     /* Log */
 //    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",
 //           chosen_user,
@@ -214,21 +207,4 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
     /* schedule next packet transmission */
     tx_timer_->resched(txt);
   }
-}
-
-double PFScheduler::hol_delay(uint32_t user_id) const {
-  double hol_arrival = 0.0;
-  double txtime = 0.0;
-  if (abeyance_.at(user_id) != nullptr) {
-    assert(hol_ts_.at(user_id)>=0);
-    hol_arrival = hol_ts_.at(user_id);
-    txtime = (8*hdr_cmn::access(abeyance_.at(user_id))->size())/get_link_rate_estimate(user_id);
-  } else {
-    assert(user_queues_.at(user_id)->get_hol()>=0);
-    hol_arrival = user_queues_.at(user_id)->get_hol();
-    txtime = (8*hdr_cmn::access(user_queues_.at(user_id)->get_head())->size())/get_link_rate_estimate(user_id);
-  }
-  double delay = Scheduler::instance().clock() - hol_arrival + txtime;
-  assert(delay > 0);
-  return delay;
 }
