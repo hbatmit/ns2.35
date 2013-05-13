@@ -5,12 +5,14 @@ source stat_collector.tcl
 
 # TCP servers
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
-  # Create TCP Agents
+  # Create TCP Agents with congestion control specified in opt(tcp)
   set tcp_server($i) [ new Agent/$opt(tcp) ]
   if { $opt(tcp) == "TCP/Linux" } {
     puts "TCP/Linux is buggy, exiting "
     exit 5
   }
+
+  # Attach TCP Agent to basestation Node
   $ns attach-agent $basestation $tcp_server($i)
 
   # set flow id
@@ -18,7 +20,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   set fid($i) $counter
   set counter [ incr counter ]
 
-  # Generate ON/OFF traffic on TCP Agent
+  # Attach source (such as FTP) to TCP Agent
   set src($fid($i)) [ $tcp_server($i) attach-source $opt(app) ]
 }
 
@@ -26,9 +28,11 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create node corresponding to mobile user
   set tcp_client_node($i) [ $ns node ]
-  create_link $ns $opt(bottleneck_bw) $opt(bottleneck_latency) $basestation $tcp_client_node($i) $opt(bottleneck_qdisc) $fid($i) 
 
-  # Get handles to link and queue
+  # Create forward and reverse links from basestation to mobile user
+  create_link $ns $opt(bottleneck_bw) $opt(bottleneck_latency) $basestation $tcp_client_node($i) $opt(bottleneck_qdisc) $fid($i)
+
+  # Get handles to link and queue from basestation to user
   set cell_link [ [ $ns link $basestation $tcp_client_node($i) ] link ]
   set cell_queue [ [ $ns link $basestation $tcp_client_node($i) ] queue ]
 
@@ -54,12 +58,11 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   $ns attach-agent $tcp_client_node($i) $tcp_client($i)
 
   # Create ON-OFF pattern if required
-
   if { $opt(enable_on_off) == "true" } {
     set onoff_server($i) [new LoggingApp $fid($i)]
     $onoff_server($i) attach-agent $tcp_client($i)
     $ns at 0.0 "$onoff_server($i) start"
-  
+
     # start only the odd-numbered connections immediately
     if { [expr $i % 2] == 0 } {
       $onoff_server($i) go 0.0
