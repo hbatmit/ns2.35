@@ -30,12 +30,21 @@ StatCollector instproc showstats {final id} {
       set avgrtt 0.0
   }
   set reqd_index [expr round (floor ($nsamples * 0.95)) ]
-  set sorted [lsort $all_rtt_samples]
-  set rtt95th [expr [lindex $sorted $reqd_index] * 1000]
+  assert ( $nsamples == [llength $all_rtt_samples] )
+  if { $nsamples != 0 } {
+    set sorted [lsort $all_rtt_samples]
+    set rtt95th [expr [lindex $sorted $reqd_index] * 1000]
+  } else {
+    set rtt95th 1000000
+  }
 
   if { $totaltime > 0.0 } {
       set throughput [expr 8.0 * $totalbytes / $totaltime]
-      set utility [expr log($throughput) - [expr log($rtt95th)]]
+      if { $totalbytes != 0 } {
+        set utility [expr log($throughput) - [expr log($rtt95th)]]
+      } else {
+        set utility "-infinity"
+      }
       if { $final == True } {
           puts [ format "FINAL id %d bytes %d mbps %.3f avgrtt %.1f rtt-95th %.1f on_percentage %.4f utility %.2f num_connections %d nsamples %d" $id $totalbytes [expr $throughput/1000000.0] $avgrtt $rtt95th [expr 100.0*$totaltime/$opt(duration)] $utility $nconns $nsamples ]
       } else {
