@@ -20,21 +20,21 @@ static class PFSchedulerClass : public TclClass {
   }
 } class_prop_fair;
 
-PFScheduler::PFScheduler(uint32_t num_users,
-                         double feedback_delay,
-                         double slot_duration,
-                         uint32_t ewma_slots,
-                         double alpha,
-                         std::string sub_qdisc)
-    : EnsembleScheduler(num_users, feedback_delay),
+PFScheduler::PFScheduler(uint32_t    t_num_users,
+                         double      t_feedback_delay,
+                         double      t_slot_duration,
+                         uint32_t    t_ewma_slots,
+                         double      t_alpha,
+                         std::string t_sub_qdisc)
+    : EnsembleScheduler(t_num_users, t_feedback_delay),
       current_slot_(0.0),
-      slot_duration_(slot_duration),
-      ewma_slots_(ewma_slots),
-      alpha_(alpha),
-      sub_qdisc_(sub_qdisc),
+      slot_duration_(t_slot_duration),
+      ewma_slots_(t_ewma_slots),
+      alpha_(t_alpha),
+      sub_qdisc_(t_sub_qdisc),
       chosen_user_(0),
       mean_achieved_rates_(std::vector<double> (num_users_, 0.0)),
-      flow_stats_(std::vector<FlowStats> (num_users_, FlowStats(time_constant))),
+      flow_stats_(std::vector<FlowStats> (num_users_, FlowStats(FLOW_EST_TIME_CONSTANT))),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*> (num_users_, nullptr)),

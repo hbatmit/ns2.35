@@ -20,12 +20,12 @@ class PFTxTimer;
 class PFScheduler : public EnsembleScheduler {
  public:
   /* Constructor */
-  PFScheduler(uint32_t num_users,
-              double feedback_delay,
-              double slot_duration,
-              uint32_t ewma_slots,
-              double alpha,
-              std::string sub_qdisc);
+  PFScheduler(uint32_t    t_num_users,
+              double      t_feedback_delay,
+              double      t_slot_duration,
+              uint32_t    t_ewma_slots,
+              double      t_alpha,
+              std::string t_sub_qdisc);
 
   /* pick next user to schedule */
   virtual uint32_t pick_user_to_schedule(void) const override; 
@@ -50,7 +50,7 @@ class PFScheduler : public EnsembleScheduler {
 
   /* Get delay of head of line packet */
   double hol_delay(uint32_t user_id) const;
-  static constexpr double time_constant = 0.2;
+  static constexpr double FLOW_EST_TIME_CONSTANT = 0.2;
 
  private:
   /* update mean achieved rates */
