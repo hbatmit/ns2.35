@@ -19,6 +19,7 @@ set opt(partialresults) false;    # show partial throughput, delay, and utility 
 set opt(enable_on_off)  false;    # enable on off traffic iff required.
 set opt(seed)               1;    # random seed TODO: Fix it, method is obsolete
 set opt(alpha)              1.0;  # alpha for max-weight scheduling policy
+set opt(sub_qdisc)          propfair
 
 # LoggingApp specific stuff
 set opt(onrand) Exponential
