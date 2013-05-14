@@ -55,9 +55,6 @@ class PFScheduler : public EnsembleScheduler {
   /* update mean achieved rates */
   void update_mean_achieved_rates(uint32_t scheduled_user);
 
-  /* Get latest delay estimate */
-  double get_delay(uint32_t user_id) const { return flow_stats_.at(user_id)._delay_est.get_estimate();}
-
   /* slot duration */
   const double slot_duration_;
 
