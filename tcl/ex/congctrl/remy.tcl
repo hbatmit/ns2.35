@@ -9,14 +9,14 @@
 
 #!/bin/sh
 # the next line finds ns \
-nshome=`dirname $0`; [ ! -x $nshome/ns ] && [ -x ../../ns ] && nshome=../..
+nshome=`dirname $0`; [ ! -x $nshome/ns ] && [ -x ../../../ns ] && nshome=../../..
 # the next line starts ns \
 export nshome; exec $nshome/ns "$0" "$@"
 
 if [info exists env(nshome)] {
 	set nshome $env(nshome)
-} elseif [file executable ../../ns] {
-	set nshome ../..
+} elseif [file executable ../../../ns] {
+	set nshome ../../..
 } elseif {[file executable ./ns] || [file executable ./ns.exe]} {
 	set nshome "[pwd]"
 } else {
@@ -26,6 +26,7 @@ if [info exists env(nshome)] {
 set env(PATH) "$nshome/bin:$env(PATH)"
 
 source logging-app.tcl
+source stat-collector.tcl
 
 set conffile [lindex $argv 0]
 #set conffile remyconf/vz4gdown.tcl
@@ -53,38 +54,6 @@ proc Getopt {} {
             continue
         }
     }
-}
-
-Class StatCollector 
-
-StatCollector instproc init {id ctype} {
-    $self set srcid_ $id
-    $self set ctype_ $ctype;    # type of congestion control / tcp
-    $self set numbytes_ 0
-    $self set ontime_ 0.0;     # total time connection was in ON state
-    $self set cumrtt_ 0.0
-    $self set nsamples_ 0
-    $self set nconns_ 0
-}
-
-StatCollector instproc update {newbytes newtime cumrtt nsamples} {
-    global ns opt
-    $self instvar srcid_ numbytes_ ontime_ cumrtt_ nsamples_ nconns_
-    incr numbytes_ $newbytes
-    set ontime_ [expr $ontime_ + $newtime]
-    set cumrtt_ $cumrtt
-    set nsamples_ $nsamples
-    incr nconns_
-#    puts "[$ns now]: updating stats for $srcid_: $newbytes $newtime $cumrtt $nsamples"
-#    puts "[$ns now]: \tTO: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
-    if { $opt(partialresults) } {
-        showstats False
-    }
-}
-
-StatCollector instproc results { } {
-    $self instvar numbytes_ ontime_ cumrtt_ nsamples_ nconns_
-    return [list $numbytes_ $ontime_ $cumrtt_ $nsamples_ $nconns_]
 }
 
 #
@@ -235,44 +204,75 @@ proc showstats {final} {
         set nsamples [lindex $res 3]
         set nconns [lindex $res 4]
 
-        if { $nsamples > 0.0 } {
-            set avgrtt [expr 1000*$totalrtt/$nsamples]
-        } else {
-            set avgrtt 0.0
-        }
-        if { $totaltime > 0.0 } {
+        if { $totaltime > 0.0 && $nsamples > 0} {
             set throughput [expr 8.0 * $totalbytes / $totaltime]
-            set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
-            if { $final == True } {
-                puts [ format "FINAL %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
+            set avgrtt [expr 1000*$totalrtt/$nsamples]
+            if { $avgrtt > 0.0 } {
+                set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
             } else {
-                puts [ format "----- %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
+                set utility [expr log($throughput)
+            }
+            if { $final == True } {
+                puts [ format "FINAL %d %d %.3f %.1f %.2f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
+            } else {
+                puts [ format "----- %d %d %.3f %.1f %.2f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
             }
         }
-    }
+    }   
 }
+
+
+# proc showstats {final} {
+#     global ns opt stats
+
+#     for {set i 0} {$i < $opt(nsrc)} {incr i} {
+#         set res [$stats($i) results]
+#         set totalbytes [lindex $res 0]
+#         set totaltime [lindex $res 1]
+#         set totalrtt [lindex $res 2]
+#         set nsamples [lindex $res 3]
+#         set nconns [lindex $res 4]
+
+#         if { $nsamples > 0 } {
+#             set avgrtt [expr 1000*$totalrtt/$nsamples]
+#         } else {
+#             set avgrtt 0.0
+#         }
+#         if { $totaltime > 0.0} {
+#             set throughput [expr 8.0 * $totalbytes / $totaltime]
+#             set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
+#             if { $final == True } {
+#                 puts [ format "FINAL %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
+#             } else {
+#                 puts [ format "----- %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
+#             }
+#         }
+#     }
+# }
+
 
 proc finish {} {
     global ns opt stats recvapp global
     global f
-
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set rapp $recvapp($i)
-        set nbytes [$rapp set nbytes_]
-        set ontime [expr [$ns now] - [$rapp set laststart_] ]
-        set cumrtt [$rapp set cumrtt_]
-        set numsamples [$rapp set numsamples_]
-        set srcid [$rapp set srcid_]
-        $stats($srcid) update $nbytes $ontime $cumrtt $numsamples
+        if { [$rapp set state_] == ON} {
+            # If the current state is ON, then we have one more set of stats to update.
+            # Otherwise, we're all set and there's nothing to update.
+            set nbytes [$rapp set nbytes_]
+            set ontime [expr [$ns now] - [$rapp set laststart_] ]
+            set cumrtt [$rapp set cumrtt_]
+            set numsamples [$rapp set numsamples_]
+            set rttsamples [$rapp set rtt_samples_]
+            set srcid [$rapp set srcid_]
+            $stats($srcid) update $nbytes $ontime $cumrtt $numsamples $rttsamples
+        }
     }
-
     showstats True
-
-#    $ns flush-trace
-#    close $f
+    # $ns flush-trace
+    # close $f                                                                                                                  
     exit 0
 }
-
 
 ## MAIN ##
 

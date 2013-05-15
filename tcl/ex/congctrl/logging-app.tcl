@@ -9,10 +9,7 @@ LoggingApp instproc init {id} {
     $self instvar srcid_ nbytes_ cumrtt_ numsamples_ u_ offtotal_ on_ranvar_ off_ranvar_ rtt_samples_ flowfile
     global opt
     $self set srcid_ $id
-    $self set nbytes_ 0
-    $self set cumrtt_ 0.0
-    $self set rtt_samples_ {}
-    $self set numsamples_ 0
+    $self reset
     $self set u_ [new RandomVariable/Uniform]
     $self set offtotal_ 0.0
     
@@ -36,6 +33,16 @@ LoggingApp instproc init {id} {
     $self next
 }
 
+LoggingApp instproc reset { } {
+    $self instvar nbytes_ cumrtt_ numsamples_ state_
+
+    $self set state_ OFF
+    $self set nbytes_ 0
+    $self set cumrtt_ 0.0
+    $self set numsamples_ 0
+    $self set rtt_samples_ {}
+}
+
 LoggingApp instproc settype { } {
     $self instvar endtime_ maxbytes_ 
     global opt
@@ -44,7 +51,7 @@ LoggingApp instproc settype { } {
         $self set endtime_ 0
     } else {
         $self set endtime_ $opt(simtime)
-        $self set maxbytes_ 0        
+        $self set maxbytes_ 0
     }
 }
 
@@ -55,7 +62,7 @@ LoggingApp instproc go { starttime } {
 
     set laststart_ $starttime
     if { $starttime <= [$ns now] } {
-        # starttime is lesser than current time, so it's high time we started.
+        # current time is equal to (or more than) starttime, so let's start
         set state_ ON
         if { $opt(ontype) == "bytes" } {
             set maxbytes_ [$on_ranvar_ value]; # in bytes
@@ -72,14 +79,14 @@ LoggingApp instproc go { starttime } {
             set maxbytes_ [expr 40 + [lindex $flowcdf $idx]]
 #            puts "Flow len $maxbytes_"
         }
-        # puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ sec"
+
+        puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes duration $endtime_"
 
         $ns at [$ns now] "$src($srcid_) start"
         # Start right away, because starttime was less than or equal to current time
     } else {
-        # It's not yet time to start, so schedule an alarm to wake up just before $starttime
+        # Not yet time to start, so schedule an alarm to wake up at $starttime
         $self sched [expr $starttime - [$ns now]]
-        set state_ OFF
     }
 }
 
@@ -91,6 +98,8 @@ LoggingApp instproc timeout {} {
     $self go [$ns now]
 }
 
+# LoggingApp maintains information for each on-off period; when turned off, recv calls StatCollector::update,
+# which maintains the cumulative statistics for the srcid (i.e., src-dest pair) across all on-off periods.
 LoggingApp instproc recv { bytes } {
     # there's one of these objects for each src/dest pair 
     $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_ offtotal_ off_ranvar_ on_ranvar_ rtt_samples_
@@ -98,7 +107,7 @@ LoggingApp instproc recv { bytes } {
 
     if { $state_ == OFF } {
         if { [$ns now] >= $laststart_ } {
-#            puts "[$ns now]: wasoff turning $srcid_ on for $maxbytes_"
+            puts "[$ns now]: wasoff turning $srcid_ on for $maxbytes_ duration $endtime_"
             set state_ ON
         }
     }
@@ -116,11 +125,10 @@ LoggingApp instproc recv { bytes } {
         }
         set ontime [expr [$ns now] - $laststart_]
         if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
-#            puts "[$ns now]: Turning off $srcid_ ontime $ontime"
+            puts "[$ns now]: Turning off $srcid_ ontime $ontime"
             $ns at [$ns now] "$src($srcid_) stop"
             $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_ $rtt_samples_
-            set nbytes_ 0
-            set state_ OFF
+            $self reset
             set nexttime [expr [$ns now] + [$off_ranvar_ value]]; # stay off until nexttime
             set offtotal_ [expr $offtotal_ + $nexttime - [$ns now]]
 #            puts "OFFTOTAL for src $srcid_ $offtotal_"
@@ -135,17 +143,13 @@ LoggingApp instproc recv { bytes } {
                     set r [$u_ value]
                     set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
                 }
-                $ns at $nexttime: "$src($srcid_) start"; # schedule next start
+                $self sched [expr $nexttime - [$ns now]]
+#                $ns at $nexttime: "$src($srcid_) start"; # schedule next start
 #                puts "@$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
             }
         }
         return nbytes_
     }
-}
-
-LoggingApp instproc results {} {
-    $self instvar nbytes_ cumrtt_ numsamples_ rtt_samples_
-    return [list $nbytes_ $cumrtt_ $numsamples_ $rtt_samples_]
 }
 
 LoggingApp instproc sample_off_duration {} {
