@@ -28,7 +28,7 @@ StatCollector instproc showstats {final} {
   if { $nsamples > 0 } {
       set avgrtt [expr 1000*$totalrtt/$nsamples]
       set reqd_index [expr round (floor ($nsamples * 0.95)) ]
-      set sorted [lsort $all_rtt_samples]
+      set sorted [lsort -real $all_rtt_samples]
       set rtt95th [expr [lindex $sorted $reqd_index] * 1000]
   } else {
       set avgrtt 0.0
