@@ -40,7 +40,7 @@ proc finish { sim_object trace_file } {
 }
 
 # read default constants from config file
-source configuration.tcl
+source onrampconf/configuration.tcl
 
 # Print out Usage
 proc Usage {} {
@@ -142,7 +142,7 @@ proc setup_sfd {queue scheduler} {
 }
 
 # TCP connections
-source setup_tcp_connections.tcl
+source setup_onramp_tcp_connections.tcl
 
 # Activate scheduler
 $ensemble_scheduler activate-link-scheduler
