@@ -75,7 +75,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 
   # Connect them to their sources
   $ns connect $tcp_server($i) $tcp_client($i)
-  set tcp_senders($fid($i)) $tcp_server($i)
+  set tp($fid($i)) $tcp_server($i)
 
   # Setup stat collector
   set stats($i) [new StatCollector $i $opt(tcp)]

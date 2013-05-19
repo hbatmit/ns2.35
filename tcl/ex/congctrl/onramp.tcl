@@ -15,23 +15,18 @@ proc finish { sim_object trace_file } {
   global opt stats onoff_server num_users
   if {$opt(enable_on_off) == "true"} {
     for {set i 0} {$i < $num_users} {incr i} {
-      set rapp $onoff_server($i)
-      set nbytes [$rapp set nbytes_]
-      if { [$rapp set state_] == "OFF" } {
-        set current_ontime 0.0
-      } else {
-        set current_ontime [expr [$sim_object now] - [$rapp set laststart_]]
+      if { [$rapp set state_] == ON} {
+        # If the current state is ON, then we have one more set of stats to update.
+        # Otherwise, we're all set and there's nothing to update.
+        set nbytes [$rapp set nbytes_]
+        set ontime [expr [$ns now] - [$rapp set laststart_] ]
+        set cumrtt [$rapp set cumrtt_]
+        set numsamples [$rapp set numsamples_]
+        set rttsamples [$rapp set rtt_samples_]
+        set srcid [$rapp set srcid_]
+        $stats($srcid) update $nbytes $ontime $cumrtt $numsamples $rttsamples
       }
-      if {$current_ontime < 0.0} {
-          puts "$current_ontime cannot be negative"
-          exit 5
-      }
-      set cumrtt [$rapp set cumrtt_]
-      set rtt_samples [$rapp set rtt_samples_]
-      set numsamples [$rapp set numsamples_]
-      set srcid [$rapp set srcid_]
-      $stats($srcid) update $nbytes $current_ontime $cumrtt $numsamples $rtt_samples
-      $stats($srcid) showstats True $srcid
+      $stats($srcid) showstats True
     }
   }
   $sim_object flush-trace
