@@ -86,7 +86,6 @@ Packet* SFD::deque()
   /* Implements pure virtual function Queue::deque() */
   double now = Scheduler::instance().clock();
   Packet *p = _packet_queue->deque();
-  _rate_estimator.est_service_rate(now, p);
   //print_stats( now );
   return p;
 }
