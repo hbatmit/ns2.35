@@ -25,16 +25,17 @@ StatCollector instproc showstats {final} {
   set nconns [lindex $res 4]
   set all_rtt_samples [lindex $res 5]
 
-  if { $nsamples > 0.0 } {
+  if { $nsamples > 0 } {
       set avgrtt [expr 1000*$totalrtt/$nsamples]
+      set reqd_index [expr round (floor ($nsamples * 0.95)) ]
+      set sorted [lsort $all_rtt_samples]
+      set rtt95th [expr [lindex $sorted $reqd_index] * 1000]
   } else {
       set avgrtt 0.0
+      set rtt95th 0.0
   }
-  set reqd_index [expr round (floor ($nsamples * 0.95)) ]
-  set sorted [lsort $all_rtt_samples]
-  set rtt95th [expr [lindex $sorted $reqd_index] * 1000]
 
-  if { $totaltime > 0.0 } {
+  if { ($totaltime > 0.0) && ($nsamples > 0) } {
       set throughput [expr 8.0 * $totalbytes / $totaltime]
       set utility [expr log($throughput) - [expr log($rtt95th)]]
       if { $final == True } {
