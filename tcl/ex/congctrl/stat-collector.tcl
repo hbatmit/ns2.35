@@ -14,9 +14,10 @@ StatCollector instproc init {id ctype} {
     $self set nconns_ 0
 }
 
-StatCollector instproc showstats {final id} {
+StatCollector instproc showstats {final} {
   global opt
   set res [$self results]
+  set id [$self set srcid_]
   set totalbytes [lindex $res 0]
   set totaltime [lindex $res 1]
   set totalrtt [lindex $res 2]
@@ -51,7 +52,7 @@ StatCollector instproc update {newbytes newtime cumrtt nsamples rtt_samples} {
     set ontime_ [expr $ontime_ + $newtime]
     set cumrtt_ [expr $cumrtt_ + $cumrtt]
     incr nsamples_ $nsamples
-    set rtt_samples_ $rtt_samples
+    set rtt_samples_ [concat $rtt_samples_ $rtt_samples]
     incr nconns_
     puts "[$ns now]: updating stats for $srcid_: $newbytes $newtime $cumrtt $nsamples"
     puts "[$ns now]: Total so far: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
