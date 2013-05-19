@@ -13,22 +13,20 @@ unset opt
 # Clean up procedures
 proc finish { sim_object trace_file } {
   global opt stats onoff_server num_users
-  if {$opt(enable_on_off) == "true"} {
-    for {set i 0} {$i < $num_users} {incr i} {
-      set rapp $onoff_server($i)
-      set srcid [$rapp set srcid_]
-      if { [$rapp set state_] == ON} {
-        # If the current state is ON, then we have one more set of stats to update.
-        # Otherwise, we're all set and there's nothing to update.
-        set nbytes [$rapp set nbytes_]
-        set ontime [expr [$sim_object now] - [$rapp set laststart_] ]
-        set cumrtt [$rapp set cumrtt_]
-        set numsamples [$rapp set numsamples_]
-        set rttsamples [$rapp set rtt_samples_]
-        $stats($srcid) update $nbytes $ontime $cumrtt $numsamples $rttsamples
-      }
-      $stats($srcid) showstats True
+  for {set i 0} {$i < $num_users} {incr i} {
+    set rapp $onoff_server($i)
+    set srcid [$rapp set srcid_]
+    if { [$rapp set state_] == ON} {
+      # If the current state is ON, then we have one more set of stats to update.
+      # Otherwise, we're all set and there's nothing to update.
+      set nbytes [$rapp set nbytes_]
+      set ontime [expr [$sim_object now] - [$rapp set laststart_] ]
+      set cumrtt [$rapp set cumrtt_]
+      set numsamples [$rapp set numsamples_]
+      set rttsamples [$rapp set rtt_samples_]
+      $stats($srcid) update $nbytes $ontime $cumrtt $numsamples $rttsamples
     }
+    $stats($srcid) showstats True
   }
   $sim_object flush-trace
   close $trace_file
@@ -90,7 +88,7 @@ if { $opt(ensemble_scheduler) == "pf" } {
 set rate_generator [ new EnsembleRateGenerator $opt(link_trace) ]; 
 set users_in_trace [ $rate_generator get_users_ ]
 puts stderr "Num users is $num_users, users_in_trace $users_in_trace users "
-assert ( $num_users == $users_in_trace );
+assert [expr $num_users == $users_in_trace]
 
 # Unique ID
 set counter 0

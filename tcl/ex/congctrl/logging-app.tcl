@@ -49,9 +49,15 @@ LoggingApp instproc settype { } {
     if { $opt(ontype) == "time" } {
         $self set maxbytes_ "infinity"; # not byte-limited
         $self set endtime_ 0
-    } else {
-        $self set endtime_ $opt(simtime)
+    } elseif { ($opt(ontype) == "bytes") || ($opt(ontype) == "flowcdf") } {
+        $self set endtime_ [expr $opt(simtime) + 1]
         $self set maxbytes_ 0
+    } elseif { $opt(ontype) == "longrunning" } {
+        $self set maxbytes_ "infinity"
+        $self set endtime_ [expr $opt(simtime) + 1]
+    } else {
+        puts "Invalid ontype"
+        exit 5
     }
 }
 
@@ -68,7 +74,7 @@ LoggingApp instproc go { starttime } {
             set maxbytes_ [$on_ranvar_ value]; # in bytes
         } elseif  { $opt(ontype) == "time" } {
             set endtime_ [$on_ranvar_ value]; # in time
-        } else {
+        } elseif  { $opt(ontype) == "flowcdf" } {
             $u_ set min_ 0.0
             $u_ set max_ 1.0
             set r [$u_ value]
@@ -78,6 +84,9 @@ LoggingApp instproc go { starttime } {
             }
             set maxbytes_ [expr 40 + [lindex $flowcdf $idx]]
 #            puts "Flow len $maxbytes_"
+        } elseif { $opt(ontype) == "longrunning" } {
+           set maxbytes_ "infinity"
+           set endtime_ $opt(simtime)
         }
 
         puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes duration $endtime_"
@@ -124,7 +133,7 @@ LoggingApp instproc recv { bytes } {
             }
         }
         set ontime [expr [$ns now] - $laststart_]
-        if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
+        if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) < [$ns now]} {
             puts "[$ns now]: Turning off $srcid_ ontime $ontime"
             $ns at [$ns now] "$src($srcid_) stop"
             $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_ $rtt_samples_
