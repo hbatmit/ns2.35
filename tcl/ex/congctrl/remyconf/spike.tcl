@@ -6,6 +6,9 @@ global opt
 set opt(nsrc) 2;                # number of sources in experiment
 set opt(tcp) TCP/Rational
 set opt(sink) TCPSink
+set opt(spike) true
+set opt(spikestart) 2.0
+set opt(spikeduration) 6.0
 set opt(cycle_protocols) false
 set protocols [list TCP/Newreno TCP/Linux/compound]; # don't put Linux TCPs first on list
 set protosinks [list TCPSink TCPSink]

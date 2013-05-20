@@ -109,35 +109,31 @@ LoggingApp instproc recv { bytes } {
     global ns opt src tp stats flowcdf
 
     if { $state_ == OFF } {
-        if { [$ns now] >= $laststart_ } {
-            puts "[$ns now]: was off turning $srcid_ on for $maxbytes_ duration $endtime_"
-            puts "THIS SHOULD NOT BE HAPPENING ANY MORE!"
-            set state_ ON
-        }
+        return [expr $nbytes_ + $bytes]
     }
     
-    if { $state_ == ON } {
-        if { $bytes > 0 } {
-            set nbytes_ [expr $nbytes_ + $bytes]
-            set tcp_sender [lindex $tp($srcid_) 0]
-            set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
-            if {$rtt_ > 0.0} {
-                set cumrtt_ [expr $rtt_  + $cumrtt_]
-                lappend rtt_samples_ $rtt_
-                set numsamples_ [expr $numsamples_ + 1]
-            }
+    # state_ must be ON here
+    if { $bytes > 0 } {
+        set nbytes_ [expr $nbytes_ + $bytes]
+        set tcp_sender [lindex $tp($srcid_) 0]
+        set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
+        if {$rtt_ > 0.0} {
+            set cumrtt_ [expr $rtt_  + $cumrtt_]
+            lappend rtt_samples_ $rtt_
+            set numsamples_ [expr $numsamples_ + 1]
         }
-        set ontime [expr [$ns now] - $laststart_]
-        if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
-            if {$opt(verbose) == true} {
-                puts [format "%.2f: Turning off $srcid_ ontime %.2f" [$ns now] $ontime]
-            }
-            $ns at [$ns now] "$src($srcid_) stop"
-            $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_ $rtt_samples_
-            $self reset
+    }
+    set ontime [expr [$ns now] - $laststart_]
+    if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
+        if {$opt(verbose) == true} {
+            puts [format "%.2f: Turning off $srcid_ ontime %.2f" [$ns now] $ontime]
+        }
+        $ns at [$ns now] "$src($srcid_) stop"
+        $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_ $rtt_samples_
+        $self reset
+        if { ![info exists opt(spike)] } {
             set nexttime [expr [$ns now] + [$off_ranvar_ value]]; # stay off until nexttime
             set offtotal_ [expr $offtotal_ + $nexttime - [$ns now]]
-#            puts "OFFTOTAL for src $srcid_ $offtotal_"
             set laststart_ $nexttime
             if { $nexttime < $opt(simtime) } { 
                 # set up for next on period
@@ -152,8 +148,8 @@ LoggingApp instproc recv { bytes } {
                 $self sched [expr $nexttime - [$ns now]]
             }
         }
-        return nbytes_
     }
+    return $nbytes_
 }
 
 LoggingApp instproc sample_off_duration {} {

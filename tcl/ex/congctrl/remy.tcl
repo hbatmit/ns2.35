@@ -185,16 +185,18 @@ proc create-sources-sinks {} {
         }
         $tcpsrc set window_ $opt(rcvwin)
         $tcpsrc set packetSize_ $opt(pktsize)
-
-        $tcpsrc trace cwnd_
-        $tcpsrc trace rtt_
-        $tcpsrc trace maxseq_
-        $tcpsrc trace ack_
-        if { $opt(tcp) == "TCP/Rational" } {
-            $tcpsrc trace _intersend_time
+        
+        if { [info exists opt(tr)] } {
+            $tcpsrc trace cwnd_
+            $tcpsrc trace rtt_
+            $tcpsrc trace maxseq_
+            $tcpsrc trace ack_
+            if { $opt(tcp) == "TCP/Rational" } {
+                $tcpsrc trace _intersend_time
+            }
+        $tcpsrc attach $f
         }
 
-        $tcpsrc attach $f
 #        set src($i) [ $tcpsrc attach-app $opt(app) ]
         set src($i) [ $tcpsrc attach-source $opt(app) ]
         set recvapp($i) [new LoggingApp $i]
@@ -279,8 +281,10 @@ proc finish {} {
         }
     }
     showstats True
-    $ns flush-trace
-    close $f                                                                                                                  
+    if { [info exists f] } {
+        $ns flush-trace
+        close $f           
+    }                                                                                                       
     exit 0
 }
 
@@ -307,9 +311,11 @@ set ns [new Simulator]
 Queue set limit_ $opt(maxq)
 #RandomVariable/Pareto set shape_ 0.5
 
-# if we don't set up tracing early, trace output isn't created!!
-set f [open $opt(tr).tr w]
-$ns trace-all $f
+if { [info exists opt(tr)] } {
+    # if we don't set up tracing early, trace output isn't created!!
+    set f [open $opt(tr).tr w]
+    $ns trace-all $f
+}
 
 set flowfile flowcdf-allman-icsi.tcl
 
@@ -324,26 +330,34 @@ create-dumbbell-topology $opt(bneck) $opt(delay)
 create-sources-sinks
 
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
-    set on_ranvar($i) [new RandomVariable/$opt(onrand)]
-    if { $opt(ontype) == "time" } {
-        $on_ranvar($i) set avg_ $opt(onavg)
-    } elseif { $opt(ontype) == "bytes" } {
-            $on_ranvar($i) set avg_ $opt(avgbytes)
-    } elseif { $opt(ontype) == "flowcdf" } {
-        source $flowfile
-    }
-    set off_ranvar($i) [new RandomVariable/$opt(offrand)]
-    $off_ranvar($i) set avg_ $opt(offavg)
-    set stats($i) [new StatCollector $i $opt(tcp)]
-}
-
-for {set i 0} {$i < $opt(nsrc)} {incr i} {
-    if { [expr $i % 2] == 1 } {
-        # start only the odd-numbered connections immediately
-        $recvapp($i) go 0.0
+    if { [info exists opt(spike)] } {
+        set opt(ontype) "time"
+        if {$i == 0} {
+            $recvapp($i) set endtime_ $opt(simtime)
+            $recvapp($i) go 0.0
+        } else {
+            $recvapp($i) set endtime_ $opt(spikeduration)
+            $recvapp($i) go $opt(spikestart)
+        }
     } else {
-        $recvapp($i) go [$off_ranvar($i) value]
+        set on_ranvar($i) [new RandomVariable/$opt(onrand)]
+        if { $opt(ontype) == "time" } {
+            $on_ranvar($i) set avg_ $opt(onavg)
+        } elseif { $opt(ontype) == "bytes" } {
+            $on_ranvar($i) set avg_ $opt(avgbytes)
+        } elseif { $opt(ontype) == "flowcdf" } {
+            source $flowfile
+        }
+        set off_ranvar($i) [new RandomVariable/$opt(offrand)]
+        $off_ranvar($i) set avg_ $opt(offavg)
+        if { [expr $i % 2] == 1 } {
+            # start only the odd-numbered connections immediately
+            $recvapp($i) go 0.0
+        } else {
+            $recvapp($i) go [$off_ranvar($i) value]
+        }
     }
+    set stats($i) [new StatCollector $i $opt(tcp)]
 }
 
 if { $opt(cycle_protocols) == true } {
