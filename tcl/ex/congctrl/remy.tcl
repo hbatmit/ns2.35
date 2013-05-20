@@ -185,11 +185,12 @@ proc create-sources-sinks {} {
         }
         $tcpsrc set window_ $opt(rcvwin)
         $tcpsrc set packetSize_ $opt(pktsize)
-#        $tcpsrc trace maxseq_
-#        $tcpsrc trace ack_
+
+        $tcpsrc trace cwnd_
+        $tcpsrc trace rtt_
+        $tcpsrc trace maxseq_
+        $tcpsrc trace ack_
         if { $opt(tcp) == "TCP/Rational" } {
-            $tcpsrc trace cwnd_
-#            $tcpsrc trace rtt_
             $tcpsrc trace _intersend_time
         }
 
