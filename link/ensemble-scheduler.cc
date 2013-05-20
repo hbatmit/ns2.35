@@ -7,12 +7,9 @@ EnsembleScheduler::EnsembleScheduler(uint32_t num_users, double feedback_delay)
       feedback_delay_(feedback_delay),
       user_queues_(std::vector<Queue*>(num_users_)),
       user_links_(std::vector<LinkDelay*>(num_users_)),
-      link_rates_(std::vector<double>(num_users_)),
-      agg_rate_estimator_(K) {
+      link_rates_(std::vector<FlowStats>(num_users_, FlowStats(FLOW_ESTIMATOR_K))),
+      agg_rate_estimator_(FLOW_ESTIMATOR_K) {
   assert(num_users_ > 0);
-  for ( uint32_t i = 0; i < num_users_; i++ ) {
-    link_rates_.at(i)=0.0;
-  }
   fprintf( stderr, "EnsembleScheduler parameters num_users_ %d, feedback_delay %f \n",
           num_users_, feedback_delay_);
 }
@@ -40,7 +37,7 @@ int EnsembleScheduler::command(int argc, const char*const* argv) {
 std::vector<uint32_t> EnsembleScheduler::get_feasible_users(void) const {
   std::vector<uint32_t> feasible_user_list;
   for ( uint32_t i = 0; i < num_users_; i++ ) {
-    if ( (!(user_queues_.at(i)->empty())) and (link_rates_.at(i) != 0)) {
+    if ( (!(user_queues_.at(i)->empty())) and (link_rates_.at(i).link_rate() != 0)) {
       feasible_user_list.push_back(i);
     } else {
 //      printf(" User_queue is empty at %d \n", i );
@@ -53,7 +50,7 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   /* Aggregate PF throughput, after EWMA */
   double agg_link_rate = 0.0;
   for (uint32_t i = 0; i < num_users_; i++) {
-    if (!user_queues_.at(i)->empty()) agg_link_rate += link_rates_.at(i);
+    if (!user_queues_.at(i)->empty()) agg_link_rate += link_rates_.at(i).link_rate();
   }
   auto pf_allocation = agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users());
   auto now = Scheduler::instance().clock();
@@ -81,6 +78,8 @@ double EnsembleScheduler::agg_service_rate(void) {
 void EnsembleScheduler::update_link_rate_estimate(void) {
   /* Update link rate estimates, model feedback delay and/or noise here */
   for (uint32_t i = 0; i < num_users_; i++) {
-    link_rates_.at(i) = user_links_.at(i)->get_bw_in_past(Scheduler::instance().clock() - feedback_delay_);
+    link_rates_.at(i).est_link_rate(Scheduler::instance().clock(),
+                                    user_links_.at(i)->get_bw_in_past(Scheduler::instance().clock() - feedback_delay_)
+                                   );
   }
 }

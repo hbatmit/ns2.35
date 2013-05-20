@@ -63,7 +63,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
 
   /* Check if there are additional abeyant users */
   for (uint32_t i=0; i < num_users_; i++) {
-    if ((abeyance_.at(i) != nullptr) and (link_rates_.at(i) != 0)) {
+    if ((abeyance_.at(i) != nullptr) and (link_rates_.at(i).link_rate() != 0)) {
       if(std::find(feasible_users.begin(), feasible_users.end(), i) == feasible_users.end()) {
         /* printf("Adding one more abeyant user : %d \n", i); */
         feasible_users.push_back(i);
@@ -75,8 +75,8 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
   std::vector<double> normalized_rates( link_rates_.size() );
   std::transform(link_rates_.begin(), link_rates_.end(),
                  mean_achieved_rates_.begin(), normalized_rates.begin(),
-                 [&] (const double & rate, const double & average)
-                 { auto norm = (average != 0 ) ? rate/average : DBL_MAX;/* printf("Norm is %f \n", norm); */ return norm;} );
+                 [&] (const FlowStats & flow_est, const double & average)
+                 { auto norm = (average != 0 ) ? flow_est.link_rate()/average : DBL_MAX;/* printf("Norm is %f \n", norm); */ return norm;} );
 
   /* Pick the highest normalized rates amongst them */
   auto abeyance_len = [&] (const Packet* tmp) { return (tmp != nullptr) ? hdr_cmn::access(tmp)->size() : 0;};
@@ -93,7 +93,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                                    return normalized_rates.at(f1) < normalized_rates.at(f2);
                                  }
                                } else if (sub_qdisc_ == "maxweight") {
-                                 return (link_rates_.at(f1) * pow(q1, alpha_)) < (link_rates_.at(f2) * pow(q2, alpha_));
+                                 return (link_rates_.at(f1).link_rate() * pow(q1, alpha_)) < (link_rates_.at(f2).link_rate() * pow(q2, alpha_));
                                } else {
                                  assert(false);
                                  return false;
@@ -128,7 +128,7 @@ void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   for ( uint32_t i=0; i < mean_achieved_rates_.size(); i++ ) {
     if ( i == scheduled_user ) {
       /* printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i); */
-      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * link_rates_.at(i);
+      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * link_rates_.at(i).link_rate();
     } else {
       mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i);
     }

@@ -35,12 +35,13 @@ class EnsembleScheduler : public TclObject {
   double agg_pf_throughput(void);
 
   /* K for rate estimation */
-  static constexpr double K = 0.200;
+  static constexpr double FLOW_ESTIMATOR_K = 0.200;
 
   /* update link rate estimate , model feedback delay and noise */
   void update_link_rate_estimate(void);
 
-  double get_link_rate_estimate(uint32_t user_id) const { return link_rates_.at(user_id); }
+  /* Get current link rate estimate after EWMA */
+  double get_link_rate_estimate(uint32_t user_id) const { return link_rates_.at(user_id).link_rate(); }
 
  protected:
   /* number of users */
@@ -56,7 +57,7 @@ class EnsembleScheduler : public TclObject {
   std::vector<LinkDelay *> user_links_;
 
   /* per user current estimate of link rates */
-  std::vector<double> link_rates_;
+  std::vector<FlowStats> link_rates_;
 
   /* aggregate rate estimator */
   FlowStats agg_rate_estimator_;
