@@ -34,7 +34,7 @@ PFScheduler::PFScheduler(uint32_t    t_num_users,
       sub_qdisc_(t_sub_qdisc),
       chosen_user_(0),
       mean_achieved_rates_(std::vector<double> (num_users_, 0.0)),
-      flow_stats_(std::vector<FlowStats> (num_users_, FlowStats(FLOW_EST_TIME_CONSTANT))),
+      delay_ewma_(std::vector<FlowStats> (num_users_, FlowStats(FLOW_EST_TIME_CONSTANT))),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*> (num_users_, nullptr)),
@@ -200,7 +200,7 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
     user_links_.at(chosen_user)->recv(p, queue_handler);
     auto current_delay = Scheduler::instance().clock() + txt - hol_ts_.at(chosen_user);
     assert(current_delay > 0);
-    flow_stats_.at(chosen_user).est_delay(Scheduler::instance().clock(), current_delay);
+    delay_ewma_.at(chosen_user).est_delay(Scheduler::instance().clock(), current_delay);
 
     /* Log */
 //    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",

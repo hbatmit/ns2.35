@@ -49,6 +49,7 @@ class FlowStats {
     double arr_rate(void)  const { return _arr_est.get_estimate();}
     double ser_rate(void)  const { return _ser_est.get_estimate();}
     double link_rate(void) const { return _link_est.get_estimate();}
+    double get_delay(void) const { return _delay_est.get_estimate();}
 
 };
 

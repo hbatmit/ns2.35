@@ -57,7 +57,7 @@ class PFScheduler : public EnsembleScheduler {
   void update_mean_achieved_rates(uint32_t scheduled_user);
 
   /* Get latest delay estimate */
-  double get_delay(uint32_t user_id) const { return flow_stats_.at(user_id)._delay_est.get_estimate();}
+  double get_delay(uint32_t user_id) const { return delay_ewma_.at(user_id).get_delay();}
 
   /* slot duration */
   const double slot_duration_;
@@ -74,11 +74,11 @@ class PFScheduler : public EnsembleScheduler {
   /* chosen user */
   uint32_t chosen_user_;
 
-  /* per user mean achieved rates */
+  /* Slotted EWMA of per user achieved rates */
   std::vector<double> mean_achieved_rates_;
 
-  /* per user delays and service rates */
-  std::vector<FlowStats> flow_stats_;
+  /* EWMA of per user delays */
+  std::vector<FlowStats> delay_ewma_;
 
   /* Timers */
   PFTxTimer* tx_timer_;
