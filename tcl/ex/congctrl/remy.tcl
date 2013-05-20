@@ -309,7 +309,7 @@ Queue set limit_ $opt(maxq)
 
 # if we don't set up tracing early, trace output isn't created!!
 set f [open $opt(tr).tr w]
-#$ns trace-all $f
+$ns trace-all $f
 
 set flowfile flowcdf-allman-icsi.tcl
 
