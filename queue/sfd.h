@@ -33,8 +33,8 @@ class SFD : public EnsembleAwareQueue {
     /* Random dropper */
     SfdDropper _dropper;
 
-    /* Rate Estimator */
-    FlowStats _rate_estimator;
+    /* Arrival Rate Estimator */
+    FlowStats _arrival_estimator;
 
   public :
     SFD(double K, double headroom, uint32_t iter, uint32_t user_id);
@@ -48,7 +48,7 @@ class SFD : public EnsembleAwareQueue {
     virtual Packet* deque() override;
     virtual bool empty() const override { return (_packet_queue->byteLength() == 0); }
     virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(_packet_queue->head())->timestamp(); }
-    virtual double get_arrival_rate() override { return _rate_estimator.arr_rate(); }
+    virtual double get_arrival_rate() override { return _arrival_estimator.arr_rate(); }
     virtual int length() const override { return _packet_queue->length(); }
     virtual int byteLength() const override { return _packet_queue->byteLength(); }
     virtual Packet* get_head() const override { return _packet_queue->head(); }

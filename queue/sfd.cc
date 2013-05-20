@@ -31,7 +31,7 @@ SFD::SFD(double K, double headroom, uint32_t iter, uint32_t user_id) :
   _user_id(user_id),
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
-  _rate_estimator(FlowStats(_K))
+  _arrival_estimator(FlowStats(_K))
 {
   fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d \n",
            _iter, _K, _headroom, _user_id );
@@ -43,7 +43,7 @@ void SFD::enque(Packet *p)
 
   /* Estimate arrival rate with an EWMA filter */
   double now = Scheduler::instance().clock();
-  double arrival_rate = _rate_estimator.est_arrival_rate(now, p);
+  double arrival_rate = _arrival_estimator.est_arrival_rate(now, p);
 
   /* Estimate current link rate with an EWMA filter. */
   _scheduler->update_link_rate_estimate();
@@ -98,5 +98,5 @@ void SFD::print_stats( double now )
   printf("\n");
 
   /* Arrival, Service, fair share, and ingress rates */
-  _rate_estimator.print_rates(_user_id, now);
+  _arrival_estimator.print_rates(_user_id, now);
 }
