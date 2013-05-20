@@ -64,6 +64,7 @@ RationalTcpAgent::~RationalTcpAgent()
 void
 RationalTcpAgent::delay_bind_init_all()
 {
+	delay_bind_init_one("_intersend_time");
 	TcpAgent::delay_bind_init_all();
         reset();
 }
@@ -223,9 +224,10 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 
 	cwnd_ = new_cwnd;
 	_intersend_time = .001 * current_whisker.intersend();
+	double _print_intersend = _intersend_time;
 	if (tracewhisk_) {
 		fprintf( stderr, "memory: %s falls into whisker %s\n", _memory.str().c_str(), current_whisker.str().c_str() );
-		fprintf( stderr, "\t=> cwnd now %u, intersend_time now %f\n", new_cwnd, _intersend_time );
+		fprintf( stderr, "\t=> cwnd now %u, intersend_time now %f\n", new_cwnd, _print_intersend );
 	}
 
 	//	fprintf( stderr, "cwnd now %u, intersend_time now %f\n", new_cwnd, _intersend_time );
