@@ -7,6 +7,9 @@ source stat-collector.tcl
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create TCP Agents with congestion control specified in opt(tcp)
   set tcp_server($i) [ new Agent/$opt(tcp) ]
+  set f [open cwnd$i.dat w]
+  $tcp_server($i) trace cwnd_
+  $tcp_server($i) attach $f
   if { $opt(tcp) == "TCP/Linux" } {
     puts "TCP/Linux is buggy, exiting "
     exit 5
