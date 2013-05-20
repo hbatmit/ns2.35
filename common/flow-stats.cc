@@ -16,6 +16,7 @@ FlowStats::FlowStats( double K ) :
 
 double FlowStats::est_arrival_rate( double now, Packet *p )
 {
+  assert(p != nullptr);
   /* Increment arrival count and accumulate arrivals */
   _arrival_count ++;
   _acc_arrivals += get_pkt_size( p );
@@ -54,6 +55,7 @@ double FlowStats::est_arrival_rate( double now, Packet *p )
 
 double FlowStats::est_service_rate( double now, Packet *p )
 {
+  assert(p != nullptr);
   /* Increment service count and accumulate services */
   _service_count++;
   _acc_services += get_pkt_size( p );
