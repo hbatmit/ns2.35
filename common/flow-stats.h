@@ -45,6 +45,11 @@ class FlowStats {
     /* Print rates */
     void print_rates(uint32_t flow_id, double now) const;
 
+    /* Get current estimate of all quantities */
+    double arr_rate(void)  const { return _arr_est.get_estimate();}
+    double ser_rate(void)  const { return _ser_est.get_estimate();}
+    double link_rate(void) const { return _link_est.get_estimate();}
+
 };
 
 #endif
