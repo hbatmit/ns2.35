@@ -74,7 +74,7 @@ RationalTcpAgent::delay_bind_dispatch(const char *varName, const char *localName
 				   TclObject *tracer)
 {
         if (delay_bind(varName, localName, "tracewhisk_", &tracewhisk_, tracer)) return TCL_OK;
-        if (delay_bind(varName, localName, "_intersend_time", &_intersend_time, tracer)) return TCL_OK
+        if (delay_bind(varName, localName, "_intersend_time", &_intersend_time, tracer)) return TCL_OK;
         return TcpAgent::delay_bind_dispatch(varName, localName, tracer);
 }
 
@@ -238,4 +238,30 @@ RationalTcpAgent::timeout_nonrtx( int tno )
 	} else if ( tno == TCP_TIMER_BURSTSND ) {
 		send_much( 1, TCP_REASON_TIMEOUT, maxburst_ );
 	}
+}
+
+
+void 
+RationalTcpAgent::traceVar(TracedVar *v)
+{
+	#define TCP_WRK_SIZE 512
+	if (!channel_)
+		return;
+
+	double curtime;
+	Scheduler& s = Scheduler::instance();
+	char wrk[TCP_WRK_SIZE];
+
+	curtime = &s ? s.clock() : 0;
+	
+	if (v == &_intersend_time) {
+		snprintf(wrk, TCP_WRK_SIZE,
+			 "%-8.5f %-2d %-2d %-2d %-2d %s %-6.6f\n",
+			 curtime, addr(), port(), daddr(), dport(),
+			 v->name(), double(*((TracedDouble*) v))); 
+		(void)Tcl_Write(channel_, wrk, -1);
+	} else {
+		TcpAgent::traceVar(v);
+	}
+
 }
