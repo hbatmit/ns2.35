@@ -79,11 +79,14 @@ LoggingApp instproc go { starttime } {
             set maxbytes_ [expr 40 + [lindex $flowcdf $idx]]
 #            puts "Flow len $maxbytes_"
         }
-
-        puts "$starttime: Turning on $srcid_ for $maxbytes_ bytes duration $endtime_"
-
+        if {$opt(verbose) == true} {
+            if {$maxbytes_ == "infinity"} {
+                puts [format "%.2f: Turning on conn %d duration %.2f " $starttime $srcid_ $endtime_]
+            } else {
+                puts [format "%.2f: Turning on conn %d bytes %.0f" $starttime $srcid_ $maxbytes_]
+            }
+        }
         $ns at [$ns now] "$src($srcid_) start"
-        # Start right away, because starttime was less than or equal to current time
     } else {
         # Not yet time to start, so schedule an alarm to wake up at $starttime
         $self sched [expr $starttime - [$ns now]]
@@ -107,7 +110,8 @@ LoggingApp instproc recv { bytes } {
 
     if { $state_ == OFF } {
         if { [$ns now] >= $laststart_ } {
-            puts "[$ns now]: wasoff turning $srcid_ on for $maxbytes_ duration $endtime_"
+            puts "[$ns now]: was off turning $srcid_ on for $maxbytes_ duration $endtime_"
+            puts "THIS SHOULD NOT BE HAPPENING ANY MORE!"
             set state_ ON
         }
     }
@@ -125,7 +129,9 @@ LoggingApp instproc recv { bytes } {
         }
         set ontime [expr [$ns now] - $laststart_]
         if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
-            puts "[$ns now]: Turning off $srcid_ ontime $ontime"
+            if {$opt(verbose) == true} {
+                puts [format "%.2f: Turning off $srcid_ ontime %.2f" [$ns now] $ontime]
+            }
             $ns at [$ns now] "$src($srcid_) stop"
             $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_ $rtt_samples_
             $self reset
@@ -144,8 +150,6 @@ LoggingApp instproc recv { bytes } {
                     set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
                 }
                 $self sched [expr $nexttime - [$ns now]]
-#                $ns at $nexttime: "$src($srcid_) start"; # schedule next start
-#                puts "@$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
             }
         }
         return nbytes_

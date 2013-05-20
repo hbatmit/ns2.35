@@ -100,7 +100,7 @@ proc create-dumbbell-topology {bneckbw delay} {
 }
 
 proc create-sources-sinks {} {
-    global ns opt s d src recvapp tp protocols protosinks
+    global ns opt s d src recvapp tp protocols protosinks f
 
     set numsrc $opt(nsrc)
     if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
@@ -185,6 +185,16 @@ proc create-sources-sinks {} {
         }
         $tcpsrc set window_ $opt(rcvwin)
         $tcpsrc set packetSize_ $opt(pktsize)
+#        set tracer($i) [new Trace/var]
+#        $tracer attach $opt(tr)
+#        $tcpsrc trace cwnd_ $tracer($i)
+        $tcpsrc trace cwnd_
+        $tcpsrc trace rtt_
+        if { $opt(tcp) == "TCP/Rational" } {
+            $tcpsrc trace _intersend_time
+        }
+
+        $tcpsrc attach $f
 #        set src($i) [ $tcpsrc attach-app $opt(app) ]
         set src($i) [ $tcpsrc attach-source $opt(app) ]
         set recvapp($i) [new LoggingApp $i]
@@ -252,7 +262,7 @@ proc showstats {final} {
 
 
 proc finish {} {
-    global ns opt stats recvapp global
+    global ns opt stats recvapp 
     global f
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set rapp $recvapp($i)
@@ -269,8 +279,8 @@ proc finish {} {
         }
     }
     showstats True
-    # $ns flush-trace
-    # close $f                                                                                                                  
+    $ns flush-trace
+    close $f                                                                                                                  
     exit 0
 }
 
@@ -298,7 +308,7 @@ Queue set limit_ $opt(maxq)
 #RandomVariable/Pareto set shape_ 0.5
 
 # if we don't set up tracing early, trace output isn't created!!
-#set f [open opt(tr).tr w]
+set f [open $opt(tr).tr w]
 #$ns trace-all $f
 
 set flowfile flowcdf-allman-icsi.tcl

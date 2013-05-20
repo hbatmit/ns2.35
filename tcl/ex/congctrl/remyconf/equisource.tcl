@@ -38,7 +38,8 @@ set opt(ontype) "time";           # valid options are "time" and "bytes"
 # simulator parameters
 set opt(simtime) 300.0;        # total simulated time
 set opt(tr) remyout;            # output trace in opt(tr).out
-set opt(partialresults) false;   # show partial throughput, delay, and utility scores?
+set opt(partialresults) false;   # show partial throughput, delay, and utility?
+set opt(verbose) false;          # verbose printing for debugging (esp stats)
 
 # utility and scoring
 set opt(alpha) 1.0

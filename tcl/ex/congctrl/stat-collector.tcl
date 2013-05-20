@@ -53,8 +53,10 @@ StatCollector instproc update {newbytes newtime cumrtt nsamples rtt_samples} {
     incr nsamples_ $nsamples
     set rtt_samples_ $rtt_samples
     incr nconns_
-    puts "[$ns now]: updating stats for $srcid_: $newbytes $newtime $cumrtt $nsamples"
-    puts "[$ns now]: Total so far: $numbytes_ $ontime_ $cumrtt_ $nsamples_"
+    if {$opt(verbose)} {
+        puts [format "%.2f: updating stats $srcid_: $newbytes %.2f %.3f $nsamples" [$ns now] $newtime $cumrtt]
+        puts [format "%.2f: Total so far: $numbytes_ %.2f %.3f $nsamples_" [$ns now] $ontime_ $cumrtt_]
+    }
     if { $opt(partialresults) } {
         $self showstats False
     }

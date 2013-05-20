@@ -21,7 +21,8 @@ class RationalTcpAgent : public virtual TcpAgent {
 private:
 	const WhiskerTree *_whiskers;
 	Memory _memory;
-	double _intersend_time;
+	//	double _intersend_time;
+	TracedDouble _intersend_time;
 
 public:
 	RationalTcpAgent();
