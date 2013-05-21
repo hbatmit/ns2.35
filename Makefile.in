@@ -82,7 +82,7 @@ LIB	= \
 	@V_LIBS@ \
 	@V_LIB_X11@ \
 	@V_LIB@ \
-	-lm -lprotobuf @LIBS@
+	-lm -lprotobuf -pthread @LIBS@
 #	-L@libdir@ \
 
 CFLAGS	+= $(CCOPT) $(DEFINE) 
