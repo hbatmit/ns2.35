@@ -3,7 +3,7 @@
 # time qlen
 # time link_utilization
 # Run as follows:
-# trace2tuq.py -d <dest> -q <bottleneck_queue_node>
+# trace2tuq.py -f <tracefile> -w <timewindow> -s <src> -d <dest>
 # This program assumes a dumbbell topology with n sources connected to
 # a gateway, connected over a bottleneck link to the destination.
 # All connections go from a source to the same destination.
