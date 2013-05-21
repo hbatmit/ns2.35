@@ -331,14 +331,17 @@ create-sources-sinks
 
 for {set i 0} {$i < $opt(nsrc)} {incr i} {
     if { [info exists opt(spike)] } {
-        set opt(ontype) "time"
+        $recvapp($i) reset
         if {$i == 0} {
             $recvapp($i) set endtime_ $opt(simtime)
-            $recvapp($i) go 0.0
+            set starttime [$ns now]
         } else {
             $recvapp($i) set endtime_ $opt(spikeduration)
-            $recvapp($i) go $opt(spikestart)
+            set starttime [expr [$ns now] + $opt(spikestart)]
         }
+        $recvapp($i) set state_ ON
+        $recvapp($i) set laststart_ $starttime
+        $ns at $starttime  "$src($i) start"
     } else {
         set on_ranvar($i) [new RandomVariable/$opt(onrand)]
         if { $opt(ontype) == "time" } {

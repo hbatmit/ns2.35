@@ -111,7 +111,7 @@ LoggingApp instproc recv { bytes } {
     if { $state_ == OFF } {
         return [expr $nbytes_ + $bytes]
     }
-    
+
     # state_ must be ON here
     if { $bytes > 0 } {
         set nbytes_ [expr $nbytes_ + $bytes]
