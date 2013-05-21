@@ -2,8 +2,7 @@ set opt(num_tcp)            1
 set opt(bottleneck_bw)      10Mb
 set opt(bottleneck_latency) 20ms
 set opt(bottleneck_qdisc)   SFD
-set opt(duration)           100
-set opt(simtime)            $opt(duration)
+set opt(simtime)            100
 set opt(codel_target)       5ms
 set opt(codel_interval)     100ms
 set opt(cbr_rate)           10Mb

@@ -146,5 +146,5 @@ $rate_generator activate-rate-generator
 
 # Run simulation
 ns-random $opt(seed)
-$ns at $opt(duration) "finish $ns $trace_file"
+$ns at $opt(simtime) "finish $ns $trace_file"
 $ns run
