@@ -27,43 +27,52 @@ if __name__ == '__main__':
 
     (config, args) = parser.parse_args()
 
+    def gather():
+        for i in xrange(nsrc):
+            if nexttime not in times[i]:
+                times[i].append(nexttime)
+                tput[i].append(8.0*bytes[i]/(1000000*config.window))
+            bytes[i] = 0
+
+    nsrc = config.dest          # number of sources
     f = open(config.fname, "r")
     nexttime = config.window
     times = []
     tput = []
-    bytes = 0
+    for i in xrange(nsrc):
+        times.append([])
+        tput.append([])
+    bytes = [0]*nsrc
+    numpkts = [0]*nsrc
     for line in f:
         data = line.split()
         if len(data) == 12:
             event = data[0]
             time = float(data[1])
-            linksrc = data[2]
-            linkdst = data[3]
+            linksrc = int(data[2])
+            linkdst = int(data[3])
+            ptype = data[4]
             psize = int(data[5])
             srcaddr = int(data[8].split(".")[0])
             srcport = int(data[8].split(".")[1])
             dstaddr = int(data[9].split(".")[0])
             dstport = int(data[9].split(".")[1])
-            
 
-        if time < nexttime:
-            if event == "r" and srcaddr == config.src and dstaddr == config.dest:
-                # received a packet at the final destination
-                bytes = bytes + psize
-        else:
-            if event == "r" and dstaddr == config.dest:
-                # received a packet at the final destination
-                # got one more throughput sample
-                times.append(nexttime)
-                tput.append(1.0*bytes/config.window)
-                nexttime = nexttime + config.window
-                bytes = psize
+        while time >= nexttime:
+            # gather together all the data for the previous window
+            gather()
+            nexttime = nexttime + config.window
 
-    if nexttime not in times:
-        times.append(nexttime)
-        tput.append(1.0*bytes/config.window)
-        nexttime = nexttime + config.window
+        # we know that if we get here time < nexttime
+        if ptype != "tcp": continue
+        if event == "r" and linkdst == config.dest:
+            # received a packet at the final destination
+            numpkts[srcaddr] = numpkts[srcaddr] + 1
+            bytes[srcaddr] = bytes[srcaddr] + psize
 
-    print times
-    print tput
-
+    gather()
+    for i in xrange(nsrc):
+        print "SOURCE", i
+        print times[i]
+        print tput[i]
+        print numpkts[i]
