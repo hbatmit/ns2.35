@@ -114,7 +114,11 @@ LoggingApp instproc recv { bytes } {
     $self instvar nbytes_ srcid_ cumrtt_ numsamples_ maxbytes_ endtime_ laststart_ state_ u_ offtotal_ off_ranvar_ on_ranvar_ rtt_samples_
     global ns opt src tp stats flowcdf
 
-    assert [string equal $state_ "ON"]
+    if { [string equal $state_ "OFF"] } {
+        puts "Time [$ns now] src $srcid_ Ignoring last few packet receptions from previous epoch"
+        return
+    }
+
     if { $bytes > 0 } {
         set nbytes_ [expr $nbytes_ + $bytes]
         set tcp_sender [lindex $tp($srcid_) 0]
