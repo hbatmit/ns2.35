@@ -55,7 +55,8 @@ LoggingApp instproc settype { } {
     }
 }
 
-# called at the start of the simulation for the first run
+# Called at the start of the simulation for the first run. 
+# Also called every time a new "on" period starts.
 LoggingApp instproc go { starttime } {
     $self instvar maxbytes_ endtime_ laststart_ srcid_ state_ u_ on_ranvar_
     global ns opt src flowcdf
@@ -109,24 +110,26 @@ LoggingApp instproc recv { bytes } {
     global ns opt src tp stats flowcdf
 
     if { $state_ == OFF } {
-        return [expr $nbytes_ + $bytes]
+#        puts "[$ns now]: $srcid_ received $bytes while OFF"
+        return
     }
 
-    # state_ must be ON here
-    if { $bytes > 0 } {
-        set nbytes_ [expr $nbytes_ + $bytes]
-        set tcp_sender [lindex $tp($srcid_) 0]
-        set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
-        if {$rtt_ > 0.0} {
-            set cumrtt_ [expr $rtt_  + $cumrtt_]
-            lappend rtt_samples_ $rtt_
-            set numsamples_ [expr $numsamples_ + 1]
-        }
+    # We only count bytes received in the ON state; there may be a
+    # small race condition, not worth worrying about (we might be off
+    # by 1 packet in time-based mode, which is irrelevant).
+    set nbytes_ [expr $nbytes_ + $bytes]
+    set tcp_sender [lindex $tp($srcid_) 0]
+    set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
+    if {$rtt_ > 0.0} {
+        set cumrtt_ [expr $rtt_  + $cumrtt_]
+        lappend rtt_samples_ $rtt_
+        set numsamples_ [expr $numsamples_ + 1]
     }
+
     set ontime [expr [$ns now] - $laststart_]
     if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) <= [$ns now]} {
         if {$opt(verbose) == true} {
-            puts [format "%.2f: Turning off $srcid_ ontime %.2f" [$ns now] $ontime]
+            puts [format "%.2f: Turning off $srcid_ ontime %.2f bytes %d maxbytes %.1f" [$ns now] $ontime $nbytes_ $maxbytes_]
         }
         $ns at [$ns now] "$src($srcid_) stop"
         $stats($srcid_) update $nbytes_ $ontime $cumrtt_ $numsamples_ $rtt_samples_
@@ -137,19 +140,18 @@ LoggingApp instproc recv { bytes } {
             set laststart_ $nexttime
             if { $nexttime < $opt(simtime) } { 
                 # set up for next on period
-                if { $opt(ontype) == "bytes" } {
-                    set maxbytes_ [$on_ranvar_ value]; # in bytes
-                } elseif  { $opt(ontype) == "time" } {
-                    set endtime_ [$on_ranvar_ value]; # in time
-                } else {
-                    set r [$u_ value]
-                    set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
-                }
+#                if { $opt(ontype) == "bytes" } {
+#                    set maxbytes_ [$on_ranvar_ value]; # in bytes
+#                } elseif  { $opt(ontype) == "time" } {
+#                    set endtime_ [$on_ranvar_ value]; # in time
+#                } else {
+#                   set r [$u_ value]
+#                    set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
+#                }
                 $self sched [expr $nexttime - [$ns now]]
             }
         }
     }
-    return $nbytes_
 }
 
 LoggingApp instproc sample_off_duration {} {

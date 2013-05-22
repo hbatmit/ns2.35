@@ -52,8 +52,10 @@ if __name__ == '__main__':
     nexttime = config.window
     times = []
     tput = []
+    totbytes = []
     for i in xrange(nsrc):
-        tput.append([])
+        tput.append( [] )
+        totbytes.append( [] )
     bytes = [0]*nsrc
     numpkts = [0]*nsrc
     qlen = 0
@@ -65,6 +67,7 @@ if __name__ == '__main__':
             times.append(nexttime)
             for i in xrange(nsrc):
                 tput[i].append(8.0*bytes[i]/(1000000*config.window))
+                totbytes[i].append(bytes[i])
                 bytes[i] = 0
             qavg.append(numpy.mean(qdat))
             qlen = 0
@@ -108,6 +111,6 @@ if __name__ == '__main__':
     for t in times:
         print "%.4f" % t,
         for i in xrange(nsrc):
-            print " %.4f " % tput[i][j],
+            print " %.4f %d" % (tput[i][j], totbytes[i][j]),
         print "%.1f" % qavg[j]
         j += 1

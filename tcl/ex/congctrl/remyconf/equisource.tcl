@@ -15,10 +15,6 @@ set protocols [list TCP/Newreno TCP/Rational]
 set protocols [list TCP/Newreno/Rational TCP/Linux/cubic ]
 set protosinks [list TCPSink/Sack1 TCPSink/Sack1/DelAck]
 
-set opt(app) FTP
-set opt(pktsize) 1210
-set opt(rcvwin) 16384
-
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 15Mb;             # bottleneck bandwidth (for some topos)
@@ -26,14 +22,18 @@ set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 74ms;            # total one-way delay in topology
 set opt(link) None
 
+set opt(app) FTP
+set opt(pktsize) 1210
+set opt(rcvwin) $opt(maxq)
+
 # random on-off times for sources
 set opt(seed) 0
 set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
 set opt(offavg) 5.0;              # mean on and off time
-set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
-set opt(ontype) "time";           # valid options are "time" and "bytes"
+set opt(avgbytes) 32000;          # 16 KBytes flows on avg (too low?)
+set opt(ontype) "bytes";           # valid options are "time" and "bytes"
 
 # simulator parameters
 set opt(simtime) 300.0;        # total simulated time
