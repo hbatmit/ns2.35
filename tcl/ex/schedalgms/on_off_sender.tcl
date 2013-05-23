@@ -91,7 +91,7 @@ Application/FTP/OnOffSender instproc timeout {} {
         if { $opt(verbose) == "true" } {
             puts "[$ns now] $id_ turning OFF"
         }
-        $stats_ update_pkts $npkts_ [expr [$ns now] - $laststart_]
+        $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
         set npkts_ 0; # important to set to 0 here for correct stat calc
         $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
             "$self send [expr int([$on_ranvar_ value])]"
@@ -108,7 +108,7 @@ Application/FTP/OnOffSender instproc dumpstats {} {
     set acked [expr $npkts_ - ($sentinel_ - $lastack_)]
 #    puts "dumpstats $id_: $npkts_ $sentinel_ $lastack_ $acked"
     if { $acked > 0 } {
-        $stats_ update_pkts $acked [expr [$ns now] - $laststart_]
+        $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
     }
 }
 
