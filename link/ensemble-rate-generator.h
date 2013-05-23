@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <queue>
 #include <vector>
+#include <map>
 #include <string>
 #include "common/timer-handler.h"
 #include "link/delay.h"
@@ -56,11 +57,19 @@ class EnsembleRateGenerator : public TimerHandler, public TclObject {
   /* Queue with all link rate changes */
   std::queue<LinkRateEvent> link_rate_changes_;
 
+  /* Initial rate map */
+  std::map<uint32_t,double> initial_rate_map_;
+
+  /* Trace file name */
+  std::string trace_file_;
+
+  /* Number of users */
+  int num_users_;
+
   /* Handles to user links */
   std::vector<LinkDelay*> user_links_;
 
-  int num_users_;
-  std::string trace_file_;
+  /* Next event */
   LinkRateEvent next_event_;
 };
 

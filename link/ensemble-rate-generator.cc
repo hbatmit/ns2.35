@@ -10,14 +10,14 @@ static class EnsembleRateGeneratorClass : public TclClass {
 } class_fcfs;
 
 EnsembleRateGenerator::EnsembleRateGenerator(std::string t_trace_file)
-    : trace_file_(t_trace_file) {
-  assert(trace_file_!="");
-  link_rate_changes_ = std::queue<LinkRateEvent>();
-  num_users_ = read_link_rate_trace();
-  assert(num_users_>0);
+    : link_rate_changes_(std::queue<LinkRateEvent>()),
+      initial_rate_map_(std::map<uint32_t,double>()),
+      trace_file_(t_trace_file),
+      num_users_(read_link_rate_trace()),
+      user_links_(std::vector<LinkDelay*>(num_users_)),
+      next_event_(LinkRateEvent()) {
   fprintf(stderr, "EnsembleRateGenerator, num_users_ %u, trace_file_ %s \n",
           num_users_, trace_file_.c_str());
-  user_links_ = std::vector<LinkDelay*>(num_users_);
 }
 
 int EnsembleRateGenerator::command(int argc, const char*const* argv) {
@@ -31,6 +31,14 @@ int EnsembleRateGenerator::command(int argc, const char*const* argv) {
       return TCL_OK;
     }
   }
+  if (argc == 3) {
+    if ( strcmp(argv[1], "get_initial_rate" ) == 0 ) {
+      uint32_t user_id = atoi(argv[2]);
+      Tcl::instance().resultf("%f", initial_rate_map_.at(user_id));
+      return TCL_OK;
+    }
+  }
+
   if(argc == 4) {
     if(!strcmp(argv[1],"attach-link")) {
       LinkDelay* link = (LinkDelay*) TclObject::lookup(argv[2]);
@@ -51,6 +59,7 @@ void EnsembleRateGenerator::expire(Event* e) {
 }
 
 uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
+  assert(trace_file_!="");
   FILE* f = fopen(trace_file_.c_str(), "r");
   if (f == NULL) {
     perror("fopen");
@@ -71,6 +80,7 @@ uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
     link_rate_change_vector.push_back(LinkRateEvent(ts, user_id, rate));
     if (std::find(unique_user_list.begin(), unique_user_list.end(), user_id) == unique_user_list.end()) {
       unique_user_list.push_back(user_id);
+      initial_rate_map_[user_id] = rate;
     }
   }
 
@@ -88,6 +98,7 @@ uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
   }
 
   fclose(f);
+  assert(!unique_user_list.empty());
   return unique_user_list.size();
 }
 
