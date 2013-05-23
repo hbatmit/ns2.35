@@ -36,9 +36,6 @@ class EnsembleRateGenerator : public TimerHandler, public TclObject {
   /* Constructor */
   EnsembleRateGenerator(std::string t_trace_file);
 
-  /* Delayed feedback to SFD and PF on the most recent rate */
-  double get_most_recent_rate(uint32_t user_id);
- 
   /* Tcl interface : add links and queues */
   virtual int command(int argc, const char*const* argv) override;
 
