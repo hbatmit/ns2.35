@@ -22,13 +22,23 @@ Application/FTP/OnOffSender instproc setid { id tcp } {
     set tcp_ $tcp
     set stats_ [new Stats $id]
     if { $opt(ontype) == "bytes" } {
-        $self set on_ranvar_ [new RandomVariable/$opt(onrand)]
+        set on_rng [new RNG]
+        for { set j 1 } {$j < $opt(seed)} {incr j} {
+            $on_rng next-substream
+        }
+        set on_ranvar_ [new RandomVariable/$opt(onrand)]
         $on_ranvar_ set avg_ $opt(avgbytes)
+        $on_ranvar_ use-rng $on_rng
     } elseif { $opt(ontype) == "flowcdf" } {
         $self set on_ranvar_ [new FlowRanvar]
     }
-    $self set off_ranvar_ [new RandomVariable/$opt(onrand)]
+    set off_rng [new RNG]
+    for { set j 1 } {$j < $opt(seed)} {incr j} {
+        $off_rng next-substream
+    }
+    set off_ranvar_ [new RandomVariable/$opt(onrand)]
     $off_ranvar_ set avg_ $opt(offavg)
+    $off_ranvar_ use-rng $off_rng
 
     $ns at [expr 0.5*[$off_ranvar_ value]] \
         "$self send [expr int([$on_ranvar_ value])]"
@@ -115,10 +125,16 @@ Application/FTP/OnOffSender instproc dumpstats {} {
 Class FlowRanvar 
 
 FlowRanvar instproc init {} {
+    global opt
     $self instvar u_
+    set rng [new RNG]
+    for { set j 1 } {$j < $opt(seed)} {incr j} {
+        $rng next-substream
+    }
     $self set u_ [new RandomVariable/Uniform]
     $u_ set min_ 0.0
     $u_ set max_ 1.0
+    $u_ use-rng $rng
 }
 
 FlowRanvar instproc value {} {
