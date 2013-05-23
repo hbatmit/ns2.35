@@ -119,16 +119,16 @@ LoggingApp instproc recv { bytes } {
         return
     }
 
-    if { $bytes > 0 } {
-        set nbytes_ [expr $nbytes_ + $bytes]
-        set tcp_sender [lindex $tp($srcid_) 0]
-        set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
-        if {$rtt_ > 0.0} {
-            set cumrtt_ [expr $rtt_  + $cumrtt_]
-            lappend rtt_samples_ $rtt_
-            set numsamples_ [expr $numsamples_ + 1]
-        }
+    assert [expr $bytes > 0 ]
+    set nbytes_ [expr $nbytes_ + $bytes]
+    set tcp_sender [lindex $tp($srcid_) 0]
+    set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
+    if {$rtt_ > 0.0} {
+        set cumrtt_ [expr $rtt_  + $cumrtt_]
+        lappend rtt_samples_ $rtt_
+        set numsamples_ [expr $numsamples_ + 1]
     }
+
     set ontime [expr [$ns now] - $laststart_]
     if { $nbytes_ >= $maxbytes_ || $ontime >= $endtime_ || $opt(simtime) < [$ns now]} {
         puts "[$ns now]: Turning off $srcid_ ontime $ontime"
@@ -141,14 +141,6 @@ LoggingApp instproc recv { bytes } {
         set laststart_ $nexttime
         if { $nexttime < $opt(simtime) } { 
             # set up for next on period
-            if { $opt(ontype) == "bytes" } {
-                set maxbytes_ [$on_ranvar_ value]; # in bytes
-            } elseif  { $opt(ontype) == "time" } {
-                set endtime_ [$on_ranvar_ value]; # in time
-            } else {
-                set r [$u_ value]
-                set maxbytes_ [expr 40 + [ lindex $flowcdf [expr int(100000*$r)]]]
-            }
             $self sched [expr $nexttime - [$ns now]]
 #            $ns at $nexttime: "$src($srcid_) start"; # schedule next start
 #            puts "@$nexttime: Turning on $srcid_ for $maxbytes_ bytes $endtime_ s"
