@@ -270,7 +270,7 @@ proc finish {} {
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set sapp $src($i)
         $sapp dumpstats 
-        $recvapp($i) dumpstats
+#        $recvapp($i) dumpstats
         set rcdbytes [$recvapp($i) set nbytes_]
         [$sapp set stats_] showstats $rcdbytes
     }
