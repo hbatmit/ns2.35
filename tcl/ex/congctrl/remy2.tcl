@@ -246,7 +246,6 @@ puts "Reading params from $conffile"
 Getopt
 
 set opt(rcvwin) [expr int(2*$opt(maxq))]
-puts $opt(rcvwin)
 
 set_access_params $opt(nsrc)
 
