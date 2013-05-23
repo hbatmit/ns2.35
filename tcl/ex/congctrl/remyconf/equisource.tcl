@@ -7,13 +7,13 @@ set opt(nsrc) 2;                # number of sources in experiment
 set opt(tcp) TCP/Rational
 set opt(sink) TCPSink
 set opt(cycle_protocols) false
-set protocols [list TCP/Newreno TCP/Linux/compound]; # don't put Linux TCPs first on list
+set protocols [list TCP/Rational TCP/Linux/compound]; # don't put Linux TCPs first on list
 set protosinks [list TCPSink TCPSink]
-set protocols [list TCP/Newreno TCP/Linux/cubic]
-set protosinks [list TCPSink TCPSink/Sack1/DelAck]
-set protocols [list TCP/Newreno TCP/Rational]
-set protocols [list TCP/Newreno/Rational TCP/Linux/cubic ]
-set protosinks [list TCPSink/Sack1 TCPSink/Sack1/DelAck]
+#set protocols [list TCP/Newreno TCP/Linux/cubic]
+#set protosinks [list TCPSink TCPSink/Sack1/DelAck]
+#set protocols [list TCP/Newreno TCP/Rational]
+#set protocols [list TCP/Newreno/Rational TCP/Linux/cubic ]
+#set protosinks [list TCPSink/Sack1 TCPSink/Sack1/DelAck]
 
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
