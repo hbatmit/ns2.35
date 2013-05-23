@@ -101,7 +101,7 @@ proc create-dumbbell-topology {bneckbw delay} {
 }
 
 proc create-sources-sinks {} {
-    global ns opt s d src recvapp tp protocols protosinks f
+    global ns opt s d src recvapp tp protocols protosinks f linuxcc
 
     set numsrc $opt(nsrc)
     if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
@@ -265,14 +265,26 @@ proc showstats {final} {
 # }
 
 proc finish {} {
-    global ns opt stats src recvapp
+    global ns opt stats src recvapp linuxcc
     global f
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set sapp $src($i)
         $sapp dumpstats 
 #        $recvapp($i) dumpstats
         set rcdbytes [$recvapp($i) set nbytes_]
-        [$sapp set stats_] showstats $rcdbytes
+        set rcd_nrtt [$recvapp($i) set nrtt_]
+        if { $rcd_nrtt > 0 } {
+            set rcd_avgrtt [expr 1000.0*[$recvapp($i) set cumrtt_] / $rcd_nrtt ]
+        } else {
+            set rcd_avgrtt 0.0
+        }
+        if { [info exists linuxcc] } {
+            puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+        } else {
+            puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+        }
+
+        [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt
     }
 
     if { [info exists f] } {
@@ -332,16 +344,8 @@ if { $opt(cycle_protocols) == true } {
         puts "$i: [lindex $protocols $i]"
     }
 } else {
-    if { [info exists linuxcc] } {
-        puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
-    } else {
-        puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
-    }
 }
 
-#puts "     SrcID Bytes Mbits/s AvgRTT On% Utility NumConns"
-
 $ns at $opt(simtime) "finish"
-
 $ns run
 
