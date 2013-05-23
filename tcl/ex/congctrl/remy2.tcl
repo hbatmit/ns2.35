@@ -269,8 +269,10 @@ proc finish {} {
     global f
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set sapp $src($i)
-        $sapp dumpstats
-        [$sapp set stats_] showstats
+        $sapp dumpstats 
+        $recvapp($i) dumpstats
+        set rcdbytes [$recvapp($i) set nbytes_]
+        [$sapp set stats_] showstats $rcdbytes
     }
 
     if { [info exists f] } {
