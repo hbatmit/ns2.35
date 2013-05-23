@@ -51,7 +51,7 @@ Stats instproc showstats { rcd } {
     }
     if { $throughput > 0.0 && $avgrtt > 0.0 } {
         set util_s [expr log(1000000.0/8) + log($throughput) - log($avgrtt) ]
-        set util_r [expr log(1000000.0/8) + log($throughput) - log($avgrtt) ]
+        set util_r [expr log(1000000.0/8) + log($rcdtput) - log($avgrtt) ]
     } else {
         set util_s 0.0
         set util_r 0.0
