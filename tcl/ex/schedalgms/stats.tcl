@@ -33,8 +33,9 @@ Stats instproc update_rtt { rtt } {
     lappend rtt_samples $rtt
 }
 
-Stats instproc showstats { } {
+Stats instproc showstats { rcd } {
     $self instvar srcid_ numbytes_ ontime_ throughput_ rtt_samples_ cumrtt_ nsamples_
+    global opt
 
     if { $nsamples_ > 0.0 } {
         set avgrtt [expr 1000.0*$cumrtt_/$nsamples_]; # in milliseconds
@@ -43,14 +44,19 @@ Stats instproc showstats { } {
     }
     if { $ontime_ > 0.0 } {
         set throughput [expr 8.0*$numbytes_/1000000 / $ontime_  ]
+        set rcdtput [expr 8.0*$rcd / 1000000 / $ontime_  ]
     } else {
         set throughput 0.0
+        set rcdtput 0.0
     }
     if { $throughput > 0.0 && $avgrtt > 0.0 } {
-        set util [expr log(1000000.0/8) + log($throughput) - log($avgrtt) ]
+        set util_s [expr log(1000000.0/8) + log($throughput) - log($avgrtt) ]
+        set util_r [expr log(1000000.0/8) + log($throughput) - log($avgrtt) ]
     } else {
-        set util 0.0
+        set util_s 0.0
+        set util_r 0.0
     }
+    set on_perc [expr 100.0*$ontime_ / $opt(simtime)]
     
-    puts [format "%d %d bytes %.3f Mbps %.0f ms %.2f" $srcid_ $numbytes_ $throughput $avgrtt $util]
+    puts [format "conn: %d rcdbytes: %d ackdbytes: %d ackMbps: %.3f rcdMbps: %.2f delayMs %.0f util_snd: %.2f util_rcd: %.2f onperc: %.1f" $srcid_ $rcd $numbytes_ $throughput $rcdtput $avgrtt $util_s $util_r $on_perc]
 }
