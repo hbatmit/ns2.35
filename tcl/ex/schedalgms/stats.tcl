@@ -18,7 +18,7 @@ Stats instproc update_pkts { newpkts newtime } {
     if { $opt(verbose) == "true" } {
         puts "updating $newpkts $newtime"
     }
-    set numbytes_ [expr $numbytes_ + $opt(pktsize)*$newpkts]
+    set numbytes_ [expr $numbytes_ + ($opt(hdrsize) + $opt(pktsize))*$newpkts]
     set ontime_ [expr $ontime_ + $newtime]
     if { $opt(verbose) == "true" } {
         puts "updating ontime to $ontime_"
@@ -58,5 +58,5 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt } {
     }
     set on_perc [expr 100.0*$ontime_ / $opt(simtime)]
     
-    puts [format "conn: %d rcdbytes: %d rcdMbps: %.2f ackdbytes: %d ackMbps: %.3f sndrttMs %.0f rcdrttMs %.0f snd_util: %.2f rcd_util: %.2f onperc: %.1f" $srcid_ $rcd_bytes $rcdtput  $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc]
+    puts [format "conn: %d rbytes: %d rMbps: %.2f abytes: %d aMbps: %.3f sndrttMs %.0f rcdrttMs %.0f s_util: %.2f r_util: %.2f onperc: %.1f" $srcid_ $rcd_bytes $rcdtput  $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc]
 }
