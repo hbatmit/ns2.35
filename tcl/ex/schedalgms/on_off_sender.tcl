@@ -39,7 +39,12 @@ Application/FTP/OnOffSender instproc send { nbytes } {
     $self instvar id_ npkts_ sentinel_ laststart_
 
     set laststart_ [$ns now]
-    set npkts_ [expr $nbytes / $opt(pktsize)]
+    # The following two lines are because Tcl doesn't seem to do ceil() correctly!
+    set npkts_ [expr int($nbytes / $opt(pktsize))]
+    if { $npkts_ * $opt(pktsize) != $nbytes } {
+        incr npkts_
+    }
+
     set sentinel_ [expr $sentinel_ + $npkts_]
     [$self agent] advanceby $npkts_
     $self sched 0.05;            # check in 50 milliseconds
