@@ -40,14 +40,17 @@ Application/FTP/OnOffSender instproc send { nbytes } {
 
     set laststart_ [$ns now]
     # The following two lines are because Tcl doesn't seem to do ceil() correctly!
-    set npkts_ [expr int($nbytes / $opt(pktsize))]
+    set npkts_ [expr int($nbytes / $opt(pktsize))]; # number of pkts for this on period
     if { $npkts_ * $opt(pktsize) != $nbytes } {
         incr npkts_
     }
 
-    set sentinel_ [expr $sentinel_ + $npkts_]
+#    if { $id_ == 0 } {
+#        puts "sen $sentinel_ npkts $npkts_"
+#    }
+    set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
     [$self agent] advanceby $npkts_
-    $self sched 0.05;            # check in 50 milliseconds
+    $self sched .005;            # check in 5 milliseconds
     if { $opt(verbose) == "true" } {
         puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
     }
@@ -81,12 +84,15 @@ Application/FTP/OnOffSender instproc timeout {} {
     }
     set lastrtt_ $rtt
     set lastack_ $ack
-#    puts "[$ns now] ACK $ack sentinel $sentinel_"
-    if { $ack >= $sentinel_ } {
+#    if {$id_ == 0} {
+#        puts "[$ns now] ACK $ack sentinel $sentinel_"
+#    }
+    if { $ack >= $sentinel_ } { # have sent for this ON period
         if { $opt(verbose) == "true" } {
             puts "[$ns now] $id_ turning OFF"
         }
         $stats_ update_pkts $npkts_ [expr [$ns now] - $laststart_]
+        set npkts_ 0; # important to set to 0 here for correct stat calc
         $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
             "$self send [expr int([$on_ranvar_ value])]"
     } else {
@@ -97,9 +103,13 @@ Application/FTP/OnOffSender instproc timeout {} {
 
 Application/FTP/OnOffSender instproc dumpstats {} {
     global ns
-    $self instvar stats_ npkts_ laststart_
-
-    $stats_ update_pkts $npkts_ [expr [$ns now] - $laststart_]
+    $self instvar id_ stats_ laststart_ lastack_ sentinel_ npkts_
+    # the connection might not have completed; calculate #acked pkts
+    set acked [expr $npkts_ - ($sentinel_ - $lastack_)]
+#    puts "dumpstats $id_: $npkts_ $sentinel_ $lastack_ $acked"
+    if { $acked > 0 } {
+        $stats_ update_pkts $acked [expr [$ns now] - $laststart_]
+    }
 }
 
 Class FlowRanvar 
