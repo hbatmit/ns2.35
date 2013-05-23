@@ -59,9 +59,6 @@ class EnsembleScheduler : public TclObject {
   /* per user current estimate of link rates */
   std::vector<FlowStats> link_rates_;
 
-  /* aggregate rate estimator */
-  FlowStats agg_rate_estimator_;
-
   /* get feasible users i.e backlogged and non-zero link rate */
   std::vector<uint32_t> get_feasible_users(void) const;
 };

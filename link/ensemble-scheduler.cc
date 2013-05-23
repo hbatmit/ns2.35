@@ -7,8 +7,7 @@ EnsembleScheduler::EnsembleScheduler(uint32_t num_users, double feedback_delay)
       feedback_delay_(feedback_delay),
       user_queues_(std::vector<Queue*>(num_users_)),
       user_links_(std::vector<LinkDelay*>(num_users_)),
-      link_rates_(std::vector<FlowStats>(num_users_, FlowStats(FLOW_ESTIMATOR_K))),
-      agg_rate_estimator_(FLOW_ESTIMATOR_K) {
+      link_rates_(std::vector<FlowStats>(num_users_, FlowStats(FLOW_ESTIMATOR_K))) {
   assert(num_users_ > 0);
   fprintf( stderr, "EnsembleScheduler parameters num_users_ %d, feedback_delay %f \n",
           num_users_, feedback_delay_);
@@ -51,10 +50,9 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   double agg_link_rate = 0.0;
   for (uint32_t i = 0; i < num_users_; i++) {
     if (!user_queues_.at(i)->empty()) agg_link_rate += link_rates_.at(i).link_rate();
+    printf("Link rate is %f \n", link_rates_.at(i).link_rate());
   }
-  auto pf_allocation = agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users());
-  auto now = Scheduler::instance().clock();
-  return agg_rate_estimator_.est_link_rate(now, pf_allocation);
+  return (agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users()));
 }
 
 double EnsembleScheduler::agg_arrival_rate(void) {
