@@ -8,18 +8,21 @@ Stats instproc init { id } {
     $self set cumrtt_ 0.0
     $self set rtt_samples_ {}
     $self set nsamples_ 0
-    $self set nconns_ 0
+    $self set nflows_ 0
 }
 
-Stats instproc update_pkts { newpkts newtime } {
+# Called when a flow ends
+Stats instproc update_flowstats { newpkts newtime } {
     global opt
-    $self instvar numbytes_ ontime_ throughput_
+    $self instvar numbytes_ ontime_ throughput_ nflows_
     
     if { $opt(verbose) == "true" } {
         puts "updating $newpkts $newtime"
     }
     set numbytes_ [expr $numbytes_ + ($opt(hdrsize) + $opt(pktsize))*$newpkts]
     set ontime_ [expr $ontime_ + $newtime]
+    incr nflows_
+    
     if { $opt(verbose) == "true" } {
         puts "updating ontime to $ontime_"
     }
@@ -34,7 +37,7 @@ Stats instproc update_rtt { rtt } {
 }
 
 Stats instproc showstats { rcd_bytes rcd_avgrtt } {
-    $self instvar srcid_ numbytes_ ontime_ throughput_ rtt_samples_ cumrtt_ nsamples_
+    $self instvar srcid_ numbytes_ ontime_ throughput_ rtt_samples_ cumrtt_ nsamples_ nflows_
     global opt
 
     if { $nsamples_ > 0.0 } {
@@ -56,7 +59,8 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt } {
         set util_s 0.0
         set util_r 0.0
     }
+    set fct [expr 1000.0*$ontime_/$nflows_]
     set on_perc [expr 100.0*$ontime_ / $opt(simtime)]
     
-    puts [format "conn: %d rbytes: %d rMbps: %.2f abytes: %d aMbps: %.3f sndrttMs %.0f rcdrttMs %.0f s_util: %.2f r_util: %.2f onperc: %.1f" $srcid_ $rcd_bytes $rcdtput  $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc]
+    puts [format "conn: %d rbytes: %d rMbps: %.2f fctMs: %.0f abytes: %d aMbps: %.3f sndrttMs %.0f rcdrttMs %.0f s_util: %.2f r_util: %.2f onperc: %.1f" $srcid_ $rcd_bytes $rcdtput $fct $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc]
 }
