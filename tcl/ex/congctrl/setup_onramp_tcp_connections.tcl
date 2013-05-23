@@ -33,7 +33,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   set tcp_client_node($i) [ $ns node ]
 
   # Create forward and reverse links from basestation to mobile user
-  create_link $ns $opt(bottleneck_bw) $opt(bottleneck_latency) $basestation $tcp_client_node($i) $opt(bottleneck_qdisc) $fid($i)
+  create_link $ns $opt(bottleneck_latency) $basestation $tcp_client_node($i) $opt(bottleneck_qdisc) $fid($i) $rate_generator
 
   # Get handles to link and queue from basestation to user
   set cell_link [ [ $ns link $basestation $tcp_client_node($i) ] link ]

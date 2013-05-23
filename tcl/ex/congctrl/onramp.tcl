@@ -94,7 +94,9 @@ assert [expr $num_users == $users_in_trace]
 set counter 0
 
 # Link creation
-proc create_link {ns  bw latency sender receiver qdisc user_id} {
+proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
+  set bw [$rate_generator get_initial_rate user_id]
+  puts "Initial bandwidth for user $user_id is $bw"
   global opt
   set q_args [ list $opt(_K) $opt(headroom) $opt(iter) $user_id ]
   if { $qdisc == "SFD" } {
