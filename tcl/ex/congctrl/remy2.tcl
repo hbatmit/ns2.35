@@ -240,6 +240,9 @@ proc finish {} {
 
 ## MAIN ##
 
+Agent/TCP set timestamps_ true
+set opt(hdrsize) 50
+
 source $conffile
 puts "Reading params from $conffile"
 
@@ -249,13 +252,6 @@ set opt(rcvwin) [expr int(2*$opt(maxq))]
 
 set_access_params $opt(nsrc)
 
-if { $opt(gw) == "XCP" } {
-    remove-all-packet-headers       ; # removes all except common
-    add-packet-header Flags IP TCP XCP ; # hdrs reqd for validation
-    set opt(hdrsize) 50
-} else {
-    set opt(hdrsize) 40
-}
     
 if { $opt(seed) >= 0 } {
     ns-random $opt(seed)
