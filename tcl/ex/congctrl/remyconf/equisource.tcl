@@ -22,10 +22,9 @@ set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 74ms;            # total one-way delay in topology
 set opt(link) None
 
+# app parameters
 set opt(app) FTP/OnOffSender
-set opt(pktsize) 1210
-set opt(rcvwin) 16384
-#set opt(rcvwin) $opt(maxq)
+set opt(pktsize) 1210;          # doesn't include proto headers
 
 # random on-off times for sources
 set opt(seed) 0
@@ -34,7 +33,7 @@ set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
 set opt(offavg) 5.0;              # mean on and off time
 set opt(avgbytes) 32000;          # 16 KBytes flows on avg (too low?)
-set opt(ontype) "bytes";           # valid options are "time" and "bytes"
+set opt(ontype) "bytes";           # valid options are "bytes" and "flowcdf"
 
 # simulator parameters
 set opt(simtime) 300.0;        # total simulated time
