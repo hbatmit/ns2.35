@@ -22,9 +22,10 @@ set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 74ms;            # total one-way delay in topology
 set opt(link) None
 
-set opt(app) FTP
+set opt(app) FTP/OnOffSender
 set opt(pktsize) 1210
-set opt(rcvwin) $opt(maxq)
+set opt(rcvwin) 16384
+#set opt(rcvwin) $opt(maxq)
 
 # random on-off times for sources
 set opt(seed) 0

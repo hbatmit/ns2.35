@@ -337,7 +337,7 @@ if { $opt(cycle_protocols) == true } {
     }
 }
 
-puts "     SrcID Bytes Mbits/s AvgRTT On% Utility NumConns"
+#puts "     SrcID Bytes Mbits/s AvgRTT On% Utility NumConns"
 
 $ns at $opt(simtime) "finish"
 
