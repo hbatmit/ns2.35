@@ -26,8 +26,6 @@ int EnsembleRateGenerator::command(int argc, const char*const* argv) {
       Tcl::instance().resultf("%u",num_users_);
       return TCL_OK;
     }
-  }
-  if (argc == 2) {
     if ( strcmp(argv[1], "activate-rate-generator" ) == 0 ) {
       init();
       return TCL_OK;
