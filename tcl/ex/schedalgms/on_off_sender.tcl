@@ -50,7 +50,7 @@ Application/FTP/OnOffSender instproc send { nbytes } {
 #    }
     set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
     [$self agent] advanceby $npkts_
-    $self sched .005;            # check in 5 milliseconds
+    $self sched $opt(checkinterval);            # check in 5 milliseconds
     if { $opt(verbose) == "true" } {
         puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
     }
@@ -97,7 +97,7 @@ Application/FTP/OnOffSender instproc timeout {} {
             "$self send [expr int([$on_ranvar_ value])]"
     } else {
         # still the same connection
-        $self sched 0.05;       # check in 50 ms
+        $self sched $opt(checkinterval);       # check in 50 ms
     }
 }
 
