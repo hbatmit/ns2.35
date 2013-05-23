@@ -199,70 +199,12 @@ proc create-sources-sinks {} {
         }
 
         set src($i) [ $tcpsrc attach-app $opt(app) ]
-        puts "Setting ID $i $tcpsrc"
         $src($i) setid $i $tcpsrc
         set recvapp($i) [new LoggingApp $i]
         $recvapp($i) attach-agent $tcpsink
         $ns at 0.0 "$recvapp($i) start"
     }
 }
-
-proc showstats {final} {
-    global ns opt stats
-
-    for {set i 0} {$i < $opt(nsrc)} {incr i} {
-        set res [$stats($i) results]
-        set totalbytes [lindex $res 0]
-        set totaltime [lindex $res 1]
-        set totalrtt [lindex $res 2]
-        set nsamples [lindex $res 3]
-        set nconns [lindex $res 4]
-
-        if { $totaltime > 0.0 && $nsamples > 0} {
-            set throughput [expr 8.0 * $totalbytes / $totaltime]
-            set avgrtt [expr 1000*$totalrtt/$nsamples]
-            if { $avgrtt > 0.0 } {
-                set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
-            } else {
-                set utility [expr log($throughput)
-            }
-            if { $final == True } {
-                puts [ format "FINAL %d %d %.3f %.1f %.2f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
-            } else {
-                puts [ format "----- %d %d %.3f %.1f %.2f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
-            }
-        }
-    }   
-}
-
-
-# proc showstats {final} {
-#     global ns opt stats
-
-#     for {set i 0} {$i < $opt(nsrc)} {incr i} {
-#         set res [$stats($i) results]
-#         set totalbytes [lindex $res 0]
-#         set totaltime [lindex $res 1]
-#         set totalrtt [lindex $res 2]
-#         set nsamples [lindex $res 3]
-#         set nconns [lindex $res 4]
-
-#         if { $nsamples > 0 } {
-#             set avgrtt [expr 1000*$totalrtt/$nsamples]
-#         } else {
-#             set avgrtt 0.0
-#         }
-#         if { $totaltime > 0.0} {
-#             set throughput [expr 8.0 * $totalbytes / $totaltime]
-#             set utility [expr log($throughput) - [expr $opt(alpha)*log($avgrtt)]]
-#             if { $final == True } {
-#                 puts [ format "FINAL %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns ]
-#             } else {
-#                 puts [ format "----- %d %d %.3f %.1f %.4f %.2f %d" $i $totalbytes [expr $throughput/1000000.0] $avgrtt [expr 100.0*$totaltime/$opt(simtime)] $utility $nconns]
-#             }
-#         }
-#     }
-# }
 
 proc finish {} {
     global ns opt stats src recvapp linuxcc
@@ -308,6 +250,9 @@ set_access_params $opt(nsrc)
 if { $opt(gw) == "XCP" } {
     remove-all-packet-headers       ; # removes all except common
     add-packet-header Flags IP TCP XCP ; # hdrs reqd for validation
+    set opt(hdrsize) 50
+} else {
+    set opt(hdrsize) 40
 }
     
 if { $opt(seed) >= 0 } {
