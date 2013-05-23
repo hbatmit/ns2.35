@@ -41,6 +41,7 @@ set opt(simtime) 300.0;        # total simulated time
 #set opt(tr) remyout;            # output trace in opt(tr).out
 set opt(partialresults) false;   # show partial throughput, delay, and utility?
 set opt(verbose) false;          # verbose printing for debugging (esp stats)
+set opt(checkinterval) 0.005;        # check stats every 5 ms
 
 # utility and scoring
 set opt(alpha) 1.0

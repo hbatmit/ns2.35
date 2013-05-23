@@ -278,10 +278,12 @@ proc finish {} {
         } else {
             set rcd_avgrtt 0.0
         }
-        if { [info exists linuxcc] } {
-            puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
-        } else {
-            puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+        if {$i == 0} {
+            if { [info exists linuxcc] } {
+                puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+            } else {
+                puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+            }
         }
 
         [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt
