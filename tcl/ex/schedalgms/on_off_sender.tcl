@@ -11,6 +11,7 @@ Application/FTP/OnOffSender instproc init {} {
     $self set lastrtt_ 0.0
     $self set sentinel_ 0
     $self set npkts_ 0
+    $self set on_duration_ 0.0
     $self next
 }
 
@@ -21,13 +22,17 @@ Application/FTP/OnOffSender instproc setid { id tcp } {
     set id_ $id
     set tcp_ $tcp
     set stats_ [new Stats $id]
-    if { $opt(ontype) == "bytes" } {
+    if { $opt(ontype) == "bytes" || $opt(ontype) == "time" } {
         set on_rng [new RNG]
         for { set j 1 } {$j < $opt(seed)} {incr j} {
             $on_rng next-substream
         }
         set on_ranvar_ [new RandomVariable/$opt(onrand)]
-        $on_ranvar_ set avg_ $opt(avgbytes)
+        if { $opt(ontype) == "bytes" } {        
+            $on_ranvar_ set avg_ $opt(avgbytes)
+        } else {
+            $on_ranvar_ set avg_ $opt(onavg)
+        }
         $on_ranvar_ use-rng $on_rng
     } elseif { $opt(ontype) == "flowcdf" } {
         $self set on_ranvar_ [new FlowRanvar]
@@ -55,15 +60,39 @@ Application/FTP/OnOffSender instproc send { nbytes } {
         incr npkts_
     }
 
-#    if { $id_ == 0 } {
-#        puts "sen $sentinel_ npkts $npkts_"
-#    }
     set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
     [$self agent] advanceby $npkts_
     $self sched $opt(checkinterval);            # check in 5 milliseconds
     if { $opt(verbose) == "true" } {
         puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
     }
+}
+
+Application/FTP/OnOffSender instproc send { bytes_or_time } {
+    global ns opt
+    $self instvar id_ npkts_ sentinel_ laststart_ on_duration_
+    
+    set laststart_ [$ns now]
+    if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
+        set nbytes [expr int($bytes_or_time)]
+        # The next 3 lines are because Tcl doesn't seem to do ceil() correctly!
+        set npkts_ [expr int($nbytes / $opt(pktsize))]; # pkts for this on period
+        if { $npkts_ * $opt(pktsize) != $nbytes } {
+            incr npkts_
+        }
+        set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
+        [$self agent] advanceby $npkts_
+        if { $opt(verbose) == "true" } {
+            puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
+        }
+    } elseif { $opt(ontype) == "time" } {
+        set on_duration_ $bytes_or_time
+        [$self agent] send -1;  # "infinite" source, but we'll stop it later
+        if { $opt(verbose) == "true" } {
+            puts "[$ns now] $id_ turning ON for $on_duration_ seconds"
+        }
+    }
+    $self sched $opt(checkinterval);            # check in 5 milliseconds
 }
 
 Application/FTP/OnOffSender instproc sched { delay } {
@@ -85,8 +114,9 @@ Application/FTP/OnOffSender instproc cancel {} {
 
 Application/FTP/OnOffSender instproc timeout {} {
     global ns opt
-    $self instvar id_ tcp_ stats_ sentinel_ npkts_ laststart_ lastrtt_ lastack_ on_ranvar_ off_ranvar_
-    
+    $self instvar id_ tcp_ stats_ on_duration_ sentinel_ npkts_ laststart_ lastrtt_ lastack_ on_ranvar_ off_ranvar_
+
+    set done false
     set rtt [expr [$tcp_ set rtt_] * [$tcp_ set tcpTick_] ]
     set ack [$tcp_ set ack_]
     if { $rtt != $lastrtt_ || $ack != $lastack_ } {
@@ -94,20 +124,31 @@ Application/FTP/OnOffSender instproc timeout {} {
     }
     set lastrtt_ $rtt
     set lastack_ $ack
-#    if {$id_ == 0} {
-#        puts "[$ns now] ACK $ack sentinel $sentinel_"
-#    }
-    if { $ack >= $sentinel_ } { # have sent for this ON period
+    
+    if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
+        if { $ack >= $sentinel_ } { # have sent for this ON period
+            set done true
+        }
+    } elseif { $opt(ontype) == "time" } {
+        if { [$ns now] - $laststart_ > $on_duration_ } {
+            set done true
+        }
+    }
+
+    if { $done == true } {
         if { $opt(verbose) == "true" } {
-            puts "[$ns now] $id_ turning OFF"
+                puts "[$ns now] $id_ turning OFF"
         }
         $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
         set npkts_ 0; # important to set to 0 here for correct stat calc
+        if { $opt(ontype) == "time" } {
+            [$self agent] advance 0; # causes TCP to pause
+        }
         $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
-            "$self send [expr int([$on_ranvar_ value])]"
+            "$self send [$on_ranvar_ value]"
     } else {
         # still the same connection
-        $self sched $opt(checkinterval);       # check in 50 ms
+        $self sched $opt(checkinterval); # check again in a little time
     }
 }
 

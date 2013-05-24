@@ -29,9 +29,9 @@ LoggingApp instproc recv { bytes } {
         set cumrtt_ [expr $rtt_  + $cumrtt_]
         incr nrtt_
     }
-    if { $opt(verbose) } {
-        puts "[$ns now]: $srcid_ rcd $bytes total $nbytes_ npkts $numsamples_ rtt $rtt_" 
-    }
+#    if { $opt(verbose) } {
+#        puts "[$ns now]: $srcid_ rcd $bytes total $nbytes_ npkts $numsamples_ rtt $rtt_" 
+#    }
 }
 
 LoggingApp instproc dumpstats { } {
