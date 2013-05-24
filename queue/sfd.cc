@@ -74,9 +74,11 @@ void SFD::enque(Packet *p)
   } else {
     /* Drop from front of the same queue */
   //  printf( " Time %f : Dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
-    Packet* head = _packet_queue->deque();
-    if (head != 0 ) {
-        drop( head );
+    if (length() > 1) {
+      Packet* head = _packet_queue->deque();
+      if (head != 0 ) {
+          drop( head );
+      }
     }
   }
 }
