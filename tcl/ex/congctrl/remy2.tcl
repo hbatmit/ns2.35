@@ -259,6 +259,7 @@ set opt(rcvwin) [expr int(2*$opt(maxq))]
 
 set_access_params $opt(nsrc)
 
+puts "case: $opt(bneck)"
     
 if { $opt(seed) >= 0 } {
 #    ns-random $opt(seed)
