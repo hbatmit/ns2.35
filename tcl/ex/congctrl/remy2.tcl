@@ -136,13 +136,16 @@ proc create-sources-sinks {} {
     for {set i 0} {$i < $numsrc} {incr i} {
 
         if { $opt(cycle_protocols) == true } {
-            set opt(tcp) [lindex $protocols [expr $i % $opt(nsrc)]]
-            set opt(sink) [lindex $protosinks [expr $i % $opt(nsrc)]]
+            if { [llength $protocols] < $opt(nsrc) } {
+                puts "Need at least nsrc ($opt(nsrc)) items in protocols list. Exiting"
+                exit 1
+            }
+            set opt(tcp) [lindex $protocols $i]
+            set opt(sink) [lindex $protosinks $i]
             if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
                 set linuxcc [ string range $opt(tcp) 10 [string length $opt(tcp)] ]
                 set opt(tcp) "TCP/Linux"
             }
-
             if { $opt(tcp) == "DCTCP" } {
                 Agent/TCP set dctcp_ true
                 Agent/TCP set ecn_ 1
@@ -221,10 +224,14 @@ proc finish {} {
             set rcd_avgrtt 0.0
         }
         if {$i == 0} {
-            if { [info exists linuxcc] } {
-                puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+            if {$opt(cycle_protocols) != "true"} {
+                if { [info exists linuxcc] } {
+                    puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+                } else {
+                    puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+                }
             } else {
-                puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
+                puts "Results for mix of protocols:"
             }
         }
 
@@ -283,12 +290,10 @@ if { $opt(ontype) == "flowcdf" } {
 create-dumbbell-topology $opt(bneck) $opt(delay)
 create-sources-sinks
 
-
 if { $opt(cycle_protocols) == true } {
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         puts "$i: [lindex $protocols $i]"
     }
-} else {
 }
 
 $ns at $opt(simtime) "finish"
