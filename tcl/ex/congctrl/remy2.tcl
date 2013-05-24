@@ -247,7 +247,7 @@ proc finish {} {
 
 ## MAIN ##
 
-Agent/TCP set timestamps_ true
+#Agent/TCP set timestamps_ true
 set opt(hdrsize) 50
 
 source $conffile

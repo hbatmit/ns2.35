@@ -194,6 +194,7 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	}
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = ::max(maxseq_, highest_ack_);
+	printf("Echoed timestamp is %f\n", 1000*tcph->ts_echo());
 	update_memory( RemyPacket( 1000 * tcph->ts_echo(), 1000 * now ) );
 	update_cwnd_and_pacing();
 	/* if the connection is done, call finish() */
