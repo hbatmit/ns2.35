@@ -16,7 +16,7 @@ Application/FTP/OnOffSender instproc init {} {
     $self next
 }
 
-Application/FTP/OnOffSender instproc setid { id tcp } {
+Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     $self instvar id_ tcp_ stats_ on_ranvar_ off_ranvar_
     global ns opt
 
@@ -46,8 +46,18 @@ Application/FTP/OnOffSender instproc setid { id tcp } {
     $off_ranvar_ set avg_ $opt(offavg)
     $off_ranvar_ use-rng $off_rng
 
-    $ns at [expr 0.5*[$off_ranvar_ value]] \
-        "$self send [expr int([$on_ranvar_ value])]"
+    if {[info exists opt(spike)] && $opt(spike) == "true" } { # for spike, ontype must be "time"
+        puts "there"
+        if { $id_ == 0 } {
+            puts "here"
+            $ns at [$ns now] "$self send $opt(simtime)"
+        } else {
+            $ns at [expr [$ns now] + $opt(spikestart)] "$self send $opt(spikeduration)"
+        }
+    } else {
+        $ns at [expr 0.5*[$off_ranvar_ value]] \
+            "$self send [expr int([$on_ranvar_ value])]"
+    }
 }
 
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
@@ -122,8 +132,10 @@ Application/FTP/OnOffSender instproc done {} {
     }
     $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
     set npkts_ 0; # important to set to 0 here for correct stat calc
-    $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
-        "$self send [$on_ranvar_ value]"
+    if { ![info exists opt(spike)] || $opt(spike) != "true" } {
+        $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
+            "$self send [$on_ranvar_ value]"
+    }
 }
 
 Application/FTP/OnOffSender instproc dumpstats {} {

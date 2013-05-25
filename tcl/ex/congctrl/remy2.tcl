@@ -202,7 +202,7 @@ proc create-sources-sinks {} {
         }
 
         set src($i) [ $tcpsrc attach-app $opt(app) ]
-        $src($i) setid $i $tcpsrc
+        $src($i) setup_and_start $i $tcpsrc
         set recvapp($i) [new LoggingApp $i]
         $recvapp($i) attach-agent $tcpsink
         $ns at 0.0 "$recvapp($i) start"
@@ -256,6 +256,10 @@ puts "Reading params from $conffile"
 Getopt
 
 set opt(rcvwin) [expr int(2*$opt(maxq))]
+
+if {[info exists opt(spike)] && $opt(spike) == "true"} {
+    set opt(ontype) "time"
+}
 
 set_access_params $opt(nsrc)
 
