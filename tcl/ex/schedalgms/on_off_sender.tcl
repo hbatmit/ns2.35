@@ -1,5 +1,3 @@
-source timer.tcl
-
 Class Application/FTP/OnOffSender -superclass { Application/FTP }
 
 Application/FTP/OnOffSender instproc init {} {
@@ -9,9 +7,12 @@ Application/FTP/OnOffSender instproc init {} {
     $self set laststart_ 0.0
     $self set lastack_ 0
     $self set lastrtt_ 0.0
-    $self set sentinel_ 0
+    if { $opt(ontype) == "time" } {
+        $self set sentinel_ INFINITY
+    } else {
+        $self set sentinel_ 0
+    }
     $self set npkts_ 0
-    $self set on_duration_ 0.0
     $self next
 }
 
@@ -49,28 +50,9 @@ Application/FTP/OnOffSender instproc setid { id tcp } {
         "$self send [expr int([$on_ranvar_ value])]"
 }
 
-Application/FTP/OnOffSender instproc send { nbytes } {
-    global ns opt
-    $self instvar id_ npkts_ sentinel_ laststart_
-
-    set laststart_ [$ns now]
-    # The following two lines are because Tcl doesn't seem to do ceil() correctly!
-    set npkts_ [expr int($nbytes / $opt(pktsize))]; # number of pkts for this on period
-    if { $npkts_ * $opt(pktsize) != $nbytes } {
-        incr npkts_
-    }
-
-    set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
-    [$self agent] advanceby $npkts_
-    $self sched $opt(checkinterval);            # check in 5 milliseconds
-    if { $opt(verbose) == "true" } {
-        puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
-    }
-}
-
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
     global ns opt
-    $self instvar id_ npkts_ sentinel_ laststart_ on_duration_
+    $self instvar id_ npkts_ sentinel_ laststart_ 
     
     set laststart_ [$ns now]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
@@ -86,13 +68,13 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
             puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
         }
     } elseif { $opt(ontype) == "time" } {
-        set on_duration_ $bytes_or_time
         [$self agent] send -1;  # "infinite" source, but we'll stop it later
         if { $opt(verbose) == "true" } {
-            puts "[$ns now] $id_ turning ON for $on_duration_ seconds"
+            puts "[$ns now] $id_ turning ON for $bytes_or_time seconds"
         }
+        $ns at [expr [$ns now] + $bytes_or_time] "$self done"
     }
-    $self sched $opt(checkinterval);            # check in 5 milliseconds
+    $self sched $opt(checkinterval);
 }
 
 Application/FTP/OnOffSender instproc sched { delay } {
@@ -114,42 +96,34 @@ Application/FTP/OnOffSender instproc cancel {} {
 
 Application/FTP/OnOffSender instproc timeout {} {
     global ns opt
-    $self instvar id_ tcp_ stats_ on_duration_ sentinel_ npkts_ laststart_ lastrtt_ lastack_ on_ranvar_ off_ranvar_
+    $self instvar id_ tcp_ stats_ sentinel_ lastrtt_ lastack_ 
 
-    set done false
     set rtt [expr [$tcp_ set rtt_] * [$tcp_ set tcpTick_] ]
     set ack [$tcp_ set ack_]
     if { $rtt != $lastrtt_ || $ack != $lastack_ } {
         $stats_ update_rtt $rtt
     }
     set lastrtt_ $rtt
-    set lastack_ $ack
-    
-    if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
-        if { $ack >= $sentinel_ } { # have sent for this ON period
-            set done true
-        }
-    } elseif { $opt(ontype) == "time" } {
-        if { [$ns now] - $laststart_ > $on_duration_ } {
-            set done true
-        }
-    }
-
-    if { $done == true } {
-        if { $opt(verbose) == "true" } {
-                puts "[$ns now] $id_ turning OFF"
-        }
-        $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
-        set npkts_ 0; # important to set to 0 here for correct stat calc
-        if { $opt(ontype) == "time" } {
-            [$self agent] advance 0; # causes TCP to pause
-        }
-        $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
-            "$self send [$on_ranvar_ value]"
+    set lastack_ $ack    
+    if { $ack >= $sentinel_ } { # have sent for this ON period
+        $self done
     } else {
         # still the same connection
         $self sched $opt(checkinterval); # check again in a little time
     }
+}
+
+Application/FTP/OnOffSender instproc done {} {
+    global opt ns
+    $self instvar id_ stats_ npkts_ laststart_ off_ranvar_ on_ranvar_
+
+    if { $opt(verbose) == "true" } {
+        puts "[$ns now] $id_ turning OFF"
+    }
+    $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
+    set npkts_ 0; # important to set to 0 here for correct stat calc
+    $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
+        "$self send [$on_ranvar_ value]"
 }
 
 Application/FTP/OnOffSender instproc dumpstats {} {
