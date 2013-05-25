@@ -1,3 +1,5 @@
+source timer.tcl
+
 Class Application/FTP/OnOffSender -superclass { Application/FTP }
 
 Application/FTP/OnOffSender instproc init {} {
@@ -7,12 +9,9 @@ Application/FTP/OnOffSender instproc init {} {
     $self set laststart_ 0.0
     $self set lastack_ 0
     $self set lastrtt_ 0.0
-    if { $opt(ontype) == "time" } {
-        $self set sentinel_ INFINITY
-    } else {
-        $self set sentinel_ 0
-    }
+    $self set sentinel_ 0
     $self set npkts_ 0
+    $self set on_duration_ 0.0
     $self next
 }
 
@@ -23,7 +22,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     set id_ $id
     set tcp_ $tcp
     set stats_ [new Stats $id]
-    set run [expr $opt(seed)+2]
+    set run [expr $opt(seed) + 2]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "time" } {
         set on_rng [new RNG]
         for { set j 1 } {$j < $run} {incr j} {
@@ -47,23 +46,13 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     $off_ranvar_ set avg_ $opt(offavg)
     $off_ranvar_ use-rng $off_rng
 
-    if {[info exists opt(spike)] && $opt(spike) == "true" } { # for spike, ontype must be "time"
-        puts "there"
-        if { $id_ == 0 } {
-            puts "here"
-            $ns at [$ns now] "$self send $opt(simtime)"
-        } else {
-            $ns at [expr [$ns now] + $opt(spikestart)] "$self send $opt(spikeduration)"
-        }
-    } else {
-        $ns at [expr 0.5*[$off_ranvar_ value]] \
-            "$self send [expr int([$on_ranvar_ value])]"
-    }
+    $ns at [expr 0.5*[$off_ranvar_ value]] \
+        "$self send [expr int([$on_ranvar_ value])]"
 }
 
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
     global ns opt
-    $self instvar id_ npkts_ sentinel_ laststart_ 
+    $self instvar id_ npkts_ sentinel_ laststart_ on_duration_
     
     set laststart_ [$ns now]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
@@ -79,11 +68,11 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
             puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
         }
     } elseif { $opt(ontype) == "time" } {
+        set on_duration_ $bytes_or_time
         [$self agent] send -1;  # "infinite" source, but we'll stop it later
         if { $opt(verbose) == "true" } {
-            puts "[$ns now] $id_ turning ON for $bytes_or_time seconds"
+            puts "[$ns now] $id_ turning ON for $on_duration_ seconds"
         }
-        $ns at [expr [$ns now] + $bytes_or_time] "$self done"
     }
     $self sched $opt(checkinterval);
 }
@@ -107,35 +96,42 @@ Application/FTP/OnOffSender instproc cancel {} {
 
 Application/FTP/OnOffSender instproc timeout {} {
     global ns opt
-    $self instvar id_ tcp_ stats_ sentinel_ lastrtt_ lastack_ 
+    $self instvar id_ tcp_ stats_ on_duration_ sentinel_ npkts_ laststart_ lastrtt_ lastack_ on_ranvar_ off_ranvar_
 
+    set done false
     set rtt [expr [$tcp_ set rtt_] * [$tcp_ set tcpTick_] ]
     set ack [$tcp_ set ack_]
     if { $rtt != $lastrtt_ || $ack != $lastack_ } {
         $stats_ update_rtt $rtt
     }
     set lastrtt_ $rtt
-    set lastack_ $ack    
-    if { $ack >= $sentinel_ } { # have sent for this ON period
-        $self done
+    set lastack_ $ack
+    
+#    puts "$lastrtt_ $lastack_"
+    if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
+        if { $ack >= $sentinel_ } { # have sent for this ON period
+            set done true
+        }
+    } elseif { $opt(ontype) == "time" } {
+        if { [$ns now] - $laststart_ > $on_duration_ } {
+            set done true
+        }
+    }
+
+    if { $done == true } {
+        if { $opt(verbose) == "true" } {
+                puts "[$ns now] $id_ turning OFF"
+        }
+        $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
+        set npkts_ 0; # important to set to 0 here for correct stat calc
+        if { $opt(ontype) == "time" } {
+            [$self agent] advance 0; # causes TCP to pause
+        }
+        $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
+            "$self send [$on_ranvar_ value]"
     } else {
         # still the same connection
         $self sched $opt(checkinterval); # check again in a little time
-    }
-}
-
-Application/FTP/OnOffSender instproc done {} {
-    global opt ns
-    $self instvar id_ stats_ npkts_ laststart_ off_ranvar_ on_ranvar_
-
-    if { $opt(verbose) == "true" } {
-        puts "[$ns now] $id_ turning OFF"
-    }
-    $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
-    set npkts_ 0; # important to set to 0 here for correct stat calc
-    if { ![info exists opt(spike)] || $opt(spike) != "true" } {
-        $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
-            "$self send [$on_ranvar_ value]"
     }
 }
 
@@ -156,7 +152,7 @@ FlowRanvar instproc init {} {
     global opt
     $self instvar u_
     set rng [new RNG]
-    set run [expr $opt(seed)+2]
+    set run [expr $opt(seed) + 2]
     for { set j 1 } {$j < $run} {incr j} {
         $rng next-substream
     }
