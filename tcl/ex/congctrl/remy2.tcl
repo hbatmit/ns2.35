@@ -265,13 +265,10 @@ set_access_params $opt(nsrc)
 
 puts "case: $opt(bneck)"
     
-if { $opt(seed) >= 0 } {
+global defaultRNG
+$defaultRNG seed $opt(seed)
+
 #    ns-random $opt(seed)
-    if { $opt(seed) == 0 } {
-        global defaultRNG
-        $defaultRNG $opt(seed)
-    }
-}
 
 set ns [new Simulator]
 
