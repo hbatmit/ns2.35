@@ -214,7 +214,7 @@ proc finish {} {
     global f
     for {set i 0} {$i < $opt(nsrc)} {incr i} {
         set sapp $src($i)
-#        $sapp dumpstats 
+        $sapp dumpstats 
         set rcdbytes [$recvapp($i) set nbytes_]
         set rcd_nrtt [$recvapp($i) set nrtt_]
         if { $rcd_nrtt > 0 } {

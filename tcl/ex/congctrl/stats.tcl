@@ -2,6 +2,7 @@ Class Stats
 
 Stats instproc init { id } {
     $self set srcid_ $id
+    $self set npkts_ 0
     $self set numbytes_ 0
     $self set ontime_ 0.0;     # total time connection was in ON state
     $self set throughput_ 0.0
@@ -14,11 +15,12 @@ Stats instproc init { id } {
 # Called when a flow ends
 Stats instproc update_flowstats { newpkts newtime } {
     global opt
-    $self instvar srcid_ numbytes_ ontime_ throughput_ nflows_
+    $self instvar srcid_ npkts_ numbytes_ ontime_ throughput_ nflows_
     
     if { $opt(verbose) == "true" } {
-        puts "conn $srcid_ updating $newpkts $newtime"
+        puts "conn $srcid_ updating pkts $newpkts time $newtime"
     }
+    set npkts_ [expr $npkts_ + $newpkts]
     set numbytes_ [expr $numbytes_ + ($opt(hdrsize) + $opt(pktsize))*$newpkts]
     set ontime_ [expr $ontime_ + $newtime]
     incr nflows_

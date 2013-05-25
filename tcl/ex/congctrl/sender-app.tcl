@@ -114,21 +114,25 @@ Application/FTP/OnOffSender instproc timeout {} {
     if { $rtt != $lastrtt_ || $ack != $lastack_ } {
         $stats_ update_rtt $rtt
     }
-    set lastrtt_ $rtt
-    set lastack_ $ack
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         if { $ack >= $sentinel_ } { # have sent for this ON period
             set done true
         }
     } elseif { $opt(ontype) == "time" } {
+        set npkts_ [expr $npkts_ + $ack - $lastack_]
         if { [$ns now] - $laststart_ > $on_duration_ } {
             set done true
         }
     }
+    set lastrtt_ $rtt
+    set lastack_ $ack
 
     if { $done == true } {
         if { $opt(verbose) == "true" } {
                 puts "[$ns now] $id_ turning OFF"
+        }
+        if { $npkts_ < 0 } {
+            set npkts_ 0
         }
         $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
         set npkts_ 0; # important to set to 0 here for correct stat calc
@@ -146,7 +150,7 @@ Application/FTP/OnOffSender instproc timeout {} {
 }
 
 Application/FTP/OnOffSender instproc dumpstats {} {
-    global ns
+    global ns opt
     $self instvar id_ stats_ laststart_ lastack_ sentinel_ npkts_
     # the connection might not have completed; calculate #acked pkts
 
@@ -157,6 +161,10 @@ Application/FTP/OnOffSender instproc dumpstats {} {
             $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
         }
     }  else {
+        set rem_pkts [expr $lastack_ - [$stats_ set npkts_]]
+        if { $rem_pkts > 0 } {
+            $stats_ update_flowstats $rem_pkts [expr [$ns now] - $laststart_]
+        }
     }
 }
 
