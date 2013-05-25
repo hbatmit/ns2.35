@@ -14,10 +14,10 @@ Stats instproc init { id } {
 # Called when a flow ends
 Stats instproc update_flowstats { newpkts newtime } {
     global opt
-    $self instvar numbytes_ ontime_ throughput_ nflows_
+    $self instvar srcid_ numbytes_ ontime_ throughput_ nflows_
     
     if { $opt(verbose) == "true" } {
-        puts "updating $newpkts $newtime"
+        puts "conn $srcid_ updating $newpkts $newtime"
     }
     set numbytes_ [expr $numbytes_ + ($opt(hdrsize) + $opt(pktsize))*$newpkts]
     set ontime_ [expr $ontime_ + $newtime]
