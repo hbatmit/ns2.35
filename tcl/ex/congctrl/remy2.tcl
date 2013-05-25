@@ -261,7 +261,11 @@ set_access_params $opt(nsrc)
 
     
 if { $opt(seed) >= 0 } {
-    ns-random $opt(seed)
+#    ns-random $opt(seed)
+    if { $opt(seed) == 0 } {
+        global defaultRNG
+        $defaultRNG $opt(seed)
+    }
 }
 
 set ns [new Simulator]

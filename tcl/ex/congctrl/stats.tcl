@@ -54,9 +54,12 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt } {
     }
     if { $throughput > 0.0 && $avgrtt > 0.0 } {
         set util_s [expr log(1000000.0/8) + log($throughput) - log($avgrtt) ]
-        set util_r [expr log(1000000.0/8) + log($rcdtput) - log($avgrtt) ]
     } else {
         set util_s 0.0
+    }
+    if { $rcdtput > 0.0 && $avgrtt > 0.0 } {
+        set util_r [expr log(1000000.0/8) + log($rcdtput) - log($avgrtt) ]
+    } else {
         set util_r 0.0
     }
     set fct [expr 1000.0*$ontime_/$nflows_]
