@@ -131,7 +131,8 @@ RationalTcpAgent::send_helper(int maxburst)
 		const double time_since_last_send( now - _last_send_time );
 		const double wait_time( _intersend_time - time_since_last_send );
 		if ( wait_time <= 0 ) {
-			burstsnd_timer_.resched( 0 );
+			//			burstsnd_timer_.resched( 0 );
+			return;
 		} else {
 			burstsnd_timer_.resched( wait_time );
 		}
@@ -157,7 +158,7 @@ RationalTcpAgent::send_idle_helper()
 	const double time_since_last_send( now - _last_send_time );
 	const double wait_time( _intersend_time - time_since_last_send );
 
-	if ( wait_time <= .0001 ) {
+	if ( wait_time <= .00000001 ) {
 		return;
 	} else {
 		burstsnd_timer_.resched( wait_time );
@@ -222,11 +223,26 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 	}
 
 	cwnd_ = new_cwnd;
+	double old_intersend_time = _intersend_time;
+
 	_intersend_time = .001 * current_whisker.intersend();
 	double _print_intersend = _intersend_time;
 	if (tracewhisk_) {
 		fprintf( stderr, "memory: %s falls into whisker %s\n", _memory.str().c_str(), current_whisker.str().c_str() );
 		fprintf( stderr, "\t=> cwnd now %u, intersend_time now %f\n", new_cwnd, _print_intersend );
+	}
+
+	const double now( Scheduler::instance().clock() );
+	const double time_since_last_send( now - _last_send_time );
+	const double wait_time( _intersend_time - time_since_last_send );
+	const double old_wait_time( old_intersend_time - time_since_last_send );
+
+	if ( wait_time < old_wait_time ) {
+		if ( wait_time <= 0 ) {
+			burstsnd_timer_.resched( 0 );
+		} else {
+			burstsnd_timer_.resched( wait_time );
+		}
 	}
 }
 

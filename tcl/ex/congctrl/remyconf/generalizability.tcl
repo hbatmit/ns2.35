@@ -18,7 +18,7 @@ set protosinks [list TCPSink TCPSink TCPSink TCPSink]
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 15Mb;             # bottleneck bandwidth (for some topos)
-set opt(maxq) 32000;             # max queue length at bottleneck
+set opt(maxq) 1000;             # max queue length at bottleneck
 set opt(delay) 74ms;            # total one-way delay in topology
 set opt(link) None
 
@@ -32,11 +32,11 @@ set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
 set opt(offavg) 5.0;              # mean on and off time
-set opt(avgbytes) 4000000;          # 16 KBytes flows on avg (too low?)
+set opt(avgbytes) 32000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "bytes" and "flowcdf"
 
 # simulator parameters
-set opt(simtime) 1000.0;        # total simulated time
+set opt(simtime) 300.0;        # total simulated time
 #set opt(tr) remyout;            # output trace in opt(tr).out
 set opt(partialresults) false;   # show partial throughput, delay, and utility?
 set opt(verbose) false;          # verbose printing for debugging (esp stats)
