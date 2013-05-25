@@ -138,6 +138,7 @@ Application/FTP/OnOffSender instproc timeout {} {
         set npkts_ 0; # important to set to 0 here for correct stat calc
         if { $opt(ontype) == "time" } {
             [$self agent] advance 0; # causes TCP to pause
+            $tcp_ reset
         }
         if { ![info exists opt(spike)] || $opt(spike) != "true" } {
             $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
