@@ -49,6 +49,7 @@ protected:
 	double _last_wakeup;
 	int _the_window;
 	int count_bytes_acked_;
+	bool resetting;
 };
 
 /* 
