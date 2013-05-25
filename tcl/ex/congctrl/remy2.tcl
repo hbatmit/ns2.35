@@ -263,6 +263,7 @@ if {[info exists opt(spike)] && $opt(spike) == "true"} {
 
 set_access_params $opt(nsrc)
 
+puts "case: $opt(bneck)"
     
 if { $opt(seed) >= 0 } {
 #    ns-random $opt(seed)
