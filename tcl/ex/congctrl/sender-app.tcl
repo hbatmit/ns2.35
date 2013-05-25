@@ -46,8 +46,18 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     $off_ranvar_ set avg_ $opt(offavg)
     $off_ranvar_ use-rng $off_rng
 
-    $ns at [expr 0.5*[$off_ranvar_ value]] \
-        "$self send [expr int([$on_ranvar_ value])]"
+    if {[info exists opt(spike)] && $opt(spike) == "true" } { # for spike, ontype must be "time"
+        puts "spiking"
+        if { $id_ == 0 } {
+            puts "here"
+            $ns at [$ns now] "$self send [expr $opt(simtime) - 1]"
+        } else {
+            $ns at [expr [$ns now] + $opt(spikestart)] "$self send $opt(spikeduration)"
+        }
+    } else {
+        $ns at [expr 0.5*[$off_ranvar_ value]] \
+            "$self send [$on_ranvar_ value]"
+    }
 }
 
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
@@ -106,8 +116,6 @@ Application/FTP/OnOffSender instproc timeout {} {
     }
     set lastrtt_ $rtt
     set lastack_ $ack
-    
-#    puts "$lastrtt_ $lastack_"
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         if { $ack >= $sentinel_ } { # have sent for this ON period
             set done true
@@ -127,8 +135,10 @@ Application/FTP/OnOffSender instproc timeout {} {
         if { $opt(ontype) == "time" } {
             [$self agent] advance 0; # causes TCP to pause
         }
-        $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
-            "$self send [$on_ranvar_ value]"
+        if { ![info exists opt(spike)] || $opt(spike) != "true" } {
+            $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
+                "$self send [$on_ranvar_ value]"
+        }
     } else {
         # still the same connection
         $self sched $opt(checkinterval); # check again in a little time
@@ -139,10 +149,14 @@ Application/FTP/OnOffSender instproc dumpstats {} {
     global ns
     $self instvar id_ stats_ laststart_ lastack_ sentinel_ npkts_
     # the connection might not have completed; calculate #acked pkts
-    set acked [expr $npkts_ - ($sentinel_ - $lastack_)]
-#    puts "dumpstats $id_: $npkts_ $sentinel_ $lastack_ $acked"
-    if { $acked > 0 } {
-        $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
+
+    if {$opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
+        set acked [expr $npkts_ - ($sentinel_ - $lastack_)]
+        #    puts "dumpstats $id_: $npkts_ $sentinel_ $lastack_ $acked"
+        if { $acked > 0 } {
+            $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
+        }
+    }  else {
     }
 }
 
