@@ -34,6 +34,7 @@ set opt(onavg) 5.0;              # mean on and off time
 set opt(offavg) 5.0;              # mean on and off time
 set opt(avgbytes) 32000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "bytes";           # valid options are "bytes" and "flowcdf"
+set opt(reset) "true";             # reset TCP on end of ON period
 
 # simulator parameters
 set opt(simtime) 300.0;        # total simulated time
