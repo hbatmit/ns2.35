@@ -47,9 +47,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     $off_ranvar_ use-rng $off_rng
 
     if { $opt(spike) == "true" } { # for spike, ontype must be "time"
-        puts "spiking"
         if { $id_ == 0 } {
-            puts "here"
             $ns at [$ns now] "$self send [expr $opt(simtime) - 1]"
         } else {
             $ns at [expr [$ns now] + $opt(spikestart)] "$self send $opt(spikeduration)"
