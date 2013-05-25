@@ -18,7 +18,8 @@ RationalTcpAgent::RationalTcpAgent()
 	: _whiskers( NULL ),
 	  _memory(),
 	  _intersend_time( 0.0 ),
-	  _last_send_time( 0 ),
+	  _internal_clock( Scheduler::instance().clock() ),
+	  _last_wakeup( _internal_clock ),
 	  count_bytes_acked_( 0 )
 {
 	bind_bool("count_bytes_acked_", &count_bytes_acked_);
@@ -33,7 +34,7 @@ RationalTcpAgent::RationalTcpAgent()
 	/* open file */
 	int fd = open( filename, O_RDONLY );
 	if ( fd < 0 ) {
-		perror( "open" );
+		perror( "open WHISKERS" );
 		throw 1;
 	}
 
@@ -112,57 +113,12 @@ RationalTcpAgent::initial_window()
 {
 	_memory.reset();
 	update_cwnd_and_pacing();
+	_internal_clock = Scheduler::instance().clock();
+
+	/* start timer */
+	burstsnd_timer_.resched( 0 );
+
 	return cwnd_;
-}
-
-void 
-RationalTcpAgent::send_helper(int maxburst) 
-{
-	/* 
-	 * If there is still data to be sent and there is space in the
-	 * window, set a timer to schedule the next burst. Note that
-	 * we wouldn't get here if TCP_TIMER_BURSTSEND were pending,
-	 * so we do not need an explicit check here.
-	 */
-
-	/* schedule wakeup */
-	if ( t_seqno_ <= highest_ack_ + window() && t_seqno_ < curseq_ ) {
-		const double now( Scheduler::instance().clock() );
-		const double time_since_last_send( now - _last_send_time );
-		const double wait_time( _intersend_time - time_since_last_send );
-		if ( wait_time <= 0 ) {
-			//			burstsnd_timer_.resched( 0 );
-			return;
-		} else {
-			burstsnd_timer_.resched( wait_time );
-		}
-	}
-}
-
-/* 
- * Connection has been idle for some time. 
- */
-void
-RationalTcpAgent::send_idle_helper() 
-{
-	const double now( Scheduler::instance().clock() );
-
-	if ( now - _last_send_time > 0.2 ) {
-		/* timeout */
-		initial_window();
-	}
-
-	/* we want to pace each packet */
-	maxburst_ = 1;
-
-	const double time_since_last_send( now - _last_send_time );
-	const double wait_time( _intersend_time - time_since_last_send );
-
-	if ( wait_time <= .00000001 ) {
-		return;
-	} else {
-		burstsnd_timer_.resched( wait_time );
-	}
 }
 
 /*
@@ -177,13 +133,13 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 {
 	double now = Scheduler::instance().clock();
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
-	double last_rtt = Scheduler::instance().clock() - tcph->ts_echo();
-	double g = 1/8; /* gain used for smoothing rtt */
-	double h = 1/4; /* gain used for smoothing rttvar */
-	double delta;
-	int ackcount, i;
 
-	double last_ack_time_ = now;
+	/*
+	fprintf( stderr, "got ack @ %f (acking %d sent @ %f)\n", now * 1000,
+		 tcph->seqno(), 1000 * tcph->ts_echo() );
+	*/
+	int ackcount;
+
 	/*
 	 * If we are counting the actual amount of data acked, ackcount >= 1.
 	 * Otherwise, ackcount=1 just as in standard TCP.
@@ -202,6 +158,11 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 		closed_ = 1;
 		finish();
 	}
+
+	if ( burstsnd_timer_.status() != TIMER_PENDING ) {
+		fprintf( stderr, "Starting timer at %f...\n", now * 1000 );
+		burstsnd_timer_.sched( 0 );
+	}
 }
 
 void 
@@ -216,46 +177,65 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 {
 	const Whisker & current_whisker( _whiskers->use_whisker( _memory ) );
 
-	unsigned int new_cwnd = current_whisker.window( (unsigned int)cwnd_ );
+	cwnd_ = 0; /* don't let it send unless we're doing the sending */
 
-	if ( new_cwnd > 1024 ) {
-		new_cwnd = 1024;
+	unsigned int new_cwnd = current_whisker.window( (unsigned int)_the_window );
+
+	if ( new_cwnd > 32768 ) {
+		new_cwnd = 32768;
 	}
 
-	cwnd_ = new_cwnd;
-	double old_intersend_time = _intersend_time;
-
+	_the_window = new_cwnd;
 	_intersend_time = .001 * current_whisker.intersend();
 	double _print_intersend = _intersend_time;
 	if (tracewhisk_) {
 		fprintf( stderr, "memory: %s falls into whisker %s\n", _memory.str().c_str(), current_whisker.str().c_str() );
 		fprintf( stderr, "\t=> cwnd now %u, intersend_time now %f\n", new_cwnd, _print_intersend );
 	}
-
-	const double now( Scheduler::instance().clock() );
-	const double time_since_last_send( now - _last_send_time );
-	const double wait_time( _intersend_time - time_since_last_send );
-	const double old_wait_time( old_intersend_time - time_since_last_send );
-
-	if ( wait_time < old_wait_time ) {
-		if ( wait_time <= 0 ) {
-			burstsnd_timer_.resched( 0 );
-		} else {
-			burstsnd_timer_.resched( wait_time );
-		}
-	}
 }
 
 void
 RationalTcpAgent::timeout_nonrtx( int tno )
 {
-	if ( tno == TCP_TIMER_DELSND ) {
-		send_much( 1, TCP_REASON_TIMEOUT, maxburst_ );
-	} else if ( tno == TCP_TIMER_BURSTSND ) {
-		send_much( 1, TCP_REASON_TIMEOUT, maxburst_ );
+	if ( tno == TCP_TIMER_BURSTSND ) {
+		/* tick */
+		double now = Scheduler::instance().clock();
+
+		if ( now - _last_wakeup > .0011 ) {
+			fprintf( stderr, "New flow at %f\n", now * 1000 );
+			initial_window();
+		}
+
+		_last_wakeup = now;
+
+		if ( _the_window == 0 ) {
+			update_cwnd_and_pacing();
+		}
+		
+		if ( t_seqno_ >= curseq_ ) {
+			initial_window();
+		} else {
+			int realwnd = (_the_window < wnd_ ? _the_window : (int)wnd_);
+			while ( t_seqno_ <= highest_ack_ + realwnd ) {
+				if ( _internal_clock > now + .001 ) {
+					break;
+				}
+
+				/*
+				fprintf( stderr, "Sending @ %f, intersend = %f, internal_clock = %f\n",
+					 now * 1000, _intersend_time * 1000, _internal_clock * 1000 );
+				*/
+
+				cwnd_ = 1000000;
+				send_much( 1, TCP_REASON_TIMEOUT, 1 );
+				cwnd_ = 0;
+				_internal_clock += _intersend_time;
+			}
+		}
+
+		burstsnd_timer_.resched( 0.001 );
 	}
 }
-
 
 void 
 RationalTcpAgent::traceVar(TracedVar *v)
