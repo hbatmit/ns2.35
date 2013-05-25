@@ -46,7 +46,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     $off_ranvar_ set avg_ $opt(offavg)
     $off_ranvar_ use-rng $off_rng
 
-    if {[info exists opt(spike)] && $opt(spike) == "true" } { # for spike, ontype must be "time"
+    if { $opt(spike) == "true" } { # for spike, ontype must be "time"
         puts "spiking"
         if { $id_ == 0 } {
             puts "here"
@@ -142,7 +142,7 @@ Application/FTP/OnOffSender instproc timeout {} {
                 $tcp_ reset
             }
         }
-        if { ![info exists opt(spike)] || $opt(spike) != "true" } {
+        if { $opt(spike) != "true" } {
             $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
                 "$self send [$on_ranvar_ value]"
         }
