@@ -256,8 +256,16 @@ Getopt
 
 set opt(rcvwin) [expr int(2*$opt(maxq))]
 
-if {[info exists opt(spike)] && $opt(spike) == "true"} {
+if { ![info exists opt(spike)] } {
+    set opt(spike) false
+}
+
+if {$opt(spike) == "true"} {
     set opt(ontype) "time"
+}
+
+if { ![info exists opt(reset)] } {
+    set opt(reset) true;    # reset TCP connection on end of ON period
 }
 
 set_access_params $opt(nsrc)
