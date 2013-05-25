@@ -134,8 +134,10 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	double now = Scheduler::instance().clock();
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
 
+	/*
 	fprintf( stderr, "got ack @ %f (acking %d sent @ %f)\n", now * 1000,
 		 tcph->seqno(), 1000 * tcph->ts_echo() );
+	*/
 
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = ::max(maxseq_, highest_ack_);
@@ -176,10 +178,10 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 	_the_window = new_cwnd;
 	_intersend_time = .001 * current_whisker.intersend();
 	double _print_intersend = _intersend_time;
-	//	if (tracewhisk_) {
+	if (tracewhisk_) {
 		fprintf( stderr, "memory: %s falls into whisker %s\n", _memory.str().c_str(), current_whisker.str().c_str() );
-		//		fprintf( stderr, "\t=> cwnd now %u, intersend_time now %f\n", new_cwnd, _print_intersend );
-		//	}
+		fprintf( stderr, "\t=> cwnd now %u, intersend_time now %f\n", new_cwnd, _print_intersend );
+	}
 }
 
 void
@@ -192,7 +194,7 @@ RationalTcpAgent::timeout_nonrtx( int tno )
 		if ( now - _last_wakeup > .0011 ) {
 			initial_window();
 			if ( !resetting ) {
-				fprintf( stderr, "Reset.\n" );
+				//				fprintf( stderr, "Reset.\n" );
 				resetting = true;
 			}
 		}
@@ -206,23 +208,25 @@ RationalTcpAgent::timeout_nonrtx( int tno )
 		if ( t_seqno_ >= curseq_ ) {
 			initial_window();
 			if ( !resetting ) {
-				fprintf( stderr, "Reset.\n" );
+				//				fprintf( stderr, "Reset.\n" );
 				resetting = true;
 			}
 		} else {
 			if ( resetting ) {
-				fprintf( stderr, "Starting!\n" );
+				//				fprintf( stderr, "Starting!\n" );
 				initial_window();
 				resetting = false;
 			}
 			int realwnd = (_the_window < wnd_ ? _the_window : (int)wnd_);
 			while ( t_seqno_ <= highest_ack_ + realwnd ) {
-				if ( _internal_clock > now + .002 ) {
+				if ( _internal_clock > now + .001 ) {
 					break;
 				}
 
+				/*
 				fprintf( stderr, "Sending @ %f, intersend = %f, internal_clock = %f\n",
 					 now * 1000, _intersend_time * 1000, _internal_clock * 1000 );
+				*/
 
 				cwnd_ = 1000000;
 				send_much( 1, TCP_REASON_TIMEOUT, 1 );
