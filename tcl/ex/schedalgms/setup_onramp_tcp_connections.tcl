@@ -25,8 +25,8 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   set counter [ incr counter ]
 
   # Attach source (such as FTP) to TCP Agent
-  set src($fid($i)) [ $tcp_server($i) attach-app $opt(app) ]
-  $src($i) setup_and_start $fid($i) $tcp_server($i)
+  set on_off_server($fid($i)) [ $tcp_server($i) attach-app $opt(app) ]
+  $on_off_server($i) setup_and_start $fid($i) $tcp_server($i)
 }
 
 # TCP clients
