@@ -12,21 +12,18 @@ unset opt
 
 # Clean up procedures
 proc finish { sim_object trace_file } {
-  global opt stats onoff_server num_users
+  global opt stats on_off_server logging_app_client num_users
   for {set i 0} {$i < $num_users} {incr i} {
-    set rapp $onoff_server($i)
-    set srcid [$rapp set srcid_]
-    if { [$rapp set state_] == ON} {
-      # If the current state is ON, then we have one more set of stats to update.
-      # Otherwise, we're all set and there's nothing to update.
-      set nbytes [$rapp set nbytes_]
-      set ontime [expr [$sim_object now] - [$rapp set laststart_] ]
-      set cumrtt [$rapp set cumrtt_]
-      set numsamples [$rapp set numsamples_]
-      set rttsamples [$rapp set rtt_samples_]
-      $stats($srcid) update $nbytes $ontime $cumrtt $numsamples $rttsamples
+    set sapp $on_off_server($i)
+    $sapp dumpstats
+    set rcdbytes [$logging_app_client($i) set nbytes_]
+    set rcd_nrtt [$logging_app_client($i) set nrtt_]
+    if { $rcd_nrtt > 0 } {
+        set rcd_avgrtt [expr 1000.0*[$logging_app_client($i) set cumrtt_] / $rcd_nrtt ]
+    } else {
+        set rcd_avgrtt 0.0
     }
-    $stats($srcid) showstats True
+    [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt
   }
   $sim_object flush-trace
   close $trace_file
