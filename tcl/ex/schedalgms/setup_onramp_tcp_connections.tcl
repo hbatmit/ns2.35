@@ -25,7 +25,8 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   set counter [ incr counter ]
 
   # Attach source (such as FTP) to TCP Agent
-  set src($fid($i)) [ $tcp_server($i) attach-source $opt(app) ]
+  set src($fid($i)) [ $tcp_server($i) attach-app $opt(app) ]
+  $src($i) setup_and_start $fid($i) $tcp_server($i)
 }
 
 # TCP clients
@@ -61,23 +62,10 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   set tcp_client($i) [ new Agent/TCPSink/Sack1 ]
   $ns attach-agent $tcp_client_node($i) $tcp_client($i)
 
-  # Create ON-OFF servers for logging
-  set onoff_server($i) [new LoggingApp $fid($i)]
-  $onoff_server($i) attach-agent $tcp_client($i)
-  $ns at 0.0 "$onoff_server($i) start"
-
-  # Create ON-OFF pattern iff required
-  if { $opt(ontype) != "longrunning" } {
-    # start only the odd-numbered connections immediately
-    if { [expr $i % 2] == 0 } {
-      $onoff_server($i) go 0.0
-    } else {
-      $onoff_server($i) go [$onoff_server($i) sample_off_duration]
-    }
-  } else {
-    $onoff_server($i) go 0.0
-    $ns at 0.0 "$src($fid($i)) start"
-  }
+  # Create LoggingApp clients for logging received bytes
+  set logging_app_client($i) [new LoggingApp $fid($i)]
+  $logging_app_client($i) attach-agent $tcp_client($i)
+  $ns at 0.0 "$logging_app_client($i) start"
 
   # Connect them to their sources
   $ns connect $tcp_server($i) $tcp_client($i)
