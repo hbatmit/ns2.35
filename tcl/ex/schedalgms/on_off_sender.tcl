@@ -22,10 +22,9 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     set id_ $id
     set tcp_ $tcp
     set stats_ [new Stats $id]
-    set run [expr $opt(seed) + 2]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "time" } {
         set on_rng [new RNG]
-        for { set j 1 } {$j < $run} {incr j} {
+        for { set j 1 } {$j < $opt(iter)} {incr j} {
             $on_rng next-substream
         }
         set on_ranvar_ [new RandomVariable/$opt(onrand)]
@@ -39,7 +38,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
         $self set on_ranvar_ [new FlowRanvar]
     }
     set off_rng [new RNG]
-    for { set j 1 } {$j < $run} {incr j} {
+    for { set j 1 } {$j < $opt(iter)} {incr j} {
         $off_rng next-substream
     }
     set off_ranvar_ [new RandomVariable/$opt(onrand)]

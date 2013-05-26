@@ -4,8 +4,7 @@ FlowRanvar instproc init {} {
     global opt
     $self instvar u_
     set rng [new RNG]
-    set run [expr $opt(seed) + 2]
-    for { set j 1 } {$j < $run} {incr j} {
+    for { set j 1 } {$j < $opt(iter)} {incr j} {
         $rng next-substream
     }
     $self set u_ [new RandomVariable/Uniform]
