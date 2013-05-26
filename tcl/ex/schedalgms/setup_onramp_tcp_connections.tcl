@@ -1,6 +1,6 @@
 # source other files
 
-source logging-app.tcl
+source logging_app.tcl
 source stats.tcl
 source on_off_sender.tcl
 
