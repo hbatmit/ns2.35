@@ -28,24 +28,27 @@ set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "time" and "bytes"
 set opt(app) FTP;
 
+# Accounting for the number of sent and received bytes correctly
+set opt(hdrsize) 50
+set opt(pktsize) 1450
+
 # TCP parameters
 #bdp in packets, based on the nominal rtt
-set opt(psize) 1500
 set opt(nominal_rtt) [ delay_parse 100ms          ]
 set bw          [ bw_parse    $opt(bottleneck_bw) ]
 set opt(delack) 0.4
-set bdp [expr round( $bw *$opt(nominal_rtt)/(8*$opt(psize)))]
+set bdp [expr round( ($bw *$opt(nominal_rtt))/(8*($opt(pktsize)+$opt(hdrsize))))]
 
 Agent/TCP set window_     [expr $bdp * 16]
-Agent/TCP set segsize_    [expr $opt(psize)-40]
-Agent/TCP set packetSize_ [expr $opt(psize)-40]
+Agent/TCP set segsize_    [expr $opt(pktsize) ]
+Agent/TCP set packetSize_ [expr $opt(pktsize) ]
 Agent/TCP set windowInit_ 4
 Agent/TCP set segsperack_ 1
 Agent/TCP set timestamps_ true
 Agent/TCP set interval_ $opt(delack)
 Agent/TCP/FullTcp set window_     [expr $bdp * 16]
-Agent/TCP/FullTcp set segsize_    [expr $opt(psize)-40]
-Agent/TCP/FullTcp set packetSize_ [expr $opt(psize)40]
+Agent/TCP/FullTcp set segsize_    [expr $opt(pktsize)]
+Agent/TCP/FullTcp set packetSize_ [expr $opt(pktsize)]
 Agent/TCP/FullTcp set windowInit_ 4
 Agent/TCP/FullTcp set segsperack_ 1
 Agent/TCP/FullTcp set timestamps_ true
