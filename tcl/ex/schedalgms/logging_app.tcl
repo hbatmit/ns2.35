@@ -1,11 +1,11 @@
-# Author : Hari Balakrishnan                                                              
-# Class that simulates random on/off traffic, where                                       
-# on and off durations are drawn from a specific distribution.                            
+# Author : Hari Balakrishnan
+# Class that simulates random on/off traffic, where
+# on and off durations are drawn from a specific distribution.
 
 Class LoggingApp -superclass Application
 
 LoggingApp instproc init {id} {
-    $self instvar srcid_ nbytes_ cumrtt_ numsamples_ 
+    $self instvar srcid_ nbytes_ cumrtt_ numsamples_
     global opt
     $self set srcid_ $id
     $self set nbytes_ 0
@@ -16,9 +16,9 @@ LoggingApp instproc init {id} {
 }
 
 LoggingApp instproc recv { bytes } {
-    # there's one of these objects for each src/dest pair                                 
+    # there's one of these objects for each src/dest pair
     $self instvar nbytes_ srcid_ cumrtt_ numsamples_ nrtt_
-    global ns opt src tp 
+    global ns opt src tp
 
     set nbytes_ [expr $nbytes_ + $bytes]
     incr numsamples_
@@ -30,7 +30,7 @@ LoggingApp instproc recv { bytes } {
         incr nrtt_
     }
 #    if { $opt(verbose) } {
-#        puts "[$ns now]: $srcid_ rcd $bytes total $nbytes_ npkts $numsamples_ rtt $rtt_" 
+#        puts "[$ns now]: $srcid_ rcd $bytes total $nbytes_ npkts $numsamples_ rtt $rtt_"
 #    }
 }
 

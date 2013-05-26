@@ -29,7 +29,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
             $on_rng next-substream
         }
         set on_ranvar_ [new RandomVariable/$opt(onrand)]
-        if { $opt(ontype) == "bytes" } {        
+        if { $opt(ontype) == "bytes" } {
             $on_ranvar_ set avg_ $opt(avgbytes)
         } else {
             $on_ranvar_ set avg_ $opt(onavg)
@@ -61,7 +61,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
     global ns opt
     $self instvar id_ npkts_ sentinel_ laststart_ on_duration_
-    
+
     set laststart_ [$ns now]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         set nbytes [expr int($bytes_or_time)]
@@ -169,7 +169,7 @@ Application/FTP/OnOffSender instproc dumpstats {} {
     }
 }
 
-Class FlowRanvar 
+Class FlowRanvar
 
 FlowRanvar instproc init {} {
     global opt
