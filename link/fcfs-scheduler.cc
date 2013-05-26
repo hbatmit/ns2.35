@@ -13,7 +13,7 @@ static class FcfsSchedulerClass : public TclClass {
 FcfsScheduler::FcfsScheduler(uint32_t num_users, double feedback_delay)
     : EnsembleScheduler(num_users, feedback_delay),
       tx_timer_(new FcfsTxTimer(this)),
-      flow_stats_(std::vector<FlowStats> (num_users, FlowStats(FLOW_EST_TIME_CONSTANT)))
+      service_rates_(std::vector<FlowStats> (num_users, FlowStats(FLOW_EST_TIME_CONSTANT)))
 {}
 
 uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
@@ -88,6 +88,6 @@ void FcfsScheduler::transmit_pkt() {
   tx_timer_->resched(txt);
 
   /* Estimate service rate */
-  flow_stats_.at(chosen_user).est_service_rate(Scheduler::instance().clock(),
+  service_rates_.at(chosen_user).est_service_rate(Scheduler::instance().clock(),
                                                p);
 }
