@@ -25,7 +25,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   set counter [ incr counter ]
 
   # Attach source (such as FTP) to TCP Agent
-  set on_off_server($fid($i)) [ $tcp_server($i) attach-app $opt(app) ]
+  set on_off_server($i) [ $tcp_server($i) attach-app $opt(app) ]
   $on_off_server($i) setup_and_start $fid($i) $tcp_server($i)
 }
 
@@ -69,7 +69,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 
   # Connect them to their sources
   $ns connect $tcp_server($i) $tcp_client($i)
-  set tp($fid($i)) $tcp_server($i)
+  set tp($i) $tcp_server($i)
 
   # Setup stat collector
   set stats($i) [new StatCollector $i $opt(tcp)]
