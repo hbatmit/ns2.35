@@ -20,6 +20,7 @@ RationalTcpAgent::RationalTcpAgent()
 	  _intersend_time( 0.0 ),
 	  _internal_clock( Scheduler::instance().clock() ),
 	  _last_wakeup( _internal_clock ),
+	  _the_window( 0 ),
 	  count_bytes_acked_( 0 )
 {
 	bind_bool("count_bytes_acked_", &count_bytes_acked_);
@@ -134,6 +135,11 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	double now = Scheduler::instance().clock();
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
 
+	if ( burstsnd_timer_.status() != TIMER_PENDING ) {
+		//		fprintf( stderr, "Starting timer at %f...\n", now * 10000 );
+		initial_window();
+	}
+
 	/*
 	fprintf( stderr, "got ack @ %f (acking %d sent @ %f)\n", now * 1000,
 		 tcph->seqno(), 1000 * tcph->ts_echo() );
@@ -141,7 +147,7 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = ::max(maxseq_, highest_ack_);
-	update_memory( RemyPacket( 1000 * tcph->ts_echo(), 1000 * now ) );
+	update_memory( RemyPacket( 10000 * tcph->ts_echo(), 10000 * _internal_clock - 1 ) );
 	update_cwnd_and_pacing();
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
@@ -149,10 +155,6 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 		finish();
 	}
 
-	if ( burstsnd_timer_.status() != TIMER_PENDING ) {
-		fprintf( stderr, "Starting timer at %f...\n", now * 1000 );
-		burstsnd_timer_.sched( 0 );
-	}
 }
 
 void 
@@ -176,7 +178,7 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 	}
 
 	_the_window = new_cwnd;
-	_intersend_time = .001 * current_whisker.intersend();
+	_intersend_time = .0001 * current_whisker.intersend();
 	double _print_intersend = _intersend_time;
 	if (tracewhisk_) {
 		fprintf( stderr, "memory: %s falls into whisker %s\n", _memory.str().c_str(), current_whisker.str().c_str() );
@@ -191,7 +193,7 @@ RationalTcpAgent::timeout_nonrtx( int tno )
 		/* tick */
 		double now = Scheduler::instance().clock();
 
-		if ( now - _last_wakeup > .0011 ) {
+		if ( now - _last_wakeup > .00011 ) {
 			initial_window();
 			if ( !resetting ) {
 				//				fprintf( stderr, "Reset.\n" );
@@ -219,7 +221,7 @@ RationalTcpAgent::timeout_nonrtx( int tno )
 			}
 			int realwnd = (_the_window < wnd_ ? _the_window : (int)wnd_);
 			while ( t_seqno_ <= highest_ack_ + realwnd ) {
-				if ( _internal_clock > now + .001 ) {
+				if ( _internal_clock > now + .0001 ) {
 					break;
 				}
 
@@ -235,7 +237,7 @@ RationalTcpAgent::timeout_nonrtx( int tno )
 			}
 		}
 
-		burstsnd_timer_.resched( 0.001 );
+		burstsnd_timer_.resched( 0.0001 );
 	}
 }
 
