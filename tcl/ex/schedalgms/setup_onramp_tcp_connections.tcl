@@ -1,7 +1,8 @@
 # source other files
 
 source logging-app.tcl
-source stat-collector.tcl
+source stats.tcl
+source on_off_sender.tcl
 
 # TCP servers
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
