@@ -209,6 +209,16 @@ proc create-sources-sinks {} {
     }
 }
 
+proc create-parkinglot-topology { bneck delay } {
+    global ns opt
+    
+
+}
+
+proc create-tree-topology { bneck delay } {
+
+}
+
 proc finish {} {
     global ns opt stats src recvapp linuxcc
     global f
