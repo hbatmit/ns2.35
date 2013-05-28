@@ -29,7 +29,7 @@ class EnsembleScheduler : public TclObject {
   double agg_arrival_rate(void);
 
   /* Aggregate service rate */
-  double agg_service_rate(void);
+  double agg_service_rate(void) const { return agg_service_rate_.ser_rate(); }
 
   /* Aggregate total throughput by pf (or other fairness criteria) */
   double agg_pf_throughput(void);
@@ -58,6 +58,9 @@ class EnsembleScheduler : public TclObject {
 
   /* per user current estimate of link rates */
   std::vector<FlowStats> link_rates_;
+
+  /* Aggregate service rate EWMA */
+  FlowStats agg_service_rate_;
 
   /* get feasible users i.e backlogged and non-zero link rate */
   std::vector<uint32_t> get_feasible_users(void) const;

@@ -88,6 +88,8 @@ void FcfsScheduler::transmit_pkt() {
   tx_timer_->resched(txt);
 
   /* Estimate service rate */
-  service_rates_.at(chosen_user).est_service_rate(Scheduler::instance().clock(),
-                                               p);
+  service_rates_.at(chosen_user).est_service_rate(Scheduler::instance().clock(), p);
+
+  /* Estimate aggregate service rate */
+  agg_service_rate_.est_service_rate(Scheduler::instance().clock(), p);
 }
