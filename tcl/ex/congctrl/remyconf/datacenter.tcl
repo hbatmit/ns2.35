@@ -2,6 +2,8 @@
 # this one is where all the sources are identical
 global opt
 
+TCP/Agent set tcpTick_ .001
+
 # source, sink, and app types
 set opt(nsrc) 48;                # number of sources in experiment
 set opt(tcp) TCP/Rational
