@@ -3,7 +3,7 @@
 global opt
 
 # source, sink, and app types
-set opt(nsrc) 24;                # number of sources in experiment
+set opt(nsrc) 48;                # number of sources in experiment
 set opt(tcp) TCP/Rational
 set opt(sink) TCPSink
 set opt(cycle_protocols) false
@@ -31,8 +31,8 @@ set opt(seed) 0
 set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
-set opt(offavg) .2;              # mean on and off time
-set opt(avgbytes) 250000;          # 16 KBytes flows on avg (too low?)
+set opt(offavg) .1;              # mean on and off time
+set opt(avgbytes) 2000000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "bytes";           # valid options are "bytes" and "flowcdf"
 set opt(reset) "true";             # reset TCP on end of ON period
 
