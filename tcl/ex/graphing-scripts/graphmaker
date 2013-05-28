@@ -2,8 +2,8 @@
 
 use strict;
 
-my $suffix = '.flowcdfon0.off0.simtime100';
-my $dir = '/home/keithw/gradschool/wtcp/doc/sigcomm13/graphs/Equisource';
+my $suffix = '.flowcdfon0.off0.simtime300';
+my $dir = '/home/keithw/gradschool/wtcp/doc/sigcomm13/graphs/Ethernet-all';
 
 my %protos;
 my %nsrcs;
