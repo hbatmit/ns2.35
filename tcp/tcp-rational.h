@@ -45,7 +45,6 @@ protected:
 	int tracewhisk_;	// trace whiskers?
 	double _last_send_time;
 	int count_bytes_acked_;
-	int remy_timestep_; // timebase multiplier
 };
 
 /* 

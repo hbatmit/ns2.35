@@ -52,8 +52,6 @@ RationalTcpAgent::RationalTcpAgent()
 
 	/* store whiskers */
 	_whiskers = new WhiskerTree( tree );
-
-	bind( "remy_timestep", &remy_timestep_ );
 }
 
 RationalTcpAgent::~RationalTcpAgent()
@@ -200,9 +198,6 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	maxseq_ = ::max(maxseq_, highest_ack_);
 
 	int timestep = 10000;
-	if ( remy_timestep_ ) {
-		timestep = remy_timestep_;
-	}
 
 	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
 	update_cwnd_and_pacing();
@@ -235,9 +230,6 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 	double old_intersend_time = _intersend_time;
 
 	double timestep_inverse = .0001;
-	if ( remy_timestep_ ) {
-		timestep_inverse = 1.0 / remy_timestep_;
-	}
 
 	_intersend_time = timestep_inverse * current_whisker.intersend();
 	double _print_intersend = _intersend_time;
