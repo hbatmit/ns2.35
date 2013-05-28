@@ -5,7 +5,7 @@ global opt
 Agent/TCP set tcpTick_ .001
 
 # source, sink, and app types
-set opt(nsrc) 48;                # number of sources in experiment
+set opt(nsrc) 64;                # number of sources in experiment
 set opt(tcp) TCP/Rational
 set opt(sink) TCPSink
 set opt(cycle_protocols) false
@@ -20,7 +20,7 @@ set protosinks [list TCPSink TCPSink TCPSink TCPSink]
 # topology parameters
 set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 10Gb;             # bottleneck bandwidth (for some topos)
-set opt(maxq) 1000;             # max queue length at bottleneck
+set opt(maxq) 10000;             # max queue length at bottleneck
 set opt(delay) 1ms;            # total one-way delay in topology
 set opt(link) None
 
@@ -34,12 +34,12 @@ set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
 set opt(offavg) .1;              # mean on and off time
-set opt(avgbytes) 2000000;          # 16 KBytes flows on avg (too low?)
+set opt(avgbytes) 20000000
 set opt(ontype) "bytes";           # valid options are "bytes" and "flowcdf"
-set opt(reset) "true";             # reset TCP on end of ON period
+set opt(reset) "false";             # reset TCP on end of ON period
 
 # simulator parameters
-set opt(simtime) 50.0;        # total simulated time
+set opt(simtime) 10.0;        # total simulated time
 #set opt(tr) remyout;            # output trace in opt(tr).out
 set opt(partialresults) false;   # show partial throughput, delay, and utility?
 set opt(verbose) false;          # verbose printing for debugging (esp stats)
