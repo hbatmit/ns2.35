@@ -15,7 +15,7 @@ Whisker::Whisker( const RemyBuffers::Whisker & dna )
 string Whisker::str( void ) const
 {
   char tmp[ 256 ];
-  snprintf( tmp, 256, "{%s} => (win=%d + (%f * win), intersend=%.2f ms)",
+  snprintf( tmp, 256, "{%s} => (win: %d + (%f * win) intersend: %.2f ms)",
             _domain.str().c_str(), _window_increment, _window_multiple, _intersend );
   return tmp;
 }

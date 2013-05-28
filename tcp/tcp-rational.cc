@@ -240,8 +240,7 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 	const double old_wait_time( old_intersend_time - time_since_last_send );
 
 	if (tracewhisk_) {
-		fprintf( stderr, "%g: %s whisker %s\n", now, _memory.str().c_str(), current_whisker.str().c_str() );
-		fprintf( stderr, "\t=> cwnd: %u intersend_time: %f\n", new_cwnd, _print_intersend );
+		fprintf( stderr, "%g: %s whisker %s newcwnd: %u newintersend: %f\n", now, _memory.str().c_str(), current_whisker.str().c_str(), new_cwnd, _print_intersend );
 	}
 
 	if ( wait_time < old_wait_time ) {
