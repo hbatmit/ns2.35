@@ -3,7 +3,7 @@
 global opt
 
 # source, sink, and app types
-set opt(nsrc) 2;                # number of sources in experiment
+set opt(nsrc) 24;                # number of sources in experiment
 set opt(tcp) TCP/Rational
 set opt(sink) TCPSink
 set opt(cycle_protocols) false
