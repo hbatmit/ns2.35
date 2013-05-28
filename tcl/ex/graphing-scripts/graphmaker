@@ -3,7 +3,7 @@
 use strict;
 
 my $suffix = '.flowcdfon0.off0.simtime100';
-my $dir = '/home/keithw/gradschool/remy-graphs/verizon-flowcdf/Verizon-all';
+my $dir = '/home/keithw/gradschool/wtcp/doc/sigcomm13/graphs/Equisource';
 
 my %protos;
 my %nsrcs;
@@ -23,6 +23,8 @@ for ( glob "$dir/*$suffix" ) {
 #  next if ( $protocol =~ m{TCP-Linux-compound} );
 
   $protos{ $nsrc }{ $protocol }{ filename } = $_;
+
+  print STDERR "protocol $protocol\n";
 }
 
 sub median {
@@ -58,9 +60,11 @@ for my $nsrc ( keys %protos ) {
     my @rtts = ();
     my @mbpss = ();
     while ( <DATA> ) {
-      next unless m{^FINAL};
-      my ( $bytes, $mbps, $rtt ) = (split /\s+/, $_)[ 2, 3, 4 ];
-      $rtt -= 49.5;
+      next unless m{^conn:};
+
+      my ( $mbps, $fct, $rtt, $onperc ) = m{rMbps: (.*?) fctMs: (.*?) .*?sndrttMs (.*?) .*?onperc: (.*?)$};
+
+      $rtt -= 148;
       push @rtts, $rtt + 0;
       $rtt = log( $rtt ) / log( 2 );
       print ELLIPSE "$rtt $mbps\n";
@@ -131,7 +135,7 @@ HERE
   my $protocount = 1;
   for my $protocol ( keys %{ $protos{ $nsrc } } ) {
     my $nicename = $protocol;
-    $nicename =~ s{TCP-Rational}{RemyTCP};
+    $nicename =~ s{TCP-Rational}{RemyCC};
     $nicename =~ s{TCP-Vegas}{Vegas};
     $nicename =~ s{Cubic-sfqCoDel}{Cubic/sfqCoDel};
     $nicename =~ s{TCP-Reno-XCP}{XCP};
