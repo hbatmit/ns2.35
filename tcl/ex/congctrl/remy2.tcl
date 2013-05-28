@@ -120,6 +120,12 @@ proc create-sources-sinks {} {
         Agent/TCP set tcpTick_ 0.01
         Agent/TCP set minrto_ 0.2 ; # minRTO = 200ms
         Agent/TCP set windowOption_ 0
+        # DCTCP uses ECN and marks based on instantaneous queue length.
+        # To get this behavior, q_weight_ for RED should be 1, mark_p 1, 
+        # and the min and max thresholds should be equal. 
+        # http://research.microsoft.com/en-us/um/people/padhye/publications/dctcp-sigcomm2010.pdf
+        # We use 65 because that's what the code at 
+        # http://simula.stanford.edu/~alizade/Site/DCTCP.html does. 
         Queue/RED set bytes_ false
         Queue/RED set queue_in_bytes_ true
         Queue/RED set mean_pktsize_ $opt(pktsize)

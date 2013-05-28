@@ -560,6 +560,7 @@ REDQueue::drop_early(Packet* pkt)
 		hdr_flags* hf = hdr_flags::access(pickPacketForECN(pkt));
 		if (edp_.setbit && hf->ect() && 
 		    (!edp_.use_mark_p || edv_.v_prob1 <= edp_.mark_p)) { // For DCTCP: '<' is changed to '<=' here  
+			/* hari: the above DCTCP change ( <= instead of < ) from RED seems irrelevant... */
 			hf->ce() = 1; 	// mark Congestion Experienced bit
 			// Tell the queue monitor here - call emark(pkt)
 			return (0);	// no drop

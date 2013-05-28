@@ -32,6 +32,11 @@
  * SUCH DAMAGE.
  */
 
+/* 
+ * January 2013 (hari): Patched in DCTCP changes for tcp.cc from 
+ * http://simula.stanford.edu/~alizade/Site/DCTCP_files/dctcp-ns2-rev1.0.tar.gz
+ */
+
 #ifndef lint
 static const char rcsid[] =
     "@(#) $Header: /cvsroot/nsnam/ns-2/tcp/tcp.cc,v 1.182 2011/06/20 04:51:46 tom_henderson Exp $ (LBL)";
