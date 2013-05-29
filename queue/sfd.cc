@@ -48,12 +48,8 @@ void SFD::enque(Packet *p)
   /* Estimate aggregate arrival rate with an EWMA filter */
   double agg_arrival_rate = _scheduler->update_arrival_rate(now, p);
 
-  /* Estimate current link rate with an EWMA filter. */
-  _scheduler->update_link_rate_estimate();
-  auto current_link_rate = _scheduler->get_link_rate_estimate(_user_id);
-
-  /* Divide Avg. link rate by # of active flows to get fair share */
-  auto _fair_share = (current_link_rate * (1-_headroom)) / (_scheduler->num_active_users() == 0 ? 1 : _scheduler->num_active_users());
+  /* Get fair share, and take max of fair share and service rate  */
+  auto _fair_share = (1-_headroom) * _scheduler->get_fair_share(_user_id);
   _fair_share = std::max(_fair_share, _scheduler->get_service_rate(_user_id));
   //printf("User id is %d, _fair_share is %f \n", user_id, _fair_share);
 
