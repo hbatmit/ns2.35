@@ -37,13 +37,19 @@ class EnsembleScheduler : public TclObject {
   /* K for rate estimation */
   static constexpr double FLOW_ESTIMATOR_K = 0.200;
 
+  /* Get fair share of user */
+  double get_fair_share(uint32_t user_id);
+
+ protected:
   /* update link rate estimate , model feedback delay and noise */
   void update_link_rate_estimate(void);
 
   /* Get current link rate estimate after EWMA */
   double get_link_rate_estimate(uint32_t user_id) const { return link_rates_.at(user_id).link_rate(); }
 
- protected:
+  /* get feasible users i.e backlogged and non-zero link rate */
+  std::vector<uint32_t> get_feasible_users(void) const;
+
   /* number of users */
   uint32_t num_users_;
 
@@ -64,9 +70,6 @@ class EnsembleScheduler : public TclObject {
 
   /* Aggregate arrival rate EWMA */
   FlowStats agg_arrival_rate_est_;
-
-  /* get feasible users i.e backlogged and non-zero link rate */
-  std::vector<uint32_t> get_feasible_users(void) const;
 };
 
 #endif  // LINK_ENSEMBLE_SCHEDULER_H_

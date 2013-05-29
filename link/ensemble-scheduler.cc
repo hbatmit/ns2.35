@@ -65,3 +65,9 @@ void EnsembleScheduler::update_link_rate_estimate(void) {
                                    );
   }
 }
+
+double EnsembleScheduler::get_fair_share(uint32_t user_id) {
+  update_link_rate_estimate();
+  double current_link_rate = get_link_rate_estimate(user_id);
+  return current_link_rate / (num_active_users() == 0 ? 1 : num_active_users());
+}
