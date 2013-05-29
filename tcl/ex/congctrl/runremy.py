@@ -15,7 +15,7 @@ def runonce(fullname, proto, w, gateway, nsrc, type, simtime, on, off, outfname)
         sink = 'TCPSink/XCPSink'
         gw = 'XCP'              # overwrite whatever was given
     elif proto.find("Linux") != -1:
-        sink = 'TCPSink/Sack1/DelAck'
+        sink = 'TCPSink/Sack1'
     else:
         sink = 'TCPSink'
 
