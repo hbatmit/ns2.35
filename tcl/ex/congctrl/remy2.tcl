@@ -193,6 +193,7 @@ proc create-sources-sinks {} {
                 puts "tracing OFF for connection $i: $opt(tracewhisk)"
             }
         }
+	$tcpsrc set fid_ [expr $i%256]
         $tcpsrc set window_ $opt(rcvwin)
         $tcpsrc set packetSize_ $opt(pktsize)
         
