@@ -1,23 +1,31 @@
 /*
- * sfqCodel - Smart Flow Queuing, Controlled-Delay Active Queue Management
- * with stochastic binning. Inspired by Eric Dumazaet's linux code, FQ_codel.
+ * sfqCodel - The Controlled-Delay Active Queue Management algorithm
+ * with stochastic binning. Inspired by Eric Dumazaet's linux code.
  * This module was put together by Kathleen Nichols.
+ * Packets are hashed into a maximum of 1024 bins based on header
+ * Bins each have a separate CoDel manager
  * For expediency, this originally combined codel.cc and some aspects of
- * sfq.cc from the ns2 distribution, contributed by Curtis Villamizar, Feb, 1997.
- * Notable differences from Eric's code: this uses packet-by-packet
- * round-robining, which we believe to be more appropriate (more testing
- * woud be useful), this simply tail drops if the buffer space is full and
- * this should be changed to something that drops fullest bin first (as in
- * Dumazaet's code), this code keeps an empty bin on the schedule for one
- * cycle (effectively preventing a flow from getting to go "first" too
- * quickly)..
+ * sfq.cc from the ns2 distribution, contributed by Curtis Villamizar, Feb 1997.
+ * A notable difference from Eric's code is that this uses packet-by-packet
+ * round-robining, which we believe to be more appropriate, but need to test.
  * Van Jacobson contributed the hash to attempt to model linux kernel hash.
  * This is experimental code, for implementation, see Dumazaet's code. 
  *
- * Copyright (C) 2011-2012 Kathleen Nichols <nichols@pollere.com>
+ * Copyright (C) 2011-2013 Kathleen Nichols <nichols@pollere.com>
+*
+ * Portions of this source code were developed under contract with Cable
+ * Television Laboratories, Inc.
  *
- * Packets are hashed into 256 bins based on header
- * Bins each have a separate CoDel manager
+ * Changes made by Kathleen Nichols for Cable Labs 12/2012 - 1/2013
+ * tcl lines can be used to set the number of bins smaller (maxbins_)
+ * When the total buffer limit is exceeded, can either head or tail drop
+ * from the fullest (in packets) bin.
+ * This is useful in presence of nonconforming or large flows
+ * This version drops from tail but can easily be changed to head to match
+ * fq_codel though this has implementation problems in that it requres locks.
+ * Added a quantum_ variable which, when non-zero, rounds by that number
+ * of bytes instead of per packet
+ *    
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,6 +66,8 @@
 #include "delay.h"
 #include "sfqcodel.h"
 
+//#include "docsislink.h"
+
 static class sfqCoDelClass : public TclClass {
   public:
     sfqCoDelClass() : TclClass("Queue/sfqCoDel") {}
@@ -66,13 +76,21 @@ static class sfqCoDelClass : public TclClass {
     }
 } class_codel;
 
-sfqCoDelQueue::sfqCoDelQueue() : tchan_(0)
+sfqCoDelQueue::sfqCoDelQueue() :  maxbins_(MAXBINS), quantum_(0), tchan_(0), isolate_(0)
 {
     bind("interval_", &interval_);
     bind("target_", &target_);  // target min delay in clock ticks
     bind("curq_", &curq_);      // current queue size in bytes
     bind("d_exp_", &d_exp_);    // current delay experienced in clock ticks
-    for(int i=0; i<MAXBINS; i++) {
+    bind("maxbins_", &maxbins_);    // tcl settable max number of bins
+    bind("quantum_", &quantum_);    // tcl settable quantum value for byte rounding
+					// if zero, rounds by packets
+   if (maxbins_ > MAXBINS)  {
+        printf("sfqCoDel: maxbins_ of %d exceeds upper bound of %d", maxbins_, MAXBINS);
+	exit(0);
+    }
+
+    for(int i=0; i<maxbins_; i++) {
      bin_[i].q_ = new PacketQueue();
      bin_[i].first_above_time_ = -1;
      bin_[i].dropping_ = 0;
@@ -80,7 +98,6 @@ sfqCoDelQueue::sfqCoDelQueue() : tchan_(0)
      bin_[i].newflag = 0;
      bin_[i].index = i;
      bin_[i].on_sched_ = 0;
-     bin_[i].src = -1;
     }
     pq_ = bin_[0].q_; //does ns need this?
     reset();
@@ -92,40 +109,59 @@ void sfqCoDelQueue::reset()
     curq_ = 0;
     d_exp_ = 0.;
     maxpacket_ = 256;
+    maxbinid_ = 0;
     curlen_ = 0;
     curq_ = 0;
+    isolate_ = 0;
+    mtu_max_ = maxpacket_;
     Queue::reset();
 }
 
-// Add a new packet to the queue.  The packet is dropped if the maximum queue
-// size in pkts is exceeded. Otherwise just add a timestamp so dequeue can
-// compute the sojourn time (all the work is done in the deque).
-// More sophisticated approaches can prevent a single flow from taking over
-// a limited buffer.
+// Add a new packet to the queue. If the entire buffer space is full, drop from
+// the largest queue (in packets) first.
+// Add a timestamp so dequeue can compute the sojourn time (all the work is done in the deque)
+// and enqueue.
 
 void sfqCoDelQueue::enque(Packet* pkt)
 {
-    // check for tail drop on full buffer
-//    if(curlen_ >= qlim_) {
-//	drop(pkt);
-//    } else { // ANIRUDH: Infinite buffer with no TailDrop
-    {   HDR_CMN(pkt)->ts_ = Scheduler::instance().clock();
+	// check for full buffer
+	if(curlen_ >= qlim_) {
+	   //total buffer is full, drop from largest so find maxbin
+	   // maxbinid_ is either 0 or the id of the last max
+	   // trying to make sure pick a different bin of the same size
+	   int m = maxbinid_;
+	   for(int j=0; j<maxbins_; j++)
+	       if( j != maxbinid_ && bin_[j].on_sched_ && (bin_[j].q_)->length() >= (bin_[m].q_)->length()) {
+		   m = j;
+	   }
+	   maxbinid_ = m;
+
+	   //tail drop from maxbinid_ (use head() for td)
+	   Packet* p = (bin_[maxbinid_].q_)->tail();
+	   curq_ -= HDR_CMN(p)->size();
+	   curlen_--;
+	   (bin_[maxbinid_].q_)->remove(p);	//where packet is actually removed
+	   drop(p);
+	}
+
+	HDR_CMN(pkt)->ts_ = Scheduler::instance().clock();
 	curlen_++;
 	curq_ += HDR_CMN(pkt)->size();
 
+	// experimental code to isolate packets marked CBR which are
+	// all voice packets in our simulations
+	unsigned int i;
+	if(isolate_) {
+	if(HDR_CMN(pkt)->ptype() == PT_CBR)
+		i = (maxbins_ -1);
+	else
+		i = hash(pkt) % (maxbins_ - 1);
+	} else
         // Determine which bin to enqueue the packet and add it to that bin.
 	// the bin's id comes from a hash of its header
-	unsigned int i = hash(pkt) % MAXBINS;
+	i = hash(pkt) % maxbins_;
+// printf("flow_id %d bin %d\n", (hdr_ip::access(pkt))->flowid(), i);
 	(bin_[i].q_)->enque(pkt);
-       
-        /* detect collisions here */
-        hdr_ip *iph = hdr_ip::access( pkt );
-        int compare= (int)iph->saddr();
-        if ( bin_[i].src == -1 )
-            bin_[i].src=compare;
-        else 
-            if ( bin_[i].src != compare )
-                fprintf( stderr, "Collisions between %d and %d src addresses\n", bin_[i].src, (int)iph->saddr() );
 
 	//if it's the only bin in use, set binsched_
         if(binsched_ == NULL) {
@@ -134,6 +170,8 @@ void sfqCoDelQueue::enque(Packet* pkt)
           bin_[i].next = bin_[i].prev;
           bin_[i].newflag = 1;
           bin_[i].on_sched_ = 1;
+	  if(quantum_ > 0)	//if rounding by bytes
+             bin_[i].deficit_ = quantum_;
         } else if( bin_[i].on_sched_ == 0) {
 	//if bin was not on the schedule, add to the list before continuing
         // bins but after other new bins
@@ -159,8 +197,9 @@ void sfqCoDelQueue::enque(Packet* pkt)
           }
           bin_[i].newflag = 1;
           bin_[i].on_sched_ = 1;
+	  if(quantum_ > 0)	//if rounding by bytes
+             bin_[i].deficit_ = quantum_;
 	}
-    } 
 }
 
 extern "C" {
@@ -235,7 +274,6 @@ static inline u_int32_t jhash_3words( u_int32_t a, u_int32_t b, u_int32_t c, u_i
 unsigned int sfqCoDelQueue::hash(Packet* pkt)
 {
   hdr_ip* iph = hdr_ip::access(pkt);
-  return iph->flowid();
   return jhash_3words(iph->daddr(), iph->saddr(),
                       (iph->dport() << 16) | iph->sport(), 0);
 }
@@ -255,7 +293,7 @@ dodequeResult sfqCoDelQueue::dodeque(PacketQueue* q)
 
     r.p = q->deque();
     if (r.p == NULL) {
-        return r;
+	first_above_time_ = 0;
     } else {
         // d_exp_ and curq_ are ns2 'traced variables' that allow the dynamic
         // queue behavior that drives CoDel to be captured in a trace file for
@@ -264,9 +302,20 @@ dodequeResult sfqCoDelQueue::dodeque(PacketQueue* q)
         d_exp_ = now - HDR_CMN(r.p)->ts_;
         curlen_--;
         curq_ -= HDR_CMN(r.p)->size_;
+	maxpacket_ = mtu_max_;
         if (maxpacket_ < HDR_CMN(r.p)->size_)
             // keep track of the max packet size.
             maxpacket_ = HDR_CMN(r.p)->size_;
+
+	mtu_max_ = maxpacket_;
+	/* experimental code to work with docsis mac model and not drop
+	   packets with pending tokens (see note on bursty macs)
+	int tk = DocsisLink::tokens_;
+	if(tk > maxpacket_)
+	{
+                maxpacket_ = tk;
+	}
+	*/
 
         // To span a large range of bandwidths, CoDel essentially runs two
         // different AQMs in parallel. One is sojourn-time-based and takes
@@ -279,16 +328,15 @@ dodequeResult sfqCoDelQueue::dodeque(PacketQueue* q)
         // packet arriving spaced by the amount of time it takes to send such
         // a packet on the bottleneck). The 2nd term of the "if" does this.
 	// Note that we use the overall value of curq_, across all bins
-        if (d_exp_ < target_ || curq_ <= maxpacket_) {
+	// Add a test for this queue being empty though
+
+        if (d_exp_ < target_ || curq_ <= maxpacket_ || q->length() == 0) {
             // went below - stay below for at least interval
             first_above_time_ = 0;
         } else {
             if (first_above_time_ == 0) {
                 //just went above from below. if still above at first_above_time
                 // will say it’s ok to drop
-              if ((now - drop_next_) < 8*interval_ && count_ > 1)
-                first_above_time_ = control_law(now);
-              else
                  first_above_time_ = now + interval_;
             } else if (now >= first_above_time_) {
                 r.ok_to_drop = 1;
@@ -308,50 +356,52 @@ bindesc* sfqCoDelQueue::readybin()
     // set the binsched_ to that bin,
     // if none,  return NULL
     if(binsched_ == NULL) return NULL;
-    bindesc* b = binsched_;
 
+    bindesc* b = binsched_;
     while((b->q_)->length() == 0) {
-       //clean up, remove bin from schedule
-       if(b->next == b) {
-         //means this was the only bin on the schedule, so empty the schedule
-         b->next = NULL;
-         b->prev = NULL;
-	 b->on_sched_ = 0;
-         binsched_ = NULL;
-         return NULL;
-       } else {
-	 b->on_sched_ = 0;
-         binsched_ = b->next;
-         binsched_->prev = b->prev;
-         (b->prev)->next = binsched_;
-         b->next = b->prev = NULL;
-         b = binsched_;
-       }
+	b = removebin(b);	//clean up, remove bin from schedule
+	if(b == NULL) return b;
     }
+
+    // if get here, b = binsched_ and points to a non-empty queue
+    //if rounding by packets, return now
+    if(quantum_ == 0)
+       return binsched_;
+
+    // guaranteed that at least this bin has a packet. If it has a deficit, it
+    // will get more bytes go to end. If it's the only one, it will get sent 
+    while(b->deficit_ <= 0) {
+	b->deficit_ += quantum_;
+	b = b->next;
+  	while((b->q_)->length() == 0) {	// find next non-empty bin
+         b = b->next;
+	}
+    }
+    binsched_ = b;
 
     return binsched_;
 }
 
-void sfqCoDelQueue::removebin(bindesc* b) {
+bindesc* sfqCoDelQueue::removebin(bindesc* b) {
 
-    while((b->q_)->length() == 0) {
-       //clean up, remove bin from schedule
-       if(b->next == b) {
+      //clean up, remove bin from schedule
+      if(b->next == b) {
          //means this was the only bin on the schedule, so empty the schedule
          b->next = NULL;
          b->prev = NULL;
+	 b->dropping_ = 0;
 	 b->on_sched_ = 0;
          binsched_ = NULL;
-         return;
-       } else {
+      } else {
+	 b->dropping_ = 0;
 	 b->on_sched_ = 0;
          binsched_ = b->next;
          binsched_->prev = b->prev;
          (b->prev)->next = binsched_;
          b->next = b->prev = NULL;
          b = binsched_;
-       }
-    }
+      }
+      return binsched_;
 }
 
 // All of the work of CoDel is done here. There are two branches: In packet
@@ -362,25 +412,30 @@ void sfqCoDelQueue::removebin(bindesc* b) {
 
 Packet* sfqCoDelQueue::deque()
 {
-    double now = Scheduler::instance().clock();;
+    double now = Scheduler::instance().clock();
     bindesc* b;
     dodequeResult r;
 
    do {
    //have to check all bins until find a packet (or there are none)
-   if( (b = readybin()) == NULL) return NULL;
+    if( (b = readybin()) == NULL) return NULL;
+
+    //set up to use the same dodeque() as regular CoDel
     b->newflag = 0;
     first_above_time_ = b->first_above_time_;
     drop_next_ = b->drop_next_;
     count_ = b->count_;
     dropping_ = b->dropping_;
-
     r = dodeque( b->q_ );
+    b->newflag = 0;
+
+    //There has to be a packet because readybin() returned a bin
     if(r.p == NULL) printf("sfqCoDelQueue::deque(): error\n");
 
     if (dropping_) {
         if (! r.ok_to_drop) {
             // sojourn time below target - leave dropping state
+	    //    and send this bin's packet
             dropping_ = 0;
         }
         // It’s time for the next drop. Drop the current packet and dequeue
@@ -391,20 +446,22 @@ Packet* sfqCoDelQueue::deque()
         while (now >= drop_next_ && dropping_) {
             drop(r.p);
             r = dodeque(b->q_);
-//in dropping state, drop elderly packets
-//while (r.ok_to_drop && d_exp_ > 8*interval_) {
-// drop(r.p);
-// r = dodeque(b->q_);
-//}
+
 	    //if drop emptied queue, it gets to be new on next arrival
-	    if(r.p == NULL)
+	    // and want to move on to next bin to find a packet to send
+	    if(r.p == NULL) {
+    		b->count_ = count_;
+    		b->drop_next_ = drop_next_;
+    		b->first_above_time_ = 0;
 		removebin(b);
+	    }
+
             if (! r.ok_to_drop) {
                 // leave dropping state
                 dropping_ = 0;
             } else {
                 // schedule the next drop.
-                ++(count_);
+                ++count_;
                 drop_next_ = control_law(drop_next_);
             }
         }
@@ -414,29 +471,40 @@ Packet* sfqCoDelQueue::deque()
     } else if (r.ok_to_drop) {
         drop(r.p);
         r = dodeque(b->q_);
-	b->newflag = 0;
-	    //if drop emptied queue, it gets to be new on next arrival
-	    if(r.p == NULL)
-		removebin(b);
         dropping_ = 1;
+
+	//if drop emptied bin's queue, it gets to be new on next arrival
+	// and want to move on to next bin to find a packet to send
+	if(r.p == NULL) {
+    		b->count_ = count_;
+    		b->drop_next_ = drop_next_;
+    		b->first_above_time_ = 0;
+		removebin(b);
+	}
 
         // If min went above target close to when it last went below,
         // assume that the drop rate that controlled the queue on the
         // last cycle is a good starting point to control it now.
-	// Note: didn't put count_ decay line in sfqcodel
         count_ = (count_ > 2 && now - drop_next_ < 8*interval_)? count_ - 2 : 1;
         drop_next_ = control_law(now);
     }
-    b->count_ = count_;
-    b->first_above_time_ = first_above_time_;
-    b->drop_next_ = drop_next_;
-    b->dropping_ = dropping_;
    } while (r.p == NULL) ;
 
-    //if there's a packet to send need to advance bin schedule. If no packet to
-    // send, means this bin's queue is empty, so advance binsched_.
+    //make sure the bin state gets updated
+    if(r.p != NULL) {
+	b->count_ = count_;
+    	b->first_above_time_ = first_above_time_;
+    	b->drop_next_ = drop_next_;
+    	b->dropping_ = dropping_;
+    }
+
+    if(quantum_) { //for rounding on bytes, don't advance binsched_
+       b->deficit_ -= HDR_CMN(r.p)->size();
+    } else
+
+    // There's a packet to send so need to advance bin schedule.
     // so that binsched_ will be next one to send (or NULL)
-   if(binsched_ != NULL) binsched_ = binsched_->next;
+     if(binsched_ != NULL) binsched_ = binsched_->next;
 
     return (r.p);
 }
@@ -444,9 +512,13 @@ Packet* sfqCoDelQueue::deque()
 int sfqCoDelQueue::command(int argc, const char*const* argv)
 {
     Tcl& tcl = Tcl::instance();
+
     if (argc == 2) {
         if (strcmp(argv[1], "reset") == 0) {
             reset();
+            return (TCL_OK);
+        } else if (strcmp(argv[1], "isolate-cbr") == 0) {
+	    isolate_ = 1;
             return (TCL_OK);
         }
     } else if (argc == 3) {
