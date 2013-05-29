@@ -25,8 +25,8 @@ class EnsembleScheduler : public TclObject {
   /* Number of users */
   uint32_t num_active_users(void) const { return get_feasible_users().size(); }
 
-  /* Aggregate arrival rate */
-  double agg_arrival_rate(void);
+  /* Update aggregate arrival rate */
+  double update_arrival_rate(double now, Packet* p) { return agg_arrival_rate_est_.est_arrival_rate(now, p); }
 
   /* Aggregate service rate */
   double agg_service_rate(void) const { return agg_service_rate_.ser_rate(); }
@@ -61,6 +61,9 @@ class EnsembleScheduler : public TclObject {
 
   /* Aggregate service rate EWMA */
   FlowStats agg_service_rate_;
+
+  /* Aggregate arrival rate EWMA */
+  FlowStats agg_arrival_rate_est_;
 
   /* get feasible users i.e backlogged and non-zero link rate */
   std::vector<uint32_t> get_feasible_users(void) const;

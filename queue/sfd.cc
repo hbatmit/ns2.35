@@ -45,6 +45,9 @@ void SFD::enque(Packet *p)
   double now = Scheduler::instance().clock();
   double arrival_rate = _arrival_estimator.est_arrival_rate(now, p);
 
+  /* Estimate aggregate arrival rate with an EWMA filter */
+  double agg_arrival_rate = _scheduler->update_arrival_rate(now, p);
+
   /* Estimate current link rate with an EWMA filter. */
   _scheduler->update_link_rate_estimate();
   auto current_link_rate = _scheduler->get_link_rate_estimate(_user_id);
@@ -61,7 +64,7 @@ void SFD::enque(Packet *p)
   double drop_probability = (arrival_rate < _fair_share) ? 0.0 : 1.0 ;
 
   /* Check aggregate arrival rate and compare it to aggregate ideal pf throughput */
-  bool exceeded_capacity = _scheduler->agg_arrival_rate() > std::max(_scheduler->agg_pf_throughput(), _scheduler->agg_service_rate()) ;
+  bool exceeded_capacity = agg_arrival_rate > std::max(_scheduler->agg_pf_throughput(), _scheduler->agg_service_rate()) ;
 
   /* Enque packet */
   _packet_queue->enque( p );
