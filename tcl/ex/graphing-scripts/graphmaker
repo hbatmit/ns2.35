@@ -2,7 +2,7 @@
 
 use strict;
 
-my $suffix = '.flowcdfon0.off0.simtime300';
+my $suffix = '.flowcdfon0.off0.simtime100';
 my $dir = '/home/keithw/gradschool/wtcp/doc/sigcomm13/graphs/Ethernet-all';
 
 my %protos;
@@ -137,6 +137,7 @@ HERE
     my $nicename = $protocol;
     $nicename =~ s{TCP-Rational}{RemyCC};
     $nicename =~ s{TCP-Vegas}{Vegas};
+    $nicename =~ s{TCP-Linux-vegas}{Vegas}i;
     $nicename =~ s{Cubic-sfqCoDel}{Cubic/sfqCoDel};
     $nicename =~ s{TCP-Reno-XCP}{XCP};
     $nicename =~ s{TCP-Newreno}{NewReno};
