@@ -197,7 +197,7 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = ::max(maxseq_, highest_ack_);
 
-	int timestep = 10000;
+	int timestep = 1000;
 
 	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
 	update_cwnd_and_pacing();
@@ -229,7 +229,7 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 	cwnd_ = new_cwnd;
 	double old_intersend_time = _intersend_time;
 
-	double timestep_inverse = .0001;
+	double timestep_inverse = .001;
 
 	_intersend_time = timestep_inverse * current_whisker.intersend();
 	double _print_intersend = _intersend_time;
