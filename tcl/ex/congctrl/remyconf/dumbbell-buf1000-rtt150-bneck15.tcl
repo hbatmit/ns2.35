@@ -32,9 +32,9 @@ set opt(seed) 0
 set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
-set opt(offavg) 0.2;              # mean on and off time
-set opt(avgbytes) 32000;          # 16 KBytes flows on avg (too low?)
-set opt(ontype) "flowcdf";           # valid options are "bytes" and "flowcdf"
+set opt(offavg) 0.5;              # mean on and off time
+set opt(avgbytes) 100000;          # 16 KBytes flows on avg (too low?)
+set opt(ontype) "bytes";           # valid options are "bytes" and "flowcdf"
 set opt(reset) "false";             # reset TCP on end of ON period
 
 # simulator parameters

@@ -117,7 +117,7 @@ proc create-sources-sinks {} {
         Agent/TCP/FullTcp set segsize_ $opt(pktsize)
         Agent/TCP set window_ 1256
         Agent/TCP set slow_start_restart_ false
-        Agent/TCP set tcpTick_ 0.001
+        Agent/TCP set tcpTick_ 0.0001
         Agent/TCP set minrto_ 0.2 ; # minRTO = 200ms
         Agent/TCP set windowOption_ 0
         # DCTCP uses ECN and marks based on instantaneous queue length.
@@ -160,7 +160,7 @@ proc create-sources-sinks {} {
                 Agent/TCP/FullTcp set segsize_ $opt(pktsize)
                 Agent/TCP set window_ 1256
                 Agent/TCP set slow_start_restart_ false
-                Agent/TCP set tcpTick_ 0.001
+                Agent/TCP set tcpTick_ 0.0001
                 Agent/TCP set minrto_ 0.2 ; # minRTO = 200ms
                 Agent/TCP set windowOption_ 0
                 Queue/RED set bytes_ false
@@ -263,7 +263,7 @@ proc finish {} {
 
 ## MAIN ##
 
-Agent/TCP set tcpTick_ .001
+Agent/TCP set tcpTick_ .0001
 Agent/TCP set timestamps_ true
 set opt(hdrsize) 50
 set opt(flowoffset) 40
