@@ -200,4 +200,5 @@ FlowRanvar instproc value {} {
         set idx [expr [llength $flowcdf] - 1]
     }
     return  [expr 40 + [lindex $flowcdf $idx]]
+#    return  [expr 16000 + [lindex $flowcdf $idx]]
 }
