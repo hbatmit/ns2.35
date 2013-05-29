@@ -2,7 +2,7 @@
 
 use strict;
 
-my $suffix = '.flowcdfon0.off0.simtime100';
+my $suffix = '.byteson250000.off0.simtime100';
 my $dir = '/home/keithw/gradschool/wtcp/doc/sigcomm13/graphs/Ethernet-all';
 
 my %protos;
@@ -160,5 +160,5 @@ HERE
   close GNUPLOT or die;
 
   system( "gnuplot -p graph-$nsrc.gnu" );
-  system( "inkscape --export-png=graph-$nsrc.png -D graph-$nsrc.svg" );
+  system( "inkscape --export-png=graph-$nsrc.png -b '#ffffff' -D graph-$nsrc.svg" );
 }

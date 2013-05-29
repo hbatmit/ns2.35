@@ -28,7 +28,7 @@ def get_ellipse(points, nstd=1):
 
     # Width and height are "full" widths, not radius
 #    width, height = 2 * nstd * np.sqrt(vals)
-    width, height = 0.5 * nstd * np.sqrt(vals)
+    width, height = nstd * np.sqrt(vals)
     return [ width, height, theta ]
 
 def get_ellipse_coords(a=0.0, b=0.0, x=0.0, y=0.0, angle=0.0, k=2):
