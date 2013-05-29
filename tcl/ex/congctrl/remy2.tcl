@@ -319,6 +319,7 @@ set gw [$ns node];              # bottleneck router
 if { $opt(ontype) == "flowcdf" } {
     source $flowfile
 }
+
 create-dumbbell-topology $opt(bneck) $opt(delay)
 create-sources-sinks
 
