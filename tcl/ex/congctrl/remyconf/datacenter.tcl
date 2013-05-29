@@ -24,6 +24,8 @@ set opt(maxq) 10000;             # max queue length at bottleneck
 set opt(delay) 1ms;            # total one-way delay in topology
 set opt(link) None
 
+set opt(rcvwin) 16384
+
 # app parameters
 set opt(app) FTP/OnOffSender
 set opt(pktsize) 1210;          # doesn't include proto headers
