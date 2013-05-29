@@ -19,6 +19,7 @@ set protosinks [list TCPSink TCPSink TCPSink TCPSink]
 set opt(gw) DropTail;           # queueing at bottleneck
 set opt(bneck) 15Mb;             # bottleneck bandwidth (for some topos)
 set opt(maxq) 1000;             # max queue length at bottleneck
+set opt(rcvwin) 65536
 set opt(delay) 74ms;            # total one-way delay in topology
 set opt(link) None
 
