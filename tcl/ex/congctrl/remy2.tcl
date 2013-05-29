@@ -298,7 +298,7 @@ $defaultRNG seed $opt(seed)
 set ns [new Simulator]
 
 Queue set limit_ $opt(maxq)
-#RandomVariable/Pareto set shape_ 0.5
+RandomVariable/Pareto set shape_ 0.5
 
 if { [info exists opt(tr)] } {
     # if we don't set up tracing early, trace output isn't created!!
