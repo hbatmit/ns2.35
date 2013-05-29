@@ -271,7 +271,7 @@ puts "Reading params from $conffile"
 
 Getopt
 
-set opt(rcvwin) [expr int(2*$opt(maxq))]
+set opt(rcvwin) [expr int(32*$opt(maxq))]
 
 if { ![info exists opt(spike)] } {
     set opt(spike) false
