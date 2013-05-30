@@ -22,7 +22,6 @@ class SFD : public EnsembleAwareQueue {
   private :
 
     /* Tcl accessible SFD parameters */
-    const double  _K;        /* default : 200 ms */
     const double  _headroom; /* default : 0.05 */
     const uint32_t _iter;    /* random seed */
     const uint32_t _user_id;  /* unique user_id */
@@ -34,10 +33,10 @@ class SFD : public EnsembleAwareQueue {
     SfdDropper _dropper;
 
     /* Arrival Rate Estimator */
-    FlowStats _arrival_estimator;
+    FlowStats _user_arrival_rate_est;
 
   public :
-    SFD(double K, double headroom, uint32_t iter, uint32_t user_id);
+    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id);
     int command(int argc, const char*const* argv) override;
 
     /* print stats  */
@@ -48,7 +47,7 @@ class SFD : public EnsembleAwareQueue {
     virtual Packet* deque() override;
     virtual bool empty() const override { return (_packet_queue->byteLength() == 0); }
     virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(_packet_queue->head())->timestamp(); }
-    virtual double get_arrival_rate() override { return _arrival_estimator.arr_rate(); }
+    virtual double get_arrival_rate() override { return _user_arrival_rate_est.arr_rate(); }
     virtual int length() const override { return _packet_queue->length(); }
     virtual int byteLength() const override { return _packet_queue->byteLength(); }
     virtual Packet* get_head() const override { return _packet_queue->head(); }

@@ -10,11 +10,11 @@ static class SFDClass : public TclClass {
     TclObject* create(int argc, const char*const* argv) {
       std::string q_args(argv[4]);
       char* stripped_str = (char*) q_args.substr(1, q_args.size() - 2).c_str();
-      double K = atof(strtok(stripped_str, " "));
+      double user_arrival_rate_time_constant = atof(strtok(stripped_str, " "));
       double headroom = atof(strtok(nullptr, " "));
       double iter = atoi(strtok(nullptr," "));
       double user_id = atoi(strtok(nullptr," ")); 
-      return new SFD(K, headroom, iter, user_id);
+      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id);
     }
 } class_sfd;
 
@@ -23,18 +23,17 @@ int SFD::command(int argc, const char*const* argv)
   return EnsembleAwareQueue::command(argc, argv);
 }
 
-SFD::SFD(double K, double headroom, uint32_t iter, uint32_t user_id) :
+SFD::SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id) :
   EnsembleAwareQueue(),
-  _K(K),
   _headroom(headroom),
   _iter(iter),
   _user_id(user_id),
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
-  _arrival_estimator(FlowStats(_K))
+  _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant))
 {
   fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d \n",
-           _iter, _K, _headroom, _user_id );
+           _iter, user_arrival_rate_time_constant, _headroom, _user_id );
 }
 
 void SFD::enque(Packet *p)
@@ -43,7 +42,7 @@ void SFD::enque(Packet *p)
 
   /* Estimate arrival rate with an EWMA filter */
   double now = Scheduler::instance().clock();
-  double arrival_rate = _arrival_estimator.est_arrival_rate(now, p);
+  double arrival_rate = _user_arrival_rate_est.est_arrival_rate(now, p);
 
   /* Estimate aggregate arrival rate with an EWMA filter */
   double agg_arrival_rate = _scheduler->update_arrival_rate(now, p);
@@ -99,5 +98,5 @@ void SFD::print_stats( double now )
   printf("\n");
 
   /* Arrival, Service, fair share, and ingress rates */
-  _arrival_estimator.print_rates(_user_id, now);
+  _user_arrival_rate_est.print_rates(_user_id, now);
 }
