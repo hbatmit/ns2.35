@@ -1,3 +1,5 @@
+source flowcdf-allman-icsi.tcl
+
 Class FlowRanvar
 
 FlowRanvar instproc init {} {
