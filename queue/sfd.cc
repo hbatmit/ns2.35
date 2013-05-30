@@ -84,9 +84,7 @@ void SFD::enque(Packet *p)
 Packet* SFD::deque()
 {
   /* Implements pure virtual function Queue::deque() */
-  double now = Scheduler::instance().clock();
   Packet *p = _packet_queue->deque();
-  //print_stats( now );
   return p;
 }
 
