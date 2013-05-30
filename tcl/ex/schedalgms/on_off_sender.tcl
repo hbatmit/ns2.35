@@ -66,8 +66,12 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
         set nbytes [expr int($bytes_or_time)]
         # The next 3 lines are because Tcl doesn't seem to do ceil() correctly!
         set npkts_ [expr int($nbytes / $opt(pktsize))]; # pkts for this on period
-        if { $npkts_ * $opt(pktsize) != $nbytes } {
+        # this is a really ugly hack because for some reason TCP/Vegas does not
+        # use packet headers! Weird...
+        if { $opt(tcp) != "TCP/Vegas" } {
+          if { $npkts_ * $opt(pktsize) != $nbytes } {
             incr npkts_
+          }
         }
         set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
         [$self agent] advanceby $npkts_
