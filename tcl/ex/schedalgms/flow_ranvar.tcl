@@ -15,12 +15,12 @@ FlowRanvar instproc init {} {
 
 FlowRanvar instproc value {} {
     $self instvar u_
-    global flowcdf
+    global flowcdf opt
 
     set r [$u_ value]
     set idx [expr int(100000 * $r)]
     if { $idx > [llength $flowcdf] } {
         set idx [expr [llength $flowcdf] - 1]
     }
-    return  [expr 40 + [lindex $flowcdf $idx]]
+    return  [expr $opt(flowoffset) + [lindex $flowcdf $idx]]
 }

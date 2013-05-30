@@ -30,6 +30,7 @@ set opt(spike)  "false";          # TODO Ask Hari what this is
 set opt(verbose) "true";          # Turn on logging ?
 set opt(checkinterval) 0.005;     # Check stats every 5 ms
 set opt(reset)   "true";          # reset TCP after every ON period
+set opt(flowoffset) 40;           # flow offset
 
 # Accounting for the number of sent and received bytes correctly
 set opt(hdrsize) 50
