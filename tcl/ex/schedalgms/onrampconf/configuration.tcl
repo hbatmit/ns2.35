@@ -7,7 +7,7 @@ set opt(codel_target)       5ms
 set opt(codel_interval)     100ms
 set opt(cbr_rate)           10Mb
 set opt(iter)               1
-set opt(_K)                 0.2
+set opt(est_time_constant)  0.2
 set opt(headroom)           0.00
 set opt(cdma_slot_duration) 0.00167
 set opt(ensemble_scheduler) pf

@@ -20,7 +20,8 @@ class PFTxTimer;
 class PFScheduler : public EnsembleScheduler {
  public:
   /* Constructor */
-  PFScheduler(uint32_t    t_num_users,
+  PFScheduler(double      t_rate_est_time_constant,
+              uint32_t    t_num_users,
               double      t_feedback_delay,
               double      t_slot_duration,
               uint32_t    t_ewma_slots,
@@ -50,14 +51,13 @@ class PFScheduler : public EnsembleScheduler {
 
   /* Get delay of head of line packet */
   double hol_delay(uint32_t user_id) const;
-  static constexpr double FLOW_EST_TIME_CONSTANT = 0.2;
 
  private:
   /* update mean achieved rates */
   void update_mean_achieved_rates(uint32_t scheduled_user);
 
   /* Get latest delay estimate */
-  double get_delay(uint32_t user_id) const { return delay_ewma_.at(user_id).get_delay();}
+  double get_delay(uint32_t user_id) const { return user_delay_est_.at(user_id).get_delay();}
 
   /* slot duration */
   const double slot_duration_;
@@ -78,7 +78,7 @@ class PFScheduler : public EnsembleScheduler {
   std::vector<double> mean_achieved_rates_;
 
   /* EWMA of per user delays */
-  std::vector<FlowStats> delay_ewma_;
+  std::vector<FlowStats> user_delay_est_;
 
   /* Timers */
   PFTxTimer* tx_timer_;

@@ -6,14 +6,16 @@ static class FcfsSchedulerClass : public TclClass {
  public :
   FcfsSchedulerClass() : TclClass("FcfsScheduler") {}
   TclObject* create(int argc, const char*const* argv) {
-    return (new FcfsScheduler(atoi(argv[4]), atof(argv[5])));
+    return (new FcfsScheduler(atof(argv[4]), atoi(argv[5]), atof(argv[6])));
   }
 } class_fcfs;
 
-FcfsScheduler::FcfsScheduler(uint32_t num_users, double feedback_delay)
-    : EnsembleScheduler(num_users, feedback_delay),
+FcfsScheduler::FcfsScheduler(double rate_est_time_constant, uint32_t num_users, double feedback_delay)
+    : EnsembleScheduler(rate_est_time_constant,
+                        num_users,
+                        feedback_delay),
       tx_timer_(new FcfsTxTimer(this)),
-      service_rates_(std::vector<FlowStats> (num_users, FlowStats(FLOW_EST_TIME_CONSTANT)))
+      user_service_rate_est_(std::vector<FlowStats> (num_users, FlowStats(rate_est_time_constant)))
 {}
 
 uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
@@ -88,8 +90,8 @@ void FcfsScheduler::transmit_pkt() {
   tx_timer_->resched(txt);
 
   /* Estimate service rate */
-  service_rates_.at(chosen_user).est_service_rate(Scheduler::instance().clock(), p);
+  user_service_rate_est_.at(chosen_user).est_service_rate(Scheduler::instance().clock(), p);
 
   /* Estimate aggregate service rate */
-  agg_service_rate_.est_service_rate(Scheduler::instance().clock(), p);
+  agg_service_rate_est_.est_service_rate(Scheduler::instance().clock(), p);
 }

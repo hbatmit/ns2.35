@@ -11,22 +11,24 @@ static class PFSchedulerClass : public TclClass {
  public :
   PFSchedulerClass() : TclClass("PFScheduler") {}
   TclObject* create(int argc, const char*const* argv) {
-    return (new PFScheduler(atoi(argv[4]),
-                            atof(argv[5]),
+    return (new PFScheduler(atof(argv[4]),
+                            atoi(argv[5]),
                             atof(argv[6]),
-                            atoi(argv[7]),
-                            atof(argv[8]),
-                            std::string(argv[9])));
+                            atof(argv[7]),
+                            atoi(argv[8]),
+                            atof(argv[9]),
+                            std::string(argv[10])));
   }
 } class_prop_fair;
 
-PFScheduler::PFScheduler(uint32_t    t_num_users,
+PFScheduler::PFScheduler(double      t_rate_est_time_constant,
+                         uint32_t    t_num_users,
                          double      t_feedback_delay,
                          double      t_slot_duration,
                          uint32_t    t_ewma_slots,
                          double      t_alpha,
                          std::string t_sub_qdisc)
-    : EnsembleScheduler(t_num_users, t_feedback_delay),
+    : EnsembleScheduler(t_rate_est_time_constant, t_num_users, t_feedback_delay),
       current_slot_(0.0),
       slot_duration_(t_slot_duration),
       ewma_slots_(t_ewma_slots),
@@ -34,7 +36,7 @@ PFScheduler::PFScheduler(uint32_t    t_num_users,
       sub_qdisc_(t_sub_qdisc),
       chosen_user_(0),
       mean_achieved_rates_(std::vector<double> (num_users_, 0.0)),
-      delay_ewma_(std::vector<FlowStats> (num_users_, FlowStats(FLOW_EST_TIME_CONSTANT))),
+      user_delay_est_(std::vector<FlowStats> (num_users_, FlowStats(t_rate_est_time_constant))),
       tx_timer_(new PFTxTimer(this)),
       sched_timer_(new PFSchedTimer(this, slot_duration_)),
       abeyance_(std::vector<Packet*> (num_users_, nullptr)),
@@ -63,7 +65,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
 
   /* Check if there are additional abeyant users */
   for (uint32_t i=0; i < num_users_; i++) {
-    if ((abeyance_.at(i) != nullptr) and (link_rates_.at(i).link_rate() != 0)) {
+    if ((abeyance_.at(i) != nullptr) and (user_link_rate_est_.at(i).link_rate() != 0)) {
       if(std::find(feasible_users.begin(), feasible_users.end(), i) == feasible_users.end()) {
         /* printf("Adding one more abeyant user : %d \n", i); */
         feasible_users.push_back(i);
@@ -72,8 +74,8 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
   }
 
   /* Normalize rates */
-  std::vector<double> normalized_rates( link_rates_.size() );
-  std::transform(link_rates_.begin(), link_rates_.end(),
+  std::vector<double> normalized_rates( user_link_rate_est_.size() );
+  std::transform(user_link_rate_est_.begin(), user_link_rate_est_.end(),
                  mean_achieved_rates_.begin(), normalized_rates.begin(),
                  [&] (const FlowStats & flow_est, const double & average)
                  { auto norm = (average != 0 ) ? flow_est.link_rate()/average : DBL_MAX;/* printf("Norm is %f \n", norm); */ return norm;} );
@@ -93,7 +95,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                                    return normalized_rates.at(f1) < normalized_rates.at(f2);
                                  }
                                } else if (sub_qdisc_ == "maxweight") {
-                                 return (link_rates_.at(f1).link_rate() * pow(q1, alpha_)) < (link_rates_.at(f2).link_rate() * pow(q2, alpha_));
+                                 return (user_link_rate_est_.at(f1).link_rate() * pow(q1, alpha_)) < (user_link_rate_est_.at(f2).link_rate() * pow(q2, alpha_));
                                } else {
                                  assert(false);
                                  return false;
@@ -128,7 +130,7 @@ void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   for ( uint32_t i=0; i < mean_achieved_rates_.size(); i++ ) {
     if ( i == scheduled_user ) {
       /* printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i); */
-      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * link_rates_.at(i).link_rate();
+      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * user_link_rate_est_.at(i).link_rate();
     } else {
       mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i);
     }
@@ -200,7 +202,7 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
     user_links_.at(chosen_user)->recv(p, queue_handler);
     auto current_delay = Scheduler::instance().clock() + txt - hol_ts_.at(chosen_user);
     assert(current_delay > 0);
-    delay_ewma_.at(chosen_user).est_delay(Scheduler::instance().clock(), current_delay);
+    user_delay_est_.at(chosen_user).est_delay(Scheduler::instance().clock(), current_delay);
 
     /* Log */
 //    printf(" PFScheduler::expire, Chosen_user %d, recving %f bits @ %f \n",

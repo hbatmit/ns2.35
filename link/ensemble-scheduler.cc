@@ -2,14 +2,14 @@
 #include <algorithm>
 #include "link/ensemble-scheduler.h"
 
-EnsembleScheduler::EnsembleScheduler(uint32_t num_users, double feedback_delay)
+EnsembleScheduler::EnsembleScheduler(double rate_est_time_constant, uint32_t num_users, double feedback_delay)
     : num_users_(num_users),
       feedback_delay_(feedback_delay),
       user_queues_(std::vector<Queue*>(num_users_)),
       user_links_(std::vector<LinkDelay*>(num_users_)),
-      link_rates_(std::vector<FlowStats>(num_users_, FlowStats(FLOW_ESTIMATOR_K))),
-      agg_service_rate_(FlowStats(FLOW_ESTIMATOR_K)),
-      agg_arrival_rate_est_(FlowStats(FLOW_ESTIMATOR_K)) {
+      user_link_rate_est_(std::vector<FlowStats>(num_users_, FlowStats(rate_est_time_constant))),
+      agg_service_rate_est_(FlowStats(rate_est_time_constant)),
+      agg_arrival_rate_est_(FlowStats(rate_est_time_constant)) {
   assert(num_users_ > 0);
   fprintf( stderr, "EnsembleScheduler parameters num_users_ %d, feedback_delay %f \n",
           num_users_, feedback_delay_);
@@ -38,7 +38,7 @@ int EnsembleScheduler::command(int argc, const char*const* argv) {
 std::vector<uint32_t> EnsembleScheduler::get_feasible_users(void) const {
   std::vector<uint32_t> feasible_user_list;
   for ( uint32_t i = 0; i < num_users_; i++ ) {
-    if ( (!(user_queues_.at(i)->empty())) and (link_rates_.at(i).link_rate() != 0)) {
+    if ( (!(user_queues_.at(i)->empty())) and (user_link_rate_est_.at(i).link_rate() != 0)) {
       feasible_user_list.push_back(i);
     } else {
 //      printf(" User_queue is empty at %d \n", i );
@@ -51,8 +51,8 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   /* Aggregate PF throughput, after EWMA */
   double agg_link_rate = 0.0;
   for (uint32_t i = 0; i < num_users_; i++) {
-    if (!user_queues_.at(i)->empty()) agg_link_rate += link_rates_.at(i).link_rate();
-    printf("Link rate is %f \n", link_rates_.at(i).link_rate());
+    if (!user_queues_.at(i)->empty()) agg_link_rate += user_link_rate_est_.at(i).link_rate();
+    printf("Link rate is %f \n", user_link_rate_est_.at(i).link_rate());
   }
   return (agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users()));
 }
@@ -60,7 +60,7 @@ double EnsembleScheduler::agg_pf_throughput(void) {
 void EnsembleScheduler::update_link_rate_estimate(void) {
   /* Update link rate estimates, model feedback delay and/or noise here */
   for (uint32_t i = 0; i < num_users_; i++) {
-    link_rates_.at(i).est_link_rate(Scheduler::instance().clock(),
+    user_link_rate_est_.at(i).est_link_rate(Scheduler::instance().clock(),
                                     user_links_.at(i)->get_bw_in_past(Scheduler::instance().clock() - feedback_delay_)
                                    );
   }
