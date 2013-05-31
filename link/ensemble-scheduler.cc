@@ -52,7 +52,6 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   double agg_link_rate = 0.0;
   for (uint32_t i = 0; i < num_users_; i++) {
     if (!user_queues_.at(i)->empty()) agg_link_rate += user_link_rate_est_.at(i).link_rate();
-    printf("Link rate is %f \n", user_link_rate_est_.at(i).link_rate());
   }
   return (agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users()));
 }
