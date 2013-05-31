@@ -1,6 +1,24 @@
 # Author : Anirudh Sivaraman
 # Star topology with basestation at the centre.
 
+#!/bin/sh
+# the next line finds ns \
+nshome=`dirname $0`; [ ! -x $nshome/ns ] && [ -x ../../../ns ] && nshome=../../..
+# the next line starts ns \
+export nshome; exec $nshome/ns "$0" "$@"
+
+if [info exists env(nshome)] {
+	set nshome $env(nshome)
+} elseif [file executable ../../../ns] {
+	set nshome ../../..
+} elseif {[file executable ./ns] || [file executable ./ns.exe]} {
+	set nshome "[pwd]"
+} else {
+	puts "$argv0 cannot find ns directory"
+	exit 1
+}
+set env(PATH) "$nshome/bin:$env(PATH)"
+
 # Create a simulator object
 set ns [ new Simulator ]
 
@@ -105,7 +123,7 @@ proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
 }
 
 # DropTail feedback queue, make sure you have sufficient buffering
-Queue set limit_ 10000
+Queue set limit_ 1000
 
 # Neuter queue
 proc neuter_queue {queue} {
@@ -113,8 +131,7 @@ proc neuter_queue {queue} {
   $queue set blocked_ 1
   $queue set unblock_on_resume_ 0
 
-  # Infinite buffer
-  $queue set limit_ 10000
+  $queue set limit_ 1000
 
   # Deactivate forward queue
   $queue deactivate_queue

@@ -8,9 +8,11 @@ source on_off_sender.tcl
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create TCP Agents with congestion control specified in opt(tcp)
   set tcp_server($i) [ new Agent/$opt(tcp) ]
-  set f [open cwnd$i.dat w]
-  $tcp_server($i) trace cwnd_
-  $tcp_server($i) attach $f
+  if { [info exists opt(tr)] } {
+      set f [open cwnd$i.dat w]
+      $tcp_server($i) trace cwnd_
+      $tcp_server($i) attach $f
+  }
   if { $opt(tcp) == "TCP/Linux" } {
     puts "TCP/Linux is buggy, exiting "
     exit 5
@@ -50,7 +52,9 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   }
 
   # Attach trace_file to queue.
-  $ns trace-queue $basestation $tcp_client_node($i) $trace_file
+  if { [info exists opt(tr)] } {
+      $ns trace-queue $basestation $tcp_client_node($i) $trace_file
+  }
 
   # Attach queue and link to ensemble_scheduler
   attach_to_scheduler $ensemble_scheduler $fid($i) $cell_queue $cell_link
