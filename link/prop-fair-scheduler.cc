@@ -156,7 +156,7 @@ void PFScheduler::transmit_pkt() {
   if (p==nullptr) {
     /* Now check the main queue */
     /* Get arrival ts of hol packet */
-    hol_ts_.at(chosen_user) = user_queues_.at(chosen_user)->get_hol();
+    //hol_ts_.at(chosen_user) = user_queues_.at(chosen_user)->get_hol();
     p = user_queues_.at(chosen_user)->deque();
     if (p!=nullptr) {
       slice_and_transmit(p, chosen_user);
