@@ -15,8 +15,8 @@ for ( glob "$dir/*$suffix" ) {
 #  next if ( $protocol =~ m{XCP} );
 #  next if ( $protocol =~ m{CoDel} );
 #  next if ( $protocol =~ m{delta1$} );
-  next if ( $protocol =~ m{0_5} );
-  next if ( $protocol =~ m{2} );
+#  next if ( $protocol =~ m{0_5} );
+#  next if ( $protocol =~ m{2} );
 
 #  next if ( $protocol =~ m{^TCP-Linux-cubic$} );
 #  next if ( $protocol =~ m{TCP-Newreno} );
