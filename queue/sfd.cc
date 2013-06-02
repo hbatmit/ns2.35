@@ -49,7 +49,6 @@ void SFD::enque(Packet *p)
 
   /* Get fair share, and take max of fair share and service rate  */
   auto _fair_share = (1-_headroom) * _scheduler->get_fair_share(_user_id);
-  _fair_share = std::max(_fair_share, _scheduler->get_service_rate(_user_id));
   //printf("User id is %d, _fair_share is %f \n", user_id, _fair_share);
 
   /* Print everything */
@@ -59,7 +58,7 @@ void SFD::enque(Packet *p)
   double drop_probability = (arrival_rate < _fair_share) ? 0.0 : 1.0 ;
 
   /* Check aggregate arrival rate and compare it to aggregate ideal pf throughput */
-  bool exceeded_capacity = agg_arrival_rate > std::max(_scheduler->agg_pf_throughput(), _scheduler->agg_service_rate()) ;
+  bool exceeded_capacity = agg_arrival_rate > _scheduler->agg_pf_throughput();
 
   /* Enque packet */
   _packet_queue->enque( p );
