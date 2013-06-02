@@ -30,8 +30,11 @@ unset opt
 
 # Clean up procedures
 proc finish { sim_object trace_file } {
-  global opt stats on_off_server logging_app_client num_users
+  global opt stats on_off_server logging_app_client num_users rate_generator
   for {set i 0} {$i < $num_users} {incr i} {
+    # Get link capacity over entire trace
+    set user_capacity [expr [$rate_generator get_capacity $i] / 1000000]
+    puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
     set sapp $on_off_server($i)
     $sapp dumpstats
     set rcdbytes [$logging_app_client($i) set nbytes_]
@@ -41,7 +44,7 @@ proc finish { sim_object trace_file } {
     } else {
         set rcd_avgrtt 0.0
     }
-    [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt
+    [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt $user_capacity 
   }
   $sim_object flush-trace
   close $trace_file
@@ -100,7 +103,7 @@ if { $opt(ensemble_scheduler) == "pf" } {
 }
 
 # Create rate generator
-set rate_generator [ new EnsembleRateGenerator $opt(link_trace) ]; 
+set rate_generator [ new EnsembleRateGenerator $opt(link_trace) $opt(simtime) ]; 
 set users_in_trace [ $rate_generator get_users_ ]
 puts stderr "Num users is $num_users, users_in_trace $users_in_trace users "
 assert [expr $num_users == $users_in_trace]
@@ -110,7 +113,7 @@ set counter 0
 
 # Link creation
 proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
-  set bw [$rate_generator get_initial_rate user_id]
+  set bw [$rate_generator get_initial_rate $user_id]
   puts "Initial bandwidth for user $user_id is $bw"
   global opt
   set q_args [ list $opt(est_time_constant) $opt(headroom) $opt(iter) $user_id ]

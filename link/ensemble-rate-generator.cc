@@ -5,19 +5,27 @@ static class EnsembleRateGeneratorClass : public TclClass {
  public :
   EnsembleRateGeneratorClass() : TclClass("EnsembleRateGenerator") {}
   TclObject* create(int argc, const char*const* argv) {
-    return (new EnsembleRateGenerator(std::string(argv[4])));
+    return (new EnsembleRateGenerator(std::string(argv[4]), atof(argv[5])));
   }
 } class_fcfs;
 
-EnsembleRateGenerator::EnsembleRateGenerator(std::string t_trace_file)
+EnsembleRateGenerator::EnsembleRateGenerator(std::string t_trace_file, double simulation_time)
     : link_rate_changes_(std::queue<LinkRateEvent>()),
       initial_rate_map_(std::map<uint32_t,double>()),
       trace_file_(t_trace_file),
-      num_users_(read_link_rate_trace()),
+      cap_in_bits_(std::map<uint32_t,double>()),
+      last_change_(std::map<uint32_t,double>()),
+      last_rate_(std::map<uint32_t,double>()),
+      cap_in_bps_(std::map<uint32_t,double>()),
+      num_users_(read_link_rate_trace(simulation_time)),
       user_links_(std::vector<LinkDelay*>(num_users_)),
       next_event_(LinkRateEvent()) {
-  fprintf(stderr, "EnsembleRateGenerator, num_users_ %u, trace_file_ %s \n",
-          num_users_, trace_file_.c_str());
+  /* Finalize capacities */
+  fprintf(stderr, "Just before finalizing caps \n");
+  finalize_caps(simulation_time);
+
+  fprintf(stderr, "EnsembleRateGenerator, num_users_ %u, trace_file_ %s, simulation_time %f \n",
+          num_users_, trace_file_.c_str(), simulation_time);
 }
 
 int EnsembleRateGenerator::command(int argc, const char*const* argv) {
@@ -35,6 +43,11 @@ int EnsembleRateGenerator::command(int argc, const char*const* argv) {
     if ( strcmp(argv[1], "get_initial_rate" ) == 0 ) {
       uint32_t user_id = atoi(argv[2]);
       Tcl::instance().resultf("%f", initial_rate_map_.at(user_id));
+      return TCL_OK;
+    }
+    if ( strcmp(argv[1], "get_capacity" ) == 0 ) {
+      uint32_t user_id = atoi(argv[2]);
+      Tcl::instance().resultf("%f", cap_in_bps_.at(user_id));
       return TCL_OK;
     }
   }
@@ -58,7 +71,7 @@ void EnsembleRateGenerator::expire(Event* e) {
   schedule_next_event();
 }
 
-uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
+uint32_t EnsembleRateGenerator::read_link_rate_trace(double simulation_time) {
   assert(trace_file_!="");
   FILE* f = fopen(trace_file_.c_str(), "r");
   if (f == NULL) {
@@ -77,10 +90,27 @@ uint32_t EnsembleRateGenerator::read_link_rate_trace(void) {
     if (num_matched != 3) {
       break;
     }
+    if (ts > simulation_time) {
+      continue;
+    }
     link_rate_change_vector.push_back(LinkRateEvent(ts, user_id, rate));
     if (std::find(unique_user_list.begin(), unique_user_list.end(), user_id) == unique_user_list.end()) {
+      /* First link rate entry for this user */
+      assert(ts == 0.0);
       unique_user_list.push_back(user_id);
+      fprintf(stderr, "Populating initial rate %f for user %u \n", rate, user_id);
       initial_rate_map_[user_id] = rate;
+
+      /* Initialize capacity calculation */
+      cap_in_bits_[user_id] = 0.0;
+      last_rate_[user_id] = rate;
+      last_change_[user_id] = ts;
+    } else {
+      /* Update capacity */
+      assert(ts > last_change_.at(user_id));
+      cap_in_bits_.at(user_id) += (ts - last_change_.at(user_id)) * last_rate_.at(user_id);
+      last_rate_.at(user_id) = rate;
+      last_change_.at(user_id) = ts;
     }
   }
 
@@ -112,6 +142,18 @@ void EnsembleRateGenerator::schedule_next_event() {
   assert(next_event_.timestamp >= Scheduler::instance().clock());
   auto time_to_next_event = next_event_.timestamp - Scheduler::instance().clock();
   resched(time_to_next_event);
+}
+
+void EnsembleRateGenerator::finalize_caps(double simulation_time) {
+  /* Finalize capacity calculation */
+  for (auto &x : cap_in_bits_) {
+    cap_in_bits_.at(x.first) += (simulation_time - last_change_.at(x.first)) * last_rate_.at(x.first);
+  }
+
+  /* Normalize by dividing by simtime, to get throughput */
+  for (auto &x : cap_in_bits_) {
+    cap_in_bps_[x.first] = cap_in_bits_.at(x.first)/simulation_time;
+  }
 }
 
 void EnsembleRateGenerator::init() {

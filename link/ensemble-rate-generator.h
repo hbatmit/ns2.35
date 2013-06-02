@@ -35,7 +35,7 @@ struct LinkRateEvent {
 class EnsembleRateGenerator : public TimerHandler, public TclObject {
  public:
   /* Constructor */
-  EnsembleRateGenerator(std::string t_trace_file);
+  EnsembleRateGenerator(std::string t_trace_file, double simulation_time);
 
   /* Tcl interface : add links and queues */
   virtual int command(int argc, const char*const* argv) override;
@@ -46,10 +46,13 @@ class EnsembleRateGenerator : public TimerHandler, public TclObject {
 
  private:
   /* Read from a trace file of link rate changes, return number of unique users */
-  uint32_t read_link_rate_trace(void);
+  uint32_t read_link_rate_trace(double simulation_time);
 
   /* Schedule next link rate change using TimerHandler */
   void schedule_next_event(void);
+
+  /* Finalize capacity calculations used simulation_time */
+  void finalize_caps(double simulation_time);
 
   /* Start scheduling in response to command() */
   void init(void);
@@ -62,6 +65,12 @@ class EnsembleRateGenerator : public TimerHandler, public TclObject {
 
   /* Trace file name */
   std::string trace_file_;
+
+  /* Per user capacity calculations */
+  std::map<uint32_t,double> cap_in_bits_; /* Capacity of each user so far in bits */
+  std::map<uint32_t,double> last_change_;  /* When was the last time when the rate changed? */
+  std::map<uint32_t,double> last_rate_;   /* What was the last rate? */
+  std::map<uint32_t,double> cap_in_bps_;  /* Capacity calculated finally in bits per sec */
 
   /* Number of users */
   int num_users_;
