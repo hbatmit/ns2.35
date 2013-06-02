@@ -29,9 +29,9 @@ uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
   }
   
   /* Pick the earliest ts amongst them */
-  auto it = std::min_element(feasible_users.begin(), feasible_users.end(),
+  auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
                              [&] (const uint32_t &f1, const uint32_t &f2)
-                             { return hol_ts.at(f1) < hol_ts.at(f2);});
+                             { return ((Scheduler::instance().clock() - hol_ts.at(f1))*get_link_rate_estimate(f1)) < ((Scheduler::instance().clock() - hol_ts.at(f2)) * get_link_rate_estimate(f2));});
 
   return (it!=feasible_users.end()) ? *it : (uint32_t)-1;
 }
