@@ -87,6 +87,9 @@ proc create-dumbbell-topology {bneckbw delay} {
     } else {
         $ns duplex-link $gw $d $bneckbw $delay $opt(gw)
     }
+    if { [info exists opt(tr)] } {
+	$ns trace-queue $gw $d
+    }
     $ns queue-limit $gw $d $opt(maxq)
     $ns queue-limit $d $gw $opt(maxq)    
     if { $opt(gw) == "XCP" } {

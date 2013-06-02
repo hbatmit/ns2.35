@@ -1,13 +1,18 @@
 #!/usr/bin/perl -w
 
-for my $id ( 0 .. 9 ) {
-    system("python run-dc.py $id &");
-}
+#for my $id ( 0 .. 31 ) {
+#    system("export WHISKERS=/home/am7/hari/ns2.35/tcp/remy/rats/new/datacenter.dna.10 && python run-dc.py $id &");
+#    system("export WHISKERS=/home/am7/hari/ns2.35/tcp/remy/rats/new/datacenter.dna.10 && python run-dc.py $id &");
+#}
 
 #export WHISKERS=/home/am7/hari/ns2.35/tcp/remy/rats/new/delta1.dna 
 
-#for my $id ( 0 .. 24 ) {
-#    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15-remycubic.tcl -simtime 100 -offavg .2 |grep conn: >> remycubic/remy-cubic-dumb-15-150-off.2 &");
+for my $id ( 0 .. 127 ) {
+    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/cubic -sink TCPSink/Sack1 -gw sfqCoDel -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> cubiccodel-avg1Moff.5/cc$id &");
+    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/cubic -sink TCPSink/Sack1 -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> cubic-avg1Moff.5/cc$id &");
+#    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/cubic -sink TCPSink/Sack1 -gw sfqCoDel -offavg .2 | grep conn: >> cubiccodel.2/cc$id &");
+#    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/cubic -sink TCPSink/Sack1 -offavg .2 | grep conn: >> cubic.2/cc$id &");
+}
 
 #    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Rational -sink TCPSink -simtime 100 -offavg .2 -ontype bytes -avgbytes 100000 -onrand Pareto -nsrc 8 |grep conn: >> 100Kpareto/remy &");
 #    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/cubic -sink TCPSink/Sack1 -gw sfqCoDel  -simtime 100 -offavg .2 -ontype bytes -avgbytes 100000 -onrand Pareto -nsrc 8 |grep conn: >> 100Kpareto/cubiccodel &");
