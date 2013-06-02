@@ -118,7 +118,7 @@ set yrange [0:$utilmax]
 $xtic_instruction
 
 set xlabel "Queueing delay (ms)"
-set ylabel "Throughput (Mbps)"
+set ylabel "Utilization (Percentage)"
 set grid
 
 #set title "15 Mbps dumbbell, Empirical distribution of flow lengths, nsrc $nsrc"
