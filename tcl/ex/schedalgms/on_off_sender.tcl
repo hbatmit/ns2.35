@@ -114,7 +114,9 @@ Application/FTP/OnOffSender instproc timeout {} {
     set rtt [expr [$tcp_ set rtt_] * [$tcp_ set tcpTick_] ]
     set ack [$tcp_ set ack_]
     if { $rtt != $lastrtt_ || $ack != $lastack_ } {
+      if { $rtt > 0.0 } {
         $stats_ update_rtt $rtt
+      }
     }
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         if { $ack >= $sentinel_ } { # have sent for this ON period
