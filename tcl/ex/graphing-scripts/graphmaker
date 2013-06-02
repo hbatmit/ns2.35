@@ -63,7 +63,7 @@ for my $nsrc ( keys %protos ) {
     while ( <DATA> ) {
       next unless m{^conn:};
 
-      my ( $fct, $rtt, $onperc, $util ) = m{fctMs: (.*?) .*?sndrttMs (.*?) .*?onperc: (.*?) .*?util: (.*?)$};
+      my ( $fct, $rtt, $onperc, $util ) = m{fctMs: (.*?) .*?sndrttMs (.*?) .*?onperc: (.*?) .*?utilization: (.*?)$};
 
       $rtt -= $min_rtt;
       push @rtts, $rtt + 0;
