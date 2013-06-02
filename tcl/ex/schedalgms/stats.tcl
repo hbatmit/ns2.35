@@ -72,5 +72,5 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity } {
     }
     set on_perc [expr 100.0*$ontime_ / $opt(simtime)]
 
-    puts [format "conn: %d rbytes: %d rMbps: %.3f fctMs: %.0f abytes: %d aMbps: %.3f sndrttMs %.1f rcdrttMs %.1f s_util: %.2f r_util: %.2f onperc: %.1f util_percent %.2f" $srcid_ $rcd_bytes $rcdtput $fct $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc [expr 100 * $throughput / $user_capacity]]
+    puts [format "conn: %d rbytes: %d rMbps: %.3f fctMs: %.0f abytes: %d aMbps: %.3f sndrttMs %.1f rcdrttMs %.1f s_util: %.2f r_util: %.2f onperc: %.1f util: %.2f" $srcid_ $rcd_bytes $rcdtput $fct $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc [expr 100 * $throughput / $user_capacity]]
 }
