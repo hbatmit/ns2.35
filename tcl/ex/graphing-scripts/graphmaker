@@ -2,8 +2,9 @@
 
 use strict;
 
-my $suffix = '.bytesflowcdf.off0.5.simtime100';
-my $dir = '/home/am7/hari/onramp/tcl/ex/schedalgms/15mb-flowcdf';
+my $suffix = $ARGV[0];
+my $min_rtt= $ARGV[1];
+my $dir = '/home/am2/anirudh/onramp/ns-allinone-2.35/ns2.35/tcl/ex/schedalgms/'.$suffix;
 
 my %protos;
 my %nsrcs;
@@ -55,7 +56,7 @@ for my $nsrc ( keys %protos ) {
     my ( $rtt_tot, $mbps_tot, $count );
 
     open DATA, $filename or die "can't open $filename !";
-    open ELLIPSE, "|/home/am7/hari/onramp/tcl/ex/graphing-scripts//ellipsemaker > $protocol-$nsrc.ellipse" or die;
+    open ELLIPSE, "|/home/am2/anirudh/onramp/ns-allinone-2.35/ns2.35/tcl/ex/graphing-scripts/ellipsemaker > $protocol-$nsrc.ellipse" or die;
     open RAWDATA, ">$protocol-$nsrc.pts" or die;
     my @rtts = ();
     my @mbpss = ();
@@ -64,7 +65,7 @@ for my $nsrc ( keys %protos ) {
 
       my ( $mbps, $fct, $rtt, $onperc ) = m{rMbps: (.*?) fctMs: (.*?) .*?sndrttMs (.*?) .*?onperc: (.*?)$};
 
-      $rtt -= 150;
+      $rtt -= $min_rtt;
       push @rtts, $rtt + 0;
       $rtt = log( $rtt ) / log( 2 );
       print ELLIPSE "$rtt $mbps\n";
