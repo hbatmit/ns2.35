@@ -19,7 +19,13 @@ class EwmaEstimator {
     double update( double now, double current_value );
 
     /* Return estimate */
-    double get_estimate( void ) const;
+    double get_estimate( void ) const { return _estimate; }
+
+    /* Return time of last update */
+    double get_last_update( void ) const { return _last_update; }
+
+    /* Return time constant for this EWMA */
+    double get_time_constant( void ) const { return _time_constant; }
 };
 
 #endif

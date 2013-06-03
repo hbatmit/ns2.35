@@ -26,8 +26,3 @@ double EwmaEstimator::update( double now, double current_value )
     exp(-inter_update_interval/_time_constant)*_estimate;
   return _estimate;
 }
-
-double EwmaEstimator::get_estimate( void ) const
-{
-  return _estimate;
-}
