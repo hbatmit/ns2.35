@@ -7,15 +7,22 @@ source on_off_sender.tcl
 # TCP servers
 for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Create TCP Agents with congestion control specified in opt(tcp)
-  set tcp_server($i) [ new Agent/$opt(tcp) ]
+
+  # If opt(tcp) starts with TCP/Linux, then you need to do something different
+  if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
+    set linuxcc [ string range $opt(tcp) 10 [string length $opt(tcp)] ]
+    set opt(tcp) "TCP/Linux"
+    set tcp_server($i) [ new Agent/$opt(tcp) ]
+    $ns at 0.0 "$tcp_server($i) select_ca $linuxcc"
+    $ns at 0.0 "$tcp_server($i) set_ca_default_param linux debug_level 2"
+  } else {
+    set tcp_server($i) [ new Agent/$opt(tcp) ]
+  }
+
   if { [info exists opt(tr)] } {
       set f [open cwnd$i.dat w]
       $tcp_server($i) trace cwnd_
       $tcp_server($i) attach $f
-  }
-  if { $opt(tcp) == "TCP/Linux" } {
-    puts "TCP/Linux is buggy, exiting "
-    exit 5
   }
 
   # Attach TCP Agent to basestation Node
