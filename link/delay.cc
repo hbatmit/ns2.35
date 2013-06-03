@@ -204,7 +204,7 @@ void LinkDelay::set_bandwidth(double bandwidth) {
   bw_history[now] = bandwidth;
 }
 
-double LinkDelay::get_bw_in_past(double req_time) {
+double LinkDelay::get_bw_in_past(double req_time) const {
   /* Find the largest stored time less than equal to req_time */
   
   /* Find the first stored time strictly greater than req_time */
