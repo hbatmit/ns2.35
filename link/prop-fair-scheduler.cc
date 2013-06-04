@@ -81,12 +81,9 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                  { auto norm = (average != 0 ) ? flow_est.link_rate()/average : DBL_MAX;/* printf("Norm is %f \n", norm); */ return norm;} );
 
   /* Pick the highest normalized rates amongst them */
-  auto abeyance_len = [&] (const Packet* tmp) { return (tmp != nullptr) ? hdr_cmn::access(tmp)->size() : 0;};
   auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
                              [&] (const uint32_t &f1, const uint32_t &f2)
-                             { uint32_t q1 = abeyance_len(abeyance_.at(f1)) + user_queues_.at(f1)->byteLength();
-                               uint32_t q2 = abeyance_len(abeyance_.at(f2)) + user_queues_.at(f2)->byteLength();
-                               if (sub_qdisc_ == "propfair") {
+                             { if (sub_qdisc_ == "propfair") {
                                  if (normalized_rates.at(f1) == DBL_MAX) {
                                    return false; /* f1 > f2, so f1 < f2 is false */
                                  } else if (normalized_rates.at(f2) == DBL_MAX) {
@@ -94,8 +91,6 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
                                  } else {
                                    return normalized_rates.at(f1) < normalized_rates.at(f2);
                                  }
-                               } else if (sub_qdisc_ == "maxweight") {
-                                 return (user_link_rate_est_.at(f1).link_rate() * pow(q1, alpha_)) < (user_link_rate_est_.at(f2).link_rate() * pow(q2, alpha_));
                                } else {
                                  assert(false);
                                  return false;
