@@ -56,6 +56,10 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   return (agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users()));
 }
 
+double EnsembleScheduler::get_instantaneous_rate(uint32_t user_id) const {
+  return user_links_.at(user_id)->get_bw_in_past(Scheduler::instance().clock() - feedback_delay_);
+}
+
 void EnsembleScheduler::update_link_rate_estimate(void) {
   /* Update link rate estimates, model feedback delay and/or noise here */
   for (uint32_t i = 0; i < num_users_; i++) {
