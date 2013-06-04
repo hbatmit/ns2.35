@@ -12,6 +12,7 @@ static class CellularHeaderClass : public PacketHeaderClass {
 
 void hdr_cellular::fill_in(Packet* p,
                            int slice_size,
+                           double slice_size_bits,
                            bool last_fragment,
                            packet_t tunneled_type,
                            int original_size) {
@@ -31,9 +32,12 @@ void hdr_cellular::fill_in(Packet* p,
 
   /* What was the original packet size ? For classifier::recv() */
   hdr_cellular::access(p)->original_size_ = original_size;
+
+  /* What was the precise size of the slice in bits */
+  hdr_cellular::access(p)->size_in_bits_  = slice_size_bits;
 }
 
-Packet* hdr_cellular::slice(Packet *p, int slice_bytes) {
+Packet* hdr_cellular::slice(Packet *p, int slice_bytes, double sliced_bits) {
   /* Slice packet */
   Packet* sliced_pkt = p->copy();
 
@@ -52,6 +56,6 @@ Packet* hdr_cellular::slice(Packet *p, int slice_bytes) {
   }
 
   /* Fill in */
-  hdr_cellular::fill_in(sliced_pkt, slice_bytes, false, tunneled_type, original_size);
+  hdr_cellular::fill_in(sliced_pkt, slice_bytes, sliced_bits, false, tunneled_type, original_size);
   return sliced_pkt;
 }

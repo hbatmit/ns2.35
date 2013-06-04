@@ -170,12 +170,23 @@ void PFScheduler::transmit_pkt() {
   }
 }
 
+double PFScheduler::transmission_time(Packet* p, uint32_t chosen_user) {
+  double bandwidth = user_links_.at(chosen_user)->bandwidth();
+  if (hdr_cmn::access(p)->ptype() == PT_CELLULAR) {
+    /* sliced packet */
+    return hdr_cellular::access(p)->bit_size()/bandwidth;
+  } else {
+    /* whole packet */
+    return (8. * hdr_cmn::access(p)->size() /bandwidth);
+  }
+}
+
 void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
   /* Get queue_handler */
   auto queue_handler = &user_queues_.at(chosen_user)->qh_;
 
   /* Get transmission time */
-  double txt = user_links_.at(chosen_user)->txtime(p);
+  double txt = transmission_time(p, chosen_user);
 
   /* Check if packet txtime spills over into the next time slot. If so, slice it */
   if (txt+Scheduler::instance().clock() > current_slot_ + slot_duration_) {
@@ -184,14 +195,22 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
 //    printf(" PFTxTimer::expire, Chosen_user %d, slicing %f bits \n", chosen_user, sliced_bits);
 
     /* Slice packet */
-    Packet* sliced_pkt = hdr_cellular::slice(p, floor(sliced_bits/8));
+    Packet* sliced_pkt = hdr_cellular::slice(p, floor(sliced_bits/8), sliced_bits);
 
     /* Find remnants of the packet */
     Packet *remnants = p->copy();
     auto remaining_bytes=hdr_cmn::access(p)->size()-hdr_cmn::access(sliced_pkt)->size();
 
+    /* Accurately compute remaining bits */
+    double remaining_bits = 0.0;
+    if (hdr_cmn::access(p)->ptype() == PT_CELLULAR) {
+      remaining_bits = hdr_cellular::access(p)->bit_size() - sliced_bits;
+    } else {
+      remaining_bits = hdr_cmn::access(p)->size()*8.0 - sliced_bits;
+    }
+
     /* Fill in the fields of remnant packet to match sliced packet */
-    hdr_cellular::fill_in(remnants, remaining_bytes, true,
+    hdr_cellular::fill_in(remnants, remaining_bytes, remaining_bits, true,
                           hdr_cellular::access(sliced_pkt)->tunneled_type_,
                           hdr_cellular::access(sliced_pkt)->original_size_);
     

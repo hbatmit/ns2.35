@@ -53,6 +53,9 @@ class PFScheduler : public EnsembleScheduler {
   double hol_delay(uint32_t user_id) const;
 
  private:
+  /* Get transmission time */
+  double transmission_time(Packet *p, uint32_t chosen_user);
+
   /* update mean achieved rates */
   void update_mean_achieved_rates(uint32_t scheduled_user);
 
