@@ -8,9 +8,10 @@
 #export WHISKERS=/home/am7/hari/ns2.35/tcp/remy/rats/new/delta1.dna 
 
 for my $id ( 0 .. 127 ) {
-    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Newreno -sink TCPSink/Sack1 -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> newreno-avg1Moff.5/cc$id &");
-    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/compound -sink TCPSink/Sack1 -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> compound-avg1Moff.5/cc$id &");
-    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Reno/XCP -sink TCPSink/XCPSink -gw XCP -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> xcp-avg1Moff.5/cc$id &");
+    system("export WHISKERS=/home/am7/hari/ns2.35/tcp/remy/rats/new/delta1.dna && ./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Rational -sink TCPSink -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> remycc-1/cc$id &");
+    system("export WHISKERS=/home/am7/hari/ns2.35/tcp/remy/rats/new/delta0.1.dna && ./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Rational -sink TCPSink -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> remycc-.1/cc$id &");
+    system("export WHISKERS=/home/am7/hari/ns2.35/tcp/remy/rats/new/delta10.dna && ./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Rational -sink TCPSink -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> remycc-10/cc$id &");
+#
     system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/vegas -sink TCPSink/Sack1 -ontype bytes -avgbytes 1000000 -offavg .5 | grep conn: >> vegas-avg1Moff.5/cc$id &");
 #    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/cubic -sink TCPSink/Sack1 -gw sfqCoDel -offavg .2 | grep conn: >> cubiccodel.2/cc$id &");
 #    system("./remy2.tcl remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -tcp TCP/Linux/cubic -sink TCPSink/Sack1 -offavg .2 | grep conn: >> cubic.2/cc$id &");
