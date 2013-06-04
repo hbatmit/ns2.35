@@ -348,21 +348,21 @@ OBJ_COMPAT = $(OBJ_GETOPT) common/win32.o
 #XXX compat/win32x.o compat/tkConsole.o
 
 OBJ_EMULATE_CC = \
-	emulate/net-ip.o \
-	emulate/net.o \
-	emulate/tap.o \
-	emulate/ether.o \
-	emulate/internet.o \
-	emulate/ping_responder.o \
-	emulate/arp.o \
-	emulate/icmp.o \
-	emulate/net-pcap.o \
-	emulate/nat.o  \
-	emulate/iptap.o \
-	emulate/tcptap.o
+#	emulate/net-ip.o \
+#	emulate/net.o \
+#	emulate/tap.o \
+#	emulate/ether.o \
+#	emulate/internet.o \
+#	emulate/ping_responder.o \
+#	emulate/arp.o \
+#	emulate/icmp.o \
+#	emulate/net-pcap.o \
+#	emulate/nat.o  \
+#	emulate/iptap.o \
+#	emulate/tcptap.o
 
 OBJ_EMULATE_C = \
-	emulate/inet.o
+#	emulate/inet.o
 
 OBJ_GEN = $(GEN_DIR)version.o $(GEN_DIR)ns_tcl.o $(GEN_DIR)ptypes.o
 
