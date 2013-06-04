@@ -65,7 +65,7 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
 
   /* Check if there are additional abeyant users */
   for (uint32_t i=0; i < num_users_; i++) {
-    if ((abeyance_.at(i) != nullptr) and (user_link_rate_est_.at(i).link_rate() != 0)) {
+    if ((abeyance_.at(i) != nullptr) and (get_instantaneous_rate(i) != 0)) {
       if(std::find(feasible_users.begin(), feasible_users.end(), i) == feasible_users.end()) {
         /* printf("Adding one more abeyant user : %d \n", i); */
         feasible_users.push_back(i);
@@ -73,12 +73,19 @@ uint32_t PFScheduler::pick_user_to_schedule(void) const {
     }
   }
 
+  /* Get instantaneous rates */
+  std::vector<double> instantaneous_rates(num_users_);
+  for (uint32_t i=0; i < num_users_; i++) {
+    instantaneous_rates.at(i) = get_instantaneous_rate(i);
+  }
+
   /* Normalize rates */
-  std::vector<double> normalized_rates( user_link_rate_est_.size() );
-  std::transform(user_link_rate_est_.begin(), user_link_rate_est_.end(),
+  std::vector<double> normalized_rates( num_users_ );
+
+  std::transform(instantaneous_rates.begin(), instantaneous_rates.end(),
                  mean_achieved_rates_.begin(), normalized_rates.begin(),
-                 [&] (const FlowStats & flow_est, const double & average)
-                 { auto norm = (average != 0 ) ? flow_est.link_rate()/average : DBL_MAX;/* printf("Norm is %f \n", norm); */ return norm;} );
+                 [&] (const double & instantanoeus, const double & average)
+                 { auto norm = (average != 0 ) ? instantanoeus/average : DBL_MAX;/* printf("Norm is %f \n", norm); */ return norm;} );
 
   /* Pick the highest normalized rates amongst them */
   auto it = std::max_element(feasible_users.begin(), feasible_users.end(),
@@ -125,7 +132,7 @@ void PFScheduler::update_mean_achieved_rates(uint32_t scheduled_user) {
   for ( uint32_t i=0; i < mean_achieved_rates_.size(); i++ ) {
     if ( i == scheduled_user ) {
       /* printf(" Time %f Scheduled user is %d \n", Scheduler::instance().clock(), i); */
-      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * user_link_rate_est_.at(i).link_rate();
+      mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i) + ( 1.0/ewma_slots_ ) * get_instantaneous_rate(i);
     } else {
       mean_achieved_rates_.at(i) = ( 1.0 - 1.0/ewma_slots_ ) * mean_achieved_rates_.at(i);
     }
