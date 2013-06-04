@@ -40,6 +40,9 @@ void SFD::enque(Packet *p)
 {
   /* Implements pure virtual function Queue::enque() */
 
+  /* Enque packet, since all dropping is from the head */
+  _packet_queue->enque( p );
+ 
   /* Estimate arrival rate with an EWMA filter */
   double now = Scheduler::instance().clock();
   double arrival_rate = _user_arrival_rate_est.est_arrival_rate(now, p);
@@ -60,9 +63,6 @@ void SFD::enque(Packet *p)
   /* Check aggregate arrival rate and compare it to aggregate ideal pf throughput */
   bool exceeded_capacity = agg_arrival_rate > _scheduler->agg_pf_throughput();
 
-  /* Enque packet */
-  _packet_queue->enque( p );
- 
   /* Toss a coin and drop */
   if ( !_dropper.should_drop( drop_probability ) ) {
    // printf( " Time %f : Not dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
