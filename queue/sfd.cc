@@ -30,6 +30,8 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter,
   _user_id(user_id),
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
+  _time_constant(user_arrival_rate_time_constant),
+  _last_drop_time(0.0),
   _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant))
 {
   fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d \n",
@@ -56,25 +58,24 @@ void SFD::enque(Packet *p)
 
   /* Print everything */
   //print_stats( now );
-
-  /* Compute drop_probability */
-  double drop_probability = (arrival_rate < _fair_share) ? 0.0 : 1.0 ;
+  
 
   /* Check aggregate arrival rate and compare it to aggregate ideal pf throughput */
-  bool exceeded_capacity = agg_arrival_rate > _scheduler->agg_pf_throughput();
-
-  /* Toss a coin and drop */
-  if ( !_dropper.should_drop( drop_probability ) ) {
-   // printf( " Time %f : Not dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
-  } else if ( !exceeded_capacity ) {
-   // printf( " Time %f : Not dropping packet, from flow %u agg ingress %f, less than capacity %f \n", now, user_id, _scheduler->agg_arrival_rate(), _scheduler->agg_pf_throughput() );
-  } else {
-    /* Drop from front of the same queue */
-  //  printf( " Time %f : Dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
-    if (length() > 1) {
-      Packet* head = _packet_queue->deque();
-      if (head != 0 ) {
-          drop( head );
+  if (agg_arrival_rate <= _scheduler->agg_pf_throughput() || arrival_rate <= _fair_share) {
+    return;
+  }
+  /* The arrival rate has exceeded the service rate for the agg and for us */
+  if ((now - _last_drop_time > _time_constant)) {
+    /* Compute drop_probability */
+    double drop_probability = (now - _last_drop_time) / _time_constant;
+    /* Toss a coin and drop */
+    if ( _dropper.should_drop( drop_probability ) ) {
+      /* Drop from front of the same queue */
+      //  printf( " Time %f : Dropping packet, from flow %u drop_probability is %f\n", now, user_id, drop_probability );
+      if (length() > 1) {
+	Packet* head = _packet_queue->deque();
+	drop( head );
+	_last_drop_time = now;
       }
     }
   }

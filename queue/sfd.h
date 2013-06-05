@@ -25,7 +25,8 @@ class SFD : public EnsembleAwareQueue {
     const double  _headroom; /* default : 0.05 */
     const uint32_t _iter;    /* random seed */
     const uint32_t _user_id;  /* unique user_id */
-
+    const double _time_constant;    /* time constant for arrival rate est; used in drop prob */
+    double _last_drop_time;    /* time at which we last dropped a packet */
     /* Underlying FIFO */
     PacketQueue* _packet_queue;
 
