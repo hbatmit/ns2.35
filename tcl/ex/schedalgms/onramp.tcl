@@ -158,7 +158,7 @@ proc setup_sfd {queue scheduler} {
 source setup_onramp_tcp_connections.tcl
 
 # Activate scheduler
-$ensemble_scheduler activate-link-scheduler
+$ns at 0.0 "$ensemble_scheduler activate-link-scheduler"
 
 # Activate rate_generator
 $rate_generator activate-rate-generator
