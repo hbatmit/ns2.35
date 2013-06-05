@@ -42,6 +42,8 @@ int FcfsScheduler::command(int argc, const char*const* argv) {
       tx_timer_->resched( FALLBACK_INTERVAL );
       /* generate rates to start with */
       update_link_rate_estimate();
+      /* transmit packet if it exists */
+      transmit_pkt();
       return TCL_OK;
     }
   }
