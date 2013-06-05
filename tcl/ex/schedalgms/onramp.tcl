@@ -22,15 +22,12 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 # Create a simulator object
 set ns [ new Simulator ]
 
-# Tracing: DO NOT MOVE THIS BELOW
-set trace_file [ open cell-link.tr w ]
-
 # required for reading cmd line arguments
 unset opt
 
 # Clean up procedures
-proc finish { sim_object trace_file } {
-  global opt stats on_off_server logging_app_client num_users rate_generator
+proc finish {} {
+  global opt stats on_off_server logging_app_client num_users rate_generator trace_file ns
   for {set i 0} {$i < $num_users} {incr i} {
     # Get link capacity over entire trace
     set user_capacity [expr [$rate_generator get_capacity $i] / 1000000]
@@ -46,8 +43,10 @@ proc finish { sim_object trace_file } {
     }
     [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt $user_capacity 
   }
-  $sim_object flush-trace
-  close $trace_file
+  if { $opt(tracing) == "true" } {
+    $ns flush-trace
+    close $trace_file
+  }
   exit 0
 }
 
@@ -88,6 +87,12 @@ proc Getopt {} {
 
 Getopt
 Usage
+
+# Do we create trace files?
+if { $opt(tracing) == "true" } {
+  set trace_file [ open cell-link.tr w ]
+  $ns trace-all $trace_file
+}
 
 # create basestation
 set basestation [ $ns node ]
@@ -164,5 +169,5 @@ $ns at 0.0 "$ensemble_scheduler activate-link-scheduler"
 $rate_generator activate-rate-generator
 
 # Run simulation
-$ns at $opt(simtime) "finish $ns $trace_file"
+$ns at $opt(simtime) "finish"
 $ns run

@@ -19,10 +19,12 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
     set tcp_server($i) [ new Agent/$opt(tcp) ]
   }
 
-  if { [info exists opt(tr)] } {
-      set f [open cwnd$i.dat w]
+  if { $opt(tracing) == "true" } {
       $tcp_server($i) trace cwnd_
-      $tcp_server($i) attach $f
+      $tcp_server($i) trace rtt_
+      $tcp_server($i) trace maxseq_
+      $tcp_server($i) trace ack_
+      $tcp_server($i) attach $trace_file
   }
 
   # Attach TCP Agent to basestation Node
@@ -56,11 +58,6 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   # Set user_id and other stuff for SFD
   if { $opt(bottleneck_qdisc) == "SFD" } {
     setup_sfd $cell_queue $ensemble_scheduler
-  }
-
-  # Attach trace_file to queue.
-  if { [info exists opt(tr)] } {
-      $ns trace-queue $basestation $tcp_client_node($i) $trace_file
   }
 
   # Attach queue and link to ensemble_scheduler

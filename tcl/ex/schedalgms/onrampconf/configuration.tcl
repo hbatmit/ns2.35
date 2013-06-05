@@ -27,7 +27,8 @@ set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "time" and "bytes"
 set opt(app) FTP/OnOffSender;     # OnOffSender is our traffic generator
 set opt(spike)  "false";          # TODO Ask Hari what this is
-set opt(verbose) "false";         # Turn on logging ?
+set opt(verbose) "false";         # Turn on logging?
+set opt(tracing) "false";         # Turn on tracing?
 set opt(checkinterval) 0.005;     # Check stats every 5 ms
 set opt(reset)   "false";         # reset TCP after every ON period
 set opt(flowoffset) 40;           # flow offset
