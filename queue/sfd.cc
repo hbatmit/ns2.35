@@ -14,7 +14,8 @@ static class SFDClass : public TclClass {
       double headroom = atof(strtok(nullptr, " "));
       double iter = atoi(strtok(nullptr," "));
       double user_id = atoi(strtok(nullptr," ")); 
-      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id);
+      std::string drop_type(strtok(nullptr," "));
+      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id, drop_type);
     }
 } class_sfd;
 
@@ -23,19 +24,21 @@ int SFD::command(int argc, const char*const* argv)
   return EnsembleAwareQueue::command(argc, argv);
 }
 
-SFD::SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id) :
+SFD::SFD(double user_arrival_rate_time_constant, double headroom,
+         uint32_t iter, uint32_t user_id, std::string drop_type) :
   EnsembleAwareQueue(),
   _headroom(headroom),
   _iter(iter),
   _user_id(user_id),
+  _time_constant(user_arrival_rate_time_constant),
+  _drop_type(drop_type),
+  _last_drop_time(0.0),
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
-  _time_constant(user_arrival_rate_time_constant),
-  _last_drop_time(0.0),
   _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant))
 {
-  fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d \n",
-           _iter, user_arrival_rate_time_constant, _headroom, _user_id );
+  fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d, drop_type %s \n",
+           _iter, user_arrival_rate_time_constant, _headroom, _user_id, _drop_type.c_str());
 }
 
 void SFD::enque(Packet *p)
@@ -64,7 +67,19 @@ void SFD::enque(Packet *p)
   if (agg_arrival_rate <= _scheduler->agg_pf_throughput() || arrival_rate <= _fair_share) {
     return;
   }
+
   /* The arrival rate has exceeded the service rate for the agg and for us */
+  if (_drop_type == "draconian") {
+    draconian_dropping(now);
+  } else if (_drop_type == "time") {
+    time_based_dropping(now);
+  } else {
+    assert(false);
+  }
+}
+
+void SFD::time_based_dropping(double now)
+{
   if ((now - _last_drop_time > _time_constant)) {
     /* Compute drop_probability */
     double drop_probability = (now - _last_drop_time) / _time_constant;
@@ -78,6 +93,20 @@ void SFD::enque(Packet *p)
 	_last_drop_time = now;
       }
     }
+  }
+}
+
+void SFD::draconian_dropping(double now)
+{
+  drop_if_not_empty(now);
+}
+
+void SFD::drop_if_not_empty(double now)
+{
+  if (length() > 1) {
+    Packet* head = _packet_queue->deque();
+    drop( head );
+    _last_drop_time = now;
   }
 }
 

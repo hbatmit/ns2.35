@@ -121,7 +121,7 @@ proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
   set bw [$rate_generator get_initial_rate $user_id]
   puts "Initial bandwidth for user $user_id is $bw"
   global opt
-  set q_args [ list $opt(est_time_constant) $opt(headroom) $opt(iter) $user_id ]
+  set q_args [ list $opt(est_time_constant) $opt(headroom) $opt(iter) $user_id $opt(droptype) ]
   if { $qdisc == "SFD" } {
     $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
   } else {

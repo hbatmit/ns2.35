@@ -7,6 +7,7 @@
 #include <map>
 #include <list>
 #include <queue>
+#include <string>
 #include "rng.h"
 #include "common/flow-stats.h"
 #include "queue/sfd-dropper.h"
@@ -20,13 +21,23 @@
 
 class SFD : public EnsembleAwareQueue {
   private :
+    /* Dropping disciplines */
+    void draconian_dropping(double now);
+    void time_based_dropping(double now);
+
+    /* Helper function */
+    void drop_if_not_empty(double now);
 
     /* Tcl accessible SFD parameters */
     const double  _headroom; /* default : 0.05 */
     const uint32_t _iter;    /* random seed */
     const uint32_t _user_id;  /* unique user_id */
     const double _time_constant;    /* time constant for arrival rate est; used in drop prob */
+    const std::string _drop_type; /* draconian vs time-based dropping */
+
+    /* Internal state */
     double _last_drop_time;    /* time at which we last dropped a packet */
+
     /* Underlying FIFO */
     PacketQueue* _packet_queue;
 
@@ -37,7 +48,7 @@ class SFD : public EnsembleAwareQueue {
     FlowStats _user_arrival_rate_est;
 
   public :
-    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id);
+    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id, std::string drop_type);
     int command(int argc, const char*const* argv) override;
 
     /* print stats  */
