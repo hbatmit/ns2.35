@@ -98,17 +98,17 @@ if { $opt(tracing) == "true" } {
 set basestation [ $ns node ]
 
 # Determine number of users
-set num_users $opt(num_tcp)
+set num_users $opt(nsrc)
 
 # Pick appropriate ensemble_scheduler
-if { $opt(ensemble_scheduler) == "pf" } {
-  set ensemble_scheduler [ new PFScheduler $opt(est_time_constant) $num_users 0.0 $opt(cdma_slot_duration) $opt(cdma_ewma_slots) $opt(alpha) $opt(sub_qdisc) ]
-} elseif { $opt(ensemble_scheduler) == "fcfs" } {
-  set ensemble_scheduler [ new FcfsScheduler $opt(est_time_constant) $num_users 0.0 ]
+if { $opt(sched) == "pf" } {
+  set ensemble_scheduler [ new PFScheduler $opt(onramp_K) $num_users 0.0 $opt(cdma_slot) $opt(cdma_ewma) $opt(alpha) $opt(sub_qdisc) ]
+} elseif { $opt(sched) == "fcfs" } {
+  set ensemble_scheduler [ new FcfsScheduler $opt(onramp_K) $num_users 0.0 ]
 }
 
 # Create rate generator
-set rate_generator [ new EnsembleRateGenerator $opt(link_trace) $opt(simtime) ]; 
+set rate_generator [ new EnsembleRateGenerator $opt(link) $opt(simtime) ]; 
 set users_in_trace [ $rate_generator get_users_ ]
 puts stderr "Num users is $num_users, users_in_trace $users_in_trace users "
 assert [expr $num_users == $users_in_trace]
@@ -121,7 +121,7 @@ proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
   set bw [$rate_generator get_initial_rate $user_id]
   puts "Initial bandwidth for user $user_id is $bw"
   global opt
-  set q_args [ list $opt(est_time_constant) $opt(headroom) $opt(iter) $user_id $opt(droptype) ]
+  set q_args [ list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) ]
   if { $qdisc == "SFD" } {
     $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
   } else {

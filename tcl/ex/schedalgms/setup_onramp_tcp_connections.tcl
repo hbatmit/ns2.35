@@ -5,7 +5,7 @@ source stats.tcl
 source on_off_sender.tcl
 
 # TCP servers
-for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
+for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   # Create TCP Agents with congestion control specified in opt(tcp)
 
   # If opt(tcp) starts with TCP/Linux, then you need to do something different
@@ -41,12 +41,12 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
 }
 
 # TCP clients
-for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
+for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   # Create node corresponding to mobile user
   set tcp_client_node($i) [ $ns node ]
 
   # Create forward and reverse links from basestation to mobile user
-  create_link $ns $opt(bottleneck_latency) $basestation $tcp_client_node($i) $opt(bottleneck_qdisc) $fid($i) $rate_generator
+  create_link $ns $opt(delay) $basestation $tcp_client_node($i) $opt(gw) $fid($i) $rate_generator
 
   # Get handles to link and queue from basestation to user
   set cell_link [ [ $ns link $basestation $tcp_client_node($i) ] link ]
@@ -56,7 +56,7 @@ for { set i 0 } { $i < $opt(num_tcp) } { incr i } {
   neuter_queue $cell_queue
 
   # Set user_id and other stuff for SFD
-  if { $opt(bottleneck_qdisc) == "SFD" } {
+  if { $opt(gw) == "SFD" } {
     setup_sfd $cell_queue $ensemble_scheduler
   }
 
