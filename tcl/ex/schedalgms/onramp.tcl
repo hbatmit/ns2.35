@@ -160,6 +160,7 @@ Queue set limit_ $opt(maxq)
 
 # Neuter queue
 proc neuter_queue {queue} {
+  global opt
   # block queues
   $queue set blocked_ 1
   $queue set unblock_on_resume_ 0
