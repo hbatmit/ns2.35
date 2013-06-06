@@ -67,7 +67,7 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   $rate_generator attach-link $cell_link $fid($i)
 
   # Create tcp sinks
-  set tcp_client($i) [ new Agent/TCPSink/Sack1 ]
+  set tcp_client($i) [ new Agent/$opt(sink) ]
   $ns attach-agent $tcp_client_node($i) $tcp_client($i)
 
   # Create LoggingApp clients for logging received bytes
