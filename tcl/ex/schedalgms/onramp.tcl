@@ -19,12 +19,6 @@ if [info exists env(nshome)] {
 }
 set env(PATH) "$nshome/bin:$env(PATH)"
 
-# Create a simulator object
-set ns [ new Simulator ]
-
-# required for reading cmd line arguments
-unset opt
-
 # Clean up procedures
 proc finish {} {
   global opt stats on_off_server logging_app_client num_users rate_generator trace_file ns
@@ -49,9 +43,6 @@ proc finish {} {
   }
   exit 0
 }
-
-# read default constants from config file
-source onrampconf/configuration.tcl
 
 # Print out Usage
 proc Usage {} {
@@ -85,8 +76,42 @@ proc Getopt {} {
   }
 }
 
+# Function to setup tcp constants 
+proc setup_tcp_constants {} {
+  global opt
+  set delack      0.4
+  Agent/TCP set window_     $opt(rcvwin)
+  Agent/TCP set segsize_    [expr $opt(pktsize) ]
+  Agent/TCP set packetSize_ [expr $opt(pktsize) ]
+  Agent/TCP set windowInit_ 4
+  Agent/TCP set segsperack_ 1
+  Agent/TCP set timestamps_ true
+  Agent/TCP set interval_ $delack
+  Agent/TCP/FullTcp set window_     $opt(rcvwin)
+  Agent/TCP/FullTcp set segsize_    [expr $opt(pktsize)]
+  Agent/TCP/FullTcp set packetSize_ [expr $opt(pktsize)]
+  Agent/TCP/FullTcp set windowInit_ 4
+  Agent/TCP/FullTcp set segsperack_ 1
+  Agent/TCP/FullTcp set timestamps_ true
+  Agent/TCP/FullTcp set interval_   $delack
+  puts "TCP advertised window is [Agent/TCP set window_]"
+  puts "FullTcp advertised window is [Agent/TCP/FullTcp set window_]"
+}
+
+# Create a simulator object
+set ns [ new Simulator ]
+
+# read default constants from config file
+source onrampconf/configuration.tcl
+
+# Get options from cmd line
 Getopt
+
+# Use Usage function to print out final values of all parameters
 Usage
+
+# Now that we have all the parameters set up TCP constants
+setup_tcp_constants
 
 # Do we create trace files?
 if { $opt(tracing) == "true" } {
