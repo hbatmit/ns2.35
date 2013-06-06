@@ -156,7 +156,7 @@ proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
 }
 
 # DropTail feedback queue, make sure you have sufficient buffering
-Queue set limit_ 1000
+Queue set limit_ $opt(maxq)
 
 # Neuter queue
 proc neuter_queue {queue} {
@@ -164,7 +164,7 @@ proc neuter_queue {queue} {
   $queue set blocked_ 1
   $queue set unblock_on_resume_ 0
 
-  $queue set limit_ 1000
+  $queue set limit_ $opt(maxq)
 
   # Deactivate forward queue
   $queue deactivate_queue

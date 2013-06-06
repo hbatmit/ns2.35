@@ -13,6 +13,7 @@ set opt(cdma_ewma)          100
 set opt(link)               link.trace
 set opt(tcp)                TCP/Sack1
 set opt(sink)               TCPSink/Sack1
+set opt(maxq)               1000; # maximum queue size in packets
 set opt(partialresults) false;    # show partial throughput, delay, and utility scores?
 set opt(alpha)              1.0;  # alpha for max-weight scheduling policy
 set opt(sub_qdisc)          propfair
