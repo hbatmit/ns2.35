@@ -98,6 +98,49 @@ proc setup_tcp_constants {} {
   puts "FullTcp advertised window is [Agent/TCP/FullTcp set window_]"
 }
 
+# Neuter queue
+proc neuter_queue {queue} {
+  global opt
+  # block queues
+  $queue set blocked_ 1
+  $queue set unblock_on_resume_ 0
+
+  $queue set limit_ $opt(maxq)
+
+  # Deactivate forward queue
+  $queue deactivate_queue
+}
+
+# Add queue and link to ensemble scheduler
+proc attach_to_scheduler {scheduler user queue link} {
+  puts stderr "Adding user $user to scheduler"
+  $scheduler attach-queue $queue $user
+  $scheduler attach-link  $link  $user
+  # Deactivate link
+  $link deactivate_link
+}
+
+# Setup SFD
+proc setup_sfd {queue scheduler} {
+  $queue attach-sched $scheduler
+}
+
+# Link creation
+proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
+  set bw [$rate_generator get_initial_rate $user_id]
+  puts "Initial bandwidth for user $user_id is $bw"
+  global opt
+  set q_args [ list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) ]
+  if { $qdisc == "SFD" } {
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
+  } else {
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
+  }
+  $ns simplex-link $receiver $sender [ bw_parse $bw ]  $latency DropTail
+}
+
+# DRIVER PROGRAM STARTS HERE
+
 # Create a simulator object
 set ns [ new Simulator ]
 
@@ -144,49 +187,8 @@ assert [expr $num_users == $users_in_trace]
 # Unique ID
 set counter 0
 
-# Link creation
-proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
-  set bw [$rate_generator get_initial_rate $user_id]
-  puts "Initial bandwidth for user $user_id is $bw"
-  global opt
-  set q_args [ list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) ]
-  if { $qdisc == "SFD" } {
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
-  } else {
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
-  }
-  $ns simplex-link $receiver $sender [ bw_parse $bw ]  $latency DropTail
-}
-
 # DropTail feedback queue, make sure you have sufficient buffering
 Queue set limit_ $opt(maxq)
-
-# Neuter queue
-proc neuter_queue {queue} {
-  global opt
-  # block queues
-  $queue set blocked_ 1
-  $queue set unblock_on_resume_ 0
-
-  $queue set limit_ $opt(maxq)
-
-  # Deactivate forward queue
-  $queue deactivate_queue
-}
-
-# Add queue and link to ensemble scheduler
-proc attach_to_scheduler {scheduler user queue link} {
-  puts stderr "Adding user $user to scheduler"
-  $scheduler attach-queue $queue $user
-  $scheduler attach-link  $link  $user
-  # Deactivate link
-  $link deactivate_link
-}
-
-# Setup SFD
-proc setup_sfd {queue scheduler} {
-  $queue attach-sched $scheduler
-}
 
 # TCP connections
 source setup_onramp_tcp_connections.tcl
