@@ -248,6 +248,9 @@ Queue/REM set pmark_ 0.0
 Queue/REM set markpkts_ false
 Queue/REM set qib_ false
 
+Queue/SFD set _last_drop_time   0.0
+Queue/SFD set _arr_rate_at_drop 0.0
+Queue/SFD set _current_arr_rate 0.0
 Queue/CoDel set curq_ 0.0
 Queue/CoDel set d_exp_ 0.0
 Queue/CoDel set interval_ 0.1

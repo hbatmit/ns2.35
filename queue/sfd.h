@@ -23,7 +23,7 @@ class SFD : public EnsembleAwareQueue {
   private :
     /* Dropping disciplines */
     void draconian_dropping(double now);
-    void time_based_dropping(double now);
+    void time_based_dropping(double now, double arrival_rate);
 
     /* Helper function */
     void drop_if_not_empty(double now);
@@ -36,7 +36,9 @@ class SFD : public EnsembleAwareQueue {
     const std::string _drop_type; /* draconian vs time-based dropping */
 
     /* Internal state */
-    double _last_drop_time;    /* time at which we last dropped a packet */
+    TracedDouble _last_drop_time;       /* time at which we last dropped a packet */
+    TracedDouble _arr_rate_at_drop;     /* arrival rate at last drop */
+    TracedDouble _current_arr_rate;     /* current arrival rate */ 
 
     /* Underlying FIFO */
     PacketQueue* _packet_queue;
