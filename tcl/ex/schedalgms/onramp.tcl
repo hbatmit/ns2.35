@@ -101,6 +101,9 @@ proc setup_tcp_constants {} {
 # Create a simulator object
 set ns [ new Simulator ]
 
+# Clear out opt, in case it already exists
+unset opt
+
 # read default constants from config file
 source onrampconf/configuration.tcl
 
