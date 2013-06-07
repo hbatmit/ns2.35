@@ -20,11 +20,11 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   }
 
   if { $opt(tracing) == "true" } {
-      $tcp_server($i) trace cwnd_
-      $tcp_server($i) trace rtt_
-      $tcp_server($i) trace maxseq_
-      $tcp_server($i) trace ack_
-      $tcp_server($i) attach $trace_file
+    $tcp_server($i) trace cwnd_
+    $tcp_server($i) trace rtt_
+    $tcp_server($i) trace maxseq_
+    $tcp_server($i) trace ack_
+    $tcp_server($i) attach $trace_file
   }
 
   # Attach TCP Agent to basestation Node

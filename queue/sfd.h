@@ -33,6 +33,7 @@ class SFD : public EnsembleAwareQueue {
     const uint32_t _iter;    /* random seed */
     const uint32_t _user_id;  /* unique user_id */
     const double _time_constant;    /* time constant for arrival rate est; used in drop prob */
+    const double _delay_thresh;    /* delay threshold */
     const std::string _drop_type; /* draconian vs time-based dropping */
 
     /* Internal state */
@@ -57,7 +58,7 @@ class SFD : public EnsembleAwareQueue {
     Tcl_Channel tchan_;
 
   public :
-    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id, std::string drop_type);
+    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh);
     int command(int argc, const char*const* argv) override;
 
     /* print stats  */
