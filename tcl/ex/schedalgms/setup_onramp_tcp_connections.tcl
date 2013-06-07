@@ -55,6 +55,14 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   # All the non-standard queue neutering:
   neuter_queue $cell_queue
 
+  # Trace sfd events if required
+  if { $opt(tracing) == "true" && $opt(gw) == "SFD" } { 
+    $cell_queue attach $trace_file;
+    $cell_queue trace _last_drop_time;
+    $cell_queue trace _current_arr_rate;
+    $cell_queue trace _arr_rate_at_drop;
+  }
+
   # Set user_id and other stuff for SFD
   if { $opt(gw) == "SFD" } {
     setup_sfd $cell_queue $ensemble_scheduler

@@ -19,8 +19,47 @@ static class SFDClass : public TclClass {
     }
 } class_sfd;
 
+void SFD::trace(TracedVar* v)
+{
+  if (tchan_) {
+    double now = Scheduler::instance().clock();
+    char print_str[500];
+    if (std::string(v->name()) == "_last_drop_time") {
+      sprintf(print_str, "user:%d %s %g %g", _user_id, v->name(), now, double(*((TracedDouble*) v)));
+    } else if (std::string(v->name()) == "_arr_rate_at_drop") {
+      sprintf(print_str, "user:%d %s %g %g", _user_id, v->name(), now, double(*((TracedDouble*) v)));
+    } else if (std::string(v->name()) == "_current_arr_rate") {
+      sprintf(print_str, "user:%d %s %g %g", _user_id, v->name(), now, double(*((TracedDouble*) v)));
+    } else {
+      fprintf(stderr, "SFD: unknown trace var %s\n", v->name());
+      exit(5);
+    } 
+    int n = strlen(print_str);
+    print_str[n] = '\n'; 
+    print_str[n+1] = 0;
+    Tcl_Write(tchan_, print_str, n+1);
+  } else {
+    fprintf(stderr, "Trace file handle is empty ... exiting\n");
+    exit(5);
+  }
+}
+
 int SFD::command(int argc, const char*const* argv)
 {
+  if (argc == 3) {
+    Tcl& tcl = Tcl::instance();
+    // attach a file for variable tracing
+    if (strcmp(argv[1], "attach") == 0) {
+      int mode;
+      const char* id = argv[2];
+      tchan_ = Tcl_GetChannel(tcl.interp(), (char*)id, &mode);
+      if (tchan_ == 0) {
+        tcl.resultf("SFD trace: can't attach %s for writing", id);
+        return (TCL_ERROR);
+      }
+      return (TCL_OK);
+    }
+  }
   return EnsembleAwareQueue::command(argc, argv);
 }
 
@@ -37,7 +76,8 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
   _current_arr_rate(0.0),
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
-  _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant))
+  _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant)),
+  tchan_(0)
 {
   bind("_last_drop_time",   &_last_drop_time);
   bind("_arr_rate_at_drop", &_arr_rate_at_drop);

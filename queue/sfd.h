@@ -49,6 +49,13 @@ class SFD : public EnsembleAwareQueue {
     /* Arrival Rate Estimator */
     FlowStats _user_arrival_rate_est;
 
+  protected:
+    /* override tracing function from Agent */
+    virtual void trace(TracedVar* v) override;
+
+    /* Place to write traced records */
+    Tcl_Channel tchan_;
+
   public :
     SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id, std::string drop_type);
     int command(int argc, const char*const* argv) override;
