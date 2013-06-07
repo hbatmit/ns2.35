@@ -51,6 +51,7 @@
 
 #include "queue.h"
 #include <stdlib.h>
+#include <float.h>
 #include "agent.h"
 #include "template.h"
 #include "trace.h"
@@ -93,6 +94,9 @@ class sfqCoDelQueue : public Queue {
                          // currently in all bins
 */
 
+    /* Override functions from Queue */
+    virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(bin_[0].q_->head())->timestamp(); }
+    virtual bool empty() const override { return (bin_[0].q_->byteLength()==0); }
 
   protected:
     // Stuff specific to the CoDel algorithm
@@ -135,7 +139,6 @@ int mtu_max_;
     unsigned int hash(Packet*);
     bindesc* readybin();
     bindesc* removebin(bindesc*);
-    virtual bool empty() const override { return (bin_[0].q_->byteLength()==0); }
 };
 
 #endif
