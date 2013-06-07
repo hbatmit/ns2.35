@@ -37,7 +37,7 @@ proc finish {} {
     }
     [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt $user_capacity 
   }
-  if { $opt(tracing) == "true" } {
+    if { $opt(tracing) == "true" } {
     $ns flush-trace
     close $trace_file
   }
@@ -115,7 +115,7 @@ setup_tcp_constants
 
 # Do we create trace files?
 if { $opt(tracing) == "true" } {
-  set trace_file [ open cell-link.tr w ]
+  set trace_file [ open $opt(tr) w ] 
   $ns trace-all $trace_file
 }
 
@@ -146,9 +146,10 @@ proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
   set bw [$rate_generator get_initial_rate $user_id]
   puts "Initial bandwidth for user $user_id is $bw"
   global opt
-  set q_args [ list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) ]
+  puts "dth $opt(dth)"
+  set q_args [ list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) $opt(dth) ]
   if { $qdisc == "SFD" } {
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args 
   } else {
     $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
   }

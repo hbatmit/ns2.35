@@ -15,7 +15,8 @@ static class SFDClass : public TclClass {
       double iter = atoi(strtok(nullptr," "));
       double user_id = atoi(strtok(nullptr," ")); 
       std::string drop_type(strtok(nullptr," "));
-      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id, drop_type);
+      double delay_thresh = atof(strtok(nullptr, " "));
+      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id, drop_type, delay_thresh);
     }
 } class_sfd;
 
@@ -25,20 +26,21 @@ int SFD::command(int argc, const char*const* argv)
 }
 
 SFD::SFD(double user_arrival_rate_time_constant, double headroom,
-         uint32_t iter, uint32_t user_id, std::string drop_type) :
+         uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh) :
   EnsembleAwareQueue(),
   _headroom(headroom),
   _iter(iter),
   _user_id(user_id),
   _time_constant(user_arrival_rate_time_constant),
   _drop_type(drop_type),
+  _delay_thresh(delay_thresh),
   _last_drop_time(0.0),
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
   _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant))
 {
-  fprintf( stderr,  "SFD: _iter %d, _K %f, _headroom %f, user_id %d, drop_type %s \n",
-           _iter, user_arrival_rate_time_constant, _headroom, _user_id, _drop_type.c_str());
+  fprintf( stderr,  "SFD: _iter %d, _K %.3f, _headroom %.2f, user_id %d, drop_type %s delay_thresh %.3f\n",
+           _iter, user_arrival_rate_time_constant, _headroom, _user_id, _drop_type.c_str(), _delay_thresh);
 }
 
 void SFD::enque(Packet *p)
@@ -62,13 +64,16 @@ void SFD::enque(Packet *p)
   /* Print everything */
   //print_stats( now );
   
-
-  /* Check aggregate arrival rate and compare it to aggregate ideal pf throughput */
-  if (agg_arrival_rate <= _scheduler->agg_pf_throughput() || arrival_rate <= _fair_share) {
+  double cap = _scheduler->agg_pf_throughput();
+  double delay_total = std::max(_time_constant * (agg_arrival_rate - cap) / cap, 0.0);
+  double delay_flow = std::max(_time_constant * (arrival_rate - _fair_share) / _fair_share, 0.0);
+  printf("time %.2f agg_arr %.0f sched_agg_pf %.0f arriv_rate %.0f fairshare %.0f\n", now, agg_arrival_rate, _scheduler->agg_pf_throughput(), arrival_rate, _fair_share);
+  if (delay_total < _delay_thresh || delay_flow < _delay_thresh) {
     return;
   }
 
-  /* The arrival rate has exceeded the service rate for the agg and for us */
+  /* We have exceeded the delay threshold (aggregate and for flow). */
+  printf("time %.2f agg_arr %.0f sched_agg_pf %.0f arriv_rate %.0f fairshare %.0f\n", now, agg_arrival_rate, _scheduler->agg_pf_throughput(), arrival_rate, _fair_share);
   if (_drop_type == "draconian") {
     draconian_dropping(now);
   } else if (_drop_type == "time") {

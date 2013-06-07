@@ -6,6 +6,7 @@ set opt(simtime)            100
 set opt(cbr)                10Mb
 set opt(iter)               1
 set opt(onramp_K)           0.2
+set opt(dth)                0.01
 set opt(headroom)           0.00
 set opt(cdma_slot)          0.00167
 set opt(sched)              pf
@@ -31,6 +32,7 @@ set opt(app) FTP/OnOffSender;     # OnOffSender is our traffic generator
 set opt(spike)  "false";          # TODO Ask Hari what this is
 set opt(verbose) "false";         # Turn on logging?
 set opt(tracing) "false";         # Turn on tracing?
+set opt(tr) "onramp.tr"
 set opt(checkinterval) 0.005;     # Check stats every 5 ms
 set opt(reset)   "false";         # reset TCP after every ON period
 set opt(flowoffset) 40;           # flow offset
