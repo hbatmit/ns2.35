@@ -253,12 +253,6 @@ Queue/CoDel set d_exp_ 0.0
 Queue/CoDel set interval_ 0.1
 Queue/CoDel set target_ .005
 
-Queue/SFD set _capacity 10000000
-Queue/SFD set _iter 1
-Queue/SFD set _qdisc 1
-Queue/SFD set _K 0.2
-Queue/SFD set _headroom 0.05
-
 Queue/sfqCoDel set curq_ 0.0
 Queue/sfqCoDel set d_exp_ 0.0
 Queue/sfqCoDel set interval_ 0.1
