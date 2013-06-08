@@ -111,14 +111,12 @@ void SFD::enque(Packet *p)
   
   double cap = _scheduler->agg_pf_throughput();
   double delay_total = std::max(_time_constant * (agg_arrival_rate - cap) / cap, 0.0);
-  double delay_flow = std::max(_time_constant * (arrival_rate - _fair_share) / _fair_share, 0.0);
-  printf("time %.2f agg_arr %.0f sched_agg_pf %.0f arriv_rate %.0f fairshare %.0f\n", now, agg_arrival_rate, _scheduler->agg_pf_throughput(), arrival_rate, _fair_share);
+  double delay_flow = std::max(_time_constant * (_current_arr_rate - _fair_share) / _fair_share, 0.0);
   if (delay_total < _delay_thresh || delay_flow < _delay_thresh) {
     return;
   }
 
   /* We have exceeded the delay threshold (aggregate and for flow). */
-  printf("time %.2f agg_arr %.0f sched_agg_pf %.0f arriv_rate %.0f fairshare %.0f\n", now, agg_arrival_rate, _scheduler->agg_pf_throughput(), arrival_rate, _fair_share);
   if (_drop_type == "draconian") {
     draconian_dropping(now);
   } else if (_drop_type == "time") {
