@@ -33,8 +33,8 @@ class SFD : public EnsembleAwareQueue {
     const uint32_t _iter;    /* random seed */
     const uint32_t _user_id;  /* unique user_id */
     const double _time_constant;    /* time constant for arrival rate est; used in drop prob */
-    const double _delay_thresh;    /* delay threshold */
     const std::string _drop_type; /* draconian vs time-based dropping */
+    const double _delay_thresh;    /* delay threshold */
 
     /* Internal state */
     TracedDouble _last_drop_time;       /* time at which we last dropped a packet */
