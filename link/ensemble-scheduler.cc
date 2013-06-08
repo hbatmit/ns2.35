@@ -57,6 +57,15 @@ double EnsembleScheduler::agg_pf_throughput(void) {
   return (agg_link_rate/(num_active_users() == 0 ? 1 : num_active_users()));
 }
 
+uint32_t EnsembleScheduler::agg_queue_bytes(void) {
+  /* Sum total of all queue sizes */
+  int sum_total = 0;
+  for (uint32_t i = 0; i < num_users_; i++) {
+    sum_total += user_queues_.at(i)->byteLength();
+  }
+  return sum_total;
+}
+
 double EnsembleScheduler::get_instantaneous_rate(uint32_t user_id) const {
   return user_links_.at(user_id)->get_bw_in_past(Scheduler::instance().clock() - feedback_delay_);
 }

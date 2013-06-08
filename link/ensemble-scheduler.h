@@ -34,6 +34,9 @@ class EnsembleScheduler : public TclObject {
   /* Aggregate total throughput by pf (or other fairness criteria) */
   double agg_pf_throughput(void);
 
+  /* Aggregate number of bytes across all queues */
+  uint32_t agg_queue_bytes(void);
+
   /* Get fair share of user */
   double get_fair_share(uint32_t user_id);
 
