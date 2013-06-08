@@ -37,7 +37,7 @@ proc finish {} {
     }
     [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt $user_capacity 
   }
-    if { $opt(tracing) == "true" } {
+  if { $opt(tracing) == "true" } {
     $ns flush-trace
     close $trace_file
   }
@@ -133,7 +133,7 @@ proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
   puts "dth $opt(dth)"
   set q_args [ list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) $opt(dth) ]
   if { $qdisc == "SFD" } {
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args 
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
   } else {
     $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
   }
