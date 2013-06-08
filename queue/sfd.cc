@@ -110,8 +110,8 @@ void SFD::enque(Packet *p)
   //print_stats( now );
   
   double cap = _scheduler->agg_pf_throughput();
-  double delay_total = std::max(_time_constant * (agg_arrival_rate - cap) / cap, 0.0);
-  double delay_flow = std::max(_time_constant * (_current_arr_rate - _fair_share) / _fair_share, 0.0);
+  double delay_total = _scheduler->agg_queue_bytes()*8.0/cap + std::max(_time_constant * (agg_arrival_rate - cap) / cap, 0.0);
+  double delay_flow  = byteLength()*8.0/_fair_share + std::max(_time_constant * (_current_arr_rate - _fair_share) / _fair_share, 0.0);
   if (delay_total < _delay_thresh || delay_flow < _delay_thresh) {
     return;
   }
