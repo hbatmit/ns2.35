@@ -46,7 +46,7 @@ std::vector<double> QdelayEstimator::estimate_delays(double now)
 		double inter_arrival_time = get_ts(current_pkt) - get_ts(previous_pkt);
 		double service_time = get_service_time(current_pkt);
 		assert( inter_arrival_time >= 0 );
-		current_delay = std::max( (int64_t) (current_delay + service_time - inter_arrival_time), (int64_t) 0 );
+		current_delay = std::max(current_delay + service_time - inter_arrival_time, 0.0);
 		assert( current_delay >= 0 );
 		_delays.push_back( current_delay );
 		fprintf( stderr, "Lindley : seqnum %u delay %f\n", get_seq(current_pkt), current_delay);
