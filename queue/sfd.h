@@ -30,7 +30,7 @@ class DeliveredPacket {
 class SFD : public EnsembleAwareQueue {
   private :
     /* Estimate median delivery delay */
-    double get_median_delay(void);
+    double get_delay_percentile(double percentile);
 
     /* Dropping disciplines */
     void draconian_dropping(double now, double current_arrival_rate);

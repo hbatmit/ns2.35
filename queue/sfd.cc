@@ -111,7 +111,7 @@ void SFD::enque(Packet *p)
 
   /* Print everything */
   //print_stats( now );
-  
+
   double cap = _scheduler->agg_pf_throughput();
   double delay_total = _scheduler->agg_queue_bytes()*8.0/cap + std::max(_time_constant * (agg_arrival_rate - cap) / cap, 0.0);
   double delay_flow  = byteLength()*8.0/_fair_share + std::max(_time_constant * (_current_arr_rate - _fair_share) / _fair_share, 0.0);
@@ -129,7 +129,7 @@ void SFD::enque(Packet *p)
   }
 }
 
-double SFD::get_median_delay(void)
+double SFD::get_delay_percentile(double percentile)
 {
   /* Estimate delay of packets in queue */
   QdelayEstimator estimator(_packet_queue, _scheduler->get_fair_share(_user_id));
@@ -148,7 +148,7 @@ double SFD::get_median_delay(void)
   Distribution composed = history_dist.compose( queue_dist );
 
   /* Return median */
-  return composed.quantile(0.5);
+  return composed.quantile(percentile/100.0);
 }
 
 void SFD::time_based_dropping(double now, double current_arrival_rate)
@@ -189,7 +189,8 @@ Packet* SFD::deque()
 
   /* Track user delays */
   if (p != nullptr) {
-    _hist_delays.push_back(DeliveredPacket(*(p->copy()), now)); 
+    _hist_delays.push_back(DeliveredPacket(*(p->copy()),
+                                           now + (8.0*hdr_cmn::access(p)->size()/_scheduler->get_fair_share(_user_id))));
   } 
 
   /* purge old delays */
