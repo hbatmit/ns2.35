@@ -19,6 +19,7 @@ QdelayEstimator::QdelayEstimator(PacketQueue* pkts, double link_rate) :
 	_link_rate(link_rate),
 	_delays(std::vector<double> ())
 {
+	pkts->resetIterator();
 	Packet *p = pkts->getNext();
 	while (p != nullptr) {
 		_pkts.push(*(p->copy()));
