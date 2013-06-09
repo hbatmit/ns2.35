@@ -8,13 +8,13 @@
 class Distribution
 {
 public :
-	std::vector<std::tuple<uint64_t,double>> _pmf;
+	std::vector<std::tuple<double,double>> _pmf;
 	
-	Distribution( std::vector<uint64_t> value_vector );
+	Distribution( std::vector<double> value_vector );
 	
-	Distribution( std::vector<std::tuple<uint64_t,double>> pmf);
+	Distribution( std::vector<std::tuple<double,double>> pmf);
 	
-	uint64_t quantile( double location );
+	double quantile( double location );
 	
 	Distribution compose( Distribution & other );
 	
