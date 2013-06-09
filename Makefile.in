@@ -146,6 +146,7 @@ NS_TCL_LIB_STL = tcl/lib/ns-diffusion.tcl \
 OBJ_CC = \
 	tools/random.o tools/rng.o tools/ranvar.o common/misc.o common/timer-handler.o \
 	common/scheduler.o common/object.o common/packet.o common/ewma-estimator.o \
+        common/distribution.o \
 	common/ip.o routing/route.o common/connector.o common/ttl.o \
 	trace/trace.o trace/trace-ip.o \
 	classifier/classifier.o classifier/classifier-addr.o \
@@ -202,6 +203,7 @@ OBJ_CC = \
 	queue/queue.o queue/drop-tail.o \
 	adc/simple-intserv-sched.o queue/red.o queue/codel.o queue/sfqcodel.o \
         queue/sfd.o common/flow-stats.o queue/ensemble-aware-queue.o \
+        queue/qdelay-estimator.o \
         link/ensemble-scheduler.o link/ensemble-rate-generator.o \
         link/rayleigh_channel.o \
         link/prop-fair-scheduler.o link/rate-gen.o \
