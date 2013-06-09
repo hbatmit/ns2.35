@@ -18,9 +18,20 @@
  * where drop rates for TCP are set in accordance
  * with the TCP loss equation.
  */
+class DeliveredPacket {
+  public:
+    Packet pkt;
+    double delivered;
+    DeliveredPacket(Packet t_packet, double t_delivered)
+        : pkt(t_packet),
+          delivered(t_delivered) {}
+};
 
 class SFD : public EnsembleAwareQueue {
   private :
+    /* Estimate median delivery delay */
+    double get_median_delay(void);
+
     /* Dropping disciplines */
     void draconian_dropping(double now, double current_arrival_rate);
     void time_based_dropping(double now, double current_arrival_rate);
@@ -51,7 +62,7 @@ class SFD : public EnsembleAwareQueue {
     FlowStats _user_arrival_rate_est;
 
     /* Historic delays */
-    std::vector<Packet> _hist_delays;  
+    std::vector<DeliveredPacket> _hist_delays;  
 
   protected:
     /* override tracing function from Agent */

@@ -1,5 +1,7 @@
 #include "sfd.h"
 #include "rng.h"
+#include "queue/qdelay-estimator.hh"
+#include "common/distribution.hh"
 #include <stdint.h>
 #include <algorithm>
 #include <float.h>
@@ -79,7 +81,7 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
   _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant)),
-  _hist_delays(std::vector<Packet>()),
+  _hist_delays(std::vector<DeliveredPacket>()),
   tchan_(0)
 {
   bind("_last_drop_time",   &_last_drop_time);
@@ -127,6 +129,28 @@ void SFD::enque(Packet *p)
   }
 }
 
+double SFD::get_median_delay(void)
+{
+  /* Estimate delay of packets in queue */
+  QdelayEstimator estimator(_packet_queue, _scheduler->get_fair_share(_user_id));
+  
+  /* Compute delays from history */
+  std::vector<double> historic_delays(_hist_delays.size());
+  std::transform(_hist_delays.begin(), _hist_delays.end(), historic_delays.begin(),
+                 [&] (const DeliveredPacket & p)
+                 { return p.delivered - hdr_cmn::access(&(p.pkt))->timestamp();} );
+
+  /*Estimate both distributions */
+  Distribution queue_dist ( estimator.estimate_delays(Scheduler::instance().clock()) );
+  Distribution history_dist( historic_delays );
+
+  /* Compose the two */
+  Distribution composed = history_dist.compose( queue_dist );
+
+  /* Return median */
+  return composed.quantile(0.5);
+}
+
 void SFD::time_based_dropping(double now, double current_arrival_rate)
 {
   if ((now - _last_drop_time > _time_constant)) {
@@ -157,16 +181,20 @@ void SFD::drop_if_not_empty(double now, double current_arrival_rate)
 
 Packet* SFD::deque()
 {
+  /* Current time */
+  double now = Scheduler::instance().clock();
+  
   /* Implements pure virtual function Queue::deque() */
   Packet *p = _packet_queue->deque();
 
   /* Track user delays */
-  if (p != nullptr) _hist_delays.push_back(*(p->copy())); 
+  if (p != nullptr) {
+    _hist_delays.push_back(DeliveredPacket(*(p->copy()), now)); 
+  } 
 
   /* purge old delays */
-  double now = Scheduler::instance().clock();
   _hist_delays.erase(std::remove_if(_hist_delays.begin(), _hist_delays.end(),
-                                    [&] (const Packet & p) { return hdr_cmn::access(&p)->timestamp() < now - _time_constant; }),
+                                    [&] (const DeliveredPacket & p) { return p.delivered < now - _time_constant; }),
                      _hist_delays.end());
   return p;
 }
