@@ -22,11 +22,11 @@
 class SFD : public EnsembleAwareQueue {
   private :
     /* Dropping disciplines */
-    void draconian_dropping(double now);
-    void time_based_dropping(double now, double arrival_rate);
+    void draconian_dropping(double now, double current_arrival_rate);
+    void time_based_dropping(double now, double current_arrival_rate);
 
     /* Helper function */
-    void drop_if_not_empty(double now);
+    void drop_if_not_empty(double now, double current_arrival_rate);
 
     /* Tcl accessible SFD parameters */
     const double  _headroom; /* default : 0.05 */
@@ -49,6 +49,9 @@ class SFD : public EnsembleAwareQueue {
 
     /* Arrival Rate Estimator */
     FlowStats _user_arrival_rate_est;
+
+    /* Historic delays */
+    std::vector<Packet> _hist_delays;  
 
   protected:
     /* override tracing function from Agent */

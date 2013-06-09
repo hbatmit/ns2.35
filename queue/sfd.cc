@@ -79,6 +79,7 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
   _packet_queue( new PacketQueue() ),
   _dropper(_iter),
   _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant)),
+  _hist_delays(std::vector<Packet>()),
   tchan_(0)
 {
   bind("_last_drop_time",   &_last_drop_time);
@@ -118,7 +119,7 @@ void SFD::enque(Packet *p)
 
   /* We have exceeded the delay threshold (aggregate and for flow). */
   if (_drop_type == "draconian") {
-    draconian_dropping(now);
+    draconian_dropping(now, _current_arr_rate);
   } else if (_drop_type == "time") {
     time_based_dropping(now, _current_arr_rate);
   } else {
@@ -133,28 +134,24 @@ void SFD::time_based_dropping(double now, double current_arrival_rate)
     double drop_probability = (now - _last_drop_time) / _time_constant;
     /* Toss a coin and drop */
     if ( _dropper.should_drop( drop_probability ) ) {
-      if (length() > 1) {
-	Packet* head = _packet_queue->deque();
-	drop( head );
-        /* Drop from front of the same queue */
-	_last_drop_time   = now;
-        _arr_rate_at_drop = current_arrival_rate;
-      }
+      drop_if_not_empty(now, current_arrival_rate);
     }
   }
 }
 
-void SFD::draconian_dropping(double now)
+void SFD::draconian_dropping(double now, double current_arrival_rate)
 {
-  drop_if_not_empty(now);
+  drop_if_not_empty(now, current_arrival_rate);
 }
 
-void SFD::drop_if_not_empty(double now)
+void SFD::drop_if_not_empty(double now, double current_arrival_rate)
 {
   if (length() > 1) {
     Packet* head = _packet_queue->deque();
     drop( head );
-    _last_drop_time = now;
+    /* Drop from front of the same queue */
+    _last_drop_time   = now;
+    _arr_rate_at_drop = current_arrival_rate;
   }
 }
 
@@ -162,6 +159,15 @@ Packet* SFD::deque()
 {
   /* Implements pure virtual function Queue::deque() */
   Packet *p = _packet_queue->deque();
+
+  /* Track user delays */
+  if (p != nullptr) _hist_delays.push_back(*(p->copy())); 
+
+  /* purge old delays */
+  double now = Scheduler::instance().clock();
+  _hist_delays.erase(std::remove_if(_hist_delays.begin(), _hist_delays.end(),
+                                    [&] (const Packet & p) { return hdr_cmn::access(&p)->timestamp() < now - _time_constant; }),
+                     _hist_delays.end());
   return p;
 }
 
