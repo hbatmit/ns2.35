@@ -37,7 +37,6 @@ std::vector<double> QdelayEstimator::estimate_delays(double now)
 	double current_delay = now - get_ts(hol_pkt) + get_service_time(hol_pkt);
 	_delays.push_back( current_delay );
 	Packet previous_pkt = hol_pkt;
-	fprintf( stderr, "Lindley : seqnum %u delay %f\n", get_seq(hol_pkt), current_delay);
 
 	/* Apply Lindley's recurrence using constant service time */
 	while ( !_pkts.empty() ) {
@@ -49,7 +48,6 @@ std::vector<double> QdelayEstimator::estimate_delays(double now)
 		current_delay = std::max(current_delay + service_time - inter_arrival_time, 0.0);
 		assert( current_delay >= 0 );
 		_delays.push_back( current_delay );
-		fprintf( stderr, "Lindley : seqnum %u delay %f\n", get_seq(current_pkt), current_delay);
 		previous_pkt = current_pkt ;
 		}
 	/* return delays */
