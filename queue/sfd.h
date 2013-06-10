@@ -20,9 +20,9 @@
  */
 class DeliveredPacket {
   public:
-    Packet pkt;
+    const Packet* pkt;
     double delivered;
-    DeliveredPacket(Packet t_packet, double t_delivered)
+    DeliveredPacket(const Packet* t_packet, double t_delivered)
         : pkt(t_packet),
           delivered(t_delivered) {}
 };
