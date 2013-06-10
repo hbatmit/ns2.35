@@ -129,7 +129,7 @@ double SFD::get_delay_percentile(double percentile)
   std::vector<double> historic_delays(_hist_delays.size());
   std::transform(_hist_delays.begin(), _hist_delays.end(), historic_delays.begin(),
                  [&] (const DeliveredPacket & p)
-                 { return p.delivered - hdr_cmn::access(p.pkt)->timestamp();} );
+                 { return p.delivered - p.arrived;} );
 
   /*Estimate both distributions */
   Distribution queue_dist ( estimator.estimate_delays(Scheduler::instance().clock()) );
@@ -180,7 +180,7 @@ Packet* SFD::deque()
 
   /* Track user delays */
   if (p != nullptr) {
-    _hist_delays.push_back(DeliveredPacket(p->copy(),
+    _hist_delays.push_back(DeliveredPacket(hdr_cmn::access(p)->timestamp(),
                                            now + (8.0*hdr_cmn::access(p)->size()/_scheduler->get_fair_share(_user_id))));
   } 
 
