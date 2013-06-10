@@ -9,11 +9,11 @@
 class QdelayEstimator
 {
 private:
-	double get_ts(Packet p);
-        uint32_t get_seq(Packet p);
-        double get_service_time(Packet p);
+	const double get_ts(const Packet* p);
+	const uint32_t get_seq(const Packet* p);
+	const double get_service_time(const Packet* p);
 
-	std::queue<Packet> _pkts;
+	std::queue<const Packet*> _pkts;
 	double _link_rate;
 	std::vector<double> _delays;
 
