@@ -20,6 +20,7 @@ set opt(alpha)              1.0;  # alpha for max-weight scheduling policy
 set opt(sub_qdisc)          propfair
 set opt(droptype)           "time"
 set opt(rcvwin)             65536; # receiver advertised window for TCP 
+set opt(percentile)         95;    # control 95th percentile delay
 
 # LoggingApp specific stuff
 set opt(onrand) Exponential

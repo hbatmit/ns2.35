@@ -18,7 +18,8 @@ static class SFDClass : public TclClass {
       double user_id = atoi(strtok(nullptr," ")); 
       std::string drop_type(strtok(nullptr," "));
       double delay_thresh = atof(strtok(nullptr, " "));
-      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id, drop_type, delay_thresh);
+      double percentile = atof(strtok(nullptr, " "));
+      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id, drop_type, delay_thresh, percentile);
     }
 } class_sfd;
 
@@ -67,7 +68,7 @@ int SFD::command(int argc, const char*const* argv)
 }
 
 SFD::SFD(double user_arrival_rate_time_constant, double headroom,
-         uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh) :
+         uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh, double percentile) :
   EnsembleAwareQueue(),
   _headroom(headroom),
   _iter(iter),
@@ -82,6 +83,7 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
   _dropper(_iter),
   _user_arrival_rate_est(FlowStats(user_arrival_rate_time_constant)),
   _hist_delays(std::vector<DeliveredPacket>()),
+  _percentile(percentile),
   tchan_(0)
 {
   bind("_last_drop_time",   &_last_drop_time);
@@ -102,20 +104,9 @@ void SFD::enque(Packet *p)
   double now = Scheduler::instance().clock();
   _current_arr_rate = _user_arrival_rate_est.est_arrival_rate(now, p);
 
-  /* Estimate aggregate arrival rate with an EWMA filter */
-  double agg_arrival_rate = _scheduler->update_arrival_rate(now, p);
+  double delay_flow = get_delay_percentile(_percentile);
 
-  /* Get fair share, and take max of fair share and service rate  */
-  auto _fair_share = (1-_headroom) * _scheduler->get_fair_share(_user_id);
-  //printf("User id is %d, _fair_share is %f \n", user_id, _fair_share);
-
-  /* Print everything */
-  //print_stats( now );
-
-  double cap = _scheduler->agg_pf_throughput();
-  double delay_total = _scheduler->agg_queue_bytes()*8.0/cap + std::max(_time_constant * (agg_arrival_rate - cap) / cap, 0.0);
-  double delay_flow  = byteLength()*8.0/_fair_share + std::max(_time_constant * (_current_arr_rate - _fair_share) / _fair_share, 0.0);
-  if (delay_total < _delay_thresh || delay_flow < _delay_thresh) {
+  if (delay_flow < _delay_thresh) {
     return;
   }
 

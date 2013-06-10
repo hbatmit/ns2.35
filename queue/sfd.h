@@ -63,6 +63,9 @@ class SFD : public EnsembleAwareQueue {
 
     /* Historic delays */
     std::vector<DeliveredPacket> _hist_delays;  
+   
+    /* Percentile delay that we want to control */
+    double _percentile; 
 
   protected:
     /* override tracing function from Agent */
@@ -72,7 +75,7 @@ class SFD : public EnsembleAwareQueue {
     Tcl_Channel tchan_;
 
   public :
-    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh);
+    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh, double percentile);
     int command(int argc, const char*const* argv) override;
 
     /* print stats  */
