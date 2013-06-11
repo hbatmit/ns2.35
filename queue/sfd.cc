@@ -97,8 +97,8 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
 void SFD::enque(Packet *p)
 {
   bool reactivate = false;
-  if (_scheduler->agg_queue_bytes() == 0) {
-    /* Arrival to an empty queue, reactivate link */
+  if (_scheduler->busy() == false) {
+    /* Arrival to an idle link, reactivate link */
     reactivate = true;
   }
 
@@ -114,6 +114,7 @@ void SFD::enque(Packet *p)
   double delay_flow = get_delay_percentile(_percentile);
 
   if (delay_flow < _delay_thresh) {
+    if (reactivate) _scheduler->reactivate_link();
     return;
   }
 
