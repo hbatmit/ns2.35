@@ -214,6 +214,9 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
                           hdr_cellular::access(sliced_pkt)->tunneled_type_,
                           hdr_cellular::access(sliced_pkt)->original_size_);
     
+    /* Free up old packet because it's been segmented */
+    Packet::free(p);
+
     /* Send slice and put remnants in abeyance */
     user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
     abeyance_.at(chosen_user) = remnants;
