@@ -60,7 +60,7 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity } {
         set util_s 0.0
     }
     if { $rcdtput > 0.0 && $avgrtt > 0.0 } {
-        set util_r [expr log(1000000.0) + log($rcdtput) - log($avgrtt) - log($user_capacity) ]
+        set util_r [expr log(1000000.0) + log($rcdtput) - log($rcd_avgrtt) - log($user_capacity) ]
     } else {
         set util_r 0.0
     }
