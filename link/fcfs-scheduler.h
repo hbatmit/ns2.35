@@ -35,6 +35,9 @@ class FcfsScheduler : public EnsembleScheduler {
   /* Timers */
   FcfsTxTimer* tx_timer_;
 
+  /* Called when a packet arrives to an empty queue to reactivate link */
+  virtual void reactivate_link() override;
+ 
  private:
   /* per user service rates */
   std::vector<FlowStats> user_service_rate_est_;

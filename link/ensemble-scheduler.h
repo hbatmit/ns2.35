@@ -19,6 +19,9 @@ class EnsembleScheduler : public TclObject {
   /* Get service rate of EnsembleScheduler, this is different from the service rate of Queue */
   virtual double get_service_rate(uint32_t user_id) = 0;
 
+  /* Reactivate link , when packet arrives to an empty queue */
+  virtual void reactivate_link(void) = 0;
+
   /* Tcl interface : add links and queues */
   virtual int command(int argc, const char*const* argv) override;
 

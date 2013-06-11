@@ -52,6 +52,9 @@ class PFScheduler : public EnsembleScheduler {
   /* Get delay of head of line packet */
   double hol_delay(uint32_t user_id) const;
 
+  /* Called when a packet arrives to an empty queue to reactivate link */
+  virtual void reactivate_link() override;
+
  private:
   /* Get transmission time */
   double transmission_time(Packet *p, uint32_t chosen_user);

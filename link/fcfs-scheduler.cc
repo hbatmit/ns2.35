@@ -97,3 +97,7 @@ void FcfsScheduler::transmit_pkt() {
   /* Estimate aggregate service rate */
   agg_service_rate_est_.est_service_rate(Scheduler::instance().clock(), p);
 }
+
+void FcfsScheduler::reactivate_link() {
+  tx_timer_->resched(0.0);
+}

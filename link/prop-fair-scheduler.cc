@@ -258,3 +258,7 @@ double PFScheduler::hol_delay(uint32_t user_id) const {
   assert(delay > 0);
   return delay;
 }
+
+void PFScheduler::reactivate_link() {
+  sched_timer_->resched(0.0);
+}
