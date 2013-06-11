@@ -39,7 +39,6 @@ uint32_t FcfsScheduler::pick_user_to_schedule(void) const {
 int FcfsScheduler::command(int argc, const char*const* argv) {
   if (argc == 2) {
     if ( strcmp(argv[1], "activate-link-scheduler" ) == 0 ) {
-      tx_timer_->resched( FALLBACK_INTERVAL );
       /* generate rates to start with */
       update_link_rate_estimate();
       /* transmit packet if it exists */
@@ -59,12 +58,14 @@ void FcfsScheduler::transmit_pkt() {
 
   /* If no one was scheduled, return */
   if (chosen_user==(uint32_t)-1) {
-    tx_timer_->resched(FALLBACK_INTERVAL);
+    busy_ = false;
     return;
   }
 
   /* If link rate is zero, return */
   if (user_links_.at(chosen_user)->bandwidth()==0) {
+    busy_ = false;
+    /* Wake up in 1ms or when SFD::enque wakes you up */
     tx_timer_->resched(FALLBACK_INTERVAL);
     return;
   }
@@ -81,6 +82,7 @@ void FcfsScheduler::transmit_pkt() {
 
   /* Send packet onward */
   user_links_.at(chosen_user)->recv(p, queue_handler);
+  busy_ = true;
 
   /* Log */
 //  printf(" FcfsTxTimer::expire, Chosen_user %d, recving %f bits @ %f \n",
