@@ -144,11 +144,16 @@ void PFScheduler::transmit_pkt() {
   uint32_t chosen_user = chosen_user_;
 
   /* If no one was scheduled, return */
-  if (chosen_user == (uint32_t)-1) return;
+  if (chosen_user == (uint32_t)-1) {
+    busy_ = false;
+    return;
+  }
 
-  /* If link rate is zero, return */
+  /* If link rate is zero, reset PF slot boundary right now
+     and see if someone else can be scheduled */
   if (user_links_.at(chosen_user)->bandwidth() == 0) {
     sched_timer_->resched(0.0);
+    busy_ = false;
     return;
   }
 
@@ -163,6 +168,8 @@ void PFScheduler::transmit_pkt() {
     if (p!=nullptr) {
       slice_and_transmit(p, chosen_user);
     } else {
+      /* We ran out of packets, move on to someone else */
+      busy_ = false;
       sched_timer_->resched(0.0);
     }
   } else {
@@ -219,11 +226,13 @@ void PFScheduler::slice_and_transmit(Packet *p, uint32_t chosen_user) {
 
     /* Send slice and put remnants in abeyance */
     user_links_.at(chosen_user)->recv(sliced_pkt, queue_handler);
+    busy_ = true;
     abeyance_.at(chosen_user) = remnants;
 
   } else {
     /* Send packet onward */
     user_links_.at(chosen_user)->recv(p, queue_handler);
+    busy_ = true;
     auto current_delay = Scheduler::instance().clock() + txt - hol_ts_.at(chosen_user);
     assert(current_delay > 0);
     user_delay_est_.at(chosen_user).est_delay(Scheduler::instance().clock(), current_delay);
