@@ -46,7 +46,7 @@ double FlowStats::est_arrival_rate( double now, Packet *p )
       return _arr_est.get_estimate();
     } else {
       assert( now > _arr_est._last_update );
-      auto current_rate = _acc_arrivals/ ( now - _arr_est._last_update );
+      double current_rate = _acc_arrivals/ ( now - _arr_est._last_update );
       _acc_arrivals = 0;
       return _arr_est.update( now, current_rate );
     }
@@ -131,22 +131,22 @@ void FlowStats::print_rates(uint32_t flow_id, double now) const
 {
   /* Arrival rates */
   printf(" Time %f : A :  ", now );
-  printf(" %lu %f ", flow_id, _arr_est.get_estimate());
+  printf(" %u %f ", flow_id, _arr_est.get_estimate());
   printf("\n");
 
   /* Service rates */
   printf(" Time %f : S :  ", now );
-  printf(" %lu %f ", flow_id, _ser_est.get_estimate());
+  printf(" %u %f ", flow_id, _ser_est.get_estimate());
   printf("\n");
 
   /* Link rate of each user */
   printf(" Time %f : F :  ", now );
-  printf(" %lu %f ", flow_id, _link_est.get_estimate());
+  printf(" %u %f ", flow_id, _link_est.get_estimate());
   printf("\n");
 
   /* Delay of each user */
   printf(" Time %f : D :  ", now );
-  printf(" %lu %f ", flow_id, _delay_est.get_estimate());
+  printf(" %u %f ", flow_id, _delay_est.get_estimate());
   printf("\n");
 
 }
