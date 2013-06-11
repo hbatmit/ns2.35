@@ -1,6 +1,7 @@
 #include "sfd.h"
 #include "rng.h"
 #include "queue/qdelay-estimator.hh"
+#include "link/fcfs-scheduler.h"
 #include "common/distribution.hh"
 #include <stdint.h>
 #include <algorithm>
@@ -29,11 +30,11 @@ void SFD::trace(TracedVar* v)
     double now = Scheduler::instance().clock();
     char print_str[500];
     if (std::string(v->name()) == "_last_drop_time") {
-      sprintf(print_str, "user:%d %s %g %g", _user_id, v->name(), now, double(*((TracedDouble*) v)));
+      sprintf(print_str, "user:%d %s %f %f", _user_id, v->name(), now, double(*((TracedDouble*) v)));
     } else if (std::string(v->name()) == "_arr_rate_at_drop") {
-      sprintf(print_str, "user:%d %s %g %g", _user_id, v->name(), now, double(*((TracedDouble*) v)));
+      sprintf(print_str, "user:%d %s %f %f", _user_id, v->name(), now, double(*((TracedDouble*) v)));
     } else if (std::string(v->name()) == "_current_arr_rate") {
-      sprintf(print_str, "user:%d %s %g %g", _user_id, v->name(), now, double(*((TracedDouble*) v)));
+      sprintf(print_str, "user:%d %s %f %f", _user_id, v->name(), now, double(*((TracedDouble*) v)));
     } else {
       fprintf(stderr, "SFD: unknown trace var %s\n", v->name());
       exit(5);
@@ -95,6 +96,11 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
 
 void SFD::enque(Packet *p)
 {
+  if (_scheduler->agg_queue_bytes() == 0) {
+    /* Arrival to an empty queue, reactivate link */
+    _scheduler->reactivate_link();
+  }
+
   /* Implements pure virtual function Queue::enque() */
 
   /* Enque packet, since all dropping is from the head */
