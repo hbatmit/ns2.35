@@ -5,6 +5,7 @@
 EnsembleScheduler::EnsembleScheduler(double rate_est_time_constant, uint32_t num_users, double feedback_delay)
     : num_users_(num_users),
       feedback_delay_(feedback_delay),
+      busy_(false),
       user_queues_(std::vector<Queue*>(num_users_)),
       user_links_(std::vector<LinkDelay*>(num_users_)),
       user_link_rate_est_(std::vector<FlowStats>(num_users_, FlowStats(rate_est_time_constant))),

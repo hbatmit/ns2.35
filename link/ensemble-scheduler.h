@@ -43,6 +43,9 @@ class EnsembleScheduler : public TclObject {
   /* Get fair share of user */
   double get_fair_share(uint32_t user_id);
 
+  /* Is link busy? */
+  bool busy() { return busy_; }
+
  protected:
   /* update link rate estimate , model feedback delay and noise */
   void update_link_rate_estimate(void);
@@ -61,6 +64,9 @@ class EnsembleScheduler : public TclObject {
 
   /* feedback delay in secs */
   double feedback_delay_;
+
+  /* is link busy presently? */
+  bool busy_;   
 
   /* per user queues */
   std::vector<Queue *> user_queues_;
