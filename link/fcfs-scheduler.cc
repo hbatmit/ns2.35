@@ -99,5 +99,5 @@ void FcfsScheduler::transmit_pkt() {
 }
 
 void FcfsScheduler::reactivate_link() {
-  tx_timer_->resched(0.0);
+  transmit_pkt();
 }

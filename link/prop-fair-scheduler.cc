@@ -260,5 +260,6 @@ double PFScheduler::hol_delay(uint32_t user_id) const {
 }
 
 void PFScheduler::reactivate_link() {
-  sched_timer_->resched(0.0);
+  tick();
+  sched_timer_->resched(slot_duration_);
 }

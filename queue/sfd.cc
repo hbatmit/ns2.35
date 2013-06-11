@@ -96,9 +96,10 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
 
 void SFD::enque(Packet *p)
 {
+  bool reactivate = false;
   if (_scheduler->agg_queue_bytes() == 0) {
     /* Arrival to an empty queue, reactivate link */
-    _scheduler->reactivate_link();
+    reactivate = true;
   }
 
   /* Implements pure virtual function Queue::enque() */
@@ -124,6 +125,8 @@ void SFD::enque(Packet *p)
   } else {
     assert(false);
   }
+
+  if (reactivate) _scheduler->reactivate_link();
 }
 
 double SFD::get_delay_percentile(double percentile)
