@@ -1,5 +1,7 @@
 #include "queue/ensemble-aware-queue.h"
 
+EnsembleAwareQueue::EnsembleAwareQueue(EnsembleScheduler* scheduler) : _scheduler(scheduler) {}
+
 int EnsembleAwareQueue::command( int argc, const char*const* argv )
 {
   if(argc==3) {

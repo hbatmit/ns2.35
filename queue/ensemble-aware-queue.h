@@ -13,6 +13,8 @@ class EnsembleAwareQueue : public Queue {
   public :
     EnsembleAwareQueue() : Queue() {};
 
+    EnsembleAwareQueue(EnsembleScheduler* scheduler);
+
     int command( int argc, const char*const* argv );
 
 };
