@@ -139,10 +139,8 @@ public:
         virtual bool empty() const;
         virtual double get_hol() const;
         virtual double get_arrival_rate();
-	virtual int length() const { return pq_->length(); }	/* number of pkts currently in
-						 * underlying packet queue */
-	virtual int byteLength() const { return pq_->byteLength(); }	/* number of bytes *
-						 * currently in packet queue */
+	virtual int length() const;	/* number of pkts in q */
+	virtual int byteLength() const;	/* number of bytes in q */
 	virtual Packet* get_head() const; 
 	/* mean utilization, decaying based on util_weight */
 	virtual double utilization (void);

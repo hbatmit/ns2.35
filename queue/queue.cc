@@ -277,3 +277,16 @@ Packet* Queue::get_head() const
   exit(7);
   return nullptr;
 }
+
+int Queue::length() const
+{
+  printf("length() not implemented. Aborting ...\n");
+  exit(7);
+  return -1;
+}
+int Queue::byteLength() const
+{
+  printf("byteLength() not implemented. Aborting ...\n");
+  exit(7);
+  return -1;
+}
