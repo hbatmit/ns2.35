@@ -126,16 +126,17 @@ proc setup_sfd {queue scheduler} {
 }
 
 # Link creation
-proc create_link {ns latency sender receiver qdisc user_id rate_generator} {
+proc create_link {ns latency sender receiver qdisc user_id rate_generator ensemble_scheduler} {
   set bw [$rate_generator get_initial_rate $user_id]
   puts "Initial bandwidth for user $user_id is $bw"
   global opt
   puts "dth $opt(dth)"
-  set q_args [ list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) $opt(dth) $opt(percentile) ]
   if { $qdisc == "SFD" } {
+    set q_args [list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) $opt(dth) $opt(percentile) $ensemble_scheduler ]
     $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
   } else {
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc
+    set q_args [list $ensemble_scheduler ]
+    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
   }
   $ns simplex-link $receiver $sender [ bw_parse $bw ]  $latency DropTail
 }

@@ -46,7 +46,7 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   set tcp_client_node($i) [ $ns node ]
 
   # Create forward and reverse links from basestation to mobile user
-  create_link $ns $opt(delay) $basestation $tcp_client_node($i) $opt(gw) $fid($i) $rate_generator
+  create_link $ns $opt(delay) $basestation $tcp_client_node($i) $opt(gw) $fid($i) $rate_generator $ensemble_scheduler
 
   # Get handles to link and queue from basestation to user
   set cell_link [ [ $ns link $basestation $tcp_client_node($i) ] link ]
