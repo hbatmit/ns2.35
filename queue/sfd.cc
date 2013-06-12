@@ -20,7 +20,9 @@ static class SFDClass : public TclClass {
       std::string drop_type(strtok(nullptr," "));
       double delay_thresh = atof(strtok(nullptr, " "));
       double percentile = atof(strtok(nullptr, " "));
-      return new SFD(user_arrival_rate_time_constant, headroom, iter, user_id, drop_type, delay_thresh, percentile);
+      EnsembleScheduler* scheduler = static_cast<EnsembleScheduler*>(TclObject::lookup(strtok(nullptr, " ")));
+      return new SFD(user_arrival_rate_time_constant, headroom, iter,
+                     user_id, drop_type, delay_thresh, percentile, scheduler);
     }
 } class_sfd;
 
@@ -69,8 +71,9 @@ int SFD::command(int argc, const char*const* argv)
 }
 
 SFD::SFD(double user_arrival_rate_time_constant, double headroom,
-         uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh, double percentile) :
-  EnsembleAwareQueue(),
+         uint32_t iter, uint32_t user_id, std::string drop_type,
+         double delay_thresh, double percentile, EnsembleScheduler* scheduler) :
+  EnsembleAwareQueue(scheduler),
   _headroom(headroom),
   _iter(iter),
   _user_id(user_id),
@@ -90,8 +93,9 @@ SFD::SFD(double user_arrival_rate_time_constant, double headroom,
   bind("_last_drop_time",   &_last_drop_time);
   bind("_arr_rate_at_drop", &_arr_rate_at_drop);
   bind("_current_arr_rate", &_current_arr_rate);
-  fprintf( stderr,  "SFD: _iter %d, _K %.3f, _headroom %.2f, user_id %d, drop_type %s delay_thresh %.3f\n",
-           _iter, user_arrival_rate_time_constant, _headroom, _user_id, _drop_type.c_str(), _delay_thresh);
+  fprintf( stderr,  "SFD: _iter %d, _K %.3f, _headroom %.2f, user_id %d, drop_type %s delay_thresh %.3f percentile %.3f\n",
+           _iter, user_arrival_rate_time_constant, _headroom, _user_id,
+           _drop_type.c_str(), _delay_thresh, _percentile);
 }
 
 void SFD::enque(Packet *p)

@@ -75,7 +75,9 @@ class SFD : public EnsembleAwareQueue {
     Tcl_Channel tchan_;
 
   public :
-    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter, uint32_t user_id, std::string drop_type, double delay_thresh, double percentile);
+    SFD(double user_arrival_rate_time_constant, double headroom, uint32_t iter,
+        uint32_t user_id, std::string drop_type, double delay_thresh, double percentile,
+        EnsembleScheduler* scheduler);
     int command(int argc, const char*const* argv) override;
 
     /* print stats  */
