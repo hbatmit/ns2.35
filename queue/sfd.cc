@@ -136,24 +136,27 @@ void SFD::enque(Packet *p)
 
 double SFD::get_delay_percentile(double percentile)
 {
-  /* Estimate delay of packets in queue */
-  QdelayEstimator estimator(_packet_queue, _scheduler->get_fair_share(_user_id));
-  
   /* Compute delays from history */
   std::vector<double> historic_delays(_hist_delays.size());
   std::transform(_hist_delays.begin(), _hist_delays.end(), historic_delays.begin(),
                  [&] (const DeliveredPacket & p)
                  { return p.delivered - p.arrived;} );
 
-  /*Estimate both distributions */
-  Distribution queue_dist ( estimator.estimate_delays(Scheduler::instance().clock()) );
+  /*Estimate delay distribution */
   Distribution history_dist( historic_delays );
 
-  /* Compose the two */
-  Distribution composed = history_dist.compose( queue_dist );
+  /* Estimate delay distribution of packets in queue if service rate is > 0 */
+  if (_scheduler->get_fair_share(_user_id) > 0.0) {
+    QdelayEstimator estimator(_packet_queue, _scheduler->get_fair_share(_user_id));
+    Distribution queue_dist ( estimator.estimate_delays(Scheduler::instance().clock()) );
 
-  /* Return median */
-  return composed.quantile(percentile/100.0);
+    /* Compose the two */
+    Distribution composed = history_dist.compose( queue_dist );
+
+    return composed.quantile(percentile/100.0);
+  } else {
+    return history_dist.quantile(percentile/100.0);
+  }
 }
 
 void SFD::time_based_dropping(double now, double current_arrival_rate)
