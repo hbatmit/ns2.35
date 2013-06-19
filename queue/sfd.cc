@@ -194,8 +194,7 @@ Packet* SFD::deque()
 
   /* Track user delays */
   if (p != nullptr) {
-    _hist_delays.push_back(DeliveredPacket(hdr_cmn::access(p)->timestamp(),
-                                           now + (8.0*hdr_cmn::access(p)->size()/_scheduler->get_fair_share(_user_id))));
+    _hist_delays.push_back(DeliveredPacket(hdr_cmn::access(p)->timestamp(), now));
   } 
 
   /* purge old delays */
