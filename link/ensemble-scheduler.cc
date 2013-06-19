@@ -39,8 +39,7 @@ int EnsembleScheduler::command(int argc, const char*const* argv) {
 std::vector<uint32_t> EnsembleScheduler::get_feasible_users(void) const {
   std::vector<uint32_t> feasible_user_list;
   for ( uint32_t i = 0; i < num_users_; i++ ) {
-    if ( !(user_queues_.at(i)->empty())) {
-      //    if ( (!(user_queues_.at(i)->empty())) and (get_instantaneous_rate(i) != 0)) {
+    if ( (!(user_queues_.at(i)->empty())) and (get_instantaneous_rate(i) != 0)) {
       feasible_user_list.push_back(i);
     } else {
 //      printf(" User_queue is empty at %d \n", i );
