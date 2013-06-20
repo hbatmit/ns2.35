@@ -42,6 +42,7 @@ sub median {
   return $median;
 }
 
+system( "rm -rf $dir/graphdir" );
 mkdir( "$dir/graphdir" ) or die "directory exists: $!";
 chdir( "$dir/graphdir" ) or die "can't enter directory: $!";
 
