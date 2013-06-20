@@ -140,7 +140,7 @@ proc create_link {ns latency sender receiver qdisc user_id rate_generator ensemb
     set q_args [list $ensemble_scheduler ]
     $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
   }
-  $ns simplex-link $receiver $sender [ bw_parse $bw ]  $latency DropTail
+  $ns simplex-link $receiver $sender [ bw_parse $opt(ack_bw) ]  $latency DropTail
 }
 
 # DRIVER PROGRAM STARTS HERE
