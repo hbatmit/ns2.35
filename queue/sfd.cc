@@ -115,9 +115,13 @@ void SFD::enque(Packet *p)
   double now = Scheduler::instance().clock();
   _current_arr_rate = _user_arrival_rate_est.est_arrival_rate(now, p);
 
-  double delay_flow = get_delay_percentile(_percentile);
+  /* Estimate aggregate arrival rate with an EWMA filter */
+  double agg_arrival_rate = _scheduler->update_arrival_rate(now, p);
 
-  if (delay_flow < _delay_thresh) {
+  /* Estimate aggregate PF capacity */
+  double cap = _scheduler->agg_pf_throughput();
+
+  if ((_current_arr_rate < _scheduler->get_fair_share(_user_id)) or (agg_arrival_rate < cap)) {
     if (reactivate) _scheduler->reactivate_link();
     return;
   }
