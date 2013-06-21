@@ -2,6 +2,7 @@
 suffix=$1
 outdir=$1
 cd $outdir
-cat onramp100.$suffix-iter* > onramp100.$suffix
+cat onramp.$suffix-iter*   > onramp.$suffix
 cat sfqCoDel.$suffix-iter* > sfqCoDel.$suffix
+cat DropTail.$suffix-iter* > DropTail.$suffix
 rm *iter*
