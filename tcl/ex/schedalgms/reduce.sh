@@ -5,4 +5,4 @@ cd $outdir
 cat onramp.$suffix-iter*   > onramp.$suffix
 cat sfqCoDel.$suffix-iter* > sfqCoDel.$suffix
 cat DropTail.$suffix-iter* > DropTail.$suffix
-rm *iter*
+cd ..
