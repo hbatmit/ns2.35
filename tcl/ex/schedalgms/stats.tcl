@@ -35,7 +35,7 @@ Stats instproc update_rtt { rtt } {
 
     set cumrtt_ [expr $cumrtt_ + $rtt]
     incr nsamples_
-    lappend rtt_samples $rtt
+    lappend rtt_samples_ $rtt
 }
 
 Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity } {
