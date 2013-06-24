@@ -44,8 +44,12 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity } {
 
     if { $nsamples_ > 0.0 } {
         set avgrtt [expr 1000.0*$cumrtt_/$nsamples_]; # in milliseconds
+        set reqd_index [expr round (floor ($nsamples_ * 0.95))]
+        set sorted [lsort -real $rtt_samples_]
+        set rtt95th [expr [lindex $sorted $reqd_index] * 1000]
     } else {
-        set avgrtt 0.0
+        set avgrtt  0.0
+        set rtt95th 0.0
     }
     if { $ontime_ > 0.0 } {
         set throughput [expr 8.0*$numbytes_/1000000 / $ontime_  ]
@@ -72,5 +76,5 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity } {
     }
     set on_perc [expr 100.0*$ontime_ / $opt(simtime)]
 
-    puts [format "conn: %d rbytes: %d rMbps: %.3f fctMs: %.0f abytes: %d aMbps: %.3f sndrttMs %.1f rcdrttMs %.1f s_util: %.2f r_util: %.2f onperc: %.1f utilization: %.2f" $srcid_ $rcd_bytes $rcdtput $fct $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc [expr 100 * $throughput / $user_capacity]]
+    puts [format "conn: %d rbytes: %d rMbps: %.3f fctMs: %.0f abytes: %d aMbps: %.3f sndrttMs %.1f rcdrttMs %.1f s_util: %.2f r_util: %.2f onperc: %.1f utilization: %.2f rtt95th %.1f" $srcid_ $rcd_bytes $rcdtput $fct $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc [expr 100 * $throughput / $user_capacity] $rtt95th]
 }
