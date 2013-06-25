@@ -3,7 +3,7 @@ fh=sys.stdin                               # filename for pps file
 start_time=int(sys.argv[1])                # start time for printing rates in seconds
 end_time=int(sys.argv[2])                  # end time for printing rates in seconds
 BIN_INTERVAL=int(sys.argv[3])              # i.e number of ms in one bandwidth bin
-acc=[0]*(1+((1000*end_time)/BIN_INTERVAL)) # Create enough bins for 'duration' seconds of data. The 1000 is to convert ms to seconds.
+acc=[0]*(1+((1000*end_time)/BIN_INTERVAL)) # Create enough bins for 'end_time' seconds of data. The 1000 is to convert ms to seconds.
 user_id=int(sys.argv[4])                   # User id to insert into link trace.
 
 for line in fh.readlines() :
