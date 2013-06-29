@@ -21,17 +21,17 @@ set env(PATH) "$nshome/bin:$env(PATH)"
 
 # Clean up procedures
 proc finish {} {
-  global opt stats on_off_server logging_app_client num_users rate_generator trace_file ns
+  global opt stats on_off_server web_logging_client num_users rate_generator trace_file ns
   for {set i 0} {$i < $num_users} {incr i} {
     # Get link capacity over entire trace
     set user_capacity [expr [$rate_generator get_capacity $i] / 1000000]
     puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
     set sapp $on_off_server($i)
     $sapp dumpstats
-    set rcdbytes [$logging_app_client($i) set nbytes_]
-    set rcd_nrtt [$logging_app_client($i) set nrtt_]
+    set rcdbytes [$web_logging_client($i) set nbytes_]
+    set rcd_nrtt [$web_logging_client($i) set nrtt_]
     if { $rcd_nrtt > 0 } {
-        set rcd_avgrtt [expr 1000.0*[$logging_app_client($i) set cumrtt_] / $rcd_nrtt ]
+        set rcd_avgrtt [expr 1000.0*[$web_logging_client($i) set cumrtt_] / $rcd_nrtt ]
     } else {
         set rcd_avgrtt 0.0
     }
