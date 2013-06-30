@@ -1,6 +1,3 @@
-source timer.tcl
-source flow_ranvar.tcl
-
 Class Application/FTP/BulkSender -superclass { Application/FTP }
 
 Application/FTP/BulkSender instproc init {} {

@@ -1,4 +1,3 @@
-source timer.tcl
 source flow_ranvar.tcl
 
 Class Application/FTP/OnOffSender -superclass { Application/FTP }
