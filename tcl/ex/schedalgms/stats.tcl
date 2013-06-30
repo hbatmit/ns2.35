@@ -68,7 +68,6 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity } {
     } else {
         set util_r 0.0
     }
-    set fct [expr 1000.0*$ontime_/$nflows_]
     if { $nflows_ > 0 } {
       set fct [expr 1000.0*$ontime_/$nflows_]
     } else {
