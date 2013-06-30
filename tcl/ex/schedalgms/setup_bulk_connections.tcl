@@ -7,8 +7,8 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   # If opt(tcp) starts with TCP/Linux, then you need to do something different
   if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
     set linuxcc [ string range $opt(tcp) 10 [string length $opt(tcp)] ]
-    set opt(tcp) "TCP/Linux"
-    set bt_server($i) [ new Agent/$opt(tcp) ]
+    set cc_family "TCP/Linux"
+    set bt_server($i) [ new Agent/$cc_family ]
     $ns at 0.0 "$bt_server($i) select_ca $linuxcc"
     $ns at 0.0 "$bt_server($i) set_ca_default_param linux debug_level 2"
   } else {
