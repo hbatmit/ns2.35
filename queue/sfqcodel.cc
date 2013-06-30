@@ -580,3 +580,10 @@ sfqCoDelQueue::trace(TracedVar* v)
         (void)Tcl_Write(tchan_, wrk, n+1);
     }
 }
+
+bool sfqCoDelQueue::empty() const {
+  for (int i=0; i < maxbins_; i++) {
+    if (bin_[i].q_->byteLength() > 0) return false;
+  }
+  return true;
+}

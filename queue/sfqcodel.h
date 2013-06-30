@@ -97,8 +97,7 @@ class sfqCoDelQueue : public EnsembleAwareQueue {
 */
 
     /* Override functions from Queue */
-    virtual double get_hol() const override { return (empty()) ? DBL_MAX : hdr_cmn::access(bin_[0].q_->head())->timestamp(); }
-    virtual bool empty() const override { return (bin_[0].q_->byteLength()==0); }
+    virtual bool empty() const override;
 
   protected:
     // Stuff specific to the CoDel algorithm
