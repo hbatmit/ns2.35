@@ -19,23 +19,34 @@ if [info exists env(nshome)] {
 }
 set env(PATH) "$nshome/bin:$env(PATH)"
 
-# Clean up procedures
-proc finish {} {
-  global opt stats on_off_server web_logging_client num_users rate_generator trace_file ns
-  for {set i 0} {$i < $num_users} {incr i} {
-    # Get link capacity over entire trace
-    set user_capacity [expr [$rate_generator get_capacity $i] / 1000000]
-    puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
-    set sapp $on_off_server($i)
+# generate stats
+proc gen_stats {app_server logging_client user_capacity} {
+    set sapp $app_server
     $sapp dumpstats
-    set rcdbytes [$web_logging_client($i) set nbytes_]
-    set rcd_nrtt [$web_logging_client($i) set nrtt_]
+    set rcdbytes [$logging_client set nbytes_]
+    set rcd_nrtt [$logging_client set nrtt_]
     if { $rcd_nrtt > 0 } {
-        set rcd_avgrtt [expr 1000.0*[$web_logging_client($i) set cumrtt_] / $rcd_nrtt ]
+        set rcd_avgrtt [expr 1000.0*[$logging_client set cumrtt_] / $rcd_nrtt ]
     } else {
         set rcd_avgrtt 0.0
     }
     [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt $user_capacity 
+}
+
+# Clean up procedures
+proc finish {} {
+  global opt stats on_off_server web_logging_client download_server bt_logging_client num_users rate_generator trace_file ns
+  for {set i 0} {$i < $num_users} {incr i} {
+    # Get link capacity over entire trace
+    set user_capacity [expr [$rate_generator get_capacity $i] / 1000000]
+    puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
+
+    # get web stats
+    gen_stats $on_off_server($i) $web_logging_client($i) $user_capacity
+
+    # get bt stats
+    gen_stats $download_server($i) $bt_logging_client($i) $user_capacity
+
   }
   if { $opt(tracing) == "true" } {
     $ns flush-trace

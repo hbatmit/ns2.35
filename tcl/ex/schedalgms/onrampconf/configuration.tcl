@@ -30,6 +30,7 @@ set opt(offavg) 5.0;              # mean on and off time
 set opt(avgbytes) 16000;          # 16 KBytes flows on avg (too low?)
 set opt(ontype) "time";           # valid options are "time" and "bytes"
 set opt(app) FTP/OnOffSender;     # OnOffSender is our traffic generator
+set opt(btapp) FTP/BulkSender;    # BulkSender is our bulk transfer app
 set opt(spike)  "false";          # TODO Ask Hari what this is
 set opt(verbose) "false";         # Turn on logging?
 set opt(tracing) "false";         # Turn on tracing?
