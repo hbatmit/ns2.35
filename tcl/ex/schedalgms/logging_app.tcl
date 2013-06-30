@@ -4,10 +4,11 @@
 
 Class LoggingApp -superclass Application
 
-LoggingApp instproc init {id} {
-    $self instvar srcid_ nbytes_ cumrtt_ numsamples_
+LoggingApp instproc init {id tcp_sender} {
+    $self instvar srcid_ nbytes_ cumrtt_ numsamples_ tcp_sender_
     global opt
     $self set srcid_ $id
+    $self set tcp_sender_ $tcp_sender
     $self set nbytes_ 0
     $self set cumrtt_ 0.0
     $self set numsamples_ 0
@@ -17,14 +18,13 @@ LoggingApp instproc init {id} {
 
 LoggingApp instproc recv { bytes } {
     # there's one of these objects for each src/dest pair
-    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ nrtt_
-    global ns opt src tp
+    $self instvar nbytes_ srcid_ cumrtt_ numsamples_ nrtt_ tcp_sender_
+    global ns opt
 
     set nbytes_ [expr $nbytes_ + $bytes]
     incr numsamples_
 
-    set tcp_sender [lindex $tp($srcid_) 0]
-    set rtt_ [expr [$tcp_sender set rtt_] * [$tcp_sender set tcpTick_]]
+    set rtt_ [expr [$tcp_sender_ set rtt_] * [$tcp_sender_ set tcpTick_]]
     if {$rtt_ > 0.0} {
         set cumrtt_ [expr $rtt_  + $cumrtt_]
         incr nrtt_

@@ -39,11 +39,10 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   $ns attach-agent $client_node($i) $web_client($i)
 
   # Create LoggingApp clients for logging received bytes
-  set web_logging_client($i) [new LoggingApp $i]; # TODO: Change this in onramp.tcl
+  set web_logging_client($i) [new LoggingApp $i $web_server($i)];
   $web_logging_client($i) attach-agent $web_client($i)
   $ns at 0.0 "$web_logging_client($i) start"
 
   # Connect them to their sources
   $ns connect $web_server($i) $web_client($i)
-  set tp($i) $web_server($i); # TODO: What's this tp here?
 }
