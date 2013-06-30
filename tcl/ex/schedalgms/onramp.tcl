@@ -20,7 +20,7 @@ if [info exists env(nshome)] {
 set env(PATH) "$nshome/bin:$env(PATH)"
 
 # generate stats
-proc gen_stats {app_server logging_client user_capacity} {
+proc gen_stats {app_server logging_client user_capacity tag} {
     set sapp $app_server
     $sapp dumpstats
     set rcdbytes [$logging_client set nbytes_]
@@ -30,7 +30,7 @@ proc gen_stats {app_server logging_client user_capacity} {
     } else {
         set rcd_avgrtt 0.0
     }
-    [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt $user_capacity 
+    [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt $user_capacity $tag 
 }
 
 # Clean up procedures
@@ -42,10 +42,10 @@ proc finish {} {
     puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
 
     # get web stats
-    gen_stats $on_off_server($i) $web_logging_client($i) $user_capacity
+    gen_stats $on_off_server($i) $web_logging_client($i) $user_capacity "web"
 
     # get bt stats
-    gen_stats $download_server($i) $bt_logging_client($i) $user_capacity
+    gen_stats $download_server($i) $bt_logging_client($i) $user_capacity "bt"
 
   }
   if { $opt(tracing) == "true" } {
