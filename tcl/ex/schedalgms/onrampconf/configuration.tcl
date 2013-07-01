@@ -21,6 +21,7 @@ set opt(sub_qdisc)          propfair
 set opt(droptype)           "time"
 set opt(rcvwin)             65536; # receiver advertised window for TCP 
 set opt(percentile)         95;    # control 95th percentile delay
+set opt(iw)                 4;     # initial window of 4 segments
 
 # LoggingApp specific stuff
 set opt(onrand) Exponential

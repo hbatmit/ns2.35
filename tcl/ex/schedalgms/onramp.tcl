@@ -94,7 +94,7 @@ proc setup_tcp_constants {} {
   Agent/TCP set window_     $opt(rcvwin)
   Agent/TCP set segsize_    [expr $opt(pktsize) ]
   Agent/TCP set packetSize_ [expr $opt(pktsize) ]
-  Agent/TCP set windowInit_ 4
+  Agent/TCP set windowInit_ [expr $opt(iw)]
   Agent/TCP set segsperack_ 1
   Agent/TCP set timestamps_ true
   Agent/TCP set interval_ $delack
@@ -102,7 +102,7 @@ proc setup_tcp_constants {} {
   Agent/TCP/FullTcp set window_     $opt(rcvwin)
   Agent/TCP/FullTcp set segsize_    [expr $opt(pktsize)]
   Agent/TCP/FullTcp set packetSize_ [expr $opt(pktsize)]
-  Agent/TCP/FullTcp set windowInit_ 4
+  Agent/TCP/FullTcp set windowInit_ [expr $opt(iw)]
   Agent/TCP/FullTcp set segsperack_ 1
   Agent/TCP/FullTcp set timestamps_ true
   Agent/TCP/FullTcp set interval_   $delack
