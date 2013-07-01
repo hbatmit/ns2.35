@@ -15,7 +15,7 @@ tcp_cc=$6
 offtime=$7
 iw=$8
 
-suffix=link.`echo $link_trace | rev | cut -f 1 -d '/' | rev`.$onewaydelay.nconn$num_srcs.$traffic_type.$onbytes.`echo $tcp_cc | rev | cut -d '/' -f1 | rev`.$offtime
+suffix=link.`echo $link_trace | rev | cut -f 1 -d '/' | rev`.$onewaydelay.nconn$num_srcs.$traffic_type.$onbytes.`echo $tcp_cc | rev | cut -d '/' -f1 | rev`.$offtime.iw$iw
 i=1
 iters=26
 
