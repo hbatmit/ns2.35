@@ -1,5 +1,3 @@
-source bulk_sender.tcl
-
 # TCP bulk transfer(bt) servers
 for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   # Create TCP Agents with congestion control specified in opt(tcp)
@@ -27,7 +25,7 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   $ns attach-agent $basestation $bt_server($i)
 
   # set flow id
-  $bt_server($i) set fid_ $i
+  $bt_server($i) set fid_ 0
 
   # Attach source (such as FTP) to TCP Agent
   set download_server($i) [ $bt_server($i) attach-app $opt(btapp) ]

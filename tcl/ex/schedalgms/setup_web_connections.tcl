@@ -27,7 +27,7 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   $ns attach-agent $basestation $web_server($i)
 
   # set flow id
-  $web_server($i) set fid_ $i
+  $web_server($i) set fid_ 1
 
   # Attach source (such as FTP) to TCP Agent
   set on_off_server($i) [ $web_server($i) attach-app $opt(app) ]
