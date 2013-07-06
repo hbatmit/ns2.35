@@ -35,17 +35,20 @@ proc gen_stats {app_server logging_client user_capacity tag} {
 
 # Clean up procedures
 proc finish {} {
-  global opt stats on_off_server web_logging_client download_server bt_logging_client num_users rate_generator trace_file ns
+  global opt stats download_server bt_logging_client on_off_server web_logging_client video_server stream_logging_client num_users rate_generator trace_file ns
   for {set i 0} {$i < $num_users} {incr i} {
     # Get link capacity over entire trace
     set user_capacity [expr [$rate_generator get_capacity $i] / 1000000]
     puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
 
+    # get bt stats
+    gen_stats $download_server($i) $bt_logging_client($i) $user_capacity "bt"
+
     # get web stats
     gen_stats $on_off_server($i) $web_logging_client($i) $user_capacity "web"
 
-    # get bt stats
-    gen_stats $download_server($i) $bt_logging_client($i) $user_capacity "bt"
+    # gen streaming stats
+    gen_stats $video_server($i) $stream_logging_client($i) $user_capacity "stream"
 
   }
   if { $opt(tracing) == "true" } {
@@ -204,6 +207,9 @@ set counter 0
 
 # DropTail feedback queue, make sure you have sufficient buffering
 Queue set limit_ $opt(maxq)
+
+# sfqCoDel max bins
+Queue/sfqCoDel set maxbins_ 3
 
 # TCP connections
 source setup_onramp_tcp_connections.tcl
