@@ -99,6 +99,11 @@ class sfqCoDelQueue : public EnsembleAwareQueue {
     /* Override functions from Queue */
     virtual bool empty() const override;
 
+    /* QUEUE TYPES, like TOS fields */
+    static const uint32_t QUEUE_BT     = 0;
+    static const uint32_t QUEUE_WEB    = 1;
+    static const uint32_t QUEUE_STREAM = 2;   
+
   protected:
     // Stuff specific to the CoDel algorithm
     void enque(Packet* pkt);
@@ -136,7 +141,7 @@ int mtu_max_;
 
   private:
     double control_law(double);
-    dodequeResult dodeque(PacketQueue*);
+    dodequeResult dodeque(PacketQueue*, double bin_target);
     unsigned int hash(Packet*);
     bindesc* readybin();
     bindesc* removebin(bindesc*);

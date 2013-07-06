@@ -279,8 +279,7 @@ static inline u_int32_t jhash_3words( u_int32_t a, u_int32_t b, u_int32_t c, u_i
 unsigned int sfqCoDelQueue::hash(Packet* pkt)
 {
   hdr_ip* iph = hdr_ip::access(pkt);
-  return jhash_3words(iph->daddr(), iph->saddr(),
-                      (iph->dport() << 16) | iph->sport(), 0);
+  return iph->flowid();
 }
 
 // return the time of the next drop relative to 't'
@@ -291,7 +290,7 @@ double sfqCoDelQueue::control_law(double t)
 
 // Internal routine to dequeue a packet. All the delay and min tracking
 // is done here to make sure it's done consistently on every dequeue.
-dodequeResult sfqCoDelQueue::dodeque(PacketQueue* q)
+dodequeResult sfqCoDelQueue::dodeque(PacketQueue* q, double target)
 {
     double now = Scheduler::instance().clock();
     dodequeResult r = { NULL, 0 };
@@ -335,7 +334,7 @@ dodequeResult sfqCoDelQueue::dodeque(PacketQueue* q)
 	// Note that we use the overall value of curq_, across all bins
 	// Add a test for this queue being empty though
 
-        if (d_exp_ < target_ || curq_ <= maxpacket_ || q->length() == 0) {
+        if (d_exp_ < target || curq_ <= maxpacket_ || q->length() == 0) {
             // went below - stay below for at least interval
             first_above_time_ = 0;
         } else {
@@ -425,13 +424,23 @@ Packet* sfqCoDelQueue::deque()
    //have to check all bins until find a packet (or there are none)
     if( (b = readybin()) == NULL) return NULL;
 
+    double bin_target = target_;
+    if (b->index == QUEUE_BT) {
+      bin_target = 1000.0; // Huge target
+    } else if (b->index == QUEUE_WEB) {
+      bin_target = 1000.0;
+    } else {
+      bin_target = target_;
+      assert(b->index  == QUEUE_STREAM);
+    }
+    
     //set up to use the same dodeque() as regular CoDel
     b->newflag = 0;
     first_above_time_ = b->first_above_time_;
     drop_next_ = b->drop_next_;
     count_ = b->count_;
     dropping_ = b->dropping_;
-    r = dodeque( b->q_ );
+    r = dodeque( b->q_, bin_target );
     b->newflag = 0;
 
     //There has to be a packet because readybin() returned a bin
@@ -450,7 +459,7 @@ Packet* sfqCoDelQueue::deque()
         // ‘while’ loop.
         while (now >= drop_next_ && dropping_) {
             drop(r.p);
-            r = dodeque(b->q_);
+            r = dodeque(b->q_, bin_target);
 
 	    //if drop emptied queue, it gets to be new on next arrival
 	    // and want to move on to next bin to find a packet to send
@@ -475,7 +484,7 @@ Packet* sfqCoDelQueue::deque()
     // sojourn time has been above target for interval so enter dropping state.
     } else if (r.ok_to_drop) {
         drop(r.p);
-        r = dodeque(b->q_);
+        r = dodeque(b->q_, bin_target);
         dropping_ = 1;
 
 	//if drop emptied bin's queue, it gets to be new on next arrival
