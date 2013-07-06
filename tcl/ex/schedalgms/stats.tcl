@@ -73,6 +73,17 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity tag} {
     } else {
       set fct 0.0
     }
+    if {$tag == "web" } {
+      set util_s [expr log (1000000.0) - expr log($fct)]
+    } elseif {$tag == "bt" } {
+      set util_s [expr log(1000000.0) + log($throughput)]
+    } elseif {$tag == "stream"} {
+      set util_s [expr log(1000000.0) + log($throughput) - log($avgrtt) - log($user_capacity) ]
+    } else {
+      puts "Invalid tag"
+      exit 5
+    }
+
     set on_perc [expr 100.0*$ontime_ / $opt(simtime)]
 
     puts [format "%s conn: %d rbytes: %d rMbps: %.3f fctMs: %.0f abytes: %d aMbps: %.3f sndrttMs %.1f rcdrttMs %.1f s_util: %.2f r_util: %.2f onperc: %.1f utilization: %.2f rtt95th %.1f" $tag $srcid_ $rcd_bytes $rcdtput $fct $numbytes_ $throughput $avgrtt $rcd_avgrtt $util_s $util_r $on_perc [expr 100 * $throughput / $user_capacity] $rtt95th]
