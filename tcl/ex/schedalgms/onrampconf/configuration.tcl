@@ -23,6 +23,11 @@ set opt(rcvwin)             65536; # receiver advertised window for TCP
 set opt(percentile)         95;    # control 95th percentile delay
 set opt(iw)                 4;     # initial window of 4 segments
 
+# Traffic sources
+set opt(enable_web)         "true"
+set opt(enable_bulk)        "true"
+set opt(enable_stream)      "true"
+
 # LoggingApp specific stuff
 set opt(onrand) Exponential
 set opt(offrand) Exponential

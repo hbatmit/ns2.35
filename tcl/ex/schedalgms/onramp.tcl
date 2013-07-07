@@ -42,13 +42,19 @@ proc finish {} {
     puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
 
     # get bt stats
-    gen_stats $download_server($i) $bt_logging_client($i) $user_capacity "bt"
+    if { $opt(enable_bulk) == "true" } {
+      gen_stats $download_server($i) $bt_logging_client($i) $user_capacity "bt"
+    }
 
     # get web stats
-    gen_stats $on_off_server($i) $web_logging_client($i) $user_capacity "web"
+    if { $opt(enable_web) == "true" } {
+      gen_stats $on_off_server($i) $web_logging_client($i) $user_capacity "web"
+    }
 
     # gen streaming stats
-    gen_stats $video_server($i) $stream_logging_client($i) $user_capacity "stream"
+    if { $opt(enable_stream) == "true" } {
+      gen_stats $video_server($i) $stream_logging_client($i) $user_capacity "stream"
+    }
 
   }
   if { $opt(tracing) == "true" } {
