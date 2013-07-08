@@ -35,10 +35,10 @@ proc gen_stats {app_server logging_client user_capacity tag} {
 
 # Clean up procedures
 proc finish {} {
-  global opt stats download_server bt_logging_client on_off_server web_logging_client video_server stream_logging_client num_users rate_generator trace_file ns
+  global opt stats download_server bt_logging_client on_off_server web_logging_client video_server stream_logging_client num_users dl_rate_generator trace_file ns
   for {set i 0} {$i < $num_users} {incr i} {
     # Get link capacity over entire trace
-    set user_capacity [expr [$rate_generator get_capacity $i] / 1000000]
+    set user_capacity [expr [$dl_rate_generator get_capacity $i] / 1000000]
     puts [format "User %d, capacity %.3f mbps" $i $user_capacity]
 
     # get bt stats
@@ -148,17 +148,17 @@ proc setup_sfd {queue scheduler} {
 }
 
 # Link creation
-proc create_link {ns latency sender receiver qdisc user_id rate_generator ensemble_scheduler} {
-  set bw [$rate_generator get_initial_rate $user_id]
-  puts "Initial bandwidth for user $user_id is $bw"
+proc create_link {ns latency sender receiver qdisc user_id dl_rate_generator ensemble_scheduler} {
+  set dl_bw [$dl_rate_generator get_initial_rate $user_id]
+  puts "Initial bandwidth for user $user_id is $dl_bw"
   global opt
   puts "dth $opt(dth)"
   if { $qdisc == "SFD" } {
     set q_args [list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) $opt(dth) $opt(percentile) $ensemble_scheduler ]
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
+    $ns simplex-link $sender $receiver [ bw_parse $dl_bw ]  $latency $qdisc $q_args
   } else {
     set q_args [list $ensemble_scheduler ]
-    $ns simplex-link $sender $receiver [ bw_parse $bw ]  $latency $qdisc $q_args
+    $ns simplex-link $sender $receiver [ bw_parse $dl_bw ]  $latency $qdisc $q_args
   }
   $ns simplex-link $receiver $sender [ bw_parse $opt(ack_bw) ]  $latency DropTail
 }
@@ -203,8 +203,8 @@ if { $opt(sched) == "pf" } {
 }
 
 # Create rate generator
-set rate_generator [ new EnsembleRateGenerator $opt(link) $opt(simtime) ]; 
-set users_in_trace [ $rate_generator get_users_ ]
+set dl_rate_generator [ new EnsembleRateGenerator $opt(link) $opt(simtime) ]; 
+set users_in_trace [ $dl_rate_generator get_users_ ]
 puts stderr "Num users is $num_users, users_in_trace $users_in_trace users "
 assert [expr $num_users == $users_in_trace]
 
@@ -224,7 +224,7 @@ source setup_onramp_tcp_connections.tcl
 $ns at 0.0 "$ensemble_scheduler activate-link-scheduler"
 
 # Activate rate_generator
-$rate_generator activate-rate-generator
+$dl_rate_generator activate-rate-generator
 
 # Run simulation
 $ns at $opt(simtime) "finish"

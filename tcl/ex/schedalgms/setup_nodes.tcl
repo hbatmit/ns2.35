@@ -4,7 +4,7 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   set client_node($i) [ $ns node ]
 
   # Create forward and reverse links from basestation to mobile user
-  create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $rate_generator $ensemble_scheduler
+  create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $dl_rate_generator $ensemble_scheduler
 
   # Get handles to link and queue from basestation to user
   set cell_link [ [ $ns link $basestation $client_node($i) ] link ]
@@ -30,5 +30,5 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   attach_to_scheduler $ensemble_scheduler $i $cell_queue $cell_link
 
   # Attach link to rate generator
-  $rate_generator attach-link $cell_link $i
+  $dl_rate_generator attach-link $cell_link $i
 }
