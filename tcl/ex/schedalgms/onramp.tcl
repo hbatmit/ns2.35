@@ -148,7 +148,7 @@ proc setup_sfd {queue scheduler} {
 }
 
 # Link creation
-proc create_link {ns latency sender receiver qdisc user_id dl_rate_generator ul_rate_generator ensemble_dl_sched} {
+proc create_link {ns latency sender receiver qdisc user_id dl_rate_generator ul_rate_generator ensemble_dl_sched ensemble_ul_sched} {
   set dl_bw [$dl_rate_generator get_initial_rate $user_id]
   set ul_bw [$ul_rate_generator get_initial_rate $user_id]
   puts "Initial downlink bandwidth for user $user_id is $dl_bw"
@@ -162,7 +162,8 @@ proc create_link {ns latency sender receiver qdisc user_id dl_rate_generator ul_
     set q_args [list $ensemble_dl_sched ]
     $ns simplex-link $sender $receiver [ bw_parse $dl_bw ]  $latency $qdisc $q_args
   }
-  $ns simplex-link $receiver $sender [ bw_parse $ul_bw ]  $latency DropTail; #TODO: Should this be DropTail or something else?
+  set q_args_ul [list $ensemble_ul_sched]
+  $ns simplex-link $receiver $sender [ bw_parse $ul_bw ]  $latency DropTail $q_args_ul
 }
 
 # DRIVER PROGRAM STARTS HERE

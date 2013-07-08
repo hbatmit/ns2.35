@@ -34,7 +34,7 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   set client_node($i) [ $ns node ]
 
   # Create forward and reverse links from basestation to mobile user
-  create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $dl_rate_generator $ul_rate_generator $ensemble_dl_sched
+  create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $dl_rate_generator $ul_rate_generator $ensemble_dl_sched $ensemble_ul_sched
 
   ############ Setup things on the downlink ###########
   link_setup $basestation $client_node($i) $dl_rate_generator $ensemble_dl_sched $i
