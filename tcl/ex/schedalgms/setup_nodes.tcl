@@ -1,14 +1,9 @@
-# Setup nodes
-for { set i 0 } { $i < $opt(nsrc) } { incr i } {
-  # Create node corresponding to mobile user
-  set client_node($i) [ $ns node ]
-
-  # Create forward and reverse links from basestation to mobile user
-  create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $dl_rate_generator $ensemble_scheduler
+proc link_setup {origin dst rate_gen ensemble_sched index} {
+  global ns opt
 
   # Get handles to link and queue from basestation to user
-  set cell_link [ [ $ns link $basestation $client_node($i) ] link ]
-  set cell_queue [ [ $ns link $basestation $client_node($i) ] queue ]
+  set cell_link  [ [ $ns link $origin $dst ] link ]
+  set cell_queue [ [ $ns link $origin $dst ] queue ]
 
   # All the non-standard queue neutering:
   neuter_queue $cell_queue
@@ -23,12 +18,27 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
 
   # Set user_id and other stuff for SFD
   if { $opt(gw) == "SFD" } {
-    setup_sfd $cell_queue $ensemble_scheduler
+    setup_sfd $cell_queue $ensemble_sched
   }
 
   # Attach queue and link to ensemble_scheduler
-  attach_to_scheduler $ensemble_scheduler $i $cell_queue $cell_link
+  attach_to_scheduler $ensemble_sched $index $cell_queue $cell_link
 
   # Attach link to rate generator
-  $dl_rate_generator attach-link $cell_link $i
+  $rate_gen attach-link $cell_link $index
+}
+
+# Setup nodes
+for { set i 0 } { $i < $opt(nsrc) } { incr i } {
+  # Create node corresponding to mobile user
+  set client_node($i) [ $ns node ]
+
+  # Create forward and reverse links from basestation to mobile user
+  create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $dl_rate_generator $ul_rate_generator $ensemble_dl_sched
+
+  ############ Setup things on the downlink ###########
+  link_setup $basestation $client_node($i) $dl_rate_generator $ensemble_dl_sched $i
+
+  ############# Setup things on the uplink ###############
+  link_setup $client_node($i) $basestation $ul_rate_generator $ensemble_ul_sched $i
 }

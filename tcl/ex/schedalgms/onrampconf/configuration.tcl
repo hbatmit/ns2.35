@@ -11,7 +11,8 @@ set opt(headroom)           0.00
 set opt(cdma_slot)          0.00167
 set opt(sched)              pf
 set opt(cdma_ewma)          100
-set opt(link)               link.trace
+set opt(downlink)           link.trace
+set opt(uplink)             link.trace
 set opt(tcp)                TCP/Sack1
 set opt(sink)               TCPSink/Sack1
 set opt(maxq)               1000; # maximum queue size in packets

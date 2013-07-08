@@ -148,19 +148,21 @@ proc setup_sfd {queue scheduler} {
 }
 
 # Link creation
-proc create_link {ns latency sender receiver qdisc user_id dl_rate_generator ensemble_scheduler} {
+proc create_link {ns latency sender receiver qdisc user_id dl_rate_generator ul_rate_generator ensemble_dl_sched} {
   set dl_bw [$dl_rate_generator get_initial_rate $user_id]
-  puts "Initial bandwidth for user $user_id is $dl_bw"
+  set ul_bw [$ul_rate_generator get_initial_rate $user_id]
+  puts "Initial downlink bandwidth for user $user_id is $dl_bw"
+  puts "Initial uplink bandwidth for user $user_id is $ul_bw"
   global opt
   puts "dth $opt(dth)"
   if { $qdisc == "SFD" } {
-    set q_args [list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) $opt(dth) $opt(percentile) $ensemble_scheduler ]
+    set q_args [list $opt(onramp_K) $opt(headroom) $opt(iter) $user_id $opt(droptype) $opt(dth) $opt(percentile) $ensemble_dl_sched ]
     $ns simplex-link $sender $receiver [ bw_parse $dl_bw ]  $latency $qdisc $q_args
   } else {
-    set q_args [list $ensemble_scheduler ]
+    set q_args [list $ensemble_dl_sched ]
     $ns simplex-link $sender $receiver [ bw_parse $dl_bw ]  $latency $qdisc $q_args
   }
-  $ns simplex-link $receiver $sender [ bw_parse $opt(ack_bw) ]  $latency DropTail
+  $ns simplex-link $receiver $sender [ bw_parse $ul_bw ]  $latency DropTail; #TODO: Should this be DropTail or something else?
 }
 
 # DRIVER PROGRAM STARTS HERE
@@ -197,14 +199,22 @@ set num_users $opt(nsrc)
 
 # Pick appropriate ensemble_scheduler
 if { $opt(sched) == "pf" } {
-  set ensemble_scheduler [ new PFScheduler $opt(onramp_K) $num_users 0.0 $opt(cdma_slot) $opt(cdma_ewma) $opt(alpha) $opt(sub_qdisc) ]
+  set ensemble_dl_sched [ new PFScheduler $opt(onramp_K) $num_users 0.0 $opt(cdma_slot) $opt(cdma_ewma) $opt(alpha) $opt(sub_qdisc) ]
+  set ensemble_ul_sched [ new PFScheduler $opt(onramp_K) $num_users 0.0 $opt(cdma_slot) $opt(cdma_ewma) $opt(alpha) $opt(sub_qdisc) ]
 } elseif { $opt(sched) == "fcfs" } {
-  set ensemble_scheduler [ new FcfsScheduler $opt(onramp_K) $num_users 0.0 ]
+  set ensemble_dl_sched [ new FcfsScheduler $opt(onramp_K) $num_users 0.0 ]
+  set ensemble_ul_sched [ new FcfsScheduler $opt(onramp_K) $num_users 0.0 ]
 }
 
-# Create rate generator
-set dl_rate_generator [ new EnsembleRateGenerator $opt(link) $opt(simtime) ]; 
+# Create downlink rate generator
+set dl_rate_generator [ new EnsembleRateGenerator $opt(downlink) $opt(simtime) ];
 set users_in_trace [ $dl_rate_generator get_users_ ]
+puts stderr "Num users is $num_users, users_in_trace $users_in_trace users "
+assert [expr $num_users == $users_in_trace]
+
+# Create uplink rate generator
+set ul_rate_generator [ new EnsembleRateGenerator $opt(uplink) $opt(simtime) ];
+set users_in_trace [ $ul_rate_generator get_users_ ]
 puts stderr "Num users is $num_users, users_in_trace $users_in_trace users "
 assert [expr $num_users == $users_in_trace]
 
@@ -221,10 +231,12 @@ Queue/sfqCoDel set maxbins_ $opt(num_classes)
 source setup_onramp_tcp_connections.tcl
 
 # Activate scheduler
-$ns at 0.0 "$ensemble_scheduler activate-link-scheduler"
+$ns at 0.0 "$ensemble_dl_sched activate-link-scheduler"
+$ns at 0.0 "$ensemble_ul_sched activate-link-scheduler"
 
-# Activate rate_generator
+# Activate rate generators
 $dl_rate_generator activate-rate-generator
+$ul_rate_generator activate-rate-generator
 
 # Run simulation
 $ns at $opt(simtime) "finish"
