@@ -215,7 +215,7 @@ set counter 0
 Queue set limit_ $opt(maxq)
 
 # sfqCoDel max bins
-Queue/sfqCoDel set maxbins_ 3
+Queue/sfqCoDel set maxbins_ $opt(num_classes)
 
 # TCP connections
 source setup_onramp_tcp_connections.tcl

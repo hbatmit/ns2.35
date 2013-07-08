@@ -22,6 +22,7 @@ set opt(droptype)           "time"
 set opt(rcvwin)             65536; # receiver advertised window for TCP 
 set opt(percentile)         95;    # control 95th percentile delay
 set opt(iw)                 4;     # initial window of 4 segments
+set opt(num_classes)        3;     # Number of traffic classes for Class Based Fair Queuing
 
 # Traffic sources
 set opt(enable_bulk)        "true"
