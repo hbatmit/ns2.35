@@ -119,6 +119,9 @@ class sfqCoDelQueue : public EnsembleAwareQueue {
 
     // Static state (user supplied parameters)
     double target_;         // target queue size (in time, same units as clock)
+    double bt_target_;      // target for bulk transfer queue
+    double web_target_;     // target for web queue
+
     double interval_;       // width of moving time window over which to compute min
 
     int maxpacket_;         // largest packet we've seen so far (this should be

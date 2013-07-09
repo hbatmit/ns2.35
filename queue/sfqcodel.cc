@@ -88,6 +88,9 @@ sfqCoDelQueue::sfqCoDelQueue(EnsembleScheduler* scheduler)
     bind("maxbins_", &maxbins_);    // tcl settable max number of bins
     bind("quantum_", &quantum_);    // tcl settable quantum value for byte rounding
 					// if zero, rounds by packets
+    bind("bt_target_", &bt_target_);    // Bulk transfer queue target
+    bind("web_target_", &web_target_);  // Web queue target
+
    if (maxbins_ > MAXBINS)  {
         printf("sfqCoDel: maxbins_ of %d exceeds upper bound of %d", maxbins_, MAXBINS);
 	exit(0);
@@ -426,9 +429,9 @@ Packet* sfqCoDelQueue::deque()
 
     double bin_target = target_;
     if (b->index == QUEUE_BT) {
-      bin_target = 1000.0; // Huge target
+      bin_target = bt_target_; // Huge target
     } else if (b->index == QUEUE_WEB) {
-      bin_target = 1000.0;
+      bin_target = web_target_;
     } else {
       bin_target = target_;
       assert(b->index  == QUEUE_STREAM);

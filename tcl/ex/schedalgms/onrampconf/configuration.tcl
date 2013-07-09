@@ -50,3 +50,8 @@ set opt(flowoffset) 40;           # flow offset
 # Accounting for the number of sent and received bytes correctly
 set opt(hdrsize) 50
 set opt(pktsize) 1450
+
+# CoDel parameters
+set opt(codel_target) 0.005;      # CoDel default target value of 5 ms
+set opt(bt_target)    0.005;      # CoDel bulk transfer target of 5 ms
+set opt(web_target)   0.005;      # CoDel web transfer target of 5 ms

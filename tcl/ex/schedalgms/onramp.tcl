@@ -225,8 +225,11 @@ set counter 0
 # DropTail feedback queue, make sure you have sufficient buffering
 Queue set limit_ $opt(maxq)
 
-# sfqCoDel max bins
-Queue/sfqCoDel set maxbins_ $opt(num_classes)
+# sfqCoDel max bins, and targets
+Queue/sfqCoDel set maxbins_    $opt(num_classes)
+Queue/sfqCoDel set target_     $opt(codel_target)
+Queue/sfqCoDel set bt_target_  $opt(bt_target)
+Queue/sfqCoDel set web_target_ $opt(web_target)
 
 # TCP connections
 source setup_onramp_tcp_connections.tcl
