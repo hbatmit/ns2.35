@@ -3,6 +3,7 @@ if [ $# -lt 5 ] ; then
   echo "Enter parent trace file, bin size in ms, number of users, duration in seconds, and name of output file"
   exit 5
 fi
+rm /tmp/cellular.*
 
 parent=$1
 bin=$2
