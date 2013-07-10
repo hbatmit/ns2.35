@@ -37,7 +37,7 @@ set -x
 while [ $i -lt $iters ]; do
   echo $i
 #  ../../../ns onramp.tcl -gw SFD      -nsrc $num_srcs -simtime 100 -sched pf -link $link_trace -delay $onewaydelay -ontype $traffic_type -avgbytes $onbytes -iter $i -offavg $offtime -tcp $tcp_cc -cdma_slot 0.00167 -onramp_K $time_constant -droptype time -iw $iw 2> /dev/null | grep sndrttMs > $outdir/onramp.$suffix-iter$i &
-  ../../../ns onramp.tcl -gw sfqCoDel -nsrc $num_srcs -simtime 100 -sched pf -downlink $downlink_trace -uplink $uplink_trace -delay $onewaydelay -ontype $traffic_type -avgbytes $onbytes -iter $i -offavg $offtime -tcp $tcp_cc -cdma_slot 0.00167 -iw $iw -enable_bulk $enable_bulk -enable_web $enable_web -enable_stream $enable_stream -maxq $maxq -num_classes $num_classes -bt_target $bt_target -web_target $web_target 2> /dev/null | grep sndrttMs > $outdir/sfqCoDel.$suffix-iter$i &
+  ../../../ns onramp.tcl -gw sfqCoDel -nsrc $num_srcs -simtime 100 -sched pf -downlink $downlink_trace -uplink $uplink_trace -delay $onewaydelay -ontype $traffic_type -avgbytes $onbytes -iter $i -offavg $offtime -tcp $tcp_cc -cdma_slot 0.00167 -iw $iw -enable_bulk $enable_bulk -enable_web $enable_web -enable_stream $enable_stream -maxq $maxq -num_classes $num_classes -bt_target $bt_target -web_target $web_target -verbose true 2> /dev/null > $outdir/sfqCoDel.$suffix-iter$i &
 #  ../../../ns onramp.tcl -gw DropTail -nsrc $num_srcs -simtime 100 -sched pf -link $link_trace -delay $onewaydelay -ontype $traffic_type -avgbytes $onbytes -iter $i -offavg $offtime  -tcp $tcp_cc -cdma_slot 0.00167 -maxq 1000000 -iw $iw 2> /dev/null | grep sndrttMs > $outdir/DropTail.$suffix-iter$i &
   i=`expr $i '+' 1`
 done
