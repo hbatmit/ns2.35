@@ -23,7 +23,7 @@ num_classes=${14}
 bt_target=${15}
 web_target=${16}
 
-suffix=link.dl`echo $downlink_trace | rev | cut -f 1 -d '/' | rev`.ul`echo $uplink_trace | rev | cut -f 1 -d '/' | rev`.$onewaydelay.nconn$num_srcs.$traffic_type.$onbytes.`echo $tcp_cc | rev | cut -d '/' -f1 | rev`.$offtime.iw$iw.bulk$enable_bulk.web$enable_web.stream$enable_stream.maxq$maxq.num_classes$num_classes
+suffix=link.dl`echo $downlink_trace | rev | cut -f 1 -d '/' | rev`.ul`echo $uplink_trace | rev | cut -f 1 -d '/' | rev`.$onewaydelay.nconn$num_srcs.$traffic_type.$onbytes.`echo $tcp_cc | rev | cut -d '/' -f1 | rev`.$offtime.iw$iw.bulk$enable_bulk.web$enable_web.stream$enable_stream.maxq$maxq.num_classes$num_classes.bt_target$bt_target.web_target$web_target
 i=1
 iters=76
 
