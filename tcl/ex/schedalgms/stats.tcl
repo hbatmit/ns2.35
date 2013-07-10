@@ -13,12 +13,12 @@ Stats instproc init { id } {
 }
 
 # Called when a flow ends
-Stats instproc update_flowstats { newpkts newtime } {
+Stats instproc update_flowstats {tag newpkts newtime } {
     global opt
     $self instvar srcid_ npkts_ numbytes_ ontime_ throughput_ nflows_
 
     if { $opt(verbose) == "true" } {
-        puts "conn $srcid_ updating pkts $newpkts time $newtime"
+        puts "conn $tag $srcid_ updating pkts $newpkts time $newtime"
     }
     set npkts_ [expr $npkts_ + $newpkts]
     set numbytes_ [expr $numbytes_ + ($opt(hdrsize) + $opt(pktsize))*$newpkts]
@@ -26,7 +26,7 @@ Stats instproc update_flowstats { newpkts newtime } {
     incr nflows_
 
     if { $opt(verbose) == "true" } {
-        puts "updating ontime to $ontime_"
+        puts "$tag updating ontime to $ontime_"
     }
 }
 

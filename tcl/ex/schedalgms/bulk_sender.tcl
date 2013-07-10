@@ -72,6 +72,6 @@ Application/FTP/BulkSender instproc dumpstats {} {
 
     set rem_pkts [expr $lastack_ - [$stats_ set npkts_]]
     if { $rem_pkts > 0 } {
-      $stats_ update_flowstats $rem_pkts [$ns now]
+      $stats_ update_flowstats "bt" $rem_pkts [$ns now]
     }
 }

@@ -137,7 +137,7 @@ Application/FTP/OnOffSender instproc timeout {} {
         if { $npkts_ < 0 } {
             set npkts_ 0
         }
-        $stats_ update_flowstats $npkts_ [expr [$ns now] - $laststart_]
+        $stats_ update_flowstats "web" $npkts_ [expr [$ns now] - $laststart_]
         set npkts_ 0; # important to set to 0 here for correct stat calc
         if { $opt(ontype) == "time" } {
             [$self agent] advance 0; # causes TCP to pause
@@ -164,12 +164,12 @@ Application/FTP/OnOffSender instproc dumpstats {} {
         set acked [expr $npkts_ - ($sentinel_ - $lastack_)]
         #    puts "dumpstats $id_: $npkts_ $sentinel_ $lastack_ $acked"
         if { $acked > 0 } {
-            $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
+            $stats_ update_flowstats "web" $acked [expr [$ns now] - $laststart_]
         }
     }  else {
         set rem_pkts [expr $lastack_ - [$stats_ set npkts_]]
         if { $rem_pkts > 0 } {
-            $stats_ update_flowstats $rem_pkts [expr [$ns now] - $laststart_]
+            $stats_ update_flowstats "web" $rem_pkts [expr [$ns now] - $laststart_]
         }
     }
 }
