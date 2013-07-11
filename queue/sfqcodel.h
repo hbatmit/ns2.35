@@ -98,6 +98,7 @@ class sfqCoDelQueue : public EnsembleAwareQueue {
 
     /* Override functions from Queue */
     virtual bool empty() const override;
+    virtual double get_hol() const override;
 
     /* QUEUE TYPES, like TOS fields */
     static const uint32_t QUEUE_BT     = 0;

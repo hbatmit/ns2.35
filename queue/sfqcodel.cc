@@ -599,3 +599,17 @@ bool sfqCoDelQueue::empty() const {
   }
   return true;
 }
+
+double sfqCoDelQueue::get_hol() const {
+  if (empty()) {
+    return DBL_MAX;
+  } else {
+    double min_timestamp = DBL_MAX;
+    for (int i=0; i < maxbins_; i++) {
+      if (hdr_cmn::access(bin_[i].q_->head())->timestamp() < min_timestamp) {
+        min_timestamp = hdr_cmn::access(bin_[i].q_->head())->timestamp();
+      }
+    }
+    return min_timestamp;
+  }
+}
