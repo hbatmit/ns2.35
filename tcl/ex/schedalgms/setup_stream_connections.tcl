@@ -30,7 +30,6 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   # Attach source (such as FTP) to TCP Agent
   set video_server($i) [ $stream_server($i) attach-app $opt(btapp) ]
   $video_server($i) setup_and_start $i $stream_server($i)
-  puts $video_server($i)
 }
 
 # TCP bulk transfer clients
