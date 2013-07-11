@@ -1,4 +1,4 @@
-proc link_setup {origin dst rate_gen ensemble_sched index} {
+proc link_setup {origin dst rate_gen ensemble_sched index setup_sfd} {
   global ns opt
 
   # Get handles to link and queue from basestation to user
@@ -17,7 +17,7 @@ proc link_setup {origin dst rate_gen ensemble_sched index} {
   }
 
   # Set user_id and other stuff for SFD
-  if { $opt(gw) == "SFD" } {
+  if { $setup_sfd } {
     setup_sfd $cell_queue $ensemble_sched
   }
 
@@ -37,8 +37,8 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $dl_rate_generator $ul_rate_generator $ensemble_dl_sched $ensemble_ul_sched
 
   ############ Setup things on the downlink ###########
-  link_setup $basestation $client_node($i) $dl_rate_generator $ensemble_dl_sched $i
+  link_setup $basestation $client_node($i) $dl_rate_generator $ensemble_dl_sched $i [string equal opt(gw) "SFD"]
 
   ############# Setup things on the uplink ###############
-  link_setup $client_node($i) $basestation $ul_rate_generator $ensemble_ul_sched $i
+  link_setup $client_node($i) $basestation $ul_rate_generator $ensemble_ul_sched $i 0
 }
