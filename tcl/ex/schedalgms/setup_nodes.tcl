@@ -1,5 +1,5 @@
 proc link_setup {origin dst rate_gen ensemble_sched index setup_sfd} {
-  global ns opt
+  global ns opt trace_file
 
   # Get handles to link and queue from basestation to user
   set cell_link  [ [ $ns link $origin $dst ] link ]
@@ -9,7 +9,7 @@ proc link_setup {origin dst rate_gen ensemble_sched index setup_sfd} {
   neuter_queue $cell_queue
 
   # Trace sfd events if required
-  if { $opt(tracing) == "true" && $opt(gw) == "SFD" } {
+  if { $opt(tracing) == "true" && $setup_sfd } {
     $cell_queue attach $trace_file;
     $cell_queue trace _last_drop_time;
     $cell_queue trace _current_arr_rate;
