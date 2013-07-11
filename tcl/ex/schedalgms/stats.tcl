@@ -76,9 +76,9 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt user_capacity tag} {
     if {$tag == "web" } {
       set util_s [expr log (1000000.0) - log($fct)]
     } elseif {$tag == "bt" } {
-      set util_s [expr log(1000000.0) + log($throughput) - log($user_capacity)]
+      set util_s [expr log(1000000.0) + log($throughput)]
     } elseif {$tag == "stream"} {
-      set util_s [expr log(1000000.0) + log($throughput) - log($avgrtt) - log($user_capacity) ]
+      set util_s [expr log(1000000.0) + log($throughput) - log($avgrtt-$opt(delay))]
     } else {
       puts "Invalid tag"
       exit 5
