@@ -42,8 +42,9 @@ static const char rcsid[] =
 static class DropTailClass : public TclClass {
  public:
 	DropTailClass() : TclClass("Queue/DropTail") {}
-	TclObject* create(int, const char*const*) {
-		return (new DropTail);
+	TclObject* create(int argc, const char*const* argv) {
+         EnsembleScheduler* scheduler = static_cast<EnsembleScheduler*>(TclObject::lookup(argv[4]));
+	 return (new DropTail(scheduler));
 	}
 } class_drop_tail;
 
@@ -76,7 +77,7 @@ DropTail::command(int argc, const char*const* argv)
 			}
 		}
 	}
-	return Queue::command(argc, argv);
+	return EnsembleAwareQueue::command(argc, argv);
 }
 
 /*
@@ -102,6 +103,7 @@ void DropTail::enque(Packet* p)
 	} else {
 		q_->enque(p);
 	}
+        if (_scheduler->busy() == false) _scheduler->reactivate_link();
 }
 
 //AG if queue size changes, we drop excessive packets...

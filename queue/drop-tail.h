@@ -39,15 +39,26 @@
 
 #include <string.h>
 #include "queue.h"
+#include "ensemble-aware-queue.h"
 #include "config.h"
 #include <float.h>
 
 /*
  * A bounded, drop-tail queue
  */
-class DropTail : public Queue {
+class DropTail : public EnsembleAwareQueue {
   public:
-	DropTail() { 
+        DropTail() {
+		q_ = new PacketQueue; 
+		pq_ = q_;
+		bind_bool("drop_front_", &drop_front_);
+		bind_bool("summarystats_", &summarystats);
+		bind_bool("queue_in_bytes_", &qib_);  // boolean: q in bytes?
+		bind("mean_pktsize_", &mean_pktsize_);
+		//		_RENAMED("drop-front_", "drop_front_");
+        }
+	DropTail(EnsembleScheduler* scheduler)
+          : EnsembleAwareQueue(scheduler) { 
 		q_ = new PacketQueue; 
 		pq_ = q_;
 		bind_bool("drop_front_", &drop_front_);
