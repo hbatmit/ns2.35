@@ -10,6 +10,7 @@ proc link_setup {origin dst rate_gen ensemble_sched index setup_sfd} {
 
   # Trace sfd events if required
   if { $opt(tracing) == "true" && $setup_sfd } {
+    puts "Tracing SFD vars"
     $cell_queue attach $trace_file;
     $cell_queue trace _last_drop_time;
     $cell_queue trace _current_arr_rate;
@@ -37,7 +38,7 @@ for { set i 0 } { $i < $opt(nsrc) } { incr i } {
   create_link $ns $opt(delay) $basestation $client_node($i) $opt(gw) $i $dl_rate_generator $ul_rate_generator $ensemble_dl_sched $ensemble_ul_sched
 
   ############ Setup things on the downlink ###########
-  link_setup $basestation $client_node($i) $dl_rate_generator $ensemble_dl_sched $i [string equal opt(gw) "SFD"]
+  link_setup $basestation $client_node($i) $dl_rate_generator $ensemble_dl_sched $i [string equal $opt(gw) "SFD"]
 
   ############# Setup things on the uplink ###############
   link_setup $client_node($i) $basestation $ul_rate_generator $ensemble_ul_sched $i 0
