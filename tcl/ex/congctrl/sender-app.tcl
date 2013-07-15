@@ -42,7 +42,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
     for { set j 1 } {$j < $run} {incr j} {
         $off_rng next-substream
     }
-    set off_ranvar_ [new RandomVariable/$opt(onrand)]
+    set off_ranvar_ [new RandomVariable/$opt(offrand)]
     $off_ranvar_ set avg_ $opt(offavg)
     $off_ranvar_ use-rng $off_rng
 
