@@ -72,9 +72,7 @@ Stats instproc showstats { rcd_bytes rcd_avgrtt } {
     set on_perc [expr 100.0*$ontime_ / $opt(simtime)]
 
     # log RTT samples
-    set tcp_records [split $opt(tcp) "/"]
-    set tcp_len [llength [split $opt(tcp) "/"]]
-    set file_name $opt(gw)[lindex $tcp_records [expr $tcp_len - 1]].log
+    set file_name $opt(rttlog)
     puts $file_name
     set chan [open $file_name a]
     puts $chan $rtt_samples_ 
