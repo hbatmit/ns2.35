@@ -211,12 +211,7 @@ proc create-sources-sinks {} {
             }
             $tcpsrc attach $f
         }
-        if { $i == 0 } {
-          set src($i) [ $tcpsrc attach-app FTP/BulkSender  ]
-        } else {
-          set src($i) [ $tcpsrc attach-app FTP/OnOffSender ]
-        }
-
+        set src($i) [ $tcpsrc attach-app FTP/BulkSender  ]
         assert [expr $i < 2 ]
         $src($i) setup_and_start $i $tcpsrc
         set recvapp($i) [new LoggingApp $i]
