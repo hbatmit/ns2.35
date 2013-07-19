@@ -269,6 +269,7 @@ proc finish {} {
 Agent/TCP set tcpTick_ .0001
 Agent/TCP set timestamps_ true
 set opt(hdrsize) 50
+set opt(flowoffset) 40
 
 source $conffile
 puts "Reading params from $conffile"

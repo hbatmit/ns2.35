@@ -51,7 +51,6 @@ TEST	= test
 RM	= rm -f
 MV      = mv
 PERL	= @PERL@
-PROTOC  = protoc
 
 # for diffusion
 #DIFF_INCLUDES = "./diffusion3/main ./diffusion3/lib ./diffusion3/nr ./diffusion3/ns"
@@ -112,18 +111,6 @@ NSLIB   = @NSLIB@
 NSX	= nsx
 NSE	= nse
 NSTK = nstk
-
-# Protobufs for Remy
-tcp/remy/memory.o: tcp/remy/dna.pb.h
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
-tcp/remy/memoryrange.o: tcp/remy/dna.pb.h
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
-tcp/remy/whisker.o: tcp/remy/dna.pb.h
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
-tcp/remy/whiskertree.o: tcp/remy/dna.pb.h
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
-%.pb.h: %.proto
-	$(PROTOC) --cpp_out=. $<
 
 # To allow conf/makefile.win overwrite this macro
 # We will set these two macros to empty in conf/makefile.win since VC6.0
@@ -424,9 +411,6 @@ all: $(NS) $(BUILD_NSE) $(NSTK) all-recursive Makefile
 
 all-recursive:
 	for i in $(SUBDIRS); do ( cd $$i; $(MAKE) all; ) done
-
-
-
 
 ifeq ($(NSLIB),libns.dll)
 

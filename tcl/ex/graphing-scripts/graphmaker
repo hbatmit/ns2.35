@@ -2,14 +2,40 @@
 
 use strict;
 
-my $suffix = '.byteson250000.off0.simtime100';
-my $dir = '/home/keithw/gradschool/wtcp/doc/sigcomm13/graphs/Ethernet-all';
+my $MIN_RTT = 149.5; # ms
+
+###################################
+#
+# This program generates the throughput-delay plots seen in
+# "TCP ex Machina: Computer-Generated Congestion Control."
+#
+#
+# Example: $ ./graphmaker /home/USERNAME/remy-reproduce/ns-allinone-2.35/ns-2.35/tcl/ex/congctrl/results/
+#
+# will write SVG to /home/USERNAME/remy-reproduce/ns-allinone-2.35/ns-2.35/tcl/ex/congctrl/results/graphdir/graph-8.svg
+# and PNG to /home/keithw/remy-reproduce/ns-allinone-2.35/ns-2.35/tcl/ex/congctrl/results/graphdir/graph-8.png
+#
+# MIN_RTT (above) must be adjusted to the minRTT of the link.
+#
+###################################
+
+unless ( 1 == scalar @ARGV ) {
+  print STDERR "Usage: $0 DIRECTORY\n";
+  exit;
+}
+
+my ($dir) = @ARGV;
 
 my %protos;
 my %nsrcs;
 
-for ( glob "$dir/*$suffix" ) {
-  my ($protocol) = m{\Q$dir\E/(.*?)\.};
+for ( glob "$dir*/*" ) {
+  if ( m{graphdir} ) {
+    die "Found ${dir}graphdir directory from previous run. This needs to be deleted.\n";
+  }
+
+  my ($delta) = m{-rational-delta(.*?)/};
+  my ($protocol) = m{.*/(.*?)\.};
   my ($nsrc) = m{nconn(\d+)};
 
 #  next if ( $protocol =~ m{XCP} );
@@ -22,9 +48,13 @@ for ( glob "$dir/*$suffix" ) {
 #  next if ( $protocol =~ m{TCP-Newreno} );
 #  next if ( $protocol =~ m{TCP-Linux-compound} );
 
+  if ( defined $delta ) {
+    $protocol .= "-$delta";
+  }
+
   $protos{ $nsrc }{ $protocol }{ filename } = $_;
 
-  print STDERR "protocol $protocol\n";
+#  print STDERR "protocol $protocol\n";
 }
 
 sub median {
@@ -41,8 +71,8 @@ sub median {
   return $median;
 }
 
-mkdir( "$dir/graphdir" ) or die "directory exists: $!";
-chdir( "$dir/graphdir" ) or die "can't enter directory: $!";
+mkdir( "$dir/graphdir" ) or die "$dir/graphdir directory already exists: $!";
+chdir( "$dir/graphdir" ) or die "can't enter directory $dir/graphdir: $!";
 
 for my $nsrc ( keys %protos ) {
   my ( $rttmin, $rttmax ) = ( 10000000000, -10000000000 );
@@ -54,7 +84,7 @@ for my $nsrc ( keys %protos ) {
     my $filename = $protos{ $nsrc }{ $protocol }{ filename };
     my ( $rtt_tot, $mbps_tot, $count );
 
-    open DATA, $filename or die "can't open $filename: !";
+    open DATA, $filename or die "can't open $filename: $!";
     open ELLIPSE, "|/home/keithw/gradschool/ns2.35/tcl/ex/graphing-scripts/ellipsemaker > $protocol-$nsrc.ellipse" or die;
     open RAWDATA, ">$protocol-$nsrc.pts" or die;
     my @rtts = ();
@@ -64,7 +94,13 @@ for my $nsrc ( keys %protos ) {
 
       my ( $mbps, $fct, $rtt, $onperc ) = m{rMbps: (.*?) fctMs: (.*?) .*?sndrttMs (.*?) .*?onperc: (.*?)$};
 
-      $rtt -= 148;
+      if ( not defined $rtt ) {
+	die "line did not match pattern: $_";
+      } elsif ( $onperc == 0 ) {
+	die "sender was never on: $_";
+      }
+
+      $rtt -= $MIN_RTT;
       push @rtts, $rtt + 0;
       $rtt = log( $rtt ) / log( 2 );
       print ELLIPSE "$rtt $mbps\n";
@@ -159,6 +195,11 @@ HERE
 
   close GNUPLOT or die;
 
+  print STDERR "Writing SVG to ${dir}graphdir/graph-$nsrc.svg\n";
+
   system( "gnuplot -p graph-$nsrc.gnu" );
+
+  print STDERR "Writing PNG to ${dir}graphdir/graph-$nsrc.png\n";
+
   system( "inkscape --export-png=graph-$nsrc.png -b '#ffffff' -D graph-$nsrc.svg" );
 }

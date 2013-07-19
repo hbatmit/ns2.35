@@ -1,0 +1,27 @@
+#!/usr/bin/perl -w
+
+use strict;
+
+use Cwd;
+
+my $dir = getcwd;
+
+my $whiskerdir = $dir . q{/../../../tcp/remy/rats/new/};
+
+for my $nsrc ( 8 ) { # maximum degree of multiplexing
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p TCP/Newreno -n $nsrc &};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p TCP/Linux/cubic -n $nsrc &};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p TCP/Linux/compound -n $nsrc &};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p TCP/Vegas -n $nsrc &};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p TCP/Reno/XCP -n $nsrc &};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p Cubic/sfqCoDel -n $nsrc &};
+
+    $ENV{ WHISKERS } = $whiskerdir . q{delta0.1.dna};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell-rational-delta0.1  -p TCP/Rational -n $nsrc &};
+
+    $ENV{'WHISKERS'} = $whiskerdir . q{delta1.dna};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell-rational-delta1  -p TCP/Rational -n $nsrc &};
+
+    $ENV{'WHISKERS'} = $whiskerdir . q{delta10.dna};
+    system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell-rational-delta10  -p TCP/Rational -n $nsrc &};
+}
