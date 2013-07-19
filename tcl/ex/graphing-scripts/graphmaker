@@ -100,7 +100,8 @@ for my $nsrc ( keys %protos ) {
       if ( not defined $rtt ) {
 	die "line did not match pattern: $_";
       } elsif ( $onperc == 0 ) {
-	die "sender was never on: $_";
+	print STDERR "WARNING: sender was never on: $_";
+	next;
       }
 
       $rtt -= $MIN_RTT;
