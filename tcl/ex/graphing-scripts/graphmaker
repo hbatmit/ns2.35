@@ -1,6 +1,9 @@
 #!/usr/bin/perl -w
 
 use strict;
+use Cwd;
+
+my $origdir = getcwd;
 
 my $MIN_RTT = 149.5; # ms
 
@@ -10,10 +13,10 @@ my $MIN_RTT = 149.5; # ms
 # "TCP ex Machina: Computer-Generated Congestion Control."
 #
 #
-# Example: $ ./graphmaker /home/USERNAME/remy-reproduce/ns-allinone-2.35/ns-2.35/tcl/ex/congctrl/results/
+# Example: $ ./graphmaker ../congctrl/results/
 #
-# will write SVG to /home/USERNAME/remy-reproduce/ns-allinone-2.35/ns-2.35/tcl/ex/congctrl/results/graphdir/graph-8.svg
-# and PNG to /home/keithw/remy-reproduce/ns-allinone-2.35/ns-2.35/tcl/ex/congctrl/results/graphdir/graph-8.png
+# will write SVG to ../congctrl/results/graphdir/graph-8.svg
+# and PNG to ../congctrl/results/graphdir/graph-8.png
 #
 # MIN_RTT (above) must be adjusted to the minRTT of the link.
 #
@@ -71,7 +74,7 @@ sub median {
   return $median;
 }
 
-mkdir( "$dir/graphdir" ) or die "$dir/graphdir directory already exists: $!";
+mkdir( "$dir/graphdir" ) or die "Found ${dir}graphdir directory from previous run. This needs to be deleted.\n";
 chdir( "$dir/graphdir" ) or die "can't enter directory $dir/graphdir: $!";
 
 for my $nsrc ( keys %protos ) {
@@ -84,8 +87,8 @@ for my $nsrc ( keys %protos ) {
     my $filename = $protos{ $nsrc }{ $protocol }{ filename };
     my ( $rtt_tot, $mbps_tot, $count );
 
-    open DATA, $filename or die "can't open $filename: $!";
-    open ELLIPSE, "|/home/keithw/gradschool/ns2.35/tcl/ex/graphing-scripts/ellipsemaker > $protocol-$nsrc.ellipse" or die;
+    open DATA, $origdir . '/' . $filename or die "can't open $filename: $!";
+    open ELLIPSE, "|$origdir/ellipsemaker > $protocol-$nsrc.ellipse" or die;
     open RAWDATA, ">$protocol-$nsrc.pts" or die;
     my @rtts = ();
     my @mbpss = ();
