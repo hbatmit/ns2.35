@@ -114,6 +114,14 @@ NSE	= nse
 NSTK = nstk
 
 # Protobufs for Remy
+tcp/remy/memory.o: tcp/remy/dna.pb.h
+	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
+tcp/remy/memoryrange.o: tcp/remy/dna.pb.h
+	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
+tcp/remy/whisker.o: tcp/remy/dna.pb.h
+	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
+tcp/remy/whiskertree.o: tcp/remy/dna.pb.h
+	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
 %.pb.h: %.proto
 	$(PROTOC) --cpp_out=. $<
 
@@ -411,7 +419,7 @@ SUBDIRS=\
 
 BUILD_NSE = @build_nse@
 
-all: tcp/remy/dna.pb.h $(NS) $(BUILD_NSE) $(NSTK) all-recursive Makefile
+all: $(NS) $(BUILD_NSE) $(NSTK) all-recursive Makefile
 
 
 all-recursive:
