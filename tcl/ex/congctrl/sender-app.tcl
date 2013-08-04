@@ -75,6 +75,8 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
 	    }
 	}
         set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
+
+        [$self agent] set prio_ $nbytes
         [$self agent] advanceby $npkts_
 #        [$self agent] send $nbytes
         if { $opt(verbose) == "true" } {
