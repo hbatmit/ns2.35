@@ -98,12 +98,19 @@ CXXFLAGS += $(CCOPT) $(DEFINE) -std=gnu++0x
 	@rm -f $@
 #	$(CPP) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
 #	$(CXX) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
-	$(CXX) -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
+	$(CXX) -MD -c $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
+	cp $*.d $*.P;
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	    -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	rm -f $*.d
 
 .c.o:
 	@rm -f $@
-	$(CC) -c $(CFLAGS) $(INCLUDES) -o $@ $*.c
-
+	$(CC) -MD -c $(CFLAGS) $(INCLUDES) -o $@ $*.c
+	cp $*.d $*.P;
+	sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	    -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $*.P; \
+	rm -f $*.d
 
 GEN_DIR	= gen/
 LIB_DIR	= lib/
@@ -396,7 +403,10 @@ SRC =	$(OBJ_C:.o=.c) $(OBJ_CC:.o=.cc) \
 
 OBJ =	$(OBJ_C) $(OBJ_CC) $(OBJ_GEN) $(OBJ_COMPAT)
 
-CLEANFILES = ns nse nsx ns.dyn $(OBJ) $(OBJ_EMULATE_CC) \
+DEP1 = $(SRC:.c=.P)
+DEP = $(DEP1:.cc=.P)
+
+CLEANFILES = ns nse nsx ns.dyn $(OBJ) $(DEP) $(OBJ_EMULATE_CC) \
 	$(OBJ_EMULATE_C) common/tclAppInit.o common/main-monolithic.o \
 	common/tkAppInit.o nstk \
 	$(GEN_DIR)* $(NS).core core core.$(NS) core.$(NSX) core.$(NSE) \
@@ -413,6 +423,7 @@ BUILD_NSE = @build_nse@
 
 all: tcp/remy/dna.pb.h $(NS) $(BUILD_NSE) $(NSTK) all-recursive Makefile
 
+-include $(DEP)
 
 all-recursive:
 	for i in $(SUBDIRS); do ( cd $$i; $(MAKE) all; ) done
@@ -608,9 +619,6 @@ tcl/lib/TAGS:	force
 		etags --lang=none -r '/^[ \t]*proc[ \t]+\([^ \t]+\)/\1/' `cat .tcl_files`; \
 		etags --append --lang=none -r '/^\([A-Z][^ \t]+\)[ \t]+\(instproc\|proc\)[ \t]+\([^ \t]+\)[ \t]+/\1::\3/' `cat .tcl_files`; \
 	)
-
-depend: $(SRC)
-	$(MKDEP) $(CFLAGS) $(INCLUDES) $(SRC) 2>&1 > /dev/null
 
 srctar:
 	@cwd=`pwd` ; dir=`basename $$cwd` ; \
