@@ -55,6 +55,6 @@ uint64_t Srpt::srpt() {
   auto flow_compare = [&] (const FlowQ & q1, const FlowQ &q2 )
                        { if (q1.second->length() == 0) return false;
                          else if(q2.second->length() == 0) return true;
-                         else return hdr_ip::access(q1.second->head())->prio() < hdr_ip::access(q2.second->head())->prio() ; };
+                         else return hdr_ip::access(q1.second->tail())->prio() < hdr_ip::access(q2.second->tail())->prio() ; };
   return std::min_element(pkt_queues_.begin(), pkt_queues_.end(), flow_compare) -> first;
 }
