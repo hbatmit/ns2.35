@@ -61,7 +61,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
     global ns opt
     $self instvar id_ npkts_ sentinel_ laststart_ on_duration_
-    
+
     set laststart_ [$ns now]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         set nbytes [expr int($bytes_or_time)]
@@ -116,7 +116,7 @@ Application/FTP/OnOffSender instproc timeout {} {
     set done false
     set rtt [expr [$tcp_ set rtt_] * [$tcp_ set tcpTick_] ]
     set ack [$tcp_ set ack_]
-    if { $rtt != $lastrtt_ || $ack != $lastack_ } {
+    if { ($rtt != $lastrtt_ || $ack != $lastack_) && ($ack != -1) } {
 	if { $rtt > 0 } {
 	    $stats_ update_rtt $rtt
 	}
@@ -125,6 +125,7 @@ Application/FTP/OnOffSender instproc timeout {} {
         if { $ack >= $sentinel_ } { # have sent for this ON period
             set done true
         }
+
     } elseif { $opt(ontype) == "time" } {
         set npkts_ [expr $npkts_ + $ack - $lastack_]
         if { [$ns now] - $laststart_ > $on_duration_ } {
