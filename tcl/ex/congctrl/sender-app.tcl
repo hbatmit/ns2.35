@@ -76,7 +76,7 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
 	}
         set sentinel_ [expr $sentinel_ + $npkts_]; # stop when we send up to sentinel_
 
-        [$self agent] set prio_ $nbytes
+        [$self agent] set prio_ $npkts_
         [$self agent] advanceby $npkts_
 #        [$self agent] send $nbytes
         if { $opt(verbose) == "true" } {
@@ -120,6 +120,7 @@ Application/FTP/OnOffSender instproc timeout {} {
 	if { $rtt > 0 } {
 	    $stats_ update_rtt $rtt
 	}
+        [$self agent] set prio_ [expr $sentinel_ - $ack]
     }
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         if { $ack >= $sentinel_ } { # have sent for this ON period
