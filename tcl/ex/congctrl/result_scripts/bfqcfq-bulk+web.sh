@@ -2,11 +2,7 @@
 # Compare CoDel+FQ with Bufferbloat+FQ
 # Workload: Bulk+Web on v4g.
 
-killall -s9 ns
-rm *.log
-rm *.codel
-rm *.droptail
-
+./remove-vestiges.sh
 seed=1
 
 while [ $seed -lt 75 ]; do

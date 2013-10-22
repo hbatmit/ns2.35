@@ -2,13 +2,7 @@
 # Compare CoDel+FCFS with CoDel+FQ
 # Workload: Bulk+Web on 15 mbps.
 
-killall -s9 ns
-rm *.log
-rm *.codel
-rm *.codelfcfs
-rm *.droptail
-rm *.rtt
-
+./remove-vestiges.sh
 seed=1
 
 while [ $seed -lt 75 ]; do

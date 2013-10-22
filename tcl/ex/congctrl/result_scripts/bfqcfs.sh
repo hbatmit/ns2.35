@@ -3,10 +3,6 @@
 # Workload: one long running TCP that is interested in
 # either: throughput/delay or throughput.
 
-killall -s9 ns
-rm *.log
-rm *.codel
-rm *.droptail
-rm *.codelfcfs
+./remove-vestiges.sh
 pls ./remy2.tcl remyconf/vz4gdown.tcl -nsrc 1 -seed 1 -simtime 250 -reset false -avgbytes 1000000000 -offavg 0.0 -gw sfqCoDel -tcp TCP/Newreno -sink TCPSink/Sack1 -maxq 10000000 -pktsize 1210 -rcvwin 10000000 -delay 0.150 -rttlog $seed.codel.rtt > $seed.codel &
 pls ./remy2.tcl remyconf/vz4gdown.tcl -nsrc 1 -seed 1 -simtime 250 -reset false -avgbytes 1000000000 -offavg 0.0 -gw DropTail -tcp TCP/Newreno -sink TCPSink/Sack1 -maxq 10000000 -pktsize 1210 -rcvwin 10000000 -delay 0.150 -rttlog $seed.droptail.rtt > $seed.droptail &
