@@ -3,6 +3,7 @@
 # Workload: Bulk+Web on v4g.
 
 ./remove-vestiges.sh
+cd ..
 seed=1
 
 while [ $seed -lt 75 ]; do
