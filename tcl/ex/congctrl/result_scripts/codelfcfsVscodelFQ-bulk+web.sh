@@ -3,6 +3,7 @@
 # Workload: Bulk+Web on 15 mbps.
 
 ./remove-vestiges.sh
+cd ..
 seed=1
 
 while [ $seed -lt 75 ]; do
