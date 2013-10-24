@@ -13,3 +13,4 @@ while [ $seed -lt 75 ]; do
 
   seed=`expr $seed '+' 1`
 done
+wait
