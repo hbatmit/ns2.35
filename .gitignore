@@ -1,2 +1,6 @@
 *.o
 *.swp
+*.codel
+*.codelfcfs
+*.droptail
+*.rtt
