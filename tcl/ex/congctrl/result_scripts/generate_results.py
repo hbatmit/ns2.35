@@ -69,9 +69,9 @@ elif (tablenum == "2b"):
   # Table 2b
   system("./bfqcfq-int+int.sh > /tmp/2b.out 2> /tmp/2b.err")
   print "Table 2b: Bufferbloat+FQ,   interactive throughput: ", tpt("droptail", 1, "*"), " Mbps"
-  print "Table 2b: Bufferbloat+FQ,   interactive delay:      ", delay("droptail", 1, "*"), " ms"
+  print "Table 2b: Bufferbloat+FQ,   interactive RTT:        ", delay("droptail", 1, "*"), " ms"
   print "Table 2b: CoDel+FQ,         interactive throughput: ", tpt("codel", 1, "*"), " Mbps"
-  print "Table 2b: CoDel+FQ,         interactive delay:      ", delay("codel", 1, "*"), " ms"
+  print "Table 2b: CoDel+FQ,         interactive RTT:        ", delay("codel", 1, "*"), " ms"
   
 elif (tablenum == "3a"):
   # Table 3a
@@ -83,6 +83,6 @@ elif (tablenum == "3b"):
   # Table 3b
   system("./bfqcfs.sh > /tmp/3b.out 2> /tmp/3b.err") # Experiment 3a and 3b are the same, so no point rerunning.
   print "Table 3b: Bufferbloat+FQ,   interactive throughput: ", tpt("droptail", 1, "*")," Mbps"
-  print "Table 3b: Bufferbloat+FQ,   interactive delay:      ", delay("droptail", 1, "*"), " ms"
+  print "Table 3b: Bufferbloat+FQ,   interactive RTT:        ", delay("droptail", 1, "*"), " ms"
   print "Table 3b: CoDel+FQ,         interactive throughput: ", tpt("codel", 1, "*"), " Mbps"
-  print "Table 3b: CoDel+FQ,         interactive delay:      ", delay("codel", 1, "*"), " ms"
+  print "Table 3b: CoDel+FQ,         interactive RTT:        ", delay("codel", 1, "*"), " ms"
