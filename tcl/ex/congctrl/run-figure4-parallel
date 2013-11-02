@@ -8,6 +8,26 @@ my $dir = getcwd;
 
 my $whiskerdir = $dir . q{/../../../tcp/remy/rats/new/};
 
+if (-d "results/Dumbbell") {
+     print "Will not run, results/Dumbbell already exists. Either delete it or specify another directory.\n";
+     exit 1;
+}
+
+if (-d "results/Dumbbell-rational-delta0.1") {
+     print "Will not run, results/Dumbbell-rational-delta0.1 already exists. Either delete it or specify another directory.\n";
+     exit 1;
+}
+
+if (-d "results/Dumbbell-rational-delta1") {
+     print "Will not run, results/Dumbbell-rational-delta1 already exists. Either delete it or specify another directory.\n";
+     exit 1;
+}
+
+if (-d "results/Dumbbell-rational-delta10") {
+     print "Will not run, results/Dumbbell-rational-delta10 already exists. Either delete it or specify another directory.\n";
+     exit 1;
+}
+
 for my $nsrc ( 8 ) { # maximum degree of multiplexing
     system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p TCP/Newreno -n $nsrc &};
     system qq{python runremy.py -c remyconf/dumbbell-buf1000-rtt150-bneck15.tcl -d results/Dumbbell  -p TCP/Linux/cubic -n $nsrc &};
