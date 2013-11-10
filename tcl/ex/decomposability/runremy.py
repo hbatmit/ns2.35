@@ -64,6 +64,7 @@ if __name__ == '__main__':
     avgbytes = 100000 # from Allman's March 2012 data and 2013 CCR paper
     worktypes = ['Exponential']
 
+    numsrcs = int(len(open(sd_file, "r").readlines()))
     for proto in protolist:
         fullname = proto
         if proto == "Cubic/sfqCoDel":
@@ -72,13 +73,11 @@ if __name__ == '__main__':
             for onoff in onofftimes:
                 for i in xrange(iterations):
                     if config.ontype == "bytes":
-                        outfname = '%s/%s.%s.%son%d.off%d.topo%s.sd%s.simtime%d.iteration%d'\
-                                   % (config.resdir, fullname.replace('/','-'), wrk, config.ontype,
-                                      avgbytes, onoff, topo_file.replace('/','-'), sd_file.replace('/','-'), simtime, i)
+                        outfname = '%s/%s.%s.nconn%d.%son%d.off%d.simtime%d.iteration%d'\
+                                   % (config.resdir, fullname.replace('/','-'), wrk, numsrcs, config.ontype, avgbytes, onoff, simtime, i)
                         runonce(fullname, proto, wrk, 'DropTail', config.ontype, simtime, avgbytes, onoff, topo_file, sd_file, outfname)
                     else:
-                        outfname = '%s/%s.%s.%son%d.off%d.topo%s.sd%s.simtime%d.iteration%d'\
-                                   % (config.resdir, fullname.replace('/','-'), wrk, config.ontype,
-                                      onoff, onoff, topo_file.replace('/','-'), sd_file.replace('/','-'), simtime, i)
+                        outfname = '%s/%s.%s.nconn%d.%son%d.off%d.simtime%d.iteration%d'\
+                                   % (config.resdir, fullname.replace('/','-'), wrk, numsrcs, config.ontype, onoff, onoff, simtime, i)
                         runonce(fullname, proto, wrk, 'DropTail', config.ontype, simtime, onoff, onoff, topo_file, sd_file, outfname)
                     print outfname

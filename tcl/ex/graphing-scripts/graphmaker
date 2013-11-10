@@ -55,7 +55,9 @@ for ( glob "$dir*/*" ) {
     $protocol .= "-$delta";
   }
 
-  $protos{ $nsrc }{ $protocol }{ filename } = $_;
+  # strip iteration before storing
+  my (@records) = split('.iteration', $_);
+  $protos{ $nsrc }{ $protocol }{ filename } = $records[0];
 
 #  print STDERR "protocol $protocol\n";
 }
@@ -87,6 +89,8 @@ for my $nsrc ( keys %protos ) {
     my $filename = $protos{ $nsrc }{ $protocol }{ filename };
     my ( $rtt_tot, $mbps_tot, $count );
 
+    my $catcmd = ' cat ' . $origdir . '/' . $filename . '.iteration*' . ' > ' . $origdir . '/' .$filename;
+    print `$catcmd`;
     open DATA, $origdir . '/' . $filename or die "can't open $filename: $!";
     open ELLIPSE, "|$origdir/ellipsemaker > $protocol-$nsrc.ellipse" or die;
     open RAWDATA, ">$protocol-$nsrc.pts" or die;
