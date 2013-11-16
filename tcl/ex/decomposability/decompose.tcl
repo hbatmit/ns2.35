@@ -75,10 +75,6 @@ proc create-topology {topology_file} {
             set rq [$rlnk queue]
             $rq set-link-capacity [ [$rlnk set link_] set bandwidth_ ]
         }
-        if { [info exists opt(tr)] } {
-            $ns trace-queue $node_array($src) $node_array($dst)
-            $ns trace-queue $node_array($dst) $node_array($src)
-        }
     }
 }
 
