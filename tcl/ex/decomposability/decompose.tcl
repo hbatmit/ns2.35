@@ -83,7 +83,7 @@ proc create-topology {topology_file} {
 }
 
 proc create-sources-destinations {sdpairs_file} {
-    global ns opt node_array app_src recvapp tp linuxcc
+    global ns opt node_array app_src recvapp tp linuxcc f
     if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
         set linuxcc [ string range $opt(tcp) 10 [string length $opt(tcp)] ]
         set opt(tcp) "TCP/Linux"
