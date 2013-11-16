@@ -111,7 +111,6 @@ double
 RationalTcpAgent::initial_window()
 {
 	_memory.reset();
-	cwnd_ = 0;
 	update_cwnd_and_pacing();
 	return cwnd_;
 }
