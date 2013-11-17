@@ -180,10 +180,14 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	newack(pkt);		// updates RTT to set RTO properly, etc.
 	maxseq_ = ::max(maxseq_, highest_ack_);
 
-	int timestep = 1000;
+	double timestep = 1000.0;
 
-	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
-	update_cwnd_and_pacing();
+	if (last_ack_ > 0) {
+                /* Only invoke RemyCC after 3-way handshake */
+		update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
+		update_cwnd_and_pacing();
+	}
+
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
 		closed_ = 1;

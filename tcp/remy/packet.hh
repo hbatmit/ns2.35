@@ -4,9 +4,9 @@
 class RemyPacket
 {
 public:
-  unsigned int tick_sent, tick_received;
+  double tick_sent, tick_received;
 
-  RemyPacket( const unsigned int & s_tick_sent, const unsigned int & s_tick_received )
+  RemyPacket( const double & s_tick_sent, const double & s_tick_received )
     : tick_sent( s_tick_sent ), tick_received( s_tick_received )
   {}
 
