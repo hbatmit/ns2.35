@@ -10,7 +10,7 @@ static const double alpha = 1.0 / 8.0;
 void Memory::packets_received( const vector< RemyPacket > & packets )
 {
   for ( const auto &x : packets ) {
-    const unsigned int rtt = x.tick_received - x.tick_sent;
+    const double rtt = x.tick_received - x.tick_sent;
     if ( _last_tick_sent == 0 || _last_tick_received == 0 ) {
       _last_tick_sent = x.tick_sent;
       _last_tick_received = x.tick_received;
