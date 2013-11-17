@@ -232,7 +232,7 @@ protected:
 	void slowdown(int how);			/* reduce cwnd/ssthresh */
 	void ecn(int seqno);		/* react to quench */
 	virtual void set_initial_window();	/* set IW */
-	double initial_window();		/* what is IW? */
+	virtual double initial_window();		/* what is IW? */
 	void newack(Packet*);
 	void finish(); /* called when the connection is terminated */
 	int network_limited();	/* Sending limited by network? */
