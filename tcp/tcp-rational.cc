@@ -87,22 +87,6 @@ public:
 	}
 } class_rational_tcp;
 
-static class RationalRenoTcpClass : public TclClass {
-public:
-	RationalRenoTcpClass() : TclClass("Agent/TCP/Reno/Rational") {}
-	TclObject* create(int, const char*const*) {
-		return (new RationalRenoTcpAgent());
-	}
-} class_rational_reno_tcp;
-
-static class RationalNewRenoTcpClass : public TclClass {
-public:
-	RationalNewRenoTcpClass() : TclClass("Agent/TCP/Newreno/Rational") {}
-	TclObject* create(int, const char*const*) {
-		return (new RationalNewRenoTcpAgent());
-	}
-} class_rational_newreno_tcp;
-
 /*
  * initial_window() is called in a few different places in tcp.cc.
  * This function overrides the default. 

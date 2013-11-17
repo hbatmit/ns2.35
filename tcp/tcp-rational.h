@@ -28,56 +28,23 @@ public:
 	RationalTcpAgent();
 	~RationalTcpAgent();
 
-	/* helper functions */
-	virtual void send_helper(int maxburst);
-	virtual void send_idle_helper();
-	virtual void recv_newack_helper(Packet* pkt);
-	virtual double initial_window();
-	virtual void update_memory( const RemyPacket packet );
-	virtual void timeout_nonrtx( int tno );
-	virtual void output( int seqno, int reason ) { _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
-	virtual void update_cwnd_and_pacing( void );
+	/* helper functions, overriden from TcpAgent */
+	void send_helper(int maxburst) override;
+	void send_idle_helper() override;
+	void recv_newack_helper(Packet* pkt) override;
+	double initial_window() override;
+	void update_memory( const RemyPacket packet );
+	void timeout_nonrtx( int tno ) override;
+	void output( int seqno, int reason ) override { _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
+	void update_cwnd_and_pacing( void );
 
 protected:
-	virtual void delay_bind_init_all();
-	virtual int delay_bind_dispatch(const char *varName, const char *localName, TclObject *tracer);
-	virtual void traceVar(TracedVar *v);
+	void delay_bind_init_all() override;
+	int delay_bind_dispatch(const char *varName, const char *localName, TclObject *tracer) override;
+	void traceVar(TracedVar *v) override;
 	int tracewhisk_;	// trace whiskers?
 	double _last_send_time;
 	int count_bytes_acked_;
-};
-
-/* 
- * Rational TCP with Reno.
- */
-
-class RationalRenoTcpAgent : public virtual RenoTcpAgent, public RationalTcpAgent {
-public:
-	RationalRenoTcpAgent() : RenoTcpAgent(), RationalTcpAgent() {}
-
-	/* helper functions */
-	virtual void send_helper(int maxburst) {RationalTcpAgent::send_helper(maxburst);}
-	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
-	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
-	virtual double initial_window() {return RationalTcpAgent::initial_window();}
-	virtual void update_memory( const RemyPacket packet ) {RationalTcpAgent::update_memory(packet);}
-	virtual void output( int seqno, int reason ) { _last_send_time = Scheduler::instance().clock(); RenoTcpAgent::output( seqno, reason ); }
-};
-
-/* 
- * Rational TCP with NewReno.
- */
-class RationalNewRenoTcpAgent : public virtual NewRenoTcpAgent, public RationalTcpAgent {
-public:
-	RationalNewRenoTcpAgent() : NewRenoTcpAgent(), RationalTcpAgent() {}
-
-	/* helper functions */
-	virtual void send_helper(int maxburst) {RationalTcpAgent::send_helper(maxburst);}
-	virtual void send_idle_helper() {RationalTcpAgent::send_idle_helper();}
-	virtual void recv_newack_helper(Packet* pkt) {RationalTcpAgent::recv_newack_helper(pkt);}
-	virtual double initial_window() {return RationalTcpAgent::initial_window();}
-	virtual void update_memory( const RemyPacket packet ) {RationalTcpAgent::update_memory(packet);}
-	virtual void output( int seqno, int reason ) { _last_send_time = Scheduler::instance().clock(); NewRenoTcpAgent::output( seqno, reason ); }
 };
 
 #endif
