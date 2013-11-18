@@ -182,11 +182,8 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 
 	double timestep = 1000.0;
 
-	if (last_ack_ > 0) {
-                /* Only invoke RemyCC after 3-way handshake */
-		update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
-		update_cwnd_and_pacing();
-	}
+	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
+	update_cwnd_and_pacing();
 
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
