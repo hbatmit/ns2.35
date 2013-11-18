@@ -711,6 +711,12 @@ void TcpAgent::output(int seqno, int reason)
 		hf->cong_action() = TRUE;  // Congestion action.
 		cong_action_ = FALSE;
         }
+
+	/* Add header size as well */
+	if (useHeaders_ == true) {
+		hdr_cmn::access(p)->size() += headersize();
+	}
+
 	/* Check if this is the initial SYN packet. */
 	if (seqno == 0) {
 		if (syn_) {
@@ -775,9 +781,7 @@ void TcpAgent::output(int seqno, int reason)
 			}
 		}
 	}
-	else if (useHeaders_ == true) {
-		hdr_cmn::access(p)->size() += headersize();
-	}
+
         hdr_cmn::access(p)->size();
 
 	/* if no outstanding data, be sure to set rtx timer again */
