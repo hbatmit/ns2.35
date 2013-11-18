@@ -29,17 +29,4 @@ LoggingApp instproc recv { bytes } {
         set cumrtt_ [expr $rtt_  + $cumrtt_]
         incr nrtt_
     }
-#    if { $opt(verbose) } {
-#        puts "[$ns now]: $srcid_ rcd $bytes total $nbytes_ npkts $numsamples_ rtt $rtt_" 
-#    }
-}
-
-LoggingApp instproc dumpstats { } {
-    $self instvar srcid_ nbytes_ numsamples_ nrtt_ cumrtt_
-
-    if {$nrtt_ > 0} {
-        puts "\trcv $srcid_: $nbytes_ bytes $numsamples_ pkts [expr 1.0*$cumrtt_/$nrtt_] ms"
-    } else {
-        puts "\trcv $srcid_: $nbytes_ bytes $numsamples_ pkts 0.0 ms"
-    }
 }
