@@ -113,7 +113,8 @@ proc create-sources-destinations {sdpairs_file} {
         $tcpsrc set window_ $opt(rcvwin)
         $tcpsrc set packetSize_ $opt(pktsize)
         $tcpsrc set syn_ 0
-        
+        $tcpsrc set delay_growth_ 0
+
         if { [info exists opt(tr)] } {
             $tcpsrc trace cwnd_
             $tcpsrc trace rtt_
