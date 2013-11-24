@@ -35,7 +35,10 @@ public:
 	double initial_window() override;
 	void update_memory( const RemyPacket packet );
 	void timeout_nonrtx( int tno ) override;
-	void output( int seqno, int reason ) override { _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
+	void output( int seqno, int reason ) override {
+             fprintf(stderr, "Sent out a packet at %f, last_send_time was %f, _intersend_time is %f\n", (Scheduler::instance().clock())*1000,
+                                              1000*((double)_last_send_time), 1000*(double)_intersend_time);
+             _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
 	void update_cwnd_and_pacing( void );
 
 protected:

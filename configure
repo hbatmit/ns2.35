@@ -5108,7 +5108,7 @@ fi
 if test "$enable_debug" = "yes" ; then
 	V_CCOPT="-g"
 	if test "$CC" = gcc ; then
-		V_CCOPT="$V_CCOPT -Wall -Wno-write-strings -Wno-parentheses -Werror"
+		V_CCOPT="$V_CCOPT -Wall -Wno-write-strings -Wno-parentheses"
 		V_DEFINE="$V_DEFINE -fsigned-char -fno-inline"
 	fi
 else

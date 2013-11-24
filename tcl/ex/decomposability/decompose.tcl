@@ -103,10 +103,10 @@ proc create-sources-destinations {sdpairs_file} {
         if { [string first "Rational" $opt(tcp)] != -1 } {
             if { $opt(tracewhisk) == "all" || $opt(tracewhisk) == $i } {
                 $tcpsrc set tracewhisk_ 1
-                puts "tracing ON for connection $i: $opt(tracewhisk)"
+               # puts "tracing ON for connection $i: $opt(tracewhisk)"
             } else {
                 $tcpsrc set tracewhisk_ 0
-                puts "tracing OFF for connection $i: $opt(tracewhisk)"
+               #  puts "tracing OFF for connection $i: $opt(tracewhisk)"
             }
         }
 	$tcpsrc set fid_ [expr $i%256]

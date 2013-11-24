@@ -182,9 +182,17 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 
 	double timestep = 1000.0;
 
+	fprintf( stderr, "%f, received feedback\n", 1000.0 * Scheduler::instance().clock());
 	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
+        fprintf( stderr, "%f, updated memory to %s\n", 1000.0 * Scheduler::instance().clock(), _memory.str().c_str());
 	update_cwnd_and_pacing();
-
+	const double time_since_last_send( now - _last_send_time );
+	const double wait_time( _last_send_time + _intersend_time - now );
+        fprintf( stderr, "%f, _last_send_time %f, _intersend_time updated to %f, next tx at %f\n",
+                       1000.0 * Scheduler::instance().clock(),
+                       1000.0 * _last_send_time,
+                       1000*_intersend_time,
+                       (_last_send_time + _intersend_time) * 1000.0);
 	/* if the connection is done, call finish() */
 	if ((highest_ack_ >= curseq_-1) && !closed_) {
 		closed_ = 1;
