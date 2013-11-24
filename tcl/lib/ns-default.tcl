@@ -923,6 +923,10 @@ Agent/TCP set t_seqno_ 0
 Agent/TCP set maxburst_ 0
 Agent/TCP set aggressive_maxburst_ 1 ;  # Added 2003/6/2.
 					# No change to default behavior.
+
+# Set burst size of 1 for TCP/Rational
+Agent/TCP/Rational set maxburst_ 1;
+
 Agent/TCP set maxcwnd_ 0
 Agent/TCP set numdupacks_ 3
 Agent/TCP set numdupacksFrac_ -1 ;	# Added 2002/10/18.
