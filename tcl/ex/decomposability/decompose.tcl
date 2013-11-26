@@ -52,7 +52,7 @@ proc create-topology {topology_file} {
     global ns opt node_array
     set topo_fd [open $topology_file r]
     while {[gets $topo_fd line] >= 0} {
-        set fields [split $line " "]
+        set fields [regexp -inline -all -- {\S+} $line]
         set src [lindex $fields 0]
         set dst [lindex $fields 1]
         set bw  [lindex $fields 2]
@@ -87,7 +87,7 @@ proc create-sources-destinations {sdpairs_file} {
     set sdpairs_fd [open $sdpairs_file r]
     set i 0
     while {[gets $sdpairs_fd line] >= 0} {
-        set fields [split $line " "]
+        set fields [regexp -inline -all -- {\S+} $line]
         set src [lindex $fields 0]
         set dst [lindex $fields 1]
         assert [info exists node_array($src)];
