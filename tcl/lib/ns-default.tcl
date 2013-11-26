@@ -923,6 +923,10 @@ Agent/TCP set t_seqno_ 0
 Agent/TCP set maxburst_ 0
 Agent/TCP set aggressive_maxburst_ 1 ;  # Added 2003/6/2.
 					# No change to default behavior.
+
+# Set burst size of 1 for TCP/Rational
+Agent/TCP/Rational set maxburst_ 1;
+
 Agent/TCP set maxcwnd_ 0
 Agent/TCP set numdupacks_ 3
 Agent/TCP set numdupacksFrac_ -1 ;	# Added 2002/10/18.
@@ -1132,16 +1136,6 @@ Agent/TCP/Rational set count_bytes_acked_ 1
 Agent/TCP/Rational set tracewhisk_ 0
 Agent/TCP/Rational set timestamps_ true
 Agent/TCP/Rational set _intersend_time 0.0
-
-Agent/TCP/Reno/Rational set count_bytes_acked_ 1
-Agent/TCP/Reno/Rational set tracewhisk_ 0
-Agent/TCP/Reno/Rational set timestamps_ true
-Agent/TCP/Reno/Rational set _intersend_time 0.0
-
-Agent/TCP/Newreno/Rational set count_bytes_acked_ 1
-Agent/TCP/Newreno/Rational set tracewhisk_ 0
-Agent/TCP/Newreno/Rational set timestamps_ true
-Agent/TCP/Newreno/Rational set _intersend_time 0.0
 
 # RFC793eduTcp -- 19990820, fcela@acm.org
 Agent/TCP/RFC793edu set add793expbackoff_  true 

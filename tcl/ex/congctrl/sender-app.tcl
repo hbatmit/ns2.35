@@ -9,7 +9,7 @@ Application/FTP/OnOffSender instproc init {} {
     $self set laststart_ 0.0
     $self set lastack_ 0
     $self set lastrtt_ 0.0
-    $self set sentinel_ 0
+    $self set sentinel_ -1; # a sentinel of 0 means you need to send one packet
     $self set npkts_ 0
     $self set on_duration_ 0.0
     $self next
@@ -159,8 +159,11 @@ Application/FTP/OnOffSender instproc timeout {} {
 
 Application/FTP/OnOffSender instproc dumpstats {} {
     global ns opt
-    $self instvar id_ stats_ laststart_ lastack_ sentinel_ npkts_
+    $self instvar id_ stats_ laststart_ lastack_ sentinel_ npkts_ tcp_
     # the connection might not have completed; calculate #acked pkts
+
+    # Update last ack
+    set lastack_ [$tcp_ set ack_]
 
     if {$opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         set acked [expr $npkts_ - ($sentinel_ - $lastack_)]
