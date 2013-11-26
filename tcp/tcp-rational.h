@@ -33,10 +33,12 @@ public:
 	void send_idle_helper() override;
 	void recv_newack_helper(Packet* pkt) override;
 	double initial_window() override;
-	void update_memory( const RemyPacket packet );
+	void update_memory( const RemyPacket packet, const unsigned int flow_id );
 	void timeout_nonrtx( int tno ) override;
 	void output( int seqno, int reason ) override {
-             fprintf(stderr, "Sent out a packet at %f, last_send_time was %f, _intersend_time is %f\n", (Scheduler::instance().clock())*1000,
+             fprintf(stderr, "%u: Sent out a packet at %f, last_send_time was %f, _intersend_time is %f\n",
+                                              fid_,
+                                              (Scheduler::instance().clock())*1000,
                                               1000*((double)_last_send_time), 1000*(double)_intersend_time);
              _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
 	void update_cwnd_and_pacing( void );

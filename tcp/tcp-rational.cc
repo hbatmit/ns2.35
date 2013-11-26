@@ -183,8 +183,9 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 	double timestep = 1000.0;
 
 	fprintf( stderr, "%f, received feedback\n", 1000.0 * Scheduler::instance().clock());
-	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
-        fprintf( stderr, "%f, updated memory to %s\n", 1000.0 * Scheduler::instance().clock(), _memory.str().c_str());
+        fprintf( stderr, "%u: %f, memory was %s\n", fid_, 1000.0 * Scheduler::instance().clock(), _memory.str().c_str());
+	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ), fid_ );
+        fprintf( stderr, "%u: %f, updated memory to %s\n", fid_, 1000.0 * Scheduler::instance().clock(), _memory.str().c_str());
 	update_cwnd_and_pacing();
 	const double time_since_last_send( now - _last_send_time );
 	const double wait_time( _last_send_time + _intersend_time - now );
@@ -201,10 +202,10 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 }
 
 void 
-RationalTcpAgent::update_memory( const RemyPacket packet )
+RationalTcpAgent::update_memory( const RemyPacket packet, const unsigned int flow_id )
 {
 	std::vector< RemyPacket > packets( 1, packet );
-	_memory.packets_received( packets );
+	_memory.packets_received( packets, flow_id );
 }
 
 void
