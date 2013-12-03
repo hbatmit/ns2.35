@@ -172,7 +172,7 @@ Application/FTP/OnOffSender instproc dumpstats {} {
             $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
         }
     }  else {
-        set rem_pkts [expr $lastack_ - [$stats_ set npkts_]]
+        set rem_pkts [expr $lastack_ - [$stats_ set npkts_] + 1]
         if { $rem_pkts > 0 } {
             $stats_ update_flowstats $rem_pkts [expr [$ns now] - $laststart_]
         }
