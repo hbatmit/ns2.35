@@ -315,6 +315,13 @@ class Memory : public ::google::protobuf::Message {
   inline double rtt_ratio() const;
   inline void set_rtt_ratio(double value);
   
+  // optional double slow_rec_rec_ewma = 24;
+  inline bool has_slow_rec_rec_ewma() const;
+  inline void clear_slow_rec_rec_ewma();
+  static const int kSlowRecRecEwmaFieldNumber = 24;
+  inline double slow_rec_rec_ewma() const;
+  inline void set_slow_rec_rec_ewma(double value);
+  
   // @@protoc_insertion_point(class_scope:RemyBuffers.Memory)
  private:
   inline void set_has_rec_send_ewma();
@@ -323,15 +330,18 @@ class Memory : public ::google::protobuf::Message {
   inline void clear_has_rec_rec_ewma();
   inline void set_has_rtt_ratio();
   inline void clear_has_rtt_ratio();
+  inline void set_has_slow_rec_rec_ewma();
+  inline void clear_has_slow_rec_rec_ewma();
   
   ::google::protobuf::UnknownFieldSet _unknown_fields_;
   
   double rec_send_ewma_;
   double rec_rec_ewma_;
   double rtt_ratio_;
+  double slow_rec_rec_ewma_;
   
   mutable int _cached_size_;
-  ::google::protobuf::uint32 _has_bits_[(3 + 31) / 32];
+  ::google::protobuf::uint32 _has_bits_[(4 + 31) / 32];
   
   friend void  protobuf_AddDesc_dna_2eproto();
   friend void protobuf_AssignDesc_dna_2eproto();
@@ -673,6 +683,28 @@ inline double Memory::rtt_ratio() const {
 inline void Memory::set_rtt_ratio(double value) {
   set_has_rtt_ratio();
   rtt_ratio_ = value;
+}
+
+// optional double slow_rec_rec_ewma = 24;
+inline bool Memory::has_slow_rec_rec_ewma() const {
+  return (_has_bits_[0] & 0x00000008u) != 0;
+}
+inline void Memory::set_has_slow_rec_rec_ewma() {
+  _has_bits_[0] |= 0x00000008u;
+}
+inline void Memory::clear_has_slow_rec_rec_ewma() {
+  _has_bits_[0] &= ~0x00000008u;
+}
+inline void Memory::clear_slow_rec_rec_ewma() {
+  slow_rec_rec_ewma_ = 0;
+  clear_has_slow_rec_rec_ewma();
+}
+inline double Memory::slow_rec_rec_ewma() const {
+  return slow_rec_rec_ewma_;
+}
+inline void Memory::set_slow_rec_rec_ewma(double value) {
+  set_has_slow_rec_rec_ewma();
+  slow_rec_rec_ewma_ = value;
 }
 
 // -------------------------------------------------------------------

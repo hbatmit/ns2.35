@@ -73,10 +73,11 @@ void protobuf_AssignDesc_dna_2eproto() {
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(MemoryRange));
   Memory_descriptor_ = file->message_type(2);
-  static const int Memory_offsets_[3] = {
+  static const int Memory_offsets_[4] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Memory, rec_send_ewma_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Memory, rec_rec_ewma_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Memory, rtt_ratio_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(Memory, slow_rec_rec_ewma_),
   };
   Memory_reflection_ =
     new ::google::protobuf::internal::GeneratedMessageReflection(
@@ -155,12 +156,12 @@ void protobuf_AddDesc_dna_2eproto() {
     "erTree\022\"\n\004leaf\030\003 \001(\0132\024.RemyBuffers.Whisk"
     "er\"U\n\013MemoryRange\022\"\n\005lower\030\013 \001(\0132\023.RemyB"
     "uffers.Memory\022\"\n\005upper\030\014 \001(\0132\023.RemyBuffe"
-    "rs.Memory\"H\n\006Memory\022\025\n\rrec_send_ewma\030\025 \001"
+    "rs.Memory\"c\n\006Memory\022\025\n\rrec_send_ewma\030\025 \001"
     "(\001\022\024\n\014rec_rec_ewma\030\026 \001(\001\022\021\n\trtt_ratio\030\027 "
-    "\001(\001\"y\n\007Whisker\022\030\n\020window_increment\030\037 \001(\021"
-    "\022\027\n\017window_multiple\030  \001(\001\022\021\n\tintersend\030!"
-    " \001(\001\022(\n\006domain\030\" \001(\0132\030.RemyBuffers.Memor"
-    "yRange", 446);
+    "\001(\001\022\031\n\021slow_rec_rec_ewma\030\030 \001(\001\"y\n\007Whiske"
+    "r\022\030\n\020window_increment\030\037 \001(\021\022\027\n\017window_mu"
+    "ltiple\030  \001(\001\022\021\n\tintersend\030! \001(\001\022(\n\006domai"
+    "n\030\" \001(\0132\030.RemyBuffers.MemoryRange", 473);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "dna.proto", &protobuf_RegisterTypes);
   WhiskerTree::default_instance_ = new WhiskerTree();
@@ -742,6 +743,7 @@ void MemoryRange::Swap(MemoryRange* other) {
 const int Memory::kRecSendEwmaFieldNumber;
 const int Memory::kRecRecEwmaFieldNumber;
 const int Memory::kRttRatioFieldNumber;
+const int Memory::kSlowRecRecEwmaFieldNumber;
 #endif  // !_MSC_VER
 
 Memory::Memory()
@@ -763,6 +765,7 @@ void Memory::SharedCtor() {
   rec_send_ewma_ = 0;
   rec_rec_ewma_ = 0;
   rtt_ratio_ = 0;
+  slow_rec_rec_ewma_ = 0;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -800,6 +803,7 @@ void Memory::Clear() {
     rec_send_ewma_ = 0;
     rec_rec_ewma_ = 0;
     rtt_ratio_ = 0;
+    slow_rec_rec_ewma_ = 0;
   }
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
   mutable_unknown_fields()->Clear();
@@ -854,6 +858,22 @@ bool Memory::MergePartialFromCodedStream(
         } else {
           goto handle_uninterpreted;
         }
+        if (input->ExpectTag(193)) goto parse_slow_rec_rec_ewma;
+        break;
+      }
+      
+      // optional double slow_rec_rec_ewma = 24;
+      case 24: {
+        if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+            ::google::protobuf::internal::WireFormatLite::WIRETYPE_FIXED64) {
+         parse_slow_rec_rec_ewma:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
+                 input, &slow_rec_rec_ewma_)));
+          set_has_slow_rec_rec_ewma();
+        } else {
+          goto handle_uninterpreted;
+        }
         if (input->ExpectAtEnd()) return true;
         break;
       }
@@ -891,6 +911,11 @@ void Memory::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteDouble(23, this->rtt_ratio(), output);
   }
   
+  // optional double slow_rec_rec_ewma = 24;
+  if (has_slow_rec_rec_ewma()) {
+    ::google::protobuf::internal::WireFormatLite::WriteDouble(24, this->slow_rec_rec_ewma(), output);
+  }
+  
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -912,6 +937,11 @@ void Memory::SerializeWithCachedSizes(
   // optional double rtt_ratio = 23;
   if (has_rtt_ratio()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(23, this->rtt_ratio(), target);
+  }
+  
+  // optional double slow_rec_rec_ewma = 24;
+  if (has_slow_rec_rec_ewma()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(24, this->slow_rec_rec_ewma(), target);
   }
   
   if (!unknown_fields().empty()) {
@@ -937,6 +967,11 @@ int Memory::ByteSize() const {
     
     // optional double rtt_ratio = 23;
     if (has_rtt_ratio()) {
+      total_size += 2 + 8;
+    }
+    
+    // optional double slow_rec_rec_ewma = 24;
+    if (has_slow_rec_rec_ewma()) {
       total_size += 2 + 8;
     }
     
@@ -976,6 +1011,9 @@ void Memory::MergeFrom(const Memory& from) {
     if (from.has_rtt_ratio()) {
       set_rtt_ratio(from.rtt_ratio());
     }
+    if (from.has_slow_rec_rec_ewma()) {
+      set_slow_rec_rec_ewma(from.slow_rec_rec_ewma());
+    }
   }
   mutable_unknown_fields()->MergeFrom(from.unknown_fields());
 }
@@ -1002,6 +1040,7 @@ void Memory::Swap(Memory* other) {
     std::swap(rec_send_ewma_, other->rec_send_ewma_);
     std::swap(rec_rec_ewma_, other->rec_rec_ewma_);
     std::swap(rtt_ratio_, other->rtt_ratio_);
+    std::swap(slow_rec_rec_ewma_, other->slow_rec_rec_ewma_);
     std::swap(_has_bits_[0], other->_has_bits_[0]);
     _unknown_fields_.Swap(&other->_unknown_fields_);
     std::swap(_cached_size_, other->_cached_size_);
