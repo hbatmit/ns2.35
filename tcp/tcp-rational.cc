@@ -131,11 +131,6 @@ RationalTcpAgent::send_idle_helper()
 {
 	const double now( Scheduler::instance().clock() );
 
-	if ( now - _last_send_time > 0.2 ) {
-		/* timeout */
-		initial_window();
-	}
-
 	/* we want to pace each packet */
 	maxburst_ = 1;
 

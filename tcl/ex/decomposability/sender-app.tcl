@@ -60,7 +60,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
 
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
     global ns opt
-    $self instvar id_ npkts_ sentinel_ laststart_ on_duration_
+    $self instvar id_ npkts_ sentinel_ laststart_ on_duration_ tcp_
     
     set laststart_ [$ns now]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
@@ -143,10 +143,10 @@ Application/FTP/OnOffSender instproc timeout {} {
         set npkts_ 0; # important to set to 0 here for correct stat calc
         if { $opt(ontype) == "time" } {
             [$self agent] advance 0; # causes TCP to pause
-            if {$opt(reset) == true} {
-                $tcp_ reset
-            }
         }
+
+        # Reset all connections whether bytes or time.
+        $tcp_ reset
         if { $opt(spike) != "true" } {
             $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
                 "$self send [$on_ranvar_ value]"
