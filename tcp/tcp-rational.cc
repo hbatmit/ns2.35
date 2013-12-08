@@ -201,10 +201,6 @@ RationalTcpAgent::update_cwnd_and_pacing( void )
 
 	unsigned int new_cwnd = current_whisker.window( (unsigned int)cwnd_ );
 
-	if ( new_cwnd > 16384 ) {
-		new_cwnd = 16384;
-	}
-
 	cwnd_ = new_cwnd;
 	double old_intersend_time = _intersend_time;
 

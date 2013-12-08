@@ -8,7 +8,7 @@ set opt(sink) TCPSink
 # AQM details
 set opt(gw) DropTail;            # queueing at bottleneck
 set opt(maxq) 1000;              # max queue length at bottleneck
-set opt(rcvwin) 65536
+set opt(rcvwin) 2000000
 
 # app parameters
 set opt(app) FTP/OnOffSender
