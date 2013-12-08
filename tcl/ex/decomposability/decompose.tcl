@@ -64,8 +64,15 @@ proc create-topology {topology_file} {
             set node_array($dst) [$ns node]
         }
         $ns duplex-link $node_array($src) $node_array($dst) ${bw}Mb ${delay}ms $opt(gw)
-        $ns queue-limit $node_array($src) $node_array($dst) $opt(maxq)
-        $ns queue-limit $node_array($dst) $node_array($src) $opt(maxq)
+        # Set qsize to 5 times the bandwidth-RTT product measured in packets
+        set qsize [expr (5 * ${bw} * 2 * ${delay} * 1000.0) / (8 * ($opt(pktsize) + $opt(hdrsize)))]
+        if { $qsize < $opt(maxq) } {
+          set qsize $opt(maxq);
+        }
+        puts "Queue size is $qsize"
+        $ns queue-limit $node_array($src) $node_array($dst) $qsize
+        $ns queue-limit $node_array($dst) $node_array($src) $qsize
+
         if { $opt(gw) == "XCP" } {
             # Hari: not clear why the XCP code doesn't do this automatically
             set lnk [$ns link $node_array($src) $node_array($dst)]
@@ -188,7 +195,6 @@ $defaultRNG seed $opt(seed)
 
 set ns [new Simulator]
 
-Queue set limit_ $opt(maxq)
 RandomVariable/Pareto set shape_ 0.5
 
 if { [info exists opt(tr)] } {
