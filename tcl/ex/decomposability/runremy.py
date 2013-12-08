@@ -31,7 +31,7 @@ def runonce(fullname, proto, workload_dist, gw, traffic_type, simtime, on, off, 
                  % (topo_file, sd_file, proto, sink, gw, traffic_type, workload_dist, off, simtime)
 
     print runstr
-    fnull = open(os.devnull, "w") 
+    fnull = open(outfname + ".err", "w") 
     fout = open(outfname, "ab")
     output = subprocess.call(runstr, stdout=fout, stderr=fnull, shell=True)    
     return
@@ -57,10 +57,10 @@ if __name__ == '__main__':
     sd_file   = config.sdpairs
 
     simtime = 100
-    iterations = 16
+    iterations = 32
 
     protolist = config.proto.split() # which transport protocol(s) are we using?
-    onofftimes = [0.5]
+    onofftimes = [1.0]
     avgbytes = 100000 # from Allman's March 2012 data and 2013 CCR paper
     worktypes = ['Exponential']
 
