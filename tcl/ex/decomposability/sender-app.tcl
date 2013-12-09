@@ -145,8 +145,11 @@ Application/FTP/OnOffSender instproc timeout {} {
             [$self agent] advance 0; # causes TCP to pause
         }
 
-        # Reset all connections whether bytes or time.
-        $tcp_ reset
+        # Reset all connections whether bytes or time, if it's TCP/Rational.
+        if { $opt(tcp) == "TCP/Rational" } {
+            $tcp_ reset_to_iw
+        }
+
         if { $opt(spike) != "true" } {
             $ns at [expr [$ns now]  +[$off_ranvar_ value]] \
                 "$self send [$on_ranvar_ value]"

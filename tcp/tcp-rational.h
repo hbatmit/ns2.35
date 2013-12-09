@@ -38,6 +38,7 @@ public:
 	void timeout_nonrtx( int tno ) override;
 	void output( int seqno, int reason ) override { _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
 	void update_cwnd_and_pacing( void );
+	int command(int argc, const char*const* argv) override;
 
 protected:
 	void delay_bind_init_all() override;

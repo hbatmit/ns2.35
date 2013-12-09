@@ -262,3 +262,14 @@ RationalTcpAgent::traceVar(TracedVar *v)
 	}
 
 }
+
+int RationalTcpAgent::command(int argc, const char*const* argv)
+{
+	if (argc == 2) {
+		if (strcmp(argv[1], "reset_to_iw") == 0) {
+			initial_window();
+			return (TCL_OK);
+		}
+	}
+	return (TcpAgent::command(argc, argv));
+}
