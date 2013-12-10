@@ -96,7 +96,12 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
         }
         set state_ on
     }
-    $self sched $opt(checkinterval);
+    if { $opt(ontype) == "time" } {
+        set sched_time [expr min($on_duration_, $opt(checkinterval))]
+        $self sched $sched_time
+    } else {
+        $self sched $opt(checkinterval)
+    }
 }
 
 Application/FTP/OnOffSender instproc sched { delay } {
@@ -134,7 +139,7 @@ Application/FTP/OnOffSender instproc timeout {} {
         }
     } elseif { $opt(ontype) == "time" } {
         set npkts_ [expr $npkts_ + $ack - $lastack_]
-        if { [$ns now] - $laststart_ > $on_duration_ } {
+        if { [$ns now] - $laststart_ >= $on_duration_ } {
             set done true
         }
     }
@@ -168,7 +173,17 @@ Application/FTP/OnOffSender instproc timeout {} {
         }
     } else {
         # still the same connection
-        $self sched $opt(checkinterval); # check again in a little time
+        if { $opt(ontype) == "time" } {
+            set remaining [expr $on_duration_ + $laststart_ - [$ns now]]
+            if {$remaining <= 0} {
+                 puts "Can't schedule in the past, exiting"
+                 exit -1;
+            }
+            set sched_time [expr min($opt(checkinterval), $remaining)]
+            $self sched $sched_time; # check again in a little time
+        } else {
+            $self sched $opt(checkinterval); # check again in a little time
+        }
     }
 }
 
