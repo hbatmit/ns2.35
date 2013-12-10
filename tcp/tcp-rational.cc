@@ -271,6 +271,10 @@ int RationalTcpAgent::command(int argc, const char*const* argv)
 {
 	if (argc == 2) {
 		if (strcmp(argv[1], "reset_to_iw") == 0) {
+			/* Clear all state except for the sequence numbers */
+			cwnd_ = 0;
+			_last_send_time = 0;
+			_intersend_time = 0;
 			initial_window();
 			fid_++;
 			return (TCL_OK);
