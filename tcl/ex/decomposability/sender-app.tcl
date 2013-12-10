@@ -64,6 +64,12 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
     $self instvar id_ npkts_ sentinel_ laststart_ on_duration_ tcp_ state_
     
     set laststart_ [$ns now]
+
+    # Reset all connections whether bytes or time, if it's TCP/Rational.
+    if { $opt(tcp) == "TCP/Rational" } {
+        $tcp_ reset_to_iw
+    }
+
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
         set nbytes [expr int($bytes_or_time)]
         # The next 3 lines are because Tcl doesn't seem to do ceil() correctly!
