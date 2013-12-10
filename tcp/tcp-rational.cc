@@ -52,6 +52,7 @@ RationalTcpAgent::RationalTcpAgent()
 
 	/* store whiskers */
 	_whiskers = new WhiskerTree( tree );
+	fid_ = 0;
 }
 
 RationalTcpAgent::~RationalTcpAgent()
@@ -177,7 +178,10 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 
 	double timestep = 1000.0;
 
-	update_memory( RemyPacket( timestep * tcph->ts_echo(), timestep * now ) );
+	unsigned int src = hdr_ip::access(pkt)->saddr();
+	unsigned int flow_id = hdr_ip::access(pkt)->flowid();
+	update_memory( RemyPacket( src, flow_id, timestep * tcph->ts_echo(), timestep * now ), fid_ );
+
 	update_cwnd_and_pacing();
 
 	/* if the connection is done, call finish() */
@@ -188,10 +192,10 @@ RationalTcpAgent::recv_newack_helper(Packet *pkt)
 }
 
 void 
-RationalTcpAgent::update_memory( const RemyPacket packet )
+RationalTcpAgent::update_memory( const RemyPacket packet, const unsigned int flow_id )
 {
 	std::vector< RemyPacket > packets( 1, packet );
-	_memory.packets_received( packets );
+	_memory.packets_received( packets, flow_id );
 }
 
 void
@@ -268,6 +272,7 @@ int RationalTcpAgent::command(int argc, const char*const* argv)
 	if (argc == 2) {
 		if (strcmp(argv[1], "reset_to_iw") == 0) {
 			initial_window();
+			fid_++;
 			return (TCL_OK);
 		}
 	}

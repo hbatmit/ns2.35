@@ -33,7 +33,7 @@ public:
 	void send_idle_helper() override;
 	void recv_newack_helper(Packet* pkt) override;
 	double initial_window() override;
-	void update_memory( const RemyPacket packet );
+	void update_memory( const RemyPacket packet, const unsigned int flow_id );
        void timeout( int tno ) override { return timeout_nonrtx( tno ); }
 	void timeout_nonrtx( int tno ) override;
 	void output( int seqno, int reason ) override { _last_send_time = Scheduler::instance().clock(); TcpAgent::output( seqno, reason ); }
