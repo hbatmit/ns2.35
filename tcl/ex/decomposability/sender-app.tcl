@@ -12,6 +12,7 @@ Application/FTP/OnOffSender instproc init {} {
     $self set sentinel_ -1; # a sentinel of 0 means you need to send one packet
     $self set npkts_ 0
     $self set on_duration_ 0.0
+    $self set state_ off
     $self next
 }
 
@@ -60,7 +61,7 @@ Application/FTP/OnOffSender instproc setup_and_start { id tcp } {
 
 Application/FTP/OnOffSender instproc send { bytes_or_time } {
     global ns opt
-    $self instvar id_ npkts_ sentinel_ laststart_ on_duration_ tcp_
+    $self instvar id_ npkts_ sentinel_ laststart_ on_duration_ tcp_ state_
     
     set laststart_ [$ns now]
     if { $opt(ontype) == "bytes" || $opt(ontype) == "flowcdf" } {
@@ -80,12 +81,14 @@ Application/FTP/OnOffSender instproc send { bytes_or_time } {
         if { $opt(verbose) == "true" } {
             puts "[$ns now] $id_ turning ON for $nbytes bytes ( $npkts_ pkts )"
         }
+        set state_ on
     } elseif { $opt(ontype) == "time" } {
         set on_duration_ $bytes_or_time
         [$self agent] send -1;  # "infinite" source, but we'll stop it later
         if { $opt(verbose) == "true" } {
             puts "[$ns now] $id_ turning ON for $on_duration_ seconds"
         }
+        set state_ on
     }
     $self sched $opt(checkinterval);
 }
@@ -109,7 +112,7 @@ Application/FTP/OnOffSender instproc cancel {} {
 
 Application/FTP/OnOffSender instproc timeout {} {
     global ns opt
-    $self instvar id_ tcp_ stats_ on_duration_ sentinel_ npkts_ laststart_ lastrtt_ lastack_ on_ranvar_ off_ranvar_
+    $self instvar id_ tcp_ stats_ on_duration_ sentinel_ npkts_ laststart_ lastrtt_ lastack_ on_ranvar_ off_ranvar_ state_
 
     set done false
     set rtt [expr [$tcp_ set rtt_] * [$tcp_ set tcpTick_] ]
@@ -145,6 +148,9 @@ Application/FTP/OnOffSender instproc timeout {} {
             [$self agent] advance 0; # causes TCP to pause
         }
 
+        # Turn off connection
+        set state_ off;
+
         # Reset all connections whether bytes or time, if it's TCP/Rational.
         if { $opt(tcp) == "TCP/Rational" } {
             $tcp_ reset_to_iw
@@ -162,7 +168,7 @@ Application/FTP/OnOffSender instproc timeout {} {
 
 Application/FTP/OnOffSender instproc dumpstats {} {
     global ns opt
-    $self instvar id_ stats_ laststart_ lastack_ sentinel_ npkts_ tcp_
+    $self instvar id_ stats_ laststart_ lastack_ sentinel_ npkts_ tcp_ state_
     # the connection might not have completed; calculate #acked pkts
 
     # Update last ack
@@ -172,12 +178,20 @@ Application/FTP/OnOffSender instproc dumpstats {} {
         set acked [expr $npkts_ - ($sentinel_ - $lastack_)]
         #    puts "dumpstats $id_: $npkts_ $sentinel_ $lastack_ $acked"
         if { $acked > 0 } {
-            $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
+            if { $state_ == "on" } {
+                $stats_ update_flowstats $acked [expr [$ns now] - $laststart_]
+            } else {
+                $stats_ update_flowstats $acked 0.0
+            }
         }
     }  else {
         set rem_pkts [expr $lastack_ - [$stats_ set npkts_] + 1]
         if { $rem_pkts > 0 } {
-            $stats_ update_flowstats $rem_pkts [expr [$ns now] - $laststart_]
+            if { $state_ ==  "on" } {
+                $stats_ update_flowstats $rem_pkts [expr [$ns now] - $laststart_]
+            } else {
+                $stats_ update_flowstats $rem_pkts 0.0
+            }
         }
     }
 }
