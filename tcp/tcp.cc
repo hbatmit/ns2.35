@@ -81,7 +81,7 @@ TcpAgent::TcpAgent()
 	  first_decrease_(1), fcnt_(0), nrexmit_(0), restart_bugfix_(1), 
           cong_action_(0), ecn_burst_(0), ecn_backoff_(0), ect_(0), 
           use_rtt_(0), qs_requested_(0), qs_approved_(0),
-	  qs_window_(0), qs_cwnd_(0), frto_(0)
+	  qs_window_(0), qs_cwnd_(0), frto_(0), stat_collector_()
 {
 #ifdef TCP_DELAY_BIND_ALL
         // defined since Dec 1999.
@@ -890,6 +890,14 @@ int TcpAgent::command(int argc, const char*const* argv)
 			t_srtt_ = other->t_srtt_;
 			t_rttvar_ = other->t_rttvar_;
 			t_backoff_ = other->t_backoff_;
+			return (TCL_OK);
+		}
+	} else if (argc == 5) {
+		if (strcmp(argv[1], "stats") == 0) {
+			double on_duration = atof(argv[2]);
+			uint32_t flow_id = atoi(argv[3]);
+			uint32_t pkt_size = atoi(argv[4]);
+			stat_collector_.output_stats(on_duration, flow_id, pkt_size);
 			return (TCL_OK);
 		}
 	}
@@ -1806,6 +1814,7 @@ int TcpAgent::lossQuickStart()
 void TcpAgent::recv(Packet *pkt, Handler*)
 {
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
+	stat_collector_.add_sample(pkt);
 	int valid_ack = 0;
 	if (qs_approved_ == 1 && tcph->seqno() > last_ack_) 
 		endQuickStart();

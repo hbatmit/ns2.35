@@ -37,6 +37,7 @@
 
 #include "agent.h"
 #include "packet.h"
+#include "statcollector.hh"
 
 //class EventTrace;
 
@@ -543,6 +544,8 @@ protected:
 	int prev_highest_ack_ ; /* Used to determine if sender is */
 				/*  window-limited.  */
    	/* end of TCP quiescence */
+        /* ANIRUDH: Statistics gathering */
+        StatCollector stat_collector_;
 };
 
 /* TCP Reno */
