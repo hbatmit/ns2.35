@@ -86,7 +86,7 @@ LIB	= \
 
 CFLAGS	+= $(CCOPT) $(DEFINE) 
 #CXXFLAGS += -std=c++0x
-CXXFLAGS += $(CCOPT) $(DEFINE) -std=gnu++0x
+CXXFLAGS += $(CCOPT) $(DEFINE) -std=c++11
 
 # Explicitly define compilation rules since SunOS 4's make doesn't like gcc.
 # Also, gcc does not remove the .o before forking 'as', which can be a
