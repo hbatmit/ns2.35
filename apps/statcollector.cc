@@ -37,7 +37,7 @@ void StatCollector::output_stats(double on_duration, uint32_t flow_id,
   fprintf(stderr,
           "%u: tp=%f mbps, del=%f ms, on=%f secs, samples=%d\n",
           flow_id,
-          (cumulative_pkts_ * 8 * payload_size)/ (1.0e6 * on_duration),
+          (cumulative_pkts_ * 8.0 * payload_size)/ (1.0e6 * on_duration),
           (cumulative_rtt_ * 1000.0) / num_samples_,
           on_duration,
           num_samples_);
