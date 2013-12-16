@@ -186,8 +186,12 @@ public:
 
 	void trace(TracedVar* v);
 	virtual void advanceby(int delta);
+	void advanceto(int newseq); /* ANIRUDH: Added this in */
 
 	virtual void reset();
+	virtual void reset_to_iw(void) { assert(false); } /* ANIRUDH: Added this in */
+
+	uint32_t ack() { return (int)last_ack_;} /* ANIRUDH: Track the last acked segment */
 
 	/* These two functions aid Tmix one-way TCP agents */
 	int is_closed() {return closed_;} 

@@ -11,7 +11,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
-
+#include <string>
+#include "exception.hh"
 #include "tcp-rational.h"
 
 RationalTcpAgent::RationalTcpAgent()
@@ -21,38 +22,39 @@ RationalTcpAgent::RationalTcpAgent()
 	  _last_send_time( 0 ),
 	  count_bytes_acked_( 0 )
 {
-	bind_bool("count_bytes_acked_", &count_bytes_acked_);
+	try {
+		bind_bool("count_bytes_acked_", &count_bytes_acked_);
 
-	/* get whisker filename */
-	const char *filename = getenv( "WHISKERS" );
-	if ( !filename ) {
-		fprintf( stderr, "RemyTCP: Missing WHISKERS environment variable.\n" );
-		throw 1;
-	}
+		/* get whisker filename */
+		const char *filename = getenv( "WHISKERS" );
+		if ( !filename ) {
+			throw Exception("RationalTcpAgent::RationalTcpAgent", "RemyTCP: Missing WHISKERS environment variable.");
+		}
 
-	/* open file */
-	int fd = open( filename, O_RDONLY );
-	if ( fd < 0 ) {
-		perror( "open" );
-		throw 1;
-	}
+		/* open file */
+		int fd = open( filename, O_RDONLY );
+		if ( fd < 0 ) {
+			throw Exception("RationalTcpAgent::RationalTcpAgent open() call");
+		}
 
-	/* parse whisker definition */
-	RemyBuffers::WhiskerTree tree;
-	if ( !tree.ParseFromFileDescriptor( fd ) ) {
-		fprintf( stderr, "RemyTCP: Could not parse whiskers in \"%s\".\n", filename );
-		throw 1;
-	}
+		/* parse whisker definition */
+		RemyBuffers::WhiskerTree tree;
+		if ( !tree.ParseFromFileDescriptor( fd ) ) {
+			throw Exception("RationalTcpAgent::RationalTcpAgent", "RemyTCP: Could not parse whiskers in " + std::string(filename) );
+		}
 
-	/* close file */
-	if ( ::close( fd ) < 0 ) {
-		perror( "close" );
-		throw 1;
-	}
+		/* close file */
+		if ( ::close( fd ) < 0 ) {
+			throw Exception("RationalTcpAgent::RationalTcpAgent close() call");
+		}
 
-	/* store whiskers */
-	_whiskers = new WhiskerTree( tree );
-	fid_ = 0;
+		/* store whiskers */
+		_whiskers = new WhiskerTree( tree );
+		fid_ = 0;
+        } catch (const Exception & e) {
+		e.perror();
+		exit(1);
+        }
 }
 
 RationalTcpAgent::~RationalTcpAgent()
@@ -266,17 +268,21 @@ RationalTcpAgent::traceVar(TracedVar *v)
 	}
 
 }
+void RationalTcpAgent::reset_to_iw(void)
+{
+	cwnd_ = 0;
+	_last_send_time = 0;
+	_intersend_time = 0;
+	initial_window();
+	fid_++;
+}
 
 int RationalTcpAgent::command(int argc, const char*const* argv)
 {
 	if (argc == 2) {
 		if (strcmp(argv[1], "reset_to_iw") == 0) {
 			/* Clear all state except for the sequence numbers */
-			cwnd_ = 0;
-			_last_send_time = 0;
-			_intersend_time = 0;
-			initial_window();
-			fid_++;
+			reset_to_iw();
 			return (TCL_OK);
 		}
 	}

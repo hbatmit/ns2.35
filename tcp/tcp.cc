@@ -836,6 +836,13 @@ void TcpAgent::advanceby(int delta)
 	send_much(0, 0, maxburst_); 
 }
 
+void TcpAgent::advanceto(int newseq)
+{
+	if (newseq > maxseq_)
+		advanceby(newseq - curseq_);
+	else
+		advanceby(maxseq_ - curseq_);
+}
 
 int TcpAgent::command(int argc, const char*const* argv)
 {
@@ -1814,7 +1821,6 @@ int TcpAgent::lossQuickStart()
 void TcpAgent::recv(Packet *pkt, Handler*)
 {
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
-	stat_collector_.add_sample(pkt);
 	int valid_ack = 0;
 	if (qs_approved_ == 1 && tcph->seqno() > last_ack_) 
 		endQuickStart();
@@ -1865,6 +1871,7 @@ void TcpAgent::recv(Packet *pkt, Handler*)
 	if (tcph->seqno() >= last_ack_)  
 		// Check if ACK is valid.  Suggestion by Mark Allman. 
 		valid_ack = 1;
+	if (app_) app_->recv_ack(pkt); /* ANIRUDH: Callback to app */
 	Packet::free(pkt);
 	/*
 	 * Try to send more data.
