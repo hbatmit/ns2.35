@@ -51,6 +51,7 @@ public:
 	virtual void send(int nbytes);
 	virtual void recv(int nbytes);
 	virtual void resume();
+	virtual void recv_ack(Packet* ack);
 
 protected:
 	virtual int command(int argc, const char*const* argv);

@@ -120,6 +120,11 @@ void Application::recv(int nbytes)
 	tcl.evalf("%s recv %d", name_, nbytes);
 }
 
+void Application::recv_ack(Packet* ack)
+{
+	/* ANIRUDH: By default, do nothing */
+	return;
+}
 
 void Application::resume()
 {
