@@ -100004,7 +100004,12 @@ const uint32_t EmpVariate::flowarray [100001] = {
 
 EmpVariate::EmpVariate(uint32_t t_run)
     : run_(t_run),
-      rng_(RNG::defaultrng()) {}
+      rng_(RNG::defaultrng()) {
+  /* Reset until the appropriate run */
+  for (uint32_t i = 1; i <= run_; i++) {
+    rng_->reset_next_substream();
+  }
+}
 
 double EmpVariate::sample(void) {
   return flowarray[int(rng_->uniform(0, 100000))];
