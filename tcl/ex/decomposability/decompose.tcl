@@ -28,10 +28,6 @@ if [info exists env(nshome)] {
 }
 set env(PATH) "$nshome/bin:$env(PATH)"
 
-source sender-app.tcl
-source logging-app2.tcl
-source stats.tcl
-
 proc Getopt {} {
     global opt argc argv
     for {set i 1} {$i < $argc} {incr i} {
@@ -92,7 +88,7 @@ proc create-topology {topology_file} {
 }
 
 proc create-sources-destinations {sdpairs_file} {
-    global ns opt node_array app_src recvapp tp linuxcc f
+    global ns opt node_array app_src tp linuxcc f
     if { [string range $opt(tcp) 0 9] == "TCP/Linux/"} {
         set linuxcc [ string range $opt(tcp) 10 [string length $opt(tcp)] ]
         set opt(tcp) "TCP/Linux"
@@ -139,44 +135,30 @@ proc create-sources-destinations {sdpairs_file} {
             $tcpsrc attach $f
         }
 
-        set app_src($i) [ $tcpsrc attach-app $opt(app) ]
-        $app_src($i) setup_and_start $i $tcpsrc
-        set recvapp($i) [new LoggingApp $i]
-        $recvapp($i) attach-agent $tcpsink
-        $ns at 0.0 "$recvapp($i) start"
+	 if { $opt(ontype) == "bytes" } {
+            set bytes_or_time $opt(avgbytes)
+        } else {
+            set bytes_or_time $opt(onavg)
+        }
+
+        set app_src($i) [new Application/OnOff $opt(ontype) $i $opt(pktsize) $opt(hdrsize) 10 $bytes_or_time $opt(offavg) $tcpsrc [string equal $opt(tcp) "TCP/Rational"]]
+        $app_src($i) attach-agent $tcpsrc
         incr i
     }
 }
 
 proc finish {} {
-    global ns opt stats app_src recvapp linuxcc
+    global ns opt app_src
     global f
-    puts "size [array size app_src]"    
+    puts "size [array size app_src]"
     for {set i 0} {$i < [array size app_src]} {incr i} {
-        set sapp $app_src($i)
-        $sapp dumpstats 
-        set rcdbytes [$recvapp($i) set nbytes_]
-        set rcd_nrtt [$recvapp($i) set nrtt_]
-        if { $rcd_nrtt > 0 } {
-            set rcd_avgrtt [expr 1000.0*[$recvapp($i) set cumrtt_] / $rcd_nrtt ]
-        } else {
-            set rcd_avgrtt 0.0
-        }
-        if {$i == 0} {
-            if { [info exists linuxcc] } {
-                puts "Results for $opt(tcp)/$linuxcc $opt(gw) $opt(sink) over $opt(simtime) seconds:"
-            } else {
-                puts "Results for $opt(tcp) $opt(gw) $opt(sink) over $opt(simtime) seconds:"
-            }
-        }
-
-        [$sapp set stats_] showstats $rcdbytes $rcd_avgrtt
+      $app_src($i) stats
     }
 
     if { [info exists f] } {
         $ns flush-trace
-        close $f           
-    }                                                                                                       
+        close $f
+    }
     exit 0
 }
 
