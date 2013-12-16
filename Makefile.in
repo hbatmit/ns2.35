@@ -184,7 +184,7 @@ OBJ_CC = \
         src_rtg/sragent.o src_rtg/hdr_src.o adc/ump.o \
 	qs/qsagent.o qs/hdr_qs.o \
 	apps/app.o apps/telnet.o tcp/tcplib-telnet.o \
-	apps/expvariate.o apps/empvariate.o \
+	apps/expvariate.o apps/empvariate.o apps/onoffapp.o \
 	apps/statcollector.o \
 	tools/trafgen.o trace/traffictrace.o tools/pareto.o \
 	tools/expoo.o tools/cbr_traffic.o \
