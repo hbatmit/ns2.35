@@ -1,5 +1,5 @@
 #include "empvariate.hh"
-const uint32_t EmpVariate::flowarray [92607] = {
+const std::array<uint32_t, 92607> EmpVariate::flowarray { {
 1  ,
 1  ,
 1  ,
@@ -92606,7 +92606,7 @@ const uint32_t EmpVariate::flowarray [92607] = {
 486309888  ,
 1116346384  ,
 3037830528  ,
-3288637712};
+3288637712 }};
 
 EmpVariate::EmpVariate(uint32_t t_run)
     : run_(t_run),
@@ -92618,5 +92618,5 @@ EmpVariate::EmpVariate(uint32_t t_run)
 }
 
 double EmpVariate::sample(void) {
-  return flowarray[int(rng_->uniform(0, 92606))];
+  return flowarray.at(int(rng_->uniform(0, flowarray.size() - 1)));
 }

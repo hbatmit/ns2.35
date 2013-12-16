@@ -2,6 +2,7 @@
 #define EMP_VARIATE_HH_
 
 #include <stdint.h>
+#include <array>
 #include "rng.h"
 
 /*
@@ -13,7 +14,7 @@ class EmpVariate {
  public:
   EmpVariate(uint32_t t_run);
   double sample(void);
-  static const uint32_t flowarray[92607];
+  static const std::array<uint32_t, 92607> flowarray;
 
  private:
   uint32_t run_;
