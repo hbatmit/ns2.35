@@ -27,7 +27,6 @@ void StatCollector::add_sample(Packet* pkt) {
 
   /* Get RTT */
   cumulative_rtt_ += Scheduler::instance().clock() - tcph->ts_echo();
-  fprintf(stderr, "new sample %f\n", 1000*(Scheduler::instance().clock() - tcph->ts_echo()));
   num_samples_++;
 }
 

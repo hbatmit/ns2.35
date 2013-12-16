@@ -184,6 +184,7 @@ OBJ_CC = \
         src_rtg/sragent.o src_rtg/hdr_src.o adc/ump.o \
 	qs/qsagent.o qs/hdr_qs.o \
 	apps/app.o apps/telnet.o tcp/tcplib-telnet.o \
+	apps/statcollector.o \
 	tools/trafgen.o trace/traffictrace.o tools/pareto.o \
 	tools/expoo.o tools/cbr_traffic.o \
 	adc/tbf.o adc/resv.o adc/sa.o tcp/saack.o \
@@ -199,7 +200,6 @@ OBJ_CC = \
 	common/messpass.o common/tp.o common/tpm.o apps/worm.o \
 	tcp/tcp.o tcp/tcp-sink.o tcp/tcp-reno.o \
 	tcp/tcp-newreno.o tcp/tcp-rational.o tcp/tcp-fast.o \
-	tcp/statcollector.o \
 	tcp/remy/dna.pb.o tcp/remy/memory.o tcp/remy/memoryrange.o tcp/remy/whisker.o tcp/remy/whiskertree.o \
 	tcp/tcp-vegas.o tcp/tcp-rbp.o tcp/tcp-full.o tcp/rq.o \
 	baytcp/tcp-full-bay.o baytcp/ftpc.o baytcp/ftps.o \
