@@ -13,7 +13,7 @@ class EmpVariate {
  public:
   EmpVariate(uint32_t t_run);
   double sample(void);
-  static const uint32_t flowarray[100001];
+  static const uint32_t flowarray[92607];
 
  private:
   uint32_t run_;
