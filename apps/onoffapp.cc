@@ -64,19 +64,17 @@ void OnOffApp::turn_on() {
 void OnOffApp::recv_ack(Packet* ack) {
   /* Measure RTT and other statistics */
   stat_collector_.add_sample(ack);
-//  fprintf(stderr, "ack %d, sentinel_ %d\n",
-//                  hdr_tcp::access(ack)->seqno(),
-//                  sentinel_);
-  if (hdr_tcp::access(ack)->seqno() >= sentinel_ and (ontype_ == BYTE_BASED or ontype_ == EMPIRICAL)) {
-      assert(hdr_tcp::access(ack)->seqno() == sentinel_);
-      turn_off();
+}
+
+void OnOffApp::resume(void) {
+  /* If ontype is BYTE_BASED or EMPIRICAL, turn off */
+  if (ontype_ == BYTE_BASED or ontype_ == EMPIRICAL) {
+    turn_off();
   }
 }
 
 void OnOffApp::turn_off(void) {
-  if (ontype_ == BYTE_BASED or ontype_ == EMPIRICAL) {
-     assert(tcp_handle_->ack() == sentinel_);
-  } else if (ontype_ == TIME_BASED) {
+  if (ontype_ == TIME_BASED) {
      assert(Scheduler::instance().clock() == (laststart_ + current_flow_.on_duration));
      tcp_handle_->advanceto(0); /* Src quench kludge */
   }
@@ -90,8 +88,12 @@ void OnOffApp::turn_off(void) {
   double off_duration = start_distribution_.sample();
   fprintf(stderr, "%d, %f Turning off, turning on at %f\n", sender_id_, Scheduler::instance().clock(),
                   Scheduler::instance().clock() + off_duration);
-  assert(on_timer_.status() == TIMER_IDLE);
-  on_timer_.sched(off_duration);
+
+  /* Either on_timer_ is unscheduled (TIMER_IDLE) */
+  /* Or we got here from on_timer_'s callback, start_send. This can happen only if pkts are sent out all at once */
+  assert(on_timer_.status() == TIMER_IDLE or
+        (on_timer_.status() == TimerHandler::TimerStatus::TIMER_HANDLING and Scheduler::instance().clock() == laststart_));
+  on_timer_.resched(off_duration);
 }
 
 static class OnOffClass : public TclClass {

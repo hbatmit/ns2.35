@@ -793,7 +793,8 @@ void TcpAgent::output(int seqno, int reason)
         ++ndatapack_;
         ndatabytes_ += databytes;
 	send(p, 0);
-	if (seqno == curseq_ && seqno > maxseq_)
+	assert(seqno < curseq_);
+	if (seqno == curseq_ - 1 && seqno > maxseq_)
 		idle();  // Tell application I have sent everything so far
 	if (seqno > maxseq_) {
 		maxseq_ = seqno;

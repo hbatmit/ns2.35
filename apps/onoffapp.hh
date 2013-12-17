@@ -42,6 +42,7 @@ class OnOffApp : public Application {
            bool reset);
   OnOffApp() = delete; /* Delete the default constructor */
   void recv_ack(Packet* ack) override; /* Called inside TcpAgent::recv() */
+  void resume(void) override; /* Called when the TcpAgent is done transmitting for the first time */
   void turn_on(void);    /* Called when the flow starts */
   void turn_off(void);   /* Called when the flow ends */
   int command(int argc, const char*const* argv) override;
