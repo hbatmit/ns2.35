@@ -55,6 +55,7 @@ void OnOffApp::start_send() {
     tcp_handle_->advanceby(ceil(double(current_flow_.flow_size) / double(pkt_size_)));
   } else if (ontype_ == TIME_BASED) {
     tcp_handle_->send(-1);
+    assert(stop_timer_.status() == TIMER_IDLE);
     stop_timer_.sched(current_flow_.on_duration);
   }
 }
@@ -85,9 +86,11 @@ void OnOffApp::turn_off(void) {
   if (do_i_reset_) {
     tcp_handle_->reset_to_iw();
   }
-  fprintf(stderr, "Turned off at %f, turning on at %f\n", Scheduler::instance().clock(),
-                  Scheduler::instance().clock() + start_distribution_.sample());
-  start_timer_.sched(start_distribution_.sample());
+  double off_duration = start_distribution_.sample();
+  fprintf(stderr, "%d Turned off at %f, turning on at %f\n", sender_id_, Scheduler::instance().clock(),
+                  Scheduler::instance().clock() + off_duration);
+  assert(start_timer_.status() == TIMER_IDLE);
+  start_timer_.sched(off_duration);
 }
 
 static class OnOffClass : public TclClass {
