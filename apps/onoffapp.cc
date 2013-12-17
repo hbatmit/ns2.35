@@ -27,13 +27,14 @@ OnOffApp::OnOffApp(string str_ontype,
       emp_stop_distribution_(run_),
       tcp_handle_(t_tcp_handle),
       do_i_reset_(reset),
-      start_timer_(this),
-      stop_timer_(this)
+      on_timer_(this),
+      off_timer_(this)
 {
-  start_timer_.sched(start_distribution_.sample());
+  on_timer_.sched(start_distribution_.sample());
 }
 
-void OnOffApp::start_send() {
+void OnOffApp::turn_on() {
+  printf("%d, %f Turning on\n", sender_id_, Scheduler::instance().clock());
   if (ontype_ == BYTE_BASED) {
     current_flow_.flow_size = stop_distribution_.sample();
   } else if (ontype_ == TIME_BASED) {
@@ -55,8 +56,8 @@ void OnOffApp::start_send() {
     tcp_handle_->advanceby(ceil(double(current_flow_.flow_size) / double(pkt_size_)));
   } else if (ontype_ == TIME_BASED) {
     tcp_handle_->send(-1);
-    assert(stop_timer_.status() == TIMER_IDLE);
-    stop_timer_.sched(current_flow_.on_duration);
+    assert(off_timer_.status() == TIMER_IDLE);
+    off_timer_.sched(current_flow_.on_duration);
   }
 }
 
@@ -87,10 +88,10 @@ void OnOffApp::turn_off(void) {
     tcp_handle_->reset_to_iw();
   }
   double off_duration = start_distribution_.sample();
-  fprintf(stderr, "%d Turned off at %f, turning on at %f\n", sender_id_, Scheduler::instance().clock(),
+  fprintf(stderr, "%d, %f Turning off, turning on at %f\n", sender_id_, Scheduler::instance().clock(),
                   Scheduler::instance().clock() + off_duration);
-  assert(start_timer_.status() == TIMER_IDLE);
-  start_timer_.sched(off_duration);
+  assert(on_timer_.status() == TIMER_IDLE);
+  on_timer_.sched(off_duration);
 }
 
 static class OnOffClass : public TclClass {
@@ -128,10 +129,10 @@ int OnOffApp::command(int argc, const char*const* argv) {
   return Application::command(argc, argv);
 }
 
-void AppStartTimer::expire(Event* e) {
-  app_->start_send();
+void AppOnTimer::expire(Event* e) {
+  app_->turn_on();
 }
 
-void AppStopTimer::expire(Event* e) {
+void AppOffTimer::expire(Event* e) {
   app_->turn_off();
 }

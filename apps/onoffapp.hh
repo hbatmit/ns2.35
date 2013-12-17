@@ -11,18 +11,18 @@
 class OnOffApp;
 
 /* Executed on OFF->ON transitions */
-class AppStartTimer : public TimerHandler {
+class AppOnTimer : public TimerHandler {
  public:
-  AppStartTimer(OnOffApp* app) : TimerHandler(), app_(app) {}
+  AppOnTimer(OnOffApp* app) : TimerHandler(), app_(app) {}
   virtual void expire(Event *e) override;
  protected:
   OnOffApp* app_;
 };
 
 /* Executed on ON->OFF transitions */
-class AppStopTimer : public TimerHandler {
+class AppOffTimer : public TimerHandler {
  public:
-  AppStopTimer(OnOffApp* app) : TimerHandler(), app_(app) {}
+  AppOffTimer(OnOffApp* app) : TimerHandler(), app_(app) {}
   virtual void expire(Event *e) override;
  protected:
   OnOffApp* app_;
@@ -42,7 +42,7 @@ class OnOffApp : public Application {
            bool reset);
   OnOffApp() = delete; /* Delete the default constructor */
   void recv_ack(Packet* ack) override; /* Called inside TcpAgent::recv() */
-  void start_send(void); /* Called before the flow starts */
+  void turn_on(void);    /* Called when the flow starts */
   void turn_off(void);   /* Called when the flow ends */
   int command(int argc, const char*const* argv) override;
 
@@ -81,8 +81,8 @@ class OnOffApp : public Application {
   const bool do_i_reset_;
 
   /* Timers */
-  AppStartTimer start_timer_;
-  AppStopTimer stop_timer_;
+  AppOnTimer  on_timer_;
+  AppOffTimer off_timer_;
 
   /* Track number of calls to stats */
   uint32_t calls_ {0};
