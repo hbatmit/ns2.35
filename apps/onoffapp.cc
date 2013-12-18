@@ -34,7 +34,7 @@ OnOffApp::OnOffApp(string str_ontype,
 }
 
 void OnOffApp::turn_on() {
-  printf("%d, %f Turning on\n", sender_id_, Scheduler::instance().clock());
+  fprintf(stderr, "%d, %f Turning on\n", sender_id_, Scheduler::instance().clock());
   if (ontype_ == BYTE_BASED) {
     current_flow_.flow_size = stop_distribution_.sample();
   } else if (ontype_ == TIME_BASED) {
