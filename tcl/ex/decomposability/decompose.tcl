@@ -174,10 +174,6 @@ set sdpairs_file  [lindex $argv 1]
 
 Getopt
 
-if { ![info exists opt(reset)] } {
-    set opt(reset) true;    # reset TCP connection on end of ON period
-}
-
 global defaultRNG
 $defaultRNG seed $opt(seed)
 
