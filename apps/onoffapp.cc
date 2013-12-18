@@ -49,8 +49,8 @@ void OnOffApp::turn_on() {
     tcp_handle_->reset_to_iw();
   }
 
-  assert(current_flow_.flow_size > 0);
   if (ontype_ == BYTE_BASED or ontype_ == EMPIRICAL) {
+    assert(current_flow_.flow_size > 0);
     sentinel_ += ceil(double(current_flow_.flow_size) / double(pkt_size_));
     /* TODO: Handle the Vegas kludge somehow */
     tcp_handle_->advanceby(ceil(double(current_flow_.flow_size) / double(pkt_size_)));
