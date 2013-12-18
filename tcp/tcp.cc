@@ -793,7 +793,8 @@ void TcpAgent::output(int seqno, int reason)
         ++ndatapack_;
         ndatabytes_ += databytes;
 	send(p, 0);
-	assert(seqno < curseq_);
+	//assert(seqno < curseq_); // ANIRUDH: Works for the non-Linux TCPs.
+                                   // There seem to be inconsistencies within ns-2!
 	if (seqno == curseq_ - 1 && seqno > maxseq_)
 		idle();  // Tell application I have sent everything so far
 	if (seqno > maxseq_) {
