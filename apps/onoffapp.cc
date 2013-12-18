@@ -53,7 +53,7 @@ void OnOffApp::turn_on() {
     assert(current_flow_.flow_size > 0);
     sentinel_ += ceil(double(current_flow_.flow_size) / double(pkt_size_));
     /* TODO: Handle the Vegas kludge somehow */
-    tcp_handle_->advanceby(ceil(double(current_flow_.flow_size) / double(pkt_size_)));
+    tcp_handle_->advanceby(ceil(double(current_flow_.flow_size) / double(pkt_size_ + hdr_size_)));
   } else if (ontype_ == TIME_BASED) {
     tcp_handle_->send(-1);
     assert(off_timer_.status() == TIMER_IDLE);
