@@ -427,6 +427,7 @@ void LinuxTcpAgent::recv(Packet *pkt, Handler*)
 	};
 	send_much(FALSE, 0, maxburst_);	//anytime we can do send_much by checking it.
 	DEBUG(5, "data sent\n");
+	app_->recv_ack(pkt);
 	Packet::free(pkt);
 
 #ifdef notyet

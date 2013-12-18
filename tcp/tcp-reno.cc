@@ -129,6 +129,7 @@ void RenoTcpAgent::recv(Packet *pkt, Handler*)
         if (tcph->seqno() >= last_ack_)
                 // Check if ACK is valid.  Suggestion by Mark Allman.
                 valid_ack = 1;
+	app_->recv_ack(pkt);
 	Packet::free(pkt);
 #ifdef notyet
 	if (trace_)
