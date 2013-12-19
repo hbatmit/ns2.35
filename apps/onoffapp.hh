@@ -60,7 +60,6 @@ class OnOffApp : public Application {
 
   /* Book-keeping and current state */
   double   laststart_ {0.0};
-  int32_t  sentinel_ {-1};
   enum {ON, OFF} state_ {OFF};
 
   /* Random variates, use names to mirror Keith's names in Remy */
