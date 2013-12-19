@@ -36,11 +36,11 @@ OnOffApp::OnOffApp(string str_ontype,
 void OnOffApp::turn_on() {
   fprintf(stderr, "%d, %f Turning on\n", sender_id_, Scheduler::instance().clock());
   if (ontype_ == BYTE_BASED) {
-    current_flow_.flow_size = stop_distribution_.sample();
+    current_flow_.flow_size = lround(ceil(stop_distribution_.sample()));
   } else if (ontype_ == TIME_BASED) {
     current_flow_.on_duration = stop_distribution_.sample();
   } else if (ontype_ == EMPIRICAL) {
-    current_flow_.flow_size = emp_stop_distribution_.sample();
+    current_flow_.flow_size = lround(ceil(emp_stop_distribution_.sample()));
   }
 
   laststart_ = Scheduler::instance().clock();
@@ -52,7 +52,7 @@ void OnOffApp::turn_on() {
   if (ontype_ == BYTE_BASED or ontype_ == EMPIRICAL) {
     assert(current_flow_.flow_size > 0);
     /* TODO: Handle the Vegas kludge somehow */
-    tcp_handle_->advanceby(lround(ceil(current_flow_.flow_size)));
+    tcp_handle_->advanceby(current_flow_.flow_size);
   } else if (ontype_ == TIME_BASED) {
     tcp_handle_->send(-1);
     assert(off_timer_.status() == TIMER_IDLE);
