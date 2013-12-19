@@ -52,7 +52,7 @@ void OnOffApp::turn_on() {
   if (ontype_ == BYTE_BASED or ontype_ == EMPIRICAL) {
     assert(current_flow_.flow_size > 0);
     /* TODO: Handle the Vegas kludge somehow */
-    tcp_handle_->advanceby(ceil(double(current_flow_.flow_size) / double(pkt_size_ + hdr_size_)));
+    tcp_handle_->advanceby(lround(ceil(current_flow_.flow_size)));
   } else if (ontype_ == TIME_BASED) {
     tcp_handle_->send(-1);
     assert(off_timer_.status() == TIMER_IDLE);
