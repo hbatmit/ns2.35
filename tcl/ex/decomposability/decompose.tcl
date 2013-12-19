@@ -135,13 +135,7 @@ proc create-sources-destinations {sdpairs_file} {
             $tcpsrc attach $f
         }
 
-	 if { $opt(ontype) == "bytes" } {
-            set bytes_or_time $opt(avgbytes)
-        } else {
-            set bytes_or_time $opt(onavg)
-        }
-
-        set app_src($i) [new Application/OnOff $opt(ontype) $i $opt(pktsize) $opt(hdrsize) 10 $bytes_or_time $opt(offavg) $tcpsrc [string equal $opt(tcp) "TCP/Rational"]]
+        set app_src($i) [new Application/OnOff $opt(ontype) $i $opt(pktsize) $opt(hdrsize) 10 $opt(onavg) $opt(offavg) $tcpsrc [string equal $opt(tcp) "TCP/Rational"]]
         $app_src($i) attach-agent $tcpsrc
         incr i
     }
