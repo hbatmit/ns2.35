@@ -74,21 +74,21 @@ long int myatoi( const string & str, const int base )
     return ret;
 }
 
-double myatof( const string & str )
+double myatod( const string & str )
 {
     if ( str.empty() ) {
-        throw Exception( "myatof", "Invalid integer string: empty" );
+        throw Exception( "myatod", "Invalid double string: empty" );
     }
 
     char *end;
 
     errno = 0;
-    long int ret = strtod( str.c_str(), &end );
+    double ret = strtod( str.c_str(), &end );
 
     if ( errno != 0 ) {
-        throw Exception( "strtol" );
+        throw Exception( "strtod" );
     } else if ( end != str.c_str() + str.size() ) {
-        throw Exception( "myatof", "Invalid float " + str );
+        throw Exception( "myatod", "Invalid double " + str );
     }
 
     return ret;

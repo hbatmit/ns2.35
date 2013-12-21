@@ -105,8 +105,8 @@ static class OnOffClass : public TclClass {
                             myatoi(argv[6]),
                             myatoi(argv[7]),
                             myatoi(argv[8]),
-                            myatof(argv[9]),
-                            myatof(argv[10]),
+                            myatod(argv[9]),
+                            myatod(argv[10]),
                             reinterpret_cast<TcpAgent *>(TclObject::lookup(argv[11])),
                             myatoi(argv[12]));
       }
