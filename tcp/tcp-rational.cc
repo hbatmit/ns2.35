@@ -20,7 +20,10 @@ RationalTcpAgent::RationalTcpAgent()
 	  _memory(),
 	  _intersend_time( 0.0 ),
 	  transmission_map_(),
+	  retx_pending_(),
 	  largest_acked_ts_( -1.0 ),
+	  largest_acked_seqno_( -1 ),
+	  transmitted_pkts_( 0 ),
 	  _last_send_time( 0 ),
 	  count_bytes_acked_( 0 )
 {
@@ -114,13 +117,17 @@ RationalTcpAgent::send_helper(int maxburst)
 	assert( burstsnd_timer_.status() != TIMER_PENDING );
 
 	/* schedule wakeup */
-	if ( t_seqno_ <= highest_ack_ + window() && t_seqno_ < curseq_ ) {
-		const double now( Scheduler::instance().clock() );
-		const double time_since_last_send( now - _last_send_time );
-		const double wait_time( _intersend_time - time_since_last_send );
-		assert( wait_time > 0 );
-		burstsnd_timer_.resched( wait_time );
+	auto num_lost_or_received = (largest_acked_ts_ != -1.0) ? transmission_map_.at( largest_acked_ts_ ).second : 0.0;
+	if (transmission_map_.size() < num_lost_or_received + window()) {
+		if ( ( not retx_pending_.empty() ) or ( t_seqno_ < curseq_ ) ) {
+			const double now( Scheduler::instance().clock() );
+			const double time_since_last_send( now - _last_send_time );
+			const double wait_time( _intersend_time - time_since_last_send );
+			assert( wait_time > 0 );
+			burstsnd_timer_.resched( wait_time );
+		}
 	}
+
 }
 
 void RationalTcpAgent::recv(Packet* pkt, Handler *h) {
@@ -135,19 +142,18 @@ void RationalTcpAgent::recv(Packet* pkt, Handler *h) {
 	assert( tcph->ts() > largest_acked_ts_ );
 	largest_acked_ts_ = tcph->ts_echo();
 
-	if (tcph->seqno() > last_ack_) {
-		newack(pkt);		// updates RTT to set RTO properly, etc.
-		maxseq_ = ::max(maxseq_, highest_ack_);
-		update_congestion_state(pkt);
-	} else if (tcph->seqno() == last_ack_) {
-		update_congestion_state(pkt);
+	/* Look at incoming ts */
+	int acked_seqno = transmission_map_.at( tcph->ts_echo() ).first;
 
-                /* Fast retransmit */
-		if (++dupacks_ == 1 ) {
-			printf("%f, Fast retransmit @ ack %d\n", Scheduler::instance().clock(), last_ack_ );
-			output(last_ack_ + 1, TCP_REASON_DUPACK);       // from top
+	/* Compare it to largest_acked_seqno_ */
+	if ( acked_seqno > largest_acked_seqno_ ) {
+	//	assert( acked_seqno == largest_acked_seqno_ + 1 );
+		for (int i = largest_acked_seqno_ + 1; i < acked_seqno; i++) {
+			retx_pending_.push( i );
 		}
 	}
+	largest_acked_seqno_ = max( largest_acked_seqno_, acked_seqno );
+	update_congestion_state(pkt);
 
 	if (app_) app_->recv_ack(pkt); /* ANIRUDH: Callback to app */
 	Packet::free(pkt);
@@ -155,38 +161,32 @@ void RationalTcpAgent::recv(Packet* pkt, Handler *h) {
 
 void RationalTcpAgent::send_much(int force, int reason, int maxburst)
 {
-	int win = window();
-
 	//assert (burstsnd_timer_.status() != TIMER_PENDING);
 	if (burstsnd_timer_.status() == TIMER_PENDING ) {
 		return;
 	}
 
-	/* We don't need a while, an if will do */
-	/* Old code */
-///	if (t_seqno_ <= highest_ack_ + win && t_seqno_ < curseq_) {
-///		output(t_seqno_, reason);
-///		t_seqno_++;
-///	}
-
 	/* New code */
 	auto num_lost_or_received = (largest_acked_ts_ != -1.0) ? transmission_map_.at( largest_acked_ts_ ).second : 0.0;
-	if (transmission_map_.size() < num_lost_or_received + win and t_seqno_ < curseq_ ) {
-		output(t_seqno_, reason);
-		t_seqno_ ++ ;
+	if (transmission_map_.size() < num_lost_or_received + window()) {
+		if ( not retx_pending_.empty() ) {
+			output(retx_pending_.front(), TCP_REASON_DUPACK );
+			retx_pending_.pop();
+		}
+		else if ( t_seqno_ < curseq_ ) {
+			output(t_seqno_, reason);
+			t_seqno_ ++ ;
+		}
 	}
 	send_helper(maxburst);
 }
 
 void RationalTcpAgent::output( int seqno, int reason )
 {
-	/* Maintain a count of all transmitted packets */
-	static unsigned int transmitted_pkts = 0;
-
 	/* Cannot have two transmissions at the same time */
 	assert( transmission_map_.find( Scheduler::instance().clock() ) == transmission_map_.end() );
-	transmission_map_[ Scheduler::instance().clock() ] = make_pair( seqno, ++transmitted_pkts );
-	assert( transmission_map_.size() == transmitted_pkts );
+	transmission_map_[ Scheduler::instance().clock() ] = make_pair( seqno, ++transmitted_pkts_ );
+	assert( transmission_map_.size() == transmitted_pkts_ );
 	_last_send_time = Scheduler::instance().clock();
 	TcpAgent::output( seqno, reason );
 }
