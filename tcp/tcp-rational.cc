@@ -5,6 +5,7 @@
  * January 2013.
  */
 
+#include <algorithm>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -15,15 +16,48 @@
 #include "exception.hh"
 #include "tcp-rational.h"
 
+void TcpRttTimer::update_rtt_timer( const double & new_rtt )
+{
+	assert( new_rtt > 0 );
+	if (not first_measurement_done_) {
+		srtt_ = new_rtt;
+		rtt_var_ = new_rtt / 2.0;
+		rto_ = srtt_ + std::max( G, K * rtt_var_ );
+		first_measurement_done_ = true;
+	} else {
+		rtt_var_ = ( 1 - beta ) * rtt_var_ + beta * abs( srtt_ - new_rtt );
+		srtt_ = ( 1 - alpha ) * srtt_ + alpha * new_rtt;
+		rto_ = srtt_ + std::max( G, K * rtt_var_ );
+		rto_ = std::max( 1.0, rto_ );
+	}
+}
+
+void TcpRttTimer::expire(Event *e) {
+	/* Ensure there is something outstanding */
+	rat_->assert_outstanding();
+
+	/* RFC6298 5.4: Retransmit earliest outstanding: last_ack_ + 1 */
+	rat_->retx_earliest_outstanding();
+
+	/* RFC6298 5.5: Backoff rto_ */
+	rto_ = rto_ * 2.0;
+
+	/* RFC6298 5.6: Set timer */
+	resched( rto_ );
+
+	/* RFC6298 5.7: N/A */
+};
+
 RationalTcpAgent::RationalTcpAgent()
 	: _whiskers( NULL ),
 	  _memory(),
 	  _intersend_time( 0.0 ),
 	  transmission_map_(),
 	  retx_pending_(),
-	  largest_acked_ts_( -1.0 ),
-	  largest_acked_seqno_( -1 ),
+	  largest_oo_ts_( -1.0 ),
+	  largest_oo_ack_( -1 ),
 	  transmitted_pkts_( 0 ),
+	  rational_rtx_timer_( this ),
 	  _last_send_time( 0 ),
 	  count_bytes_acked_( 0 )
 {
@@ -117,7 +151,7 @@ RationalTcpAgent::send_helper(int maxburst)
 	assert( burstsnd_timer_.status() != TIMER_PENDING );
 
 	/* schedule wakeup */
-	auto num_lost_or_received = (largest_acked_ts_ != -1.0) ? transmission_map_.at( largest_acked_ts_ ).second : 0.0;
+	auto num_lost_or_received = (largest_oo_ts_ != -1.0) ? transmission_map_.at( largest_oo_ts_ ).second : 0.0;
 	if (transmission_map_.size() < num_lost_or_received + window()) {
 		if ( ( not retx_pending_.empty() ) or ( t_seqno_ < curseq_ ) ) {
 			const double now( Scheduler::instance().clock() );
@@ -127,33 +161,49 @@ RationalTcpAgent::send_helper(int maxburst)
 			burstsnd_timer_.resched( wait_time );
 		}
 	}
-
 }
 
 void RationalTcpAgent::recv(Packet* pkt, Handler *h) {
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
 	hdr_cmn *cmn_hdr = hdr_cmn::access(pkt);
-	assert (cmn_hdr->ptype() == PT_ACK);
+	
 	// Check if ACK is valid.  Suggestion by Mark Allman. 
+	assert (cmn_hdr->ptype() == PT_ACK);
 	assert (tcph->seqno() >= last_ack_);
+
+	// Update last_ack_ if receiver received next in-order packet
+	if ( tcph->seqno() > last_ack_ ) {
+		/* RFC 6298 5.3: Acknowledges new data */
+		rational_rtx_timer_.resched( rational_rtx_timer_.rto() );
+		last_ack_ = tcph->seqno();
+	}
+
+	// Calculate srtt and friends
+	rational_rtx_timer_.update_rtt_timer( Scheduler::instance().clock() - tcph->ts_echo() );
 
 	/* Received ts has to be greater than the largest seen so far */
 	/* Assumption: No reordering */
-	assert( tcph->ts() > largest_acked_ts_ );
-	largest_acked_ts_ = tcph->ts_echo();
+	assert( tcph->ts_echo() > largest_oo_ts_ );
+	largest_oo_ts_ = tcph->ts_echo();
 
 	/* Look at incoming ts */
-	int acked_seqno = transmission_map_.at( tcph->ts_echo() ).first;
+	int oo_acked_seqno = transmission_map_.at( tcph->ts_echo() ).first;
 
-	/* Compare it to largest_acked_seqno_ */
-	if ( acked_seqno > largest_acked_seqno_ ) {
-	//	assert( acked_seqno == largest_acked_seqno_ + 1 );
-		for (int i = largest_acked_seqno_ + 1; i < acked_seqno; i++) {
+	/* Compare it to largest_oo_ack_ to fast retransmit missing packets */
+	if ( oo_acked_seqno > largest_oo_ack_ ) {
+		for (int i = largest_oo_ack_ + 1; i < oo_acked_seqno; i++) {
 			retx_pending_.push( i );
 		}
 	}
-	largest_acked_seqno_ = max( largest_acked_seqno_, acked_seqno );
+	largest_oo_ack_ = max( largest_oo_ack_, oo_acked_seqno );
+
+	/* Update congestion state regardless */
 	update_congestion_state(pkt);
+
+	/* RFC 6298: 5.2 No more outstanding packets */
+	if( t_seqno_ == last_ack_ ) {
+		rational_rtx_timer_.force_cancel();
+	}
 
 	if (app_) app_->recv_ack(pkt); /* ANIRUDH: Callback to app */
 	Packet::free(pkt);
@@ -166,8 +216,7 @@ void RationalTcpAgent::send_much(int force, int reason, int maxburst)
 		return;
 	}
 
-	/* We don't need a while, an if will do */
-	auto num_lost_or_received = (largest_acked_ts_ != -1.0) ? transmission_map_.at( largest_acked_ts_ ).second : 0.0;
+	auto num_lost_or_received = (largest_oo_ts_ != -1.0) ? transmission_map_.at( largest_oo_ts_ ).second : 0.0;
 	if (transmission_map_.size() < num_lost_or_received + window()) {
 		if ( not retx_pending_.empty() ) {
 			output(retx_pending_.front(), TCP_REASON_DUPACK );
@@ -189,6 +238,10 @@ void RationalTcpAgent::output( int seqno, int reason )
 	assert( transmission_map_.size() == transmitted_pkts_ );
 	_last_send_time = Scheduler::instance().clock();
 	TcpAgent::output( seqno, reason );
+	if ( rational_rtx_timer_.status() != TIMER_PENDING ) {
+		/* RFC 6298: 5.1 : Set timer if it isn't already running */
+		rational_rtx_timer_.resched( rational_rtx_timer_.rto() );
+	}
 }
 
 /*
@@ -213,7 +266,7 @@ RationalTcpAgent::update_congestion_state(Packet *pkt)
 }
 
 void 
-RationalTcpAgent::update_memory( const RemyPacket packet, const unsigned int flow_id )
+RationalTcpAgent::update_memory( const RemyPacket & packet, const unsigned int flow_id )
 {
 	std::vector< RemyPacket > packets( 1, packet );
 	_memory.packets_received( packets, flow_id );
