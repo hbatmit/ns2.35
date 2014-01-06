@@ -104,6 +104,7 @@ proc create-sources-destinations {sdpairs_file} {
         set tp($i) [$ns create-connection-list $opt(tcp) $node_array($src) $opt(sink) $node_array($dst) $i]
         set tcpsrc  [lindex $tp($i) 0]
         set tcpsink [lindex $tp($i) 1]
+	$tcpsink set ts_echo_bugfix_ 0
         if { [info exists linuxcc] } { 
             $ns at 0.0 "$tcpsrc select_ca $linuxcc"
             $ns at 0.0 "$tcpsrc set_ca_default_param linux debug_level 2"
