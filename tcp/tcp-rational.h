@@ -9,6 +9,7 @@
 #define ns_tcp_rational_h
 
 #include <map>
+#include <queue>
 
 #include "tcp.h"
 #include "ip.h"
@@ -24,8 +25,11 @@ private:
 	const WhiskerTree *_whiskers;
 	Memory _memory;
 	TracedDouble _intersend_time;
-	std::map<double, std::pair<uint32_t, uint32_t>> transmission_map_;
+	std::map<double, std::pair<int32_t, uint32_t>> transmission_map_;
+	std::queue<int32_t> retx_pending_;
 	double largest_acked_ts_;
+	int largest_acked_seqno_;
+	unsigned int transmitted_pkts_;
 
 public:
 	RationalTcpAgent();
