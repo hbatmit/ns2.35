@@ -301,8 +301,9 @@ void
 RationalTcpAgent::timeout_nonrtx( int tno )
 {
 	assert ( tno != TCP_TIMER_DELSND );
-	assert ( tno == TCP_TIMER_BURSTSND );
-	send_much( 1, TCP_REASON_TIMEOUT, maxburst_ );
+	if ( tno == TCP_TIMER_BURSTSND ) {
+		send_much( 1, TCP_REASON_TIMEOUT, maxburst_ );
+	}
 }
 
 void 
