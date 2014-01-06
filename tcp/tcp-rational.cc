@@ -201,7 +201,9 @@ void RationalTcpAgent::recv(Packet* pkt, Handler *h) {
 	update_congestion_state(pkt);
 
 	/* RFC 6298: 5.2 No more outstanding packets */
-	if( t_seqno_ == last_ack_ ) {
+	if( t_seqno_ == last_ack_ or
+            ( t_seqno_ - 1 == last_ack_ and t_seqno_ == curseq_ ) or /* ontype bytes overshoot */
+            ( t_seqno_ - 1 == last_ack_ and curseq_ == maxseq_ ) ) { /* ontype time overshoot */
 		rational_rtx_timer_.force_cancel();
 	}
 
