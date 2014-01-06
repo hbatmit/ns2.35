@@ -832,6 +832,7 @@ void TcpAgent::sendmsg(int nbytes, const char* /*flags*/)
 
 void TcpAgent::advanceby(int delta)
 {
+  assert( delta > 0 );
   curseq_ += delta;
 	if (delta > 0)
 		closed_ = 0;
@@ -840,6 +841,7 @@ void TcpAgent::advanceby(int delta)
 
 void TcpAgent::advanceto(int newseq)
 {
+	assert( newseq > 0 );
 	if (newseq > maxseq_)
 		advanceby(newseq - curseq_);
 	else
