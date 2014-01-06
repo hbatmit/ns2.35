@@ -28,7 +28,7 @@ void TcpRttTimer::update_rtt_timer( const double & new_rtt )
 		rtt_var_ = ( 1 - beta ) * rtt_var_ + beta * abs( srtt_ - new_rtt );
 		srtt_ = ( 1 - alpha ) * srtt_ + alpha * new_rtt;
 		rto_ = srtt_ + std::max( G, K * rtt_var_ );
-		rto_ = std::max( 1.0, rto_ );
+		rto_ = std::max( 0.2, rto_ );
 	}
 }
 
