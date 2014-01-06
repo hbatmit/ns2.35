@@ -66,11 +66,6 @@ proc create-topology {topology_file} {
           set qsize $opt(maxq);
         }
 
-        # For Remy, multiply qsize further by 10
-        if { $opt(tcp) == "TCP/Rational" } {
-            set qsize [expr $qsize * 10]
-        }
-
         puts "Queue size is $qsize"
         $ns queue-limit $node_array($src) $node_array($dst) $qsize
         $ns queue-limit $node_array($dst) $node_array($src) $qsize
