@@ -14,7 +14,7 @@ set opt(app) FTP/OnOffSender
 set opt(pktsize) 1200;           # doesn't include proto headers
 
 # random on-off times for sources
-set opt(seed) 0
+set opt(run) 1
 set opt(onrand) Exponential
 set opt(offrand) Exponential
 set opt(onavg) 5.0;              # mean on and off time
