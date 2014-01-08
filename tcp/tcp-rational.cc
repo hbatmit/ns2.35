@@ -66,6 +66,7 @@ RationalTcpAgent::RationalTcpAgent()
 
 		/* get whisker filename */
 		const char *filename = getenv( "WHISKERS" );
+		fprintf( stderr, "WHISKERS file: %s\n", filename );	
 		if ( !filename ) {
 			throw Exception("RationalTcpAgent::RationalTcpAgent", "RemyTCP: Missing WHISKERS environment variable.");
 		}
