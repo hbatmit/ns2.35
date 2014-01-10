@@ -29,7 +29,7 @@ def logrange(below, above, num_points):
   return list(numpy.around(numpy.logspace(start, stop, num_points), 5));
 
 # Make linkspeed topologies
-linkspeed_range = logrange(0.1, 10000, 100);
+linkspeed_range = logrange(1.0, 1000, 1000);
 for linkspeed in linkspeed_range:
   fh=open(topofolder + "/linkspeed"+ str(linkspeed) + ".txt", "w");
   fh.write("0 1 " + str(linkspeed) + " 74\n");
