@@ -61,6 +61,6 @@ Memory::Memory( const RemyBuffers::Memory & dna )
 string Memory::str( void ) const
 {
   char tmp[ 256 ];
-  snprintf( tmp, 256, "sewma=%f, rewma=%f, rttr=%f, slowrewma=%f", _rec_send_ewma, _rec_rec_ewma, _rtt_ratio, _slow_rec_rec_ewma );
+  snprintf( tmp, 256, "sewma=%f, rewma=%.15f, rttr=%f, slowrewma=%f", _rec_send_ewma, _rec_rec_ewma, _rtt_ratio, _slow_rec_rec_ewma );
   return tmp;
 }
