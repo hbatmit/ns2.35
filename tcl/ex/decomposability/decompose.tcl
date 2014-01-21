@@ -61,7 +61,7 @@ proc create-topology {topology_file} {
         }
         $ns duplex-link $node_array($src) $node_array($dst) ${bw}Mb ${delay}ms $opt(gw)
         # Set qsize to 5 times the bandwidth-RTT product measured in packets
-        set qsize [expr (2 * ${bw} * 2 * ${delay} * 1000.0) / (8 * ($opt(pktsize) + $opt(hdrsize)))]
+        set qsize [expr (20000 * ${bw} * 2 * ${delay} * 1000.0) / (8 * ($opt(pktsize) + $opt(hdrsize)))]
 
         puts "Queue size is $qsize"
         $ns queue-limit $node_array($src) $node_array($dst) $qsize
