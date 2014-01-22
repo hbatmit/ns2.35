@@ -33,12 +33,12 @@ void StatCollector::add_sample(Packet* pkt) {
 void StatCollector::output_stats(double on_duration, uint32_t flow_id,
                                  uint32_t payload_size) {
   assert(on_duration != 0);
-  assert(num_samples_ != 0);
+//  assert(num_samples_ != 0);
   fprintf(stderr,
           "%u: tp=%f mbps, del=%f ms, on=%f secs, samples=%d, inorder=%d\n",
           flow_id,
           (cumulative_pkts_ * 8.0 * payload_size)/ (1.0e6 * on_duration),
-          (cumulative_rtt_ * 1000.0) / num_samples_,
+          (num_samples_ != 0) ? (cumulative_rtt_ * 1000.0) / num_samples_ : -1.0,
           on_duration,
           num_samples_,
           cumulative_pkts_);
