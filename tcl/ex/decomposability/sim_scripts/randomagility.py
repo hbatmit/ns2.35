@@ -3,6 +3,7 @@ import os
 import numpy
 import math
 import random
+import sys
 
 # constants
 iteration_count = 10
@@ -31,8 +32,8 @@ for i in range(0, 1000):
   log_link_speed = random.uniform(math.log(1), math.log(1000))
   link_speed = math.exp(log_link_speed); 
 
-  # Sample workload from 0 to 1
-  onpercent = random.uniform(0.0, 1.0)
+  # Sample workload from 5 to 100 %
+  onpercent = random.uniform(5, 100)
   off_avg[i] = ( 100.0 - onpercent ) / onpercent;
  
   # Sample multiplexing from 1 to 20
@@ -67,8 +68,9 @@ for i in range(0, 1000):
   topology = topofolder + "/toporand" + str(i) + ".txt"
   sdpairs  = topofolder + "/sdrand" + str(i) + ".txt"
   for run in range(1, iteration_count + 1):
-    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     topology, sdpairs, rationalstr,      traffic_workload, off_avg[i], 100, run, "1000x-rand"+str(i));
-    synthesize( "NULL",                                   topology, sdpairs, cubicsfqCoDelstr, traffic_workload, off_avg[i], 100, run, "cubicsfqCoDel-rand"+str(i));
-    synthesize( "NULL",                                   topology, sdpairs, cubicstr,         traffic_workload, off_avg[i], 100, run, "cubic-rand"+str(i));
+    print >> sys.stderr, "i: ", i, "run:", run
+    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     topology, sdpairs, rationalstr,      traffic_workload, off_avg[i], 100, run, "1000x-rand" + str(i));
+    synthesize( "NULL",                                   topology, sdpairs, cubicsfqCoDelstr, traffic_workload, off_avg[i], 100, run, "cubicsfqCoDel-rand" + str(i));
+    synthesize( "NULL",                                   topology, sdpairs, cubicstr,         traffic_workload, off_avg[i], 100, run, "cubic-rand" + str(i));
 
 print "all: " + synthesize.targets, synthesize.cmdlines
