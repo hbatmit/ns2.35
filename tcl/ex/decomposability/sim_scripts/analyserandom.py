@@ -9,12 +9,9 @@ iteration_count = 10
 resultfolder = "resultsrandom/"
 
 # Make blacklist. I really don't want to fix random errors right now.
-blacklist=[94, 434]
 
 for i in range(0, 1000):
   print i
-  if (i in blacklist):
-    continue
   fh = open("toporandom/toporand" + str(i) + ".txt", "r");
   min_rtt = 2 * float(fh.readlines()[0].split()[3]);
   fh.close();

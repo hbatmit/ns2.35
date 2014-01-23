@@ -36,11 +36,11 @@ for i in range(0, 1000):
   onpercent = random.uniform(5, 100)
   off_avg[i] = ( 100.0 - onpercent ) / onpercent;
  
-  # Sample multiplexing from 1 to 20
-  muxing = random.randint(1, 20)
+  # Sample multiplexing from 1 to 10
+  muxing = random.randint(1, 10)
  
-  # Sample RTT from 10 through 300 ms
-  rtt = random.uniform(10, 300)
+  # Sample RTT from 50 through 300 ms
+  rtt = random.uniform(50, 300)
 
   fh = open(topofolder + "/toporand" + str(i) + ".txt", "w");
   fh.write("0 1 " + str(link_speed) + " " + str(rtt/2.0) + "\n");
