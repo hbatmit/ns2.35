@@ -3,7 +3,7 @@ set -x
 rm /tmp/baseline.alwayson
 rm /tmp/baseline.1sec
 rm /tmp/antagonize.alwayson
-rm /tmp/antagoinze.1sec
+rm /tmp/antagonize.1sec
 
 WHISKERS=ratsalone-baselineV2.dna.3 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 100000000000.0 -offrand Exponential -offavg 0.0 -simtime 100 -run 1 2>&1 | grep mbps > /tmp/baseline.alwayson
 
