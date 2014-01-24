@@ -88,6 +88,11 @@ proc create-sources-destinations {sdpairs_file} {
     set sdpairs_fd [open $sdpairs_file r]
     set i 0
     while {[gets $sdpairs_fd line] >= 0} {
+        if { [info exists opt(withnewreno)] } {
+          if { $i == 1 } {
+            set opt(tcp) "TCP/Newreno"
+          }
+        }
         set fields [regexp -inline -all -- {\S+} $line]
         set src [lindex $fields 0]
         set dst [lindex $fields 1]
