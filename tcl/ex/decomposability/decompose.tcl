@@ -94,6 +94,12 @@ proc create-sources-destinations {sdpairs_file} {
         assert [info exists node_array($src)];
         assert [info exists node_array($dst)];
         set tp($i) [$ns create-connection-list $opt(tcp) $node_array($src) $opt(sink) $node_array($dst) $i]
+        if { [info exists opt(altwhisk)] } {
+           if { $i == 1 } {
+             puts "Setting whiskers again"
+             [lindex $tp($i) 0] set_whiskers $opt(altwhisk);
+           }
+        }
         set tcpsrc  [lindex $tp($i) 0]
         set tcpsink [lindex $tp($i) 1]
 	if { $opt(tcp) == "TCP/Rational" } {

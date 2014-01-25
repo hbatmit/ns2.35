@@ -351,5 +351,36 @@ int RationalTcpAgent::command(int argc, const char*const* argv)
 			return (TCL_OK);
 		}
 	}
+	if (argc == 3) {
+		if (strcmp(argv[1], "set_whiskers") == 0) {
+			/* get whisker filename */
+			const char *filename = argv[2];
+			fprintf( stderr, "command sets WHISKERS file to: %s\n", filename );	
+			if ( !filename ) {
+				throw Exception("RationalTcpAgent::RationalTcpAgent", "RemyTCP: Missing WHISKERS file.");
+			}
+	
+			/* open file */
+			int fd = open( filename, O_RDONLY );
+			if ( fd < 0 ) {
+				throw Exception("RationalTcpAgent::RationalTcpAgent open() call");
+			}
+	
+			/* parse whisker definition */
+			RemyBuffers::WhiskerTree tree;
+			if ( !tree.ParseFromFileDescriptor( fd ) ) {
+				throw Exception("RationalTcpAgent::RationalTcpAgent", "RemyTCP: Could not parse whiskers in " + std::string(filename) );
+			}
+	
+			/* close file */
+			if ( ::close( fd ) < 0 ) {
+				throw Exception("RationalTcpAgent::RationalTcpAgent close() call");
+			}
+	
+			/* store whiskers */
+			_whiskers = new WhiskerTree( tree );
+			return (TCL_OK);
+		}
+	}
 	return (TcpAgent::command(argc, argv));
 }
