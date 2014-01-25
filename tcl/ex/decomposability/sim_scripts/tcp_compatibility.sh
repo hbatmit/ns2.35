@@ -19,25 +19,25 @@ done
 ###### Without Newreno #####
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=ratsonlybaselineV4.dna.6 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/baseline.alwayson
+  WHISKERS=ratsonlybaselineV5-delta0.1.dna.2 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/baseline.alwayson
   run=`expr $run '+' 1`
 done
 
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=ratsonlybaselineV4.dna.6 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/baseline.5sec
+  WHISKERS=ratsonlybaselineV5-delta0.1.dna.2 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/baseline.5sec
   run=`expr $run '+' 1`
 done
 
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=tcpantagonizeV4.dna.4 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/antagonize.alwayson
+  WHISKERS=tcpcompatibleV5-delta0.1.dna.3 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/compatible.alwayson
   run=`expr $run '+' 1`
 done
 
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=tcpantagonizeV4.dna.4 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/antagonize.5sec
+  WHISKERS=tcpcompatibleV5-delta0.1.dna.3 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run 2>&1 | grep mbps >> /tmp/withoutnewreno/compatible.5sec
   run=`expr $run '+' 1`
 done
 
@@ -47,33 +47,34 @@ mkdir /tmp/withnewreno
 
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=ratsonlybaselineV4.dna.6 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/baseline.alwayson
+  WHISKERS=ratsonlybaselineV5-delta0.1.dna.2 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/baseline.alwayson
   run=`expr $run '+' 1`
 done
 
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=ratsonlybaselineV4.dna.6 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/baseline.5sec
+  WHISKERS=ratsonlybaselineV5-delta0.1.dna.2 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/baseline.5sec
   run=`expr $run '+' 1`
 done
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=tcpantagonizeV4.dna.4 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/antagonize.alwayson
+  WHISKERS=tcpcompatibleV5-delta0.1.dna.3 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 0.01 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/compatible.alwayson
   run=`expr $run '+' 1`
 done
 
 run=1;
 while [ $run -lt 11 ]; do
-  WHISKERS=tcpantagonizeV4.dna.4 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/antagonize.5sec
+  WHISKERS=tcpcompatibleV5-delta0.1.dna.3 ./decompose.tcl topocompat.txt sdcompat.txt -tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail -ontype time -onrand Exponential -onavg 5.0 -offrand Exponential -offavg 5.0 -simtime 100 -run $run -withnewreno 2>&1 | grep mbps >> /tmp/withnewreno/compatible.5sec
   run=`expr $run '+' 1`
 done
+set +x
 
 # Analyze results
 cat /tmp/withoutnewreno/baseline.5sec       | python sim_scripts/analyze_compatibility.py "*" "tcp-naive-5sec"
 cat /tmp/withoutnewreno/baseline.alwayson   | python sim_scripts/analyze_compatibility.py "*" "tcp-naive-alwayson"
 
-cat /tmp/withoutnewreno/antagonize.5sec     | python sim_scripts/analyze_compatibility.py "*" "tcp-antagonize-5sec"
-cat /tmp/withoutnewreno/antagonize.alwayson | python sim_scripts/analyze_compatibility.py "*" "tcp-antagonize-alwayson"
+cat /tmp/withoutnewreno/compatible.5sec     | python sim_scripts/analyze_compatibility.py "*" "tcp-compatible-5sec"
+cat /tmp/withoutnewreno/compatible.alwayson | python sim_scripts/analyze_compatibility.py "*" "tcp-compatible-alwayson"
 
 cat /tmp/withoutnewreno/newreno.5sec        | python sim_scripts/analyze_compatibility.py "*" "newreno-5sec"
 cat /tmp/withoutnewreno/newreno.alwayson    | python sim_scripts/analyze_compatibility.py "*" "newreno-alwayson"
@@ -84,8 +85,8 @@ cat /tmp/withnewreno/baseline.5sec          | python sim_scripts/analyze_compati
 cat /tmp/withnewreno/baseline.alwayson      | python sim_scripts/analyze_compatibility.py 0 "tcp-naive-alwayson-withnewreno"
 cat /tmp/withnewreno/baseline.alwayson      | python sim_scripts/analyze_compatibility.py 1 "newreno-alwayson-withtcp-naive"
 
-cat /tmp/withnewreno/antagonize.5sec        | python sim_scripts/analyze_compatibility.py 0 "tcp-antagonize-5sec-withnewreno"
-cat /tmp/withnewreno/antagonize.5sec        | python sim_scripts/analyze_compatibility.py 1 "newreno-5sec-withtcp-antagonize"
+cat /tmp/withnewreno/compatible.5sec        | python sim_scripts/analyze_compatibility.py 0 "tcp-compatible-5sec-withnewreno"
+cat /tmp/withnewreno/compatible.5sec        | python sim_scripts/analyze_compatibility.py 1 "newreno-5sec-withtcp-compatible"
 
-cat /tmp/withnewreno/antagonize.alwayson    | python sim_scripts/analyze_compatibility.py 0 "tcp-antagonize-alwayson-withnewreno"
-cat /tmp/withnewreno/antagonize.alwayson    | python sim_scripts/analyze_compatibility.py 1 "newreno-alwayson-withtcp-antagonize"
+cat /tmp/withnewreno/compatible.alwayson    | python sim_scripts/analyze_compatibility.py 0 "tcp-compatible-alwayson-withnewreno"
+cat /tmp/withnewreno/compatible.alwayson    | python sim_scripts/analyze_compatibility.py 1 "newreno-alwayson-withtcp-compatible"
