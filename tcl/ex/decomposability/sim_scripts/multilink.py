@@ -4,9 +4,9 @@ import numpy
 import math
 
 # constants
-iteration_count = 5
-resultfolder = "resultsthreelinks"
-topofolder = "topothreelinks"
+iteration_count = 10
+resultfolder = "resultsmultilink"
+topofolder = "topomultilink"
 
 # protocols
 rationalstr="-tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail"
@@ -29,25 +29,22 @@ def logrange(below, above, num_points):
   return list(numpy.around(numpy.logspace(start, stop, num_points), 5));
 
 # Make linkspeed topologies
-linkspeed_range = logrange(1.0, 1000, 16);
+linkspeed_range = logrange(10.0, 100.0, 32);
 
 for link1 in linkspeed_range:
   for link2 in linkspeed_range:
-    for link3 in linkspeed_range:
-      fh=open(topofolder + "/linkspeed-"+ str(link1) + "-" + str(link2) + "-" + str(link3) + ".txt", "w");
-      fh.write("0 1 " + str(link1) + " 75\n");
-      fh.write("1 2 " + str(link2) + " 75\n");
-      fh.write("2 3 " + str(link3) + " 75\n");
-      fh.close();
+    fh=open(topofolder + "/linkspeed-"+ str(link1) + "-" + str(link2) + ".txt", "w");
+    # The main links
+    fh.write("0 1 " + str(link1) + " 75\n");
+    fh.write("1 2 " + str(link2) + " 75\n");
+
+    fh.close();
 
 # Make common sd file
 fh=open(topofolder + "/sd.txt", 'w');
-fh.write("0 3\n"); # link1 and link2 and link3
-fh.write("0 2\n"); # link1 and link2 alone
-fh.write("1 3\n"); # link2 and link3 alone
-fh.write("0 1\n"); # link1 alone
-fh.write("1 2\n"); # link2 alone
-fh.write("2 3\n"); # link3 alone
+fh.write("0 2\n"); # traverses link1 and link2
+fh.write("0 1\n"); # traverses link1 alone
+fh.write("1 2\n"); # traverses link2 alone
 fh.close();
 
 # Synthesize command line
@@ -66,11 +63,11 @@ synthesize.cmdlines=""
 # Auto-agility
 for link1 in linkspeed_range:
   for link2 in linkspeed_range:
-    for link3 in linkspeed_range:
-      linkspeed_topology = topofolder + "/linkspeed-"+ str(link1) + "-" + str(link2) + "-" + str(link3) + ".txt"
-      for run in range(1, iteration_count + 1):
-        synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     linkspeed_topology, rationalstr,      traffic_workload, 1.0, 100, run, "1000x-link" + str(link1) + "-" + str(link2) + "-" + str(link3));
-        synthesize( "NULL",                                   linkspeed_topology, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-link" + str(link1) + "-" + str(link2) + "-" + str(link3));
-        synthesize( "NULL",                                   linkspeed_topology, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-link" + str(link1) + "-" + str(link2) + "-" + str(link3));
+    linkspeed_topology = topofolder + "/linkspeed-" + str(link1) + "-" + str(link2) + ".txt"
+    for run in range(1, iteration_count + 1):
+      synthesize( "/home/am2/anirudh/multilink-take2.dna.2", linkspeed_topology, rationalstr,      traffic_workload, 1.0, 100, run, "multilinkremy" + str(link1) + "-" + str(link2));
+      synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",   linkspeed_topology, rationalstr,      traffic_workload, 1.0, 100, run, "10x-link" + str(link1) + "-" + str(link2));
+      synthesize( "NULL",                                    linkspeed_topology, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-link" + str(link1) + "-" + str(link2));
+      synthesize( "NULL",                                    linkspeed_topology, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-link" + str(link1) + "-" + str(link2));
 
 print "all: " + synthesize.targets, synthesize.cmdlines

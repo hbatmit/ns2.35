@@ -5,8 +5,8 @@ import math
 from analysis import *
 
 # constants
-iteration_count = 5
-resultfolder = "resultsthreelinks/"
+iteration_count = 10
+resultfolder = "resultsmultilink/"
 
 # define a logrange function
 def logrange(below, above, num_points):
@@ -15,7 +15,7 @@ def logrange(below, above, num_points):
   return list(numpy.around(numpy.logspace(start, stop, num_points), 5));
 
 # IDs
-ids = ["0", "1", "2", "3", "4", "5"]
+ids = ["0", "1", "2"]
 
 # Fuse results from across multiple senders
 def fuse_senders(filename):
@@ -36,9 +36,6 @@ def fuse_senders(filename):
   assert(num_points == len(results[0]));
   assert(num_points == len(results[1]));
   assert(num_points == len(results[2]));
-  assert(num_points == len(results[3]));
-  assert(num_points == len(results[4]));
-  assert(num_points == len(results[5]));
 
   # aggregate file handle
   aggregate_file = open("plots/"+ filename, "w");
@@ -49,21 +46,24 @@ def fuse_senders(filename):
     output_str = ""
     for result in results:
       records =  result[i].split()
-      output_str += records[3] + " " + records[4] + " " # append throughput followed by delay.
-    aggregate_file.write(results[0][i].split(" ")[0] + " " + results[0][i].split(" ")[1] + " " + results[0][i].split(" ")[2] + " " + output_str+"\n");
+      output_str += records[2] + " " + records[3] + " " 
+    aggregate_file.write(results[0][i].split(" ")[0] + " " + results[0][i].split(" ")[1] + " " + output_str+"\n");
  
 # Make linkspeed topologies
-linkspeed_range = logrange(1.0, 1000, 16);
+linkspeed_range = logrange(1.0, 1000, 32);
 
 for link1 in linkspeed_range:
   for link2 in linkspeed_range:
-   for link3 in linkspeed_range:
     for sender_id  in ids:
-      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "3link1000x.plot", "a"),         (link1, link2, link3), 1, resultfolder + "1000x-link" + str(link1) + "-" + str(link2) + "-" + str(link3), sender_id);
-      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "3linkcubicsfqCoDel.plot", "a"), (link1, link2, link3), 1, resultfolder + "cubicsfqCoDel-link" + str(link1) + "-" + str(link2) + "-" + str(link3), sender_id);
-      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "3linkcubic.plot", "a"),         (link1, link2, link3), 1, resultfolder + "cubic-link" + str(link1) + "-" + str(link2) + "-" + str(link3), sender_id);
+      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "multilink1000x.plot", "a"),         (link1, link2), 1, resultfolder + "1000x-link" + str(link1) + "-" + str(link2), sender_id);
+      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "multilink100x.plot", "a"),          (link1, link2), 1, resultfolder + "100x-link" + str(link1) + "-" + str(link2), sender_id);
+      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "multilink10x.plot", "a"),           (link1, link2), 1, resultfolder + "10x-link" + str(link1) + "-" + str(link2), sender_id);
+      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "multilinkcubicsfqCoDel.plot", "a"), (link1, link2), 1, resultfolder + "cubicsfqCoDel-link" + str(link1) + "-" + str(link2), sender_id);
+      plot_tpt_delay(range(1, iteration_count + 1), open("plots/" + sender_id + "multilinkcubic.plot", "a"),         (link1, link2), 1, resultfolder + "cubic-link" + str(link1) + "-" + str(link2), sender_id);
 
 # Now, put together the results
-fuse_senders("3link1000x.plot");
-fuse_senders("3linkcubicsfqCoDel.plot");
-fuse_senders("3linkcubic.plot");
+fuse_senders("multilink1000x.plot");
+fuse_senders("multilink100x.plot");
+fuse_senders("multilink10x.plot");
+fuse_senders("multilinkcubicsfqCoDel.plot");
+fuse_senders("multilinkcubic.plot");
