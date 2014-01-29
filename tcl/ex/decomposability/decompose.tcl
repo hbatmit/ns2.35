@@ -66,7 +66,7 @@ proc create-topology {topology_file} {
         puts "Queue size is $qsize"
         $ns queue-limit $node_array($src) $node_array($dst) $qsize
         $ns queue-limit $node_array($dst) $node_array($src) $qsize
-
+        set qmon [$ns monitor-queue $node_array($src) $node_array($dst) [open qm.out w] 0.1]
         if { $opt(gw) == "XCP" } {
             # Hari: not clear why the XCP code doesn't do this automatically
             set lnk [$ns link $node_array($src) $node_array($dst)]

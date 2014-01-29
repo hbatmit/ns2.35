@@ -93,14 +93,20 @@ void DropTail::enque(Packet* p)
   	(qib_ && (q_->byteLength() + hdr_cmn::access(p)->size()) >= qlimBytes)){
 		// if the queue would overflow if we added this packet...
 		if (drop_front_) { /* remove from head of queue */
+			int src = hdr_ip::access(p)->saddr();
 			q_->enque(p);
 			Packet *pp = q_->deque();
 			drop(pp);
+			fprintf(stderr, "%f Queue size is %d, src %d\n", Scheduler::instance().clock(), q_->length(), src);
 		} else {
+			int src = hdr_ip::access(p)->saddr();
 			drop(p);
+			fprintf(stderr, "%f Queue size is %d, src %d\n", Scheduler::instance().clock(), q_->length(), src);
 		}
 	} else {
+		int src = hdr_ip::access(p)->saddr();
 		q_->enque(p);
+		fprintf(stderr, "%f Queue size is %d, src %d\n", Scheduler::instance().clock(), q_->length(), src);
 	}
 }
 
@@ -130,7 +136,12 @@ Packet* DropTail::deque()
         if (summarystats && &Scheduler::instance() != NULL) {
                 Queue::updateStats(qib_?q_->byteLength():q_->length());
         }
-	return q_->deque();
+	Packet* ret = q_->deque();
+        if (ret != NULL) {
+            int src = hdr_ip::access(ret)->saddr();
+       	    fprintf(stderr, "%f Queue size is %d, src %d\n", Scheduler::instance().clock(), q_->length(), src);
+        }
+	return ret;
 }
 
 void DropTail::print_summarystats()

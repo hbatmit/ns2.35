@@ -181,7 +181,7 @@ void NewRenoTcpAgent::recv(Packet *pkt, Handler*)
 {
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
 	int valid_ack = 0;
-
+	fprintf(stderr, "%f: Inside NewRenoTcpAgent::recv()\n", Scheduler::instance().clock() );
 	/* Use first packet to calculate the RTT  --contributed by Allman */
 
         if (qs_approved_ == 1 && tcph->seqno() > last_ack_)

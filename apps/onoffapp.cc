@@ -30,7 +30,8 @@ OnOffApp::OnOffApp(string str_ontype,
       on_timer_(this),
       off_timer_(this)
 {
-  on_timer_.sched(start_distribution_.sample());
+  if (sender_id_ == 0) on_timer_.sched(5.0);
+  else on_timer_.sched(0.0);
 }
 
 void OnOffApp::turn_on() {
@@ -38,7 +39,7 @@ void OnOffApp::turn_on() {
   if (ontype_ == BYTE_BASED) {
     current_flow_.flow_size = lround(ceil(stop_distribution_.sample()));
   } else if (ontype_ == TIME_BASED) {
-    current_flow_.on_duration = stop_distribution_.sample();
+    current_flow_.on_duration = 5.0;
   } else if (ontype_ == EMPIRICAL) {
     current_flow_.flow_size = lround(ceil(emp_stop_distribution_.sample()));
   }
@@ -56,7 +57,8 @@ void OnOffApp::turn_on() {
   } else if (ontype_ == TIME_BASED) {
     tcp_handle_->send(-1);
     assert(off_timer_.status() == TIMER_IDLE);
-    off_timer_.sched(current_flow_.on_duration);
+    if (sender_id_ == 0) off_timer_.sched(100.0);
+    else off_timer_.sched(5.0);
   }
 }
 
@@ -81,7 +83,7 @@ void OnOffApp::turn_off(void) {
   state_ = OFF;
   total_on_time_ += (Scheduler::instance().clock() - laststart_);
 
-  double off_duration = start_distribution_.sample();
+  double off_duration = 5.0;
   fprintf(stderr, "%d, %f Turning off, turning on at %f\n", sender_id_, Scheduler::instance().clock(),
                   Scheduler::instance().clock() + off_duration);
 
@@ -89,7 +91,7 @@ void OnOffApp::turn_off(void) {
   /* Or we got here from on_timer_'s callback, start_send. This can happen only if pkts are sent out all at once */
   assert(on_timer_.status() == TIMER_IDLE or
         (on_timer_.status() == TimerHandler::TimerStatus::TIMER_HANDLING and Scheduler::instance().clock() == laststart_));
-  on_timer_.resched(off_duration);
+  on_timer_.resched(5.0);
 }
 
 static class OnOffClass : public TclClass {

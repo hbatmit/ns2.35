@@ -28,6 +28,7 @@ void StatCollector::add_sample(Packet* pkt) {
   /* Get RTT */
   cumulative_rtt_ += Scheduler::instance().clock() - tcph->ts_echo();
   num_samples_++;
+  fprintf(stderr, "Added yet another packet\n");
 }
 
 void StatCollector::output_stats(double on_duration, uint32_t flow_id,

@@ -1822,6 +1822,7 @@ int TcpAgent::lossQuickStart()
  */
 void TcpAgent::recv(Packet *pkt, Handler*)
 {
+	fprintf(stderr, "Inside TcpAgent::Recv()\n");
 	hdr_tcp *tcph = hdr_tcp::access(pkt);
 	int valid_ack = 0;
 	if (qs_approved_ == 1 && tcph->seqno() > last_ack_) 
