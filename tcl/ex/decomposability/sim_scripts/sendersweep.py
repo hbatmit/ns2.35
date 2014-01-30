@@ -39,7 +39,7 @@ for num_senders in range(1, max_senders + 1, 1):
 def synthesize( whiskertree, topology, sdpairs, tcp_agents, traffic_cfg, off_time, sim_time, run, tag ):
   global topofolder
   global resultfolder
-  cmdline="WHISKERS=" + whiskertree + " pls ./decompose.tcl " + topology + " " + sdpairs + " " + tcp_agents + " " +  traffic_cfg + " -offavg "+ str( off_time ) + " -simtime " + str( sim_time ) + " -run " + str( run )
+  cmdline="WHISKERS=" + whiskertree + " ./decompose.tcl " + topology + " " + sdpairs + " " + tcp_agents + " " +  traffic_cfg + " -offavg "+ str( off_time ) + " -simtime " + str( sim_time ) + " -run " + str( run )
   fileio=" >" + resultfolder + "/" + tag + "run" + str( run ) + ".out " + "2>" + resultfolder + "/" + tag + "run" + str( run ) +  ".err"
   cmdline += fileio
   target = resultfolder + "/" + tag + "run" + str( run ) + ".out"
@@ -53,10 +53,8 @@ for num_senders in range(1, max_senders + 1, 1):
   senders_topology = topofolder + "/senders" + str(num_senders) + ".txt"
   sdpairs = topofolder + "/sd" + str(num_senders) + ".txt"
   for run in range(1, iteration_count + 1):
-    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1000x-num_senders"+str(num_senders));
-    synthesize( "/home/am2/anirudh/bigbertha-100x.dna.5", senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "100x-num_senders"+str(num_senders));
-    synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "10x-num_senders"+str(num_senders));
-    synthesize( "NULL",                                   senders_topology, sdpairs, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-num_senders"+str(num_senders));
-    synthesize( "NULL",                                   senders_topology, sdpairs, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-num_senders"+str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/bigbertha-100x.dna.5",           senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "100x-2senders-num_senders"+str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/multiplexing-10.dna.3",          senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "multiplexing10-num_senders"+str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/100x-10senders-tom-final.dna.2", senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "100x-10senders-tom-final-num_senders"+str(num_senders));
 
 print "all: " + synthesize.targets, synthesize.cmdlines
