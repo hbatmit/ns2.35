@@ -16,7 +16,7 @@ FullTcp agents.
 
 \section{Implementation Details}
 
-DelayBox maintains two tables: a rule table and a flow table.  Entries
+DelayBox maintains  two tables: a rule table and a flow table.  Entries
 in the rule table are added by the user in the OTcl simulation script
 and give an outline of how flows from a source to a destination should
 be treated.  The fields are source, destination, delay Random Variable
@@ -26,7 +26,7 @@ link speed field is optional.  Entries in the flow table are created
 internally and specify exactly how each flow should be handled.  Its
 values are obtained by sampling from the distributions given in the
 rule table.  The fields are source, destination, flow ID, delay, loss,
-and bottleneck link speed (if applicable).  Full-TCP flows are defined
+and bottleneck link speed .  Full-TCP flows are defined
 as beginning at the receipt of the first SYN of a new flow ID and
 ending after the sending of the first FIN.  Packets after the first
 FIN are forwarded immediately (<i>i.e.</i>, they are neither delayed
