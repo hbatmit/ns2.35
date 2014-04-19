@@ -177,12 +177,6 @@ if { [info exists opt(tr)] } {
     $ns trace-all $f
 }
 
-set flowfile flowcdf-allman-icsi.tcl
-
-if { $opt(ontype) == "flowcdf" } {
-    source $flowfile
-}
-
 create-topology $topology_file
 create-sources-destinations $sdpairs_file
 

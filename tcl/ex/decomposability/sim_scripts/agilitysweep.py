@@ -5,8 +5,8 @@ import math
 
 # constants
 iteration_count = 10
-resultfolder = "resultslogarithmic"
-topofolder = "topologarithmic"
+resultfolder = "resultsempirical"
+topofolder = "topoempirical"
 
 # protocols
 rationalstr="-tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail"
@@ -14,12 +14,12 @@ cubicstr="-tcp TCP/Linux/cubic -sink TCPSink/Sack1 -gw DropTail"
 cubicsfqCoDelstr="-tcp TCP/Linux/cubic -sink TCPSink/Sack1 -gw sfqCoDel"
 
 # traffic pattern
-traffic_workload="-ontype time -onrand Exponential -onavg 1.0 -offrand Exponential"
+traffic_workload="-ontype time -onrand flowcdf -offrand Exponential"
 
-# Clean up the results and topologies folder
-os.system("rm -rf " + resultfolder)
+# Create results and topologies folder
+assert(os.path.isdir(resultfolder) == False)
 os.system("mkdir " + resultfolder)
-os.system("rm -rf " + topofolder)
+assert(os.path.isdir(topofolder) == False)
 os.system("mkdir " + topofolder)
 
 # define a logrange function
@@ -75,27 +75,27 @@ synthesize.cmdlines=""
 for linkspeed in linkspeed_range:
   linkspeed_topology = topofolder + "/linkspeed" + str(linkspeed) + ".txt"
   for run in range(1, iteration_count + 1):
-    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     linkspeed_topology, rationalstr,      traffic_workload, 1.0, 100, run, "1000x-link"+str(linkspeed));
-    synthesize( "/home/am2/anirudh/bigbertha-100x.dna.5", linkspeed_topology, rationalstr,      traffic_workload, 1.0, 100, run, "100x-link"+str(linkspeed));
-    synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",  linkspeed_topology, rationalstr,      traffic_workload, 1.0, 100, run, "10x-link"+str(linkspeed));
-    synthesize( "NULL",                                   linkspeed_topology, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-link"+str(linkspeed));
-    synthesize( "NULL",                                   linkspeed_topology, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-link"+str(linkspeed));
+    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     linkspeed_topology, rationalstr,      traffic_workload, 0.2, 100, run, "1000x-link"+str(linkspeed));
+    synthesize( "/home/am2/anirudh/bigbertha-100x.dna.5", linkspeed_topology, rationalstr,      traffic_workload, 0.2, 100, run, "100x-link"+str(linkspeed));
+    synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",  linkspeed_topology, rationalstr,      traffic_workload, 0.2, 100, run, "10x-link"+str(linkspeed));
+    synthesize( "NULL",                                   linkspeed_topology, cubicsfqCoDelstr, traffic_workload, 0.2, 100, run, "cubicsfqCoDel-link"+str(linkspeed));
+    synthesize( "NULL",                                   linkspeed_topology, cubicstr,         traffic_workload, 0.2, 100, run, "cubic-link"+str(linkspeed));
 
 # Cross-agility on delay
 for delay in range(5, 151, 5):
   delay_topology = topofolder + "/delay" + str(delay) + ".txt"
   for run in range(1, iteration_count + 1):
-    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     delay_topology,     rationalstr,      traffic_workload, 1.0, 100, run, "1000x-delay"+str(delay));
-    synthesize( "/home/am2/anirudh/bigbertha-100x.dna.5", delay_topology,     rationalstr,      traffic_workload, 1.0, 100, run, "100x-delay"+str(delay));
-    synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",  delay_topology,     rationalstr,      traffic_workload, 1.0, 100, run, "10x-delay"+str(delay));
-    synthesize( "NULL",                                   delay_topology,     cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-delay"+str(delay));
-    synthesize( "NULL",                                   delay_topology,     cubicstr,         traffic_workload, 1.0, 100, run, "cubic-delay"+str(delay));
+    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     delay_topology,     rationalstr,      traffic_workload, 0.2, 100, run, "1000x-delay"+str(delay));
+    synthesize( "/home/am2/anirudh/bigbertha-100x.dna.5", delay_topology,     rationalstr,      traffic_workload, 0.2, 100, run, "100x-delay"+str(delay));
+    synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",  delay_topology,     rationalstr,      traffic_workload, 0.2, 100, run, "10x-delay"+str(delay));
+    synthesize( "NULL",                                   delay_topology,     cubicsfqCoDelstr, traffic_workload, 0.2, 100, run, "cubicsfqCoDel-delay"+str(delay));
+    synthesize( "NULL",                                   delay_topology,     cubicstr,         traffic_workload, 0.2, 100, run, "cubic-delay"+str(delay));
 
 # Cross-agility on duty cycle
 for onpercent in range(5, 101, 5):
   dutycycle_topology = topofolder + "/dutycycle.txt"
   for run in range(1, iteration_count + 1):
-    off_avg=( 100.0 - onpercent ) / onpercent;
+    off_avg= 0.2 * ( ( 100.0 - onpercent ) / onpercent );
     synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     dutycycle_topology, rationalstr,      traffic_workload, off_avg, 100, run, "1000x-dutycycle"+str(onpercent));
     synthesize( "/home/am2/anirudh/bigbertha-100x.dna.5", dutycycle_topology, rationalstr,      traffic_workload, off_avg, 100, run, "100x-dutycycle"+str(onpercent));
     synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",  dutycycle_topology, rationalstr,      traffic_workload, off_avg, 100, run, "10x-dutycycle"+str(onpercent));
