@@ -44,7 +44,7 @@ proc Getopt {} {
 }
 
 # Create topology from file
-proc create-topology {topology_file} {
+proc create-topology {topology_file buffer_size} {
     global ns opt node_array
     set topo_fd [open $topology_file r]
     while {[gets $topo_fd line] >= 0} {
@@ -60,8 +60,8 @@ proc create-topology {topology_file} {
             set node_array($dst) [$ns node]
         }
         $ns duplex-link $node_array($src) $node_array($dst) ${bw}Mb ${delay}ms $opt(gw)
-        # Set qsize to 5 times the bandwidth-RTT product measured in packets
-        set qsize [expr (5 * ${bw} * 2 * ${delay} * 1000.0) / (8 * ($opt(pktsize) + $opt(hdrsize)))]
+        # Set qsize to buffer_size times the bandwidth-RTT product measured in packets
+        set qsize [expr (buffer_size * ${bw} * 2 * ${delay} * 1000.0) / (8 * ($opt(pktsize) + $opt(hdrsize)))]
 
         puts "Queue size is $qsize"
         $ns queue-limit $node_array($src) $node_array($dst) $qsize
@@ -162,6 +162,7 @@ if {[llength $argv] < 2} {
 }
 set topology_file [lindex $argv 0]
 set sdpairs_file  [lindex $argv 1]
+set buffer_size [lindex $argv 2]
 
 Getopt
 
@@ -183,7 +184,7 @@ if { $opt(ontype) == "flowcdf" } {
     source $flowfile
 }
 
-create-topology $topology_file
+create-topology $topology_file $buffer_size
 create-sources-destinations $sdpairs_file
 
 $ns at $opt(simtime) "finish"
