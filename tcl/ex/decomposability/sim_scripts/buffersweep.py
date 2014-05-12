@@ -30,7 +30,7 @@ for num_senders in range(1, max_senders + 1, 1):
   # Make sd file
   fh=open(topofolder + "/sd" + str(num_senders) + ".txt", 'w');
   for sender_index in range(2, num_senders + 2, 1):
-    fh.write("0 " + 1 + " \n");
+    fh.write("0 1\n");
   fh.close();
 
 # Synthesize command line
@@ -46,15 +46,15 @@ def synthesize( buffer_size, whiskertree, topology, sdpairs, tcp_agents, traffic
 synthesize.targets=""
 synthesize.cmdlines=""
 
-# Cross-agility on num_senders
+# Cross-agility on buffer_size
 for buffer_size in range(1, 21, 1):
   senders_topology = topofolder + "/senders2.txt"
   sdpairs = topofolder + "/sd2.txt"
   for run in range(1, iteration_count + 1):
-    synthesize( buffer_size, "/home/am2/anirudh/bigbertha2.dna.5",     senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1000x-num_senders"+str(num_senders));
-    synthesize( buffer_size, "/home/am2/anirudh/bigbertha-100x.dna.5", senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "100x-num_senders"+str(num_senders));
-    synthesize( buffer_size, "/home/am2/anirudh/bigbertha-10x.dna.4",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "10x-num_senders"+str(num_senders));
-    synthesize( buffer_size, "NULL",                                   senders_topology, sdpairs, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-num_senders"+str(num_senders));
-    synthesize( buffer_size, "NULL",                                   senders_topology, sdpairs, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-num_senders"+str(num_senders));
+    synthesize( buffer_size, "/home/am2/anirudh/bigbertha2.dna.5",     senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1000x-buffer"+str(buffer_size));
+    synthesize( buffer_size, "/home/am2/anirudh/bigbertha-100x.dna.5", senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "100x-buffer"+str(buffer_size));
+    synthesize( buffer_size, "/home/am2/anirudh/bigbertha-10x.dna.4",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "10x-buffer"+str(buffer_size));
+    synthesize( buffer_size, "NULL",                                   senders_topology, sdpairs, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-buffer"+str(buffer_size));
+    synthesize( buffer_size, "NULL",                                   senders_topology, sdpairs, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-buffer"+str(buffer_size));
 
 print "all: " + synthesize.targets, synthesize.cmdlines
