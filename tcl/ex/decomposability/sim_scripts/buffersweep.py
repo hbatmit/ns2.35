@@ -24,15 +24,13 @@ os.system("mkdir " + topofolder)
 # Vary number of senders in topology
 for num_senders in range(1, max_senders + 1, 1):
   fh=open(topofolder + "/senders"+ str(num_senders) + ".txt", "w");
-  fh.write("0 1 " + str(10 ** 1.5) + " 74\n");
-  for sender_index in range(2, num_senders + 2, 1):
-    fh.write("1 " + str(sender_index) + " 1000000000 1\n");
+  fh.write("0 1 " + str(10 ** 1.5) + " 75\n");
   fh.close();
 
   # Make sd file
   fh=open(topofolder + "/sd" + str(num_senders) + ".txt", 'w');
   for sender_index in range(2, num_senders + 2, 1):
-    fh.write("0 " + str(sender_index) + " \n");
+    fh.write("0 " + 1 + " \n");
   fh.close();
 
 # Synthesize command line

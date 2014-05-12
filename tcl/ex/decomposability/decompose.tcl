@@ -61,7 +61,7 @@ proc create-topology {topology_file buffer_size} {
         }
         $ns duplex-link $node_array($src) $node_array($dst) ${bw}Mb ${delay}ms $opt(gw)
         # Set qsize to buffer_size times the bandwidth-RTT product measured in packets
-        set qsize [expr (buffer_size * ${bw} * 2 * ${delay} * 1000.0) / (8 * ($opt(pktsize) + $opt(hdrsize)))]
+        set qsize [expr ($buffer_size * ${bw} * 2 * ${delay} * 1000.0) / (8 * ($opt(pktsize) + $opt(hdrsize)))]
 
         puts "Queue size is $qsize"
         $ns queue-limit $node_array($src) $node_array($dst) $qsize
@@ -163,7 +163,7 @@ if {[llength $argv] < 2} {
 set topology_file [lindex $argv 0]
 set sdpairs_file  [lindex $argv 1]
 set buffer_size [lindex $argv 2]
-
+puts "Buffer size is $buffer_size"
 Getopt
 
 global defaultRNG
