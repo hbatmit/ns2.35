@@ -17,9 +17,9 @@ cubicsfqCoDelstr="-tcp TCP/Linux/cubic -sink TCPSink/Sack1 -gw sfqCoDel"
 traffic_workload="-ontype time -onrand Exponential -onavg 1.0 -offrand Exponential"
 
 # Clean up the results and topologies folder
-os.system("rm -rf " + resultfolder)
+assert(os.path.isdir(resultfolder) == False)
 os.system("mkdir " + resultfolder)
-os.system("rm -rf " + topofolder)
+assert(os.path.isdir(topofolder) == False)
 os.system("mkdir " + topofolder)
 
 # Make delay toplogies
