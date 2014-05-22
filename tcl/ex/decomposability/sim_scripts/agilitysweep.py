@@ -24,7 +24,7 @@ os.system("mkdir " + topofolder)
 
 # Make delay toplogies
 fh=open(topofolder + "/delay75.txt", "w");
-fh.write("0 1 " + str(10 ** 1.5) + " " + 75 + "\n");
+fh.write("0 1 " + str(10 ** 1.5) + " 75\n");
 fh.close();
 
 # Make common sd file
