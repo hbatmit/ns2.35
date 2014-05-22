@@ -49,7 +49,7 @@ synthesize.cmdlines=""
 # Run all protocols on single configuration
 topology = topofolder + "/delay75.txt"
 for run in range(1, iteration_count + 1):
-  synthesize( "/home/anirudh/camera-ready/rats/rtt-150-alone.dna.5",     topology,     rationalstr,      traffic_workload, 1.0, 100, run, "remy");
+  synthesize( "/home/anirudh/camera-ready/rats/150-alone.dna.5",         topology,     rationalstr,      traffic_workload, 1.0, 100, run, "remy");
   synthesize( "NULL",                                                    topology,     cubicstr,         traffic_workload, 1.0, 100, run, "cubic");
   synthesize( "NULL",                                                    topology,     cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel");
 
