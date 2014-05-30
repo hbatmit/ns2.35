@@ -3,9 +3,9 @@ import os
 
 # constants
 iteration_count = 10
-max_senders = 20
-resultfolder = "resultssendersweep"
-topofolder = "toposenders"
+max_senders = 100
+resultfolder = "ns2resultssendersweep"
+topofolder = "ns2toposenders"
 
 # protocols
 rationalstr="-tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail"
@@ -24,22 +24,20 @@ os.system("mkdir " + topofolder)
 # Vary number of senders in topology
 for num_senders in range(1, max_senders + 1, 1):
   fh=open(topofolder + "/senders"+ str(num_senders) + ".txt", "w");
-  fh.write("0 1 " + str(10 ** 1.5) + " 74\n");
-  for sender_index in range(2, num_senders + 2, 1):
-    fh.write("1 " + str(sender_index) + " 1000000000 1\n");
+  fh.write("0 1 15 75\n");
   fh.close();
 
   # Make sd file
   fh=open(topofolder + "/sd" + str(num_senders) + ".txt", 'w');
-  for sender_index in range(2, num_senders + 2, 1):
-    fh.write("0 " + str(sender_index) + " \n");
+  for sender_index in range(1, num_senders + 1, 1):
+    fh.write("0 1" + " \n");
   fh.close();
 
 # Synthesize command line
 def synthesize( whiskertree, topology, sdpairs, tcp_agents, traffic_cfg, off_time, sim_time, run, tag ):
   global topofolder
   global resultfolder
-  cmdline="WHISKERS=" + whiskertree + " pls ./decompose.tcl " + topology + " " + sdpairs + " " + tcp_agents + " " +  traffic_cfg + " -offavg "+ str( off_time ) + " -simtime " + str( sim_time ) + " -run " + str( run )
+  cmdline="WHISKERS=" + whiskertree + " ./decompose.tcl " + topology + " " + sdpairs + " " + tcp_agents + " " +  traffic_cfg + " -offavg "+ str( off_time ) + " -simtime " + str( sim_time ) + " -run " + str( run )
   fileio=" >" + resultfolder + "/" + tag + "run" + str( run ) + ".out " + "2>" + resultfolder + "/" + tag + "run" + str( run ) +  ".err"
   cmdline += fileio
   target = resultfolder + "/" + tag + "run" + str( run ) + ".out"
@@ -53,9 +51,11 @@ for num_senders in range(1, max_senders + 1, 1):
   senders_topology = topofolder + "/senders" + str(num_senders) + ".txt"
   sdpairs = topofolder + "/sd" + str(num_senders) + ".txt"
   for run in range(1, iteration_count + 1):
-    synthesize( "/home/am2/anirudh/bigbertha2.dna.5",     senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1000x-num_senders"+str(num_senders));
-    synthesize( "/home/am2/anirudh/bigbertha-100x.dna.5", senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "100x-num_senders"+str(num_senders));
-    synthesize( "/home/am2/anirudh/bigbertha-10x.dna.4",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "10x-num_senders"+str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing2.dna.2",          senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--2senders" + str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing10-resume.dna.3",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--10senders"  + str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing20-resume.dna.5",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--20senders"  + str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing50-resume.dna.1",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--50senders"  + str(num_senders));
+    synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing100-resume.dna.0", senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--100senders"   + str(num_senders));
     synthesize( "NULL",                                   senders_topology, sdpairs, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-num_senders"+str(num_senders));
     synthesize( "NULL",                                   senders_topology, sdpairs, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-num_senders"+str(num_senders));
 
