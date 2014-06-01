@@ -265,7 +265,7 @@ RationalTcpAgent::update_congestion_state(Packet *pkt)
 	update_cwnd_and_pacing();
 
 	/* TODO: Figure out what this is: if the connection is done, call finish() */
-	assert( highest_ack_ < curseq_-1);
+	assert(( highest_ack_ < curseq_- 1) or (curseq_ == 0));
 }
 
 void 
