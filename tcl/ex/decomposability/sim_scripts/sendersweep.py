@@ -56,7 +56,7 @@ for num_senders in range(1, max_senders + 1, 1):
     synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing20-resume.dna.5",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--20senders"  + str(num_senders));
     synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing50-resume.dna.1",  senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--50senders"  + str(num_senders));
     synthesize( "/data/lsp/owenhsin/anirudh/remy-reproduce-1.0/ns-2.35/muxing100-resume.dna.0", senders_topology, sdpairs, rationalstr,      traffic_workload, 1.0, 100, run, "1--100senders"   + str(num_senders));
-#    synthesize( "NULL",                                   senders_topology, sdpairs, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-num_senders"+str(num_senders));
-#    synthesize( "NULL",                                   senders_topology, sdpairs, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-num_senders"+str(num_senders));
+    synthesize( "NULL",                                   senders_topology, sdpairs, cubicsfqCoDelstr, traffic_workload, 1.0, 100, run, "cubicsfqCoDel-num_senders"+str(num_senders));
+    synthesize( "NULL",                                   senders_topology, sdpairs, cubicstr,         traffic_workload, 1.0, 100, run, "cubic-num_senders"+str(num_senders));
 
 print "all: " + synthesize.targets, synthesize.cmdlines
