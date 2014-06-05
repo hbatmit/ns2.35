@@ -5,8 +5,8 @@ import math
 
 # constants
 iteration_count = 10
-resultfolder = "resultslogarithmic"
-topofolder = "topologarithmic"
+resultfolder = "results-rttvar"
+topofolder = "topo-rttvar"
 
 # protocols
 rationalstr="-tcp TCP/Rational -sink TCPSink/Sack1 -gw DropTail"
@@ -26,14 +26,12 @@ os.system("mkdir " + topofolder)
 for delay in range(5, 151, 5):
   fh=open(topofolder + "/delay"+ str(delay) + ".txt", "w");
   fh.write("0 1 " + str(10 ** 1.5) + " " + str(delay) + "\n");
-  fh.write("1 2 1000000000 1\n");
-  fh.write("1 3 1000000000 1\n");
   fh.close();
 
 # Make common sd file
 fh=open(topofolder + "/sd.txt", 'w');
-fh.write("0 2\n");
-fh.write("0 3\n");
+fh.write("0 1\n");
+fh.write("0 1\n");
 fh.close();
 
 # Synthesize command line
@@ -53,9 +51,12 @@ synthesize.cmdlines=""
 for delay in range(5, 151, 5):
   delay_topology = topofolder + "/delay" + str(delay) + ".txt"
   for run in range(1, iteration_count + 1):
-    synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-1/rtt_10x.dna.3",     delay_topology,     rationalstr,      traffic_workload, 1.0, 100, run, "rtt10x"+str(delay));
-    synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-2/rtt_20x.dna.4",     delay_topology,     rationalstr,      traffic_workload, 1.0, 100, run, "rtt20x"+str(delay));
-    synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-3/rtt_30x.dna.2",    delay_topology,     rationalstr,      traffic_workload, 1.0, 100, run, "rtt30x"+str(delay));
-    synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-and-link-speed/rtt_link.dna.3",    delay_topology,     rationalstr,      traffic_workload, 1.0, 100, run, "rttandlinkspeed"+str(delay));
+    synthesize( "/data/lsp/owenhsin/anirudh/camera-ready/150-alone/150-alone.dna.2", delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt150"+str(delay));
+    synthesize( "/data/lsp/owenhsin/anirudh/camera-ready/140160/140-160.dna.5",     delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt140--160"+str(delay));
+    synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-1/rtt_10x.dna.3",    delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt110--200"+str(delay));
+    synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-2/rtt_20x.dna.4",    delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt50--250"+str(delay));
+    synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-3/rtt_30x.dna.2",    delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt10--280"+str(delay));
+    synthesize( "NULL",    delay_topology,     cubicstr,              traffic_workload, 1.0, 100, run, "cubic" + str(delay));
+    synthesize( "NULL",    delay_topology,     cubicsfqCoDelstr,      traffic_workload, 1.0, 100, run, "cubicsfqCoDel" + str(delay));
 
 print "all: " + synthesize.targets, synthesize.cmdlines
