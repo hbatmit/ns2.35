@@ -23,7 +23,7 @@ os.system("rm -rf " + topofolder)
 os.system("mkdir " + topofolder)
 
 # Make delay toplogies
-for delay in range(5, 151, 5):
+for delay in range(1, 151, 1):
   fh=open(topofolder + "/delay"+ str(delay) + ".txt", "w");
   fh.write("0 1 " + str(10 ** 1.5) + " " + str(delay) + "\n");
   fh.close();
@@ -48,10 +48,11 @@ synthesize.targets=""
 synthesize.cmdlines=""
 
 # Cross-agility on delay
-for delay in range(5, 151, 5):
+for delay in range(1, 151, 1):
   delay_topology = topofolder + "/delay" + str(delay) + ".txt"
   for run in range(1, iteration_count + 1):
     synthesize( "/data/lsp/owenhsin/anirudh/camera-ready/150-alone/150-alone.dna.2", delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt150"+str(delay));
+    synthesize( "/data/lsp/owenhsin/anirudh/camera-ready/140160/145--155.dna.4", delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt145--155"+str(delay));
     synthesize( "/data/lsp/owenhsin/anirudh/camera-ready/140160/140-160.dna.5",     delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt140--160"+str(delay));
     synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-1/rtt_10x.dna.3",    delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt110--200"+str(delay));
     synthesize( "/data/lsp/owenhsin/anirudh/prthaker/rtt-config-2/rtt_20x.dna.4",    delay_topology, rationalstr, traffic_workload, 1.0, 100, run, "rtt50--250"+str(delay));
