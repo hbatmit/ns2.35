@@ -1,0 +1,36 @@
+#
+# nodes: 25, pause: 2.00, max speed: 2.00  max x = 50.00, max y: 50.00
+#
+$node_(0) set X_ 30
+$node_(0) set Y_ 40
+$node_(0) set Z_ 0.000000000000
+$node_(1) set X_ 22
+$node_(1) set Y_ 32
+$node_(1) set Z_ 0.000000000000
+$node_(2) set X_ 35
+$node_(2) set Y_ 32
+$node_(2) set Z_ 0.000000000000
+$node_(3) set X_ 13.5
+$node_(3) set Y_ 24
+$node_(3) set Z_ 0.000000000000
+$node_(4) set X_ 29
+$node_(4) set Y_ 24
+$node_(4) set Z_ 0.000000000000
+$node_(5) set X_ 40
+$node_(5) set Y_ 23
+$node_(5) set Z_ 0.000000000000
+$node_(6) set X_ 9
+$node_(6) set Y_ 14
+$node_(6) set Z_ 0.000000000000
+$node_(7) set X_ 16.5
+$node_(7) set Y_ 13
+$node_(7) set Z_ 0.000000000000
+$node_(8) set X_ 24
+$node_(8) set Y_ 13
+$node_(8) set Z_ 0.000000000000
+$node_(9) set X_ 34
+$node_(9) set Y_ 13.5
+$node_(9) set Z_ 0.000000000000
+$node_(10) set X_ 44
+$node_(10) set Y_ 13
+$node_(10) set Z_ 0.000000000000

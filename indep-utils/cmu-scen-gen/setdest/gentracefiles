@@ -1,0 +1,101 @@
+#!/usr/bin/perl
+
+use strict subs, vars;
+
+use FileHandle;
+use English;
+
+my @NODES;
+
+sub ReadAddrMap {
+    my ($fname) = @ARG;
+
+    open(F,$fname) or die "Can't open address map file '$fname'";
+    while (<F>) {
+	if (/[^\#]*(\d+)\s+([\w\.]+)\s+([0-9a-fA-F\.:]+)/) {
+	    $NODES[$1]->{ip} = $2;
+	    $NODES[$1]->{mac} = $3;
+	} 
+    }
+    close F;
+}
+
+sub DumpFilter {
+    my ($time, $rfilterout, $roldfilter) = @ARG;
+    my $i;
+    my $cnt = 0;
+    my $change_cnt = 0;
+
+    for ($i = 0; $i <= $#$rfilterout; $i++) {
+	if ($rfilterout->[$i] != $roldfilter->[$i]) { $change_cnt++; }
+	if ($rfilterout->[$i]) { $cnt++; }
+	$roldfilter->[$i] = $rfilterout->[$i];
+    }
+
+    if (0 == $change_cnt) { return; }
+
+    printf("FILTER $cnt\n");
+
+    for ($i = 0; $i <= $#$rfilterout; $i++) {
+	if ($rfilterout->[$i]) { 
+	    if ($NODES[$i]->{mac} eq "") { die "No mac addr for node $i\n" }
+	    printf("$NODES[$i]->{mac}\n");
+	}
+    }
+    printf("AT %d\n\n",int ($time * 1000));
+}
+
+#/\$ns_ at (\d+.\d+) \"\$god_ set-dist $node (\d+) (\d+)/
+
+sub ProduceFilters {
+    my ($SCEN, $node) = @ARG;
+    my @filterout;
+    my @oldfilterout;
+    my $time = 0.0;
+    my $max_time = 100000.0;
+
+    while (<$SCEN>) {
+	if (/^\$god_ set-dist $node (\d+) (\d+)/ 
+	    || /^\$god_ set-dist (\d+) $node (\d+)/) {
+	    if ($2 != 1) {
+		$filterout[$1] = 1;
+	    }
+	} elsif (/max time: (\d+.\d+),/ ) {
+	    $max_time = $1;
+	} elsif (/at (\d+.\d+) .*god_ set-dist $node (\d+) (\d+)/
+		 || /\$ns_ at (\d+.\d+) \"\$god_ set-dist (\d+) $node (\d+)/) {
+	    if ($1 < $time) {
+		die "set-dists for node $node aren't in chron order\n";
+	    } elsif ($1 != $time) {
+		DumpFilter($time,\@filterout,\@oldfilterout);
+		$time = $1;
+	    }
+	    if ($3 == 1) {
+		$filterout[$2] = 0;
+	    } else {
+		$filterout[$2] = 1;
+	    }
+	}
+    }
+
+    # spit out the last filter
+    DumpFilter($time,\@filterout,\@oldfilterout);
+
+    # remove all the filters when the trace ends
+    printf("FILTER 0\nAT %d\n",int ($max_time * 1000));
+}
+
+if ($#ARGV != 2) {
+    print "usage: gentracefile <scenario> <addr map> <node number>\n";
+    exit -1;
+}
+
+my $SCEN = new FileHandle;
+open $SCEN,$ARGV[0] or die "Can't open scenario file $ARGV[0]";
+
+ReadAddrMap($ARGV[1]);
+
+my $node = $ARGV[2];
+
+ProduceFilters($SCEN,$node);
+

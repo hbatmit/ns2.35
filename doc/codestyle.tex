@@ -1,0 +1,68 @@
+\chapter{ns Code Styles}
+\label{chap:codestyle}
+
+We recommend the following coding guidelines for ns 
+
+\section{Indentation style}
+\label{sec:indentationstyle}
+
+\begin{itemize}
+\item We recommend using the BSD Kernel Normal Form coding style located at\\
+http://cvsweb.netbsd.org/bsdweb.cgi/sharesrc/share/misc/style?rev=HEAD\&content-type=text/x-cvsweb-markup
+
+\item Although KNF is specified for C, it also applies reasonably well to C++ and Tcl.
+Most of ns already follows KNF and it is also extensively used for the BSD and
+Linux kernels.
+
+\item The high order bit is 8-space indents.
+Using 8-space indents avoid confusion about what a "tab" character
+represents.  A downside is it makes deeply nested looping structures
+hard to fit in 80 columns.  (Some people consider this a feature. :-)
+\end{itemize}
+
+
+\section{Variable Naming Conventions}
+\label{sec:variablenamingconventions}
+
+\begin{itemize}
+\item Instance variables of a class should all end in an underscore.
+This helps distinguish instance variables from global and local
+variables.
+
+\item C++ and Tcl bound variables should have the same names
+This helps identify the bound variables quickly and reduces complexity
+\end{itemize}
+
+
+\section{Miscellaneous}
+\label{sec:miscellaneous}
+
+\begin{itemize}
+\item Avoid the use of C++ templates.
+Ns is supported on multiple platforms and templates are not
+very portable and are often difficult to debug.
+Exception: This guideline has been relaxed for some imported code,
+but the core of ns should build and run without templates.
+
+\item For NsObjects, use the debug\_ instance variable to enable debugging functionality.
+This avoids repetitive definations of debug statements and allows debugging a particular
+Nsobject without recompilation.
+
+Example:
+To enable debugging in Queue object include the following statement in your tcl script.
+\begin{program}
+	Queue set debug_ true
+\end{program}
+
+Debugging statments can be inserted in the classes inheriting from Queue as follows:
+
+\begin{program}
+	debug("This is a debug statement %d",variable_to_debug);
+\end{program}
+
+All debugging statements are sent to stdout.
+
+
+\item Error messages which cause the program to exit should be sent to stderr.
+All other messages should be sent to stdout
+\end{itemize}

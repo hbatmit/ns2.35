@@ -1,0 +1,29 @@
+%TGIF 2.16-p12
+state(0,32,100,0,0,0,16,1,9,1,1,6,0,1,0,1,0,'Helvetica',0,17,0,0,1,10,0,0,1,1,0,16,0,0,1,1,1,1,1088,1408).
+%
+% @(#)$Header: /cvsroot/nsnam/ns-2/doc/figures/tclclass-static.obj,v 1.1 1997/11/16 22:50:10 kannan Exp $
+% %W%
+%
+page(1,"").
+text('black',122,131,'Helvetica-Bold',1,20,4,0,0,1,170,92,3,0,18,5,0,0,0,0,[
+	"Object constructor",
+	"",
+	"invoke TclClass",
+	"constructor"]).
+box('black',100,100,300,250,0,2,1,29,0,0,0,[
+]).
+text('black',457,129,'Helvetica-Bold',1,20,4,0,0,1,189,92,6,0,18,5,0,0,0,0,[
+	"TclClass constructor",
+	"",
+	"build list of TclClass",
+	"instances"]).
+box('black',451,100,651,250,0,2,1,34,0,0,0,[
+]).
+poly('black',4,[
+	300,200,380,200,380,140,450,140],1,7,1,147,0,0,0,0,22,9,0,
+    "0",[
+]).
+poly('black',2,[
+	450,230,300,230],1,7,8,148,0,0,0,0,22,9,0,
+    "0",[
+]).

@@ -1,0 +1,438 @@
+%
+% personal commentary:
+%        DRAFT DRAFT DRAFT
+%        - KFALL
+%
+\section{\shdr{Packet Fowarding}{classifier.h}{sec:classroute}}
+
+Routing generally refers to the selection of a packet's path
+through the network in conjunction with the machinery
+to accomplish packet forwarding at each node.
+The path selection is ordinarily accomplished by means
+of a distributed algorithm capable of detecting link
+failures and adjusting switch nodes to route packets
+around failed links (if possible).
+Path selection may also be statically configured.
+Packet fowarding refers to the delivery of a packet
+at a routing node to its downstream neighbor(s), and
+relies on a {\em routing table} having been previously
+set up by the path selection algorithm.
+
+In this section, we explain how the packet forwarding
+function is carried out.
+This function may be subdivided into unicast and
+multicast fowarding, which operate somewhat differently.
+Routing table set-up, as accomplished by
+dynamic routing protocols, are
+described elsewhere (see section \ref{sec:dynroute}).
+
+A packet arriving at a node is inspected to determine
+its destination (and possibly source) address fields.
+The field values are used to map the packet to a
+simulator object representing the next downstream recipient
+of the packet.
+Overall, this process is called {\em classifying} the packet, and
+is performed by a \code{Classifier} object.
+In the case of unicast packet delivery, the destination address
+is used to find an entry in the node's routing table
+indicating the proper next hop address.
+For multicasting, the destination specifies the
+{\em group} identifier; any node subscribed to the specified
+group will receive the packet.
+In the multicast case, the routing table contains a reference
+to a special objects which {\em replicate} packets to
+multiple destinations, implying multiple copies of the packet may emerge
+from a single router.
+Furthermore, the source address is used in multicast
+routing to determine which links the packet should {\em not}
+be forwarded across (see below).
+
+\subsection{\shdr{the Classifier Classes}{classifier.h}{sec:classifiers}}
+
+A classifier provides a way to match a packet against some
+logical criteria and retrieve a reference to another simulation
+object based on the match results.
+Each classifier contains a table of simulation objects indexed
+by {\em slot number}.
+The job of a classifier is to determine the slot number associated
+with a received packet and return the corresponding object reference
+from the table.
+The C++ class \code{Classifier} provides a base class for all such
+derived classes.  It is defined in \code{classifier.h} as follows:
+\begin{small}
+\begin{verbatim}
+        class Classifier : public NsObject {
+         public:
+                ~Classifier();
+                void recv(Packet*, Handler* h = 0);
+         protected:
+                Classifier();
+                void install(int slot, NsObject*);
+                void clear(int slot);
+                virtual int command(int argc, const char*const* argv);
+                virtual int classify(Packet *const) = 0;
+                void alloc(int);
+                NsObject** slot_;       /* table that maps slot number to a NsObject */
+                int nslot_;
+                int maxslot_;
+        };
+\end{verbatim}
+\end{small}
+The \code{classify} function is pure virtual, indicating the
+class \code{Classifier} is to be used only as a base class.
+The \code{alloc} function dynamically allocates enough space
+in the table to hold the specified number of slots.
+The \code{install} and \code{clear} functions add to or remove
+objects from the table.
+The \code{recv} function and OTcl interface is implemented
+as follows in \code{classifier.cc}:
+\begin{small}
+\begin{verbatim}
+        /*
+         * objects only ever see "packet" events, which come either
+         * from an incoming link or a local agent (i.e., packet source).
+         */
+        void Classifier::recv(Packet* p, Handler*)
+        {
+                NsObject* node;
+                int cl = classify(p);
+                if (cl < 0 || cl >= nslot_ || (node = slot_[cl]) == 0) {
+                        Tcl::instance().evalf("%s no-slot %d", name(), cl);
+                        Packet::free(p);
+                        return;
+                }
+                node->recv(p);
+        }
+
+        int Classifier::command(int argc, const char*const* argv)
+        {
+                Tcl& tcl = Tcl::instance();
+                if (argc == 3) {
+                        /*
+                         * $classifier clear $slot
+                         */
+                        if (strcmp(argv[1], "clear") == 0) {
+                                int slot = atoi(argv[2]);
+                                clear(slot);
+                                return (TCL_OK);
+                        }
+                } else if (argc == 4) {
+                        /*
+                         * $classifier install $slot $node
+                         */
+                        if (strcmp(argv[1], "install") == 0) {
+                                int slot = atoi(argv[2]);
+                                NsObject* node = (NsObject*)TclObject::lookup(argv[3]);
+                                install(slot, node);
+                                return (TCL_OK);
+                        }
+                }
+                return (NsObject::command(argc, argv));
+        }
+\end{verbatim}
+\end{small}
+The primary execution path through a classifier is through the
+\code{recv} function, which uses the derived class' version of
+the \code{classify} method to determine the slot index.
+Assuming an object exists in the table at the returned index that
+object is given the packet.
+If the \code{classify} function returns a slot index outside
+the allocated range of objects or the object reference is
+null, then the tcl procedure \code{Classifier no-slot} is invoked
+with the slot number.
+Presently this OTcl procedure prints an error message and terminates
+the simulation.
+The primary Otcl interface is provided by the \code{command} function,
+which provides for adding or removing objects to/from the
+object table.
+
+\subsection{\shdr{Address Classifiers}{classifier-addr.cc}{sec:classaddr}}
+
+An address classifier is used in supporting unicast packet
+forwarding.
+It applies a bitwise shift and mask operation to a packet's destination
+address to produce a slot number.
+The slot number is returned from the \code{classify} function.
+The \code{AddressClassifier} class is defined in
+\code{classifier-addr.cc} as follows:
+\begin{small}
+\begin{verbatim}
+        class AddressClassifier : public Classifier {
+        public:
+                AddressClassifier() : mask_(~0), shift_(0) {
+                        bind("mask_", (int*)&mask_);
+                        bind("shift_", &shift_);
+                }
+        protected:
+                int classify(Packet *const p) {
+                        IPHeader *h = IPHeader::access(p->bits());
+                        return ((h->dst() >> shift_) & mask_);
+                }
+                nsaddr_t mask_;
+                int shift_;
+        };
+\end{verbatim}
+\end{small}
+The class imposes no direct semantic meaning on a packet's destination
+address field.
+Rather, it returns some number of the high-order bits as the slot
+number used in the \code{Classifier::recv()} function.
+The \code{mask\_} and \code{shift\_} values are set through OTcl.
+
+\subsection{\shdr{Multicast Classifiers}{classifier-mcast.cc}{sec:classmcast}}
+
+The multicast classifier classifies packets according to both source
+and destination (group) addresses.
+It maintains a (chained hash) table mapping source/group pairs to slot
+numbers.
+When a packet arrives containing a source/group unknown to the
+classifier, it invokes an Otcl procedure \code{MultiNode new-group} to
+add an entry to its table.
+This OTcl procedure may use the method \code{set-hash} to add
+new (source, group, slot) 3-tuples to the classifier's table.
+The multicast classifier is defined in \code{classifier-mcast.cc}
+as follows:
+\begin{small}
+\begin{verbatim}
+        static class MCastClassifierClass : public TclClass {
+        public:
+                MCastClassifierClass() : TclClass("Classifier/Multicast") {}
+                TclObject* create(int argc, const char*const* argv) {
+                        return (new MCastClassifier());
+                }
+        } class_mcast_classifier;
+
+        class MCastClassifier : public Classifier {
+        public:
+                MCastClassifier();
+                ~MCastClassifier();
+        protected:
+                int command(int argc, const char*const* argv);
+                int classify(Packet *const p);
+                int findslot();
+                void set_hash(nsaddr_t src, nsaddr_t dst, int slot);
+                int hash(nsaddr_t src, nsaddr_t dst) const {
+                        u_int32_t s = src ^ dst;
+                        s ^= s >> 16;
+                        s ^= s >> 8;
+                        return (s & 0xff);
+                }
+                struct hashnode {
+                        int slot;
+                        nsaddr_t src;
+                        nsaddr_t dst;
+                        hashnode* next;
+                };
+                hashnode* ht_[256];
+                const hashnode* lookup(nsaddr_t src, nsaddr_t dst) const;
+        };
+
+        int MCastClassifier::classify(Packet *const pkt)
+        {
+                IPHeader *h = IPHeader::access(pkt->bits());
+                nsaddr_t src = h->src() >> 8; /*XXX*/
+                nsaddr_t dst = h->dst();
+                const hashnode* p = lookup(src, dst);
+                if (p == 0) {
+                        /*
+                         * Didn't find an entry.
+                         * Call tcl exactly once to install one.
+                         * If tcl doesn't come through then fail.
+                         */
+                        Tcl::instance().evalf("%s new-group %u %u", name(), src, dst);
+                        p = lookup(src, dst);
+                        if (p == 0)
+                                return (-1);
+                }
+
+                return (p->slot);
+        }
+\end{verbatim}
+\end{small}
+The \code{MCastClassifier} class implements a chained has table
+with hash function on the packet source and destination addresses.
+The hash function returns the slot number used to index the \code{slot\_}
+table in the underlying \code{Classifier} object.
+A hash miss implies packet delivery to a previously-unknown group is
+occurring and OTcl is called to handle this situation.
+The OTcl code is expected to insert an appropriate entry into the
+hash table.
+The way this insertion is performed is in section\ref{sec:classotcl}, below.
+
+\subsection{\shdr{Replicator}{replicator.cc}{sec:classreplicator}}
+
+To support multicast packet forwarding, a classifier receiving a
+multicast packet from source $S$
+destined for group $G$ computes a hash function $h(S,G)$ giving
+a ``slot number'' in the classifier's object table.
+Thus, the maximum size of the table is $O(|S|\times|G|)$.
+In multicast delivery, the packet must be copied once for
+each link leading to nodes subscribed to $G$ minus one.
+Production of additional copies of the packet is performed
+by a \code{Replicator} class, defined in \code{replicator.cc}:
+\begin{small}
+\begin{verbatim}
+        /*
+         * A replicator is not really a packet classifier but
+         * we simply find convenience in leveraging its slot table.
+         * (this object used to implement fan-out on a multicast
+         * router as well as broadcast LANs)
+         */
+        class Replicator : public Classifier {
+        public:
+                Replicator();
+                void recv(Packet*, Handler* h = 0);
+                virtual int classify(Packet* const) {};
+        protected:
+                int ignore_;
+        };
+
+        void Replicator::recv(Packet* p, Handler*)
+        {
+                IPHeader *iph = IPHeader::access(p->bits());
+                if (maxslot_ < 0) {
+                        if (!ignore_)
+                                Tcl::instance().evalf("%s drop %u %u", name(), 
+                                        iph->src(), iph->dst());
+                        Packet::free(p);
+                        return;
+                }
+                for (int i = 0; i < maxslot_; ++i) {
+                        NsObject* o = slot_[i];
+                        if (o != 0)
+                                o->recv(p->copy());
+                }
+                /* we know that maxslot is non-null */
+                slot_[maxslot_]->recv(p);
+        }
+\end{verbatim}
+\end{small}
+This class is derived from \code{Classifier}, but does not really
+classify packets.
+Rather, it replicates a packet, one for each entry in its
+table, and delivers the copies to each of the nodes listed
+in the table.
+The last entry in the table gets the ``original'' packet.
+The class over-rides the base class version of \code{recv} with its
+own member function and defines the \code{classify} function as empty.
+This function first determines if there are any downstream nodes to deliver
+the packet to.
+If not, this generally indicates no downstream node
+is interested in receiving packets destined for the packet's group and that
+a {\em prune} message should be sent to cut the multicast distribution
+subtree rooted at the local node off from the overall distribution tree
+(see section \ref{sec:mcastprune}).
+
+
+\subsection{\shdr{OTcl Support: Nodes and MultiNodes}{ns-mcast.tcl}{sec:classotcl}}
+
+The simulator may be configured in one of two modes, with support
+for multicast delivery optionally enabled.
+When only unicast delivery is enabled, the simulator object
+itself is of the class \code{Simulator} and nodes in the simulation
+topology are of class \code{Node}.
+With multicasting enabled, subclasses of these two classes,
+\code{MultiSim} and \code{MultiNode}, are used in their places.
+
+\begin{figure}[h]
+\centerline{\psfig{figure=node.eps,width=3in,height=3in}}
+\caption{\label{pic:node}A Node object containing
+two address classifiers.
+The top classifier is used in unicast packet delivery to downstream
+nodes.
+The lower classifier is used for delivering packets to agents
+on the same node.}
+\end{figure}
+
+\subsubsection{\shdr{Nodes}{ns-node.tcl}{sec:node}}
+
+Figure \ref{pic:node} depicts a (unicast) node.
+This class is defined entirely in OTcl (it has no C++ shadow object),
+but makes use of a number of the C++ objects described above.
+The \code{neighbor\_} member variable is a list containing the
+OTcl handles for each downstream neighbor in the topology.
+The OTcl function \code{Node add-neighbor} adds a node to this list.
+The \code{agents\_} member variable is a list containing the
+OTcl handles for each of the agents present on this node.
+Each of the agents has a {\em port} number associated with it
+which is currently encoded in the low-order 8 bits of the destination
+address of each packet (XXX will this change? XXX).
+The \code{classifier\_} variable holds a reference to an address
+classifier which inspects an incoming packet to determine
+if it should be locally delivered or forwarded.
+In the case of local delivery, the packet is passed through another
+classifier which inspects the port identifier to determine which
+agent on the local node should receive the packet.
+
+Nodes are typically created and initialized by the
+\code{Simulator node} method.
+This method creates a new \code{Node} object, places a reference to
+it in the array \code{Node\_} (a member of the \code{Simulator} class,
+indexed by node id number), and returns the newly-created node.
+When a new node is created it's initialization procedure
+\code{Node init} assigns a new unique node identifier and
+creates the address classifier used to route to downstream nodes.
+At this point the classifier's object table (i.e. routing table) is empty
+and it has no attached agents.
+
+A collection of OTcl methods in the \code{Node} class allow
+for manipulating the routing and agent dispatch tables.
+The \code{add-route} function adds an entry in the 
+routing table causing packets destined for the specified destination address
+to be delivered to the specified object.
+The \code{attach} method adds an agent to the node.
+It updates the \code{agent\_} list, allocates a new port ID and gives it
+to the agent, updates the {\em local entry} in the routing table, and
+updates the \code{dmux\_} classifier to point to the agent given the
+corresponding port ID.
+The \code{port} method looks up an agent on a node given its port ID.
+The \code{reset} method resets all agents on the node by calling
+their individual \code{reset} methods.
+
+\begin{figure}[h]
+\centerline{\psfig{figure=multinode.eps,width=4in}}
+\caption{\label{pic:mnode}A MultiNode object includes all
+linkage as a Node object described above, plus a
+special set of replicators used to deliver copies of
+packets to all interested downstream neighbors.}
+\end{figure}
+
+\subsubsection{\shdr{MultiNodes}{ns-mcast.tcl}{sec:multinode}}
+
+Figure \ref{pic:mnode} depicts a multicast node.
+It is derived from the \code{Node} class and is also implemented
+entirely in OTcl.
+The \code{switch\_} member variable
+contains a reference to a classifier used to separate
+multicast from unicast delivery.
+This object is set up such that all unicast traffic is
+passed through slot zero to the next classifier which operates
+identically to the routing classifier described in section~\ref{sec:node}.
+The other classifier is of type \code{Classifier/Multicast/Replicator}
+(in OTcl) which is shadowed by an object of type
+\code{Classifier/Multicast} in C++
+(and defined in section~\ref{sec:classmcast}).
+Its object entries are indexed by source/group pair and refer to
+\code{Classifier/Replicator/Demuxer} objects which contain
+the per-source/group set of next-hop objects.
+These objects are shadowed by C++ objects of the
+class \code{Classifier/Replicator}, described in section
+\ref{sec:classreplicator}.
+
+The operation of MultiNode objects is closely related to
+the exchange of {\em prune} and {\em graft} messages used
+to establish multicast distribution trees.
+This is further explained in section\ref{sec:unknown}
+(XXX this needs to be written XXX).
+
+%%\begin{figure}[h]
+%%\centerline{\psfig{figure=mcast_classes.eps,width=4in}}
+%%\caption{\label{pic:mcastclasses}Classes used to support multicasting
+%%and other related classes.  Class names in {\bf bold} indicate
+%%the OTcl classes are shadowed by C++ objects.}
+%%\end{figure}
+%%
+%%A number of classes are used in support of multicast delivery.
+%%Figure \ref{pic:mcastclasses} illustrates their inheritance relationship.
+%%All classes depicted exist in the OTcl name space, and those in bold
+%%face type have underlying C++ classes as well.

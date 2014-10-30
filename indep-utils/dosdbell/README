@@ -1,0 +1,53 @@
+Description: 
+------------
+dosdbell creates a compact dumbell topology using a distribution of 
+hops specified as probability density function (pdf). 
+The parameters of the topology are inputed from a file. 
+
+Input:
+----- 
+The parameters of the attack tree are specified in the following
+format. Link bandwidth is specified in Mbps, delays are in ms,
+and starttime in seconds. 
+
+diameter bn_bw bn_delay	         
+TCP_src, link_bw starttime  	 
+attackers rate packet_size Master starttime 
+finishtime  
+
+File Explanation:
+Line 1: Maximum number of hops, bandwidth(Mbps) and delay(ms) for the bottleneck  
+Line 2: Background traffic paramaters: 
+        Number of TCP source, link_bw(Mbps) and all TCP sources start by starttime(in sec)
+Line 3: Attack traffic  parameters: 
+	Number of attackers, attack rate, packet size, presence/Absence of master, and 
+	time(in sec) at which the attack starts.  
+Line 4: Simulation termination time (in sec) 
+
+The Master variable is a boolean value to indicate presence/absence (1/0) of 
+a master. If a master is present, then an additional delay component
+due to the trigger mechanism is added. 
+The model assumes all hops have the same propagation delay(specified as bn_delay).
+We use TCP Reno (oneway) to model background traffic.
+
+For example:
+25 10 20        # Maximum number of hops between two nodes in the original topology is 25, 
+                # bottleneck bandwidth is 10Mbps, propagation delay is 20ms 
+100 0.1  20     # Hundred TCP sources each send at 100Kbps, all start before 20s
+200 0.05 200 0 50 # 200 Attackers, each send at 50Kbps using 200B packets,
+		   no master. The attack starts at 50s
+150		 # Simulation ends at 150s 
+
+
+Output:
+------
+Creates a tcl file with the ns topology that can be used 
+directly to run the simulation. 
+The simulation creates a queue trace file, qtrace.tr, at the bottle neck link. 
+
+
+
+Usage:
+------
+
+dosdbell input_parameters output_tclfile

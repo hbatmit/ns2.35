@@ -1,0 +1,62 @@
+RTS-CTS-DATA-ACK
+----------------
+
+In a Wireless network topolgy, when not all nodes are within each other's
+range, carrier sense only provides information about collisions at the
+sender, not at the receiver. This leads to problems like "hidden terminal"
+(where two sender nodes out of range of each other transmit packets at the
+same time, to the same receiver, resulting in collisions at the
+receiver).
+To solve such problems, control packets (RTS & CTS) are used, as an
+alternative to the carrier sense protocol. When a node wants to transmit
+packets, it first sends a RTS (Request To Send) packet to the reciever.
+All nodes within the sender's range receive this RTS packet. Every node
+hearing the RTS packet will defer transmission. If receiver is not
+receiving data from any other node, it responds with a CTS (Clear To Send)
+packet. This packet is again received by every node within receiver's
+range. So all nodes in the range defer transmission .  Sender node sends
+the data packet after receiving CTS. If sender node does not hear the CTS,
+it will time-out and schedule retransmission of RTS. On receiving the data
+packet, reciever sends an ACK to the sender. Link layer ACKs are used to
+facilitate recovery from collision faster. RTS and CTS packets are very
+short, hence their collision is very less likely.If RTS packets from 2
+sender nodes collide at the receiver, sender nodes will not receive a CTS
+packet and the nodes, as a result will back off for certain duration,
+resulting in collision detection.
+This protocol solves the hidden terminal problem, even though two sender
+nodes may be out of range of each other, but they both are in the range of
+the receiver they want to send the data packets to. Hence, when receiver
+responds to one node with a CTS packet, it will be heard by the other
+sender node too and it will defer transmission.
+In our animation, we have 3 nodes 0, 1, 2.
+We see how the nodes behave in the following 3 cases :
+Case 1:
+-------
+Both sender nodes, nodes 0 and 2 are in range of each other, but node 1
+is out of range of node 2.
+When node 2 wants to send data to node 0 and node 0 wants to send data to node 1. 
+In this case, both nodes 0 and 2 do carrier sense. Node 0 then sends
+RTS packet to nodea 1 and 2. Node 2 backs off after hearing this
+RTS packet. Node 1 sends a CTS to Node 0 and Node 0 performs its
+data transmission, at the end of which, node 2 again does a carrier
+sense and performs its data transmission, finding the medium free.
+	
+Case 2:
+-------
+Both sender nodes 0 and 2 are in range of each other and in range of node 1.
+So, they can all hear each other's RTS and CTS packets.
+In this case, when node 2 wants to send data to node 1 at the same time that
+node 0 wants to send data to node 1, node 2 hears the RTS from node 0 and backs off,
+thus deferring its transmission till node 0 finishes its transmission
+and hence avoiding collision at the receiver.
+
+Case 3:
+-------
+Both sender nodes 0 and 2 are out of range of each other but are in range
+of node 1, the receiver.
+In this case, nodes are  not able to hear each other's RTS packets, but
+are able to hear CTS packet from th receiver and hence back off, deferring
+transmission till the other node finishes transmission.
+
+So, we see in all 3 cases, one node backsoff, thus avoiding collisions at the
+receiver and hence solving the hidden terminal problem.

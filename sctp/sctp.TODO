@@ -1,0 +1,91 @@
+sctp.TODO - TODO file for NS-2 SCTP module.
+   Armando L. Caro Jr.  <acaro@@cis,udel,edu>
+   Janardhan R. Iyengar <iyengar@@cis,udel,edu>
+
+@(#) $Header: /cvsroot/nsnam/ns-2/sctp/sctp.TODO,v 1.3 2006/06/23 14:28:40 tom_henderson Exp $
+
+------------------------------------------------------------------------------
+
+- consolidate CMT variables. Introduce a single CMT switch, and a switch for the
+  DAC algorithm.
+
+- change trace to use 'C' for COOKIE_ECHO and COOKIE_ACK
+
+- change trace to add more info for bundled chunks. now only # chunks in
+  the packet is displayed. instead it should be
+  chunkNumInCurrPkt:NumChunks. So a packet with 3 chunks would have 3
+  lines per trace event, each labeled with 1:3, 2:3, and 3:3.
+
+- add the remaining changes submitted by Martin Duke
+
+- add support for draft-iyengar-sctp-cacc-00.txt
+
+- add more bundling... currently SACKs, FORWARD TSNs, etc can't be bundled
+  with DATA.
+
+- receiver (and sender) should handle tsn wrap arounds. don't forget about...
+
+   o  section 6.1
+
+      Note: The data sender SHOULD NOT use a TSN that is more than 2**31 -
+      1 above the beginning TSN of the current send window.
+
+- Timeout on window probes should not count as an error count (towards
+  failure). However, since the receiver currently consumes immediately,
+  probes shouldn't be possible. If you are seeing rwnd probes, then there
+  is something wrong (probably with the sctp code). ...anyway, this should
+  be fixed in case someone later implements a receiver which actually uses
+  the rwnd for something.
+
+
+------------------------------------------------------------------------------
+ARE NOT (AND WILL NOT BE?) IMPLEMENTED:
+ 
+  o section 6.1 - Before an endpoint transmits a DATA chunk, if any
+    received DATA chunks have not been acknowledged (e.g., due to delayed
+    ack), the sender should create a SACK and bundle it with the outbound
+    DATA chunk, as long as the size of the final SCTP packet does not
+    exceed the current MTU.  See Section 6.2.
+
+    Reason: Currently, we are not implementing bi-directional data traffic
+
+
+  o section 6.2 - A SCTP receiver MUST NOT generate more than one SACK for
+    every incoming packet, other than to update the offered window as the
+    receiving application consumes new data.
+
+    Reason: Currently, the application consumes immediately. There is no
+    process delay to cause advertise window updates.
+
+
+  o section 6.4 - When a receiver of a duplicate DATA chunk sends a SACK
+    to a multi- homed endpoint it MAY be beneficial to vary the
+    destination address and not use the source address of the DATA chunk.
+    The reason being that receiving a duplicate from a multi-homed
+    endpoint might indicate that the return path (as specified in the
+    source address of the DATA chunk) for the SACK is broken.
+
+    Reason: Extra complexity that we don't have need for at this point.
+
+
+  o section 6.10 - If its peer endpoint is multi-homed, the sending
+    endpoint shall choose a size no larger than the latest MTU of the
+    current primary path.
+
+    Reason: Currently, we don't have a way for specifying different MTUs
+    for different paths. We have one MTU for all destinations.
+
+
+  o section 6.2 - Under certain circumstances, the data receiver may need
+    to drop DATA chunks that it has received but hasn't released from its
+    receive buffers (i.e., delivered to the ULP).  These DATA chunks may
+    have been acked in Gap Ack Blocks.  For example, the data receiver may
+    be holding data in its receive buffers while reassembling a fragmented
+    user message from its peer when it runs out of receive buffer space.
+    It may drop these DATA chunks even though it has acknowledged them in
+    Gap Ack Blocks.  If a data receiver drops DATA chunks, it MUST NOT
+    include them in Gap Ack Blocks in subsequent SACKs until they are
+    received again via retransmission.  In addition, the endpoint should
+    take into account the dropped data when calculating its a_rwnd.
+
+    Reason: We don't need renegging in our simulation code.

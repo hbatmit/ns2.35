@@ -1,0 +1,51 @@
+Hidden Terminal
+----------------
+
+The problem of hidden terminal arises when 
+two sender nodes out of range of each other transmit packets at the
+same time, to the same receiver, resulting in collisions at the
+receiver.
+Since sender nodes are out of range of each other, they donot detect
+carrier even though the other node is sending data, and if their
+data packets reach the destination at the same time, these packets
+are dropped due to collision at the receiver.
+
+In our animation, we consider 4 cases :
+
+Case 1 :
+--------
+When 2 nodes are in range of each other and they do carrier
+sense at different times.
+In this case, since sender nodes are in range of each other,
+they are able to detect carrier and hence one node which
+does carrier sense a little later than the other one, backs off,
+thus deferring transmission.
+As a result, their is no collision at the receiver.
+
+Case 2 :
+--------
+When 2 nodes are in range of each other but they do carrier sense
+at the same time. 
+In this case, since sender nodes do carrier sense at the same time,
+neither of the nodes is able to detect carrier, hence they both send
+data packets to the receiver at the same time, thus causing a collision
+at the receiver. Here we assume, data packets reach the destination
+at the same time.
+
+Case 3:
+-------
+When 2 nodes are out of range of each other and they do carrier sense
+at different times.
+In this case, since both nodes are out of range of each other, they 
+donot detect carrier, but since they do carrier sense at different times,
+thus sending data packets at different times, their data packets reach
+the destination at different times, thus avoiding a collision at the
+reciever.
+
+Case 4:
+-------
+When 2 nodes are out of range of each other and they do carrier sense at
+the same time
+Here, since nodes are out of range of each other, they donot detect carrier,
+and their data packets reach the destiantion at the same distance, thus
+causing a collision and hence drop of packets.

@@ -1,0 +1,10 @@
+ns ranvar.tcl demonstrates the use of the RandomVariable class in 
+tcl.  the script doesn't perform and actual simulation.  rather, it
+merely creates instances of the following kinds of random variables
+and then generates a sequence of 10 random numbers from each:
+
+Constant
+Uniform
+Exponential
+Pareto
+HyperExponential

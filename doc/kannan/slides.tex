@@ -1,0 +1,1701 @@
+% $Id: slides.tex,v 1.2 1998/04/10 16:07:24 kannan Exp $
+% $Source: /cvsroot/nsnam/ns-2/doc/kannan/slides.tex,v $
+
+\documentclass[landscape]{foils}
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{color}
+\usepackage{nsfoils}
+
+\MyLogo{\raisebox{-2ex}{\includegraphics{isi_logo_small}}}
+
+\begin{document}
+\keyword{Introduction}
+\foilhead{\blue \ns~v2 Workshop}
+\begin{center}
+  \renewcommand{\arraystretch}{2}
+  \begin{tabular}{c}
+    Kannan Varadhan\\
+    USC/Information Sciences Institute\\
+    \tup{kannan@catarina.usc.edu}\\[3ex]
+    18 September, 1997\\
+  \end{tabular}
+\end{center}
+\vspace*{4em}
+{\scriptsize
+    The work of K.~Varadhan and the VINT project at USC/ISI is supported by
+    the Defense Advanced Research Projects Agency (DARPA)
+    under contract number ABT63-96-C-0054.
+    Any opinions, findings, and conclusions or recommendations expressed
+    in this material are those of the author(s) and do not necessarily
+    reflect the views of the DARPA.
+}
+
+\begin{comment}
+\item Intro
+\end{comment}
+
+\keyword{Outline}
+\foilhead[-2ex]{\blue Outline}
+\begin{enumerate}
+  \item Topology Generation, the nodes and the links
+  \item OTcl and C++: The Duality
+  \item Routing
+    \begin{sublist}
+    \item Unicast
+    \item Multicast
+    \item Network Dynamics
+    \end{sublist}
+  \item Multicast Transport
+  \item Issues of Scale
+  \item Programming and Simulation Debugging
+\end{enumerate}
+
+\begin{comment}
+\item Have we done topologies yet?
+\end{comment}
+
+\foilhead{\blue Nodes}
+
+\placefig{node}
+
+\begin{comment}
+\item address and port classifiers, minimalistic configuration
+\item Address format
+\item restriction on number of nodes
+\item NxN split
+\end{comment}
+\keyword{Topology Definition}
+
+\foilhead{\violet Multicast Nodes}
+
+\placefig{mcastNode}
+
+\begin{comment}
+\item Multicast Classifier, <S,G> classification
+\item Replicators
+\end{comment}
+
+\foilhead{\indigo Classifiers}
+\begin{itemize}
+\item Table of $n$ slots
+\item Each slot can point to a TclObject
+\item When a packet is received
+
+  --- \fcn[]{classify} identifies the slot to forward the packet to
+
+\item If slot is invalid, the classifier calls \proc[]{no-slot}
+\item Many different types of classifiers
+
+  {\footnotesize
+  \begin{tabularx}{\linewidth}{rX}
+    Address Classifiers & parse address in packet \\
+    MultiPath Classifier & returns next slot number to use \\
+    Replicator & uses classifier as a table \\
+  \end{tabularx}}
+\end{itemize}
+
+\begin{comment}
+\item Note difference in replicator
+\end{comment}
+
+\foilhead{\violet Classifier methods}
+\begin{itemize}
+\item Install entries into classifier
+  \begin{sublist}
+  \item \proc[]{install}
+  \item \proc[]{installNext}
+  \end{sublist}
+\item Query entries in classifier
+  \begin{sublist}
+  \item \proc[]{elements} \hfil returns current list of elements inserted
+  \item \proc[]{slot} \hfil  returns handle of object in the specified slot
+  \end{sublist}
+  
+\item Delete entry in a particular slot
+  \begin{sublist}
+  \item \proc[]{clear}
+  \end{sublist}
+\item \fcn[]{classify} internal method: receives a packet, and returns 
+  a slot number for that packet.
+\end{itemize}
+
+\begin{comment}
+\item The install procedures overload instproc-likes to return nice
+key-value paris that can be loaded into Tcl arrays directly.
+\item The classify is internal nad different from the rest.
+\item classify is not used by Multipath or replicators
+\end{comment}
+
+
+\foilhead{\indigo Links}
+\placefig{link}
+
+\begin{comment}
+  \item 
+\end{comment}
+\foilhead{\violet Connectors}
+\begin{itemize}
+\item Connectors receive incoming packets, and (usually) transmit them
+  to their \code{target_}
+\item Many different types of connectors:
+
+  {\footnotesize
+  \begin{tabularx}{\linewidth}{rX}
+    Queue & holds a certain number of packets.
+    Packets exceeding their queue-size are sent to the queue's drop-target.\\
+    LinkDelay &  models delay/bandwidth of the link for detailed simulations.\\
+    TTLChecker &  decrements TTLs on each packet,
+                        drops the packet if the TTL becomes zero.\\
+    DynaLink & transmit packets if the link is up, drop packet otherwise\\
+       & Other tracing related objects\\
+  \end{tabularx}}
+\end{itemize}
+
+\begin{comment}
+  \item N way in, one way out.
+  \item Multiple trace data, and hecne sleep overnight.
+\end{comment}
+
+\foilhead{\violet Connector methods}
+\begin{itemize}
+\item Add tracing or monitoring:
+  \begin{sublist}
+  \item \code{trace}
+  \item \code{attach-monitors}
+  \item \code{init-monitor}
+  \end{sublist}
+\end{itemize}
+
+\begin{comment}
+\item trace adds enQ, deQ, drpT to trace packet activity
+\item attach-monitors adds specified snoop agents to link
+\item init-monitor adds queue length tracking code
+\end{comment}
+
+\foilhead{\indigo Topology Generation Resources}
+At \iurl{http://netweb.usc.edu/daniel/research/sims/}
+\begin{itemize}
+\item \code{ntg} by Steve Hotz \tup{hotz@isi.edu}
+\item \code{GT-ITM} by Ellen Zegura \tup{ewz@cc.gatech.edu}, \\ Ken
+  Calvert \tup{calvert@cc.gatech.edu}
+\item \code{TIERS} by Matthew Doar \tup{mdoar@nexen.com}
+\item \code{rtg} by Liming Wei \tup{lwei@cisco.com}, \\ Lee Breslau \tup{breslau@parc.xerox.com}
+\end{itemize}
+
+\begin{comment}
+\item work done by Daniel Zappala
+\item looks at different types of topology generators and summarises
+  them
+\item very brief look here
+\end{comment}
+
+\foilhead{\violet Topology Generation}
+\begin{tabularx}{\linewidth}{rX@{\hspace*{1.5em}}X}
+ & \multicolumn1c{Type of Graph} & \multicolumn1c{Edge Models} \\[2ex]
+\code{ntg} & $n$-level hierarchy &  user configurable probability distributions \\
+\code{GT-ITM} & flat random, $n$-level hierarchies, transit-stub
+networks & many different edge models \\
+\code{TIERS} & 3-level hierarchy & Minimum spanning tree + random
+placement\\
+\code{rtg} & flat random & waxman \\
+\end{tabularx}
+\begin{comment}
+\item ntg generates geographic placement
+\item GT-ITM transit stub appears to match Internet like networks in
+  terms of degree of connectivity and other characteristics
+\item TIERS generates MST and then fills it in
+\item rtg place nodes, and then allocate edges accord to waxman dist.
+\item \ns\ tools availabel to convert some of these topologies to ns
+  scripts
+\item some prebuilt topologies alread in distribution in tcl/ex
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{\blue OTcl and C++: The Duality}
+\placefig{duality}
+
+\begin{comment}
+\item \verb|\placefig{duality}|
+\item C++ code and OTcl scripts within ns
+\item Class hierarchy and protocol programming is often in C++
+\item OTcl helper scripts and built up primitives in OTcl
+\item not all hierarchy is in mirrored.  will see examples
+\item User simulation is scripted (O)Tcl code
+\end{comment}
+\keyword{OTcl Linkage}
+
+\foilhead{\indigo OTcl Linkage}
+C++ $\iff$ OTcl 
+
+\begin{tabularx}{\linewidth}{rX}
+  class Tcl           & C++ methods to access the OTcl interpreter \\
+  \scriptsize  class TclCommand      & \scriptsize Basic script to
+                                provide limited global
+                                commands to the interpreter \\
+  class EmbeddedTcl     & Container for Tcl scripts that are pre-loaded
+                                at startup \\
+  class TclObject       & Root of basic object hierarchy in \ns \\
+  class TclClass        & C++ class to set up the TclObject hierarchy \\
+  \scriptsize class InstVar   & \scriptsize internal class
+                                to bind C++ member variables
+                                to OTcl instance variables \\
+\end{tabularx}
+
+\begin{comment}
+\item outline slide
+\item Five classes
+\end{comment}
+
+\foilhead{\indigo C++ Methods to Access OTcl}
+The class Tcl
+\begin{list}{--~}{}
+\item Obtain a handle
+\item Invoke OTcl procedures
+\item Retrieve the result from the interpreter
+\item On invocation, pass a result string to the interpreter
+\item Return Success/Failure return codes
+\end{list}
+
+\begin{comment}
+\item Mention preamble, 
+\item call to
+\item called from
+\end{comment}
+
+\foilhead[-2ex]{\violet class Tcl: C++ Methods to access OTcl}
+\begin{program}
+  Tcl& tcl = {\bf{}Tcl::instance}();        \* obtain a handle to the interpreter */
+  if (argc == 2) \{                   \* cmd: {\rm{}foo now} */
+    if (strcmp(argv[1], "now") == 0) \{
+      {\bf{}tcl.resultf}("%g", clock());    \* pass back the result */
+      return TCL_OK;                 \* return success code to interpreter */
+    \}
+    {\bf{}tcl.result}("command not understood"); \* alternate way of passing result */
+    return TCL_ERROR;
+  \} else if (argc == 3) \{            \* cmd: {\rm{}foo now \tup{callback}} */
+    if (strcmp(argv[1], "now") != 0) \{
+      {\bf{}tcl.error}("command not understood");  \* alternate way to return error */
+    \}
+    char *callback = arv[2];
+    {\bf{}tcl.eval}(callback);                \* invoke an OTcl procedure */
+    {\bf{}tcl.evalc("puts {hello, world}");}   \* another variant */
+    char* timestr = {\bf{}tcl.result}();   \* callback result from the interpreter */
+    clock() = atof(timestr);
+  \} else \{
+    Interp* ti = {\bf{}tcl.interp}();  \* access the interpreter directly */
+    \ldots                                 \* \ldots to do whatever */
+\end{program}
+
+\begin{comment}
+\item obtain the reference
+\item invoke OTcl procedures, one shown, others...
+\item result handling, all three forms shown
+\item error handling, differences from returning TCL\_ERROR
+\item Direct access
+\end{comment}
+
+\foilhead{\red class TclCommand}
+Defines simple commands that execute in global interpreter context
+
+For example, \code{ns-version}
+
+\begin{comment}
+\item 1. define the class, derived from TclCommand.
+\item 2. constructor invokes parent constst. w. name of command as argument
+\item 3. command function and arguments to do the work
+\item 4. declare instance.  default instance for ns-version and others
+  are declared in init\_misc(), in misc.cc, and are called by tclAppInit().
+\end{comment}
+
+\foilhead{\indigo class EmbeddedTcl: Adding new OTcl code into \ns}
+\begin{itemize}
+\item container for scripts pre-loaded at startup
+  \begin{sublist}
+  \item \Tclf{tcl-object.tcl}
+  \item \nsf{tcl/lib/ns-lib.tcl}
+  \item scripts recursively sourced by \nsf{tcl/lib/ns-lib.tcl}
+  \end{sublist}
+\item \Tclf{tcl-object.tcl} % $\Rightarrow$ \code{et_tclobject} \hfil
+  activated by \fcn[]{Tcl::init}
+
+  \nsf{tcl/lib/ns-lib.tcl} % $\Rightarrow$ \code{et_ns_lib} \hfil
+  activated by \fcn[]{Tcl\_AppInit}
+\end{itemize}
+
+\begin{comment}
+\item Don't add your own scripts.  But if you did,
+\item use tcl2c++ to create the object instance
+\item  You'd a find a place/mechanism to load the object
+\end{comment}
+
+\foilhead{\indigo class TclObject}
+\begin{itemize}
+\item Basic object hierarchy in \ns
+\item Hierarchy mirrored in C++ and OTcl
+\item For example:
+  \begin{program}\small
+        set srm [new Agent/SRM/Adaptive]
+        $srm set packetSize_ 1024
+        $srm traffic-source $s0
+  \end{program}
+\end{itemize}
+
+\begin{comment}
+\item creation/deletion
+\item binding variables
+\item instproc-likes
+\end{comment}
+
+\foilhead[-2ex]{\violet class TclObject: Hierarchy and Shadowing}
+\placefig{tclobject-hier}
+
+\begin{comment}
+\item \verb|\placefig{tclobject-hier}|
+\item object hierarchy
+\item handle
+\item relationship to shadow
+\end{comment}
+
+\foilhead[-1.5ex]{\violet class TclObject: Creation/Deletion Mechanisms}
+\begin{itemize}
+\item global procedure \proc[]{new}
+
+  \placefig{tclobject-mech}
+
+\item global procedure \proc[]{delete}
+\end{itemize}
+
+\begin{comment}
+\item \verb|\placefig{tclobject-mech}|
+\item handle and handle equivalence
+\item constructor calling sequence: self next
+\item Base class constructr creates shadow...common mistake
+\item caveat regarding OTcl constructors
+\item create-shadow
+\item command method
+\end{comment}
+
+\foilhead[-3ex]{\violet class TclObject: Binding Variables}
+\begin{itemize}
+\item makes identical C++ member variables to OTcl instance variables
+\item Syntax
+  \begin{program}
+    ASRMAgent::ASRMAgent() \{
+      bind("pdistance_", &pdistance_);      \* real variable */
+      \ldots
+    \}
+  \end{program}
+\item Initialisation through OTcl class variables
+  \begin{program}
+      Agent/SRM/Adaptive set pdistance_ 15.0
+      Agent/SRM set pdistance_ 10.0
+      \ldots
+  \end{program}
+\item Other methods: \fcn[]{bind} (integers),
+  \fcn[]{bind\_time} (time variables),
+  \fcn[]{bind\_bw} (bandwidth variables),
+  \fcn[]{bind\_bool} (boolean variables)
+\end{itemize}
+
+\begin{comment}
+\item Five different data types supported.
+\item Usage syntax supports obvious normal forms
+\item identicality of data
+\end{comment}
+
+\foilhead{\violet Examples of Specify Bound variables}
+\begin{program}
+        $object set bwvar 1.5m
+        $object set bwvar 1.5mb
+        $object set bwvar 1500k
+        $object set bwvar 1500kb
+        $object set bwvar .1875MB
+        $object set bwvar 187.5kB
+        $object set bwvar 1.5e6
+
+        $object set timevar 1500m
+        $object set timevar 1.5
+        $object set timevar 1.5e9n
+        $object set timevar 1500e9p
+
+        $object set boolvar t           \; set to true;
+        $object set boolvar true
+        $object set boolvar 1   \; or any non-zero value;
+
+        $object set boolvar false       \; set to false;
+        $object set boolvar junk        
+        $object set boolvar 0
+\end{program}
+
+\begin{comment}
+\item Equivalent b/w spec
+\item s ignored
+\item bool spec  wierd
+\item set terrible is true, but set junk can be false...
+\item real/int are canonical forms
+\end{comment}
+
+\foilhead{\violet class TclObject: \fcn[]{command} methods}
+\begin{itemize}
+\item shadow object is accessed by a \proc[]{cmd} procedure,
+  called ``\textbf{instproc-like}''
+\item For example, \proc[]{distance?} is an
+  ``instance procedure'' of an Adaptive SRM agent
+  \begin{program}
+    int ASRMAgent::command(int argc, const char*const*argv)\nb1 \{
+        Tcl& tcl = Tcl::instance();
+        if (argc == 3) \{
+            if (strcmp(argv[1], "distance?") == 0)\nb2 \{
+                int sender = atoi(argv[2]);
+                SRMinfo* sp = get_state(sender);
+                tcl.tesultf("%f", sp->distance_);
+                return TCL_OK;\nb3
+            \}
+        \}
+        return (SRMAgent::command(argc, argv));\nb4
+    \}
+  \end{program}
+\end{itemize}
+
+\begin{comment}
+\item arguments
+\item matching
+\item return code
+\item parent calling to make instproc-like
+\end{comment}
+
+\foilhead[-3ex]{\violet class TclObject: \fcn[]{command} methods:
+  call sequence}
+\begin{itemize}
+\item Usage:
+  \begin{program}
+    $srm distance?        \; instproc-like usage;
+{\rm{}or}
+    $srm cmd distance?    \; explicit usage;
+  \end{program}
+
+  \placefig{tclobject-cmd}
+\end{itemize}
+
+\begin{comment}
+\item \verb|\placefig{tclobject-cmd}|
+\item instproc-like calling sequence
+\item overloading
+\item direct executing
+\item hierarchical resolution
+\end{comment}
+
+\foilhead{\indigo class TclClass}
+Programmer defines C++ hierarchy that is mirrored in OTcl
+  \placefig{tclclass}
+not all classes are mirrored exactly
+
+\begin{comment}
+  \item \verb|\placefig{tclclass}|
+  \item ``/'' as separator character for interpreted hierarchy
+  \item root of mirrored class hierarchies is TclObject
+  \item extra C++ classes that are not mirrored in OTcl
+  \item TclClass is adjunct to mirrored hierarchy
+\end{comment}
+
+\foilhead{\violet Class TclClass: Definition}
+\begin{itemize}
+\item For example, Adaptive SRM agent class in C++
+  is mirrored into Agent/SRM/Adaptive 
+\begin{program}
+    static class AdaptiveSRMAgentClass : public TclClass\nb1 \{
+    public:
+      AdaptiveSRMAgentClass() : TclClass("Agent/SRM/Adaptive")\nb2 \{\}
+      TclObject* create(int /*argc*/, const char*const* /*argv*/)\nb3 \{
+        return (new AdaptiveSRMAgent())\nb4;
+      \}
+    \} AdaptiveSRMAgentInstance\nb5;
+\end{program}
+\end{itemize}
+
+\begin{comment}
+\item 1. class derived from Tclclass, defies only constructor and create method
+\item 2. constructor invokes tclclass construcotr
+  with name of interpreterd class
+\item 3. class name implicitly defines the hierarchy
+\item 4. class associated with AdaptiveSRMAgent, 
+  returns objects in this associated class
+\item 5. instance needed to set all this in motion.
+\item 6.  Usually ignores argument, but check out the TraceClass definition
+\end{comment}
+
+\foilhead{\red Class TclClass: Mechanism}
+\begin{itemize}
+\item static initialisation by compiler
+
+  \placefig{tclclass-static}
+
+\item run time activation at startup
+
+  \placefig{tclclass-runt}
+
+\end{itemize}
+
+\begin{comment}
+\item \verb|\placefig{tclclass-static}| and \verb|\placefig{tclclass-runt}|
+\item object constructor is executed during C++ static instance initialisations
+\item TclClass constructor builds list of TclClass instances
+\item \fcn[]{Tcl\_AppInit} invokes \fcn[]{TclClass::bind}
+  to create interpreted hierarchies
+\item \fcn[]{bind} invokes \proc[]{TclObject::register} for each class in list
+\item \proc[]{register} establishes class hierarchy
+\item \fcn[]{bind} defines instance procedures
+  \proc[]{create-shadow} and \proc[]{delete-shadow}
+  for each class registered
+\end{comment}
+
+\foilhead{\red class Instvar}
+\begin{itemize}
+\item One object per bound variable
+\item created by \fcn[]{TclObject::bind} call
+\item Constructor activity
+  \begin{subenum}
+  \item point to C++ member variable
+  \item create instance variable for interpreted object
+  \item enable trap read/writes to instance variable using
+    \fcn[]{Tcl\_TraceVar}
+  \end{subenum}
+\end{itemize}
+
+\begin{comment}
+\item list of instvar in TclObject
+\item method execution context assumption?
+\item implicit when in create-shadow
+\item other possibilities include dynamic binding
+\end{comment}
+
+\foilhead{\blue OTcl Linkage Summary}
+\begin{itemize}
+\item Class Tcl
+  \begin{sublist}
+  \item primitives to access the interpreter
+  \end{sublist}
+\item Class TclObject: root object for mirrored hierarchies
+  \begin{sublist}
+  \item Unifies interpreted and compiled hierarchy
+  \item Provide seamless access to \ns\ objects in compiled code and
+    interpreted scripts
+  \end{sublist}
+\item Class TclClass: class that sets up the interpreted hierarchy
+  \begin{sublist}
+  \item establish interpreted hierarchy
+  \item shadowing methods
+  \end{sublist}
+\end{itemize}
+
+\begin{comment}
+\item summarise key items to remember in interaction
+\item goodfullness discussion on what goes in OTcl, and how/why
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\keyword{Routing}
+\foilhead{\blue Unicast Routing}
+Compute the forwarding tables at each node in topology
+\begin{itemize}
+\item specify
+  \begin{program}
+    $ns rtproto \tup{protocol} \tup{nodelist}
+  \end{program}
+  \begin{sublist}
+  \item run protocol on nodes listed
+  \item \tup{protocol}: static, session, DV\hfill default: static
+  \item \tup{nodelist}:\hfill default: entire topology
+  \end{sublist}
+
+\item Tailor behaviour
+  \begin{program}
+    $ns cost $n1 $n2 5
+  \end{program}
+  \begin{sublist}
+  \item assign costs to links\hfill default: cost = 1
+  \end{sublist}
+% \item Asymetric Routing, MultiPath Routing
+\end{itemize}
+\keyword{Unicast Routing}
+
+\begin{comment}
+\item populates classifier\_
+\item supports multiple route protocols
+\item centralised vs detailed distinction for DV etc.
+\end{comment}
+
+\foilhead{\indigo Centralized Unicast Routing}
+Route computation is external to simulation execution
+\begin{itemize}
+\item Supported strategies
+  \begin{sublist}
+  \item Static Routing:  Routes precomputed prior to start of simulation
+  \item Session Routing: Static + Routes recomputed on topology change
+  \end{sublist}
+\item Dijkstra's All-pairs SPF algorithm
+\end{itemize}
+
+\begin{comment}
+\item Algorithm used: Dijkstra's all-pairs spf algorithm
+\end{comment}
+
+\foilhead{\indigo Detailed Unicast Routing}
+Route computation is part of simulation execution
+\begin{itemize}
+\item Currently implemented protocols
+
+  Distributed Bellman-Ford (\textbf{DV}) routing
+  \begin{sublist}
+  \item \code{advertInterval} = $2s.$ update interval
+  \item Split-horizon w/poison reverse advertisments
+  \item triggered updates on topology change, or new route entries
+  \end{sublist}
+\item Possible options such as equal cost multi-path routing
+\end{itemize}
+
+\begin{comment}
+\item aggressive routing strategy
+\end{comment}
+
+\foilhead{\red Class Architecture}
+\placefig{rtarch}
+
+\begin{comment}
+\item \verb|\placefig{rtarch}|
+\item RouteLogic global class for routing, all classes need it thgouh
+\item Only detail routing needs rtObject and associated strategies
+\end{comment}
+
+\foilhead{\red class RouteLogic}
+\begin{itemize}
+\item Route Configuration
+
+  \placefig{rtlconfig}
+
+\item Query Node~$n_1$'s nexthop to Node~$n_2$
+  \begin{program}
+    [$ns get-routelogic] lookup $n1 $n2
+  \end{program}
+
+\item Reconfiguration on Topology Changes
+  \begin{program}
+    [$ns get-routelogic] notify
+  \end{program}
+\end{itemize}
+
+\begin{comment}
+\item instance variable array \code{rtprotos_}
+\item centralised routing hookin
+\item \verb|\placefig{rtlconfig}|
+\item lookup is overloaded instproc-lioke, returns node id of next hop.
+\item invokes \proc[]{compute-all} for all unicast routing protocols in simulation.
+\end{comment}
+
+\foilhead{\red Dynamic Routing: class rtObject}
+Route Controller
+
+\begin{tabularx}{\linewidth}{rX}
+  \proc[]{init-all} & Creates \code{rtObject} at each node in argument \\
+  \proc[]{add-proto} & Adds \tup{protocol} agent to \tup{node} \\
+  \proc[]{lookup} & Returns nexthop for \tup{dest} handle,
+                          -1 if none available \\ 
+  \proc[]{compute-routes} & compute and install best route to
+                          destinations; invoke \proc[]{send-updates},
+                          \proc[]{flag-multicast} \\
+  \proc[]{intf-changed} & notify protocol agents; recompute-routes\\
+  \proc[]{dump-routes} & to \tup{filehandle} specified \\
+\end{tabularx}
+
+\begin{comment}
+\item other methods to get protocol handle, preference, metric and
+  nexthop of installed route.
+\item special DIRECT route protocol
+\item prefernece and metric comparison for compute-routes
+\end{comment}
+
+\foilhead{\red Dynamic Routing: class Agent/rtProto/DV}
+Route Protocol Agent
+
+\begin{tabularx}{\linewidth}{rX}
+  \proc[]{init-all} & create protocol agent at each node in argument \\
+  \proc[]{compute-routes} & invoked on startup and after topology change;
+                                  compute best route in protocol;
+                                  possibly set \code{rtsChanged\_} \\
+  \proc[]{intf-changed} & called after topology change on incident node \\
+  \proc[]{send-updates} & whenever routes at node change \\
+\end{tabularx}
+
+\begin{comment}
+\item init-all invokes init-all for rtObject, add-proto to each node,
+  and find and add peers
+\item Agent will invoke \proc[]{rtObject::compute-routes} when its
+  routes change
+\item on topop change, first invoke intf-changed, then compute-routes.
+\item extensions for LS
+\item other internal details, sent-periodic updates, send-to-peer,
+  recv-updates
+\item rtPeer support
+\end{comment}
+
+\foilhead[-3ex]{\red Equal Cost Multi-Path Routes}
+\code{\textbf{Node set multiPath_ 1}}
+
+\placefig{mpath}
+
+\begin{comment}
+\item one mpath classifier per dest possible
+\item each one will alternate routes to use all of them
+\item routes must be from the same protocol and metric
+\end{comment}
+
+\foilhead{\red Asymetric Path Routing}
+\psset{unit=1in}
+\centerline{
+  \begin{pspicture}(-1,-1)(1,1)
+    \cnodeput( 0, 1){r1}{$r_1$}
+    \cnodeput( 0,-1){r2}{$r_2$}
+    \cnodeput( 1, 0){n2}{$n_2$}
+    \cnodeput(-1, 0){n1}{$n_1$}
+    \ncline{n1}{r1}\ncline{r1}{n2}\ncline{n2}{r2}\ncline{r2}{n1}
+    \rput[br](-0.75,  0.25){\footnotesize2}
+    \rput[tl]( 0.75, -0.25){\footnotesize2}
+    \rput[br]( 0.25, -0.75){\footnotesize3}
+  \end{pspicture}}
+
+\begin{list}{}{}
+\item 
+\begin{program}
+    $ns cost $n1 $r1 2
+    $ns cost $n2 $r2 2
+    $ns cost $r2 $n2 3
+\end{program}
+\end{list}
+
+\begin{comment}
+\item adjusts costs to get appropriate multipath route effects
+\item n1 and n2 are asynetric path
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{\blue Multicast Routing: Configuration}
+
+\begin{program}\small
+  Simulator \textbf{NumberInterfaces_} 1  \; for some multicast routing protocols;
+  Simulator \textbf{EnableMcast_} 1
+  set ns [new Simulator]
+  Node \textbf{expandaddr}   \; if #nodes > 128;
+  # allocate nodes
+  $ns \textbf{mrtproto} \tup{protocol} \tup{nodelist}
+  set group [Node \textbf{allocaddr}]
+
+  $node \textbf{join-group}  $agent $group
+  $node \textbf{leave-group} $agent $group
+\end{program}
+\keyword{Multicast Routing}     % 15
+
+\begin{comment}
+\item separate class eliminated
+\item class variable flags multicast
+\item default topology size limited to 128 nodes, 
+\item no default multicast, must specify protocol
+\item defautl node list is entire topology
+\item use allocaddr to allocate addresses portably
+\end{comment}
+
+\foilhead{\red Multicast Node Definition}
+\placefig{mcastNode}
+
+\begin{comment}
+\item Notice the extra replicators in the node
+\end{comment}
+
+\foilhead{\violet Multicast Routing Protocols Implemented}
+Valid protocols currently implemented:
+\begin{itemize}
+\item Centralised protocols:
+
+  \begin{tabularx}{\linewidth}{crX}
+    1. & \code{CtrMcast} & Centralised Multicast (Sparse Mode Protocol) \\
+    2. &  \code{DM}  &  Dense Mode \\
+  \end{tabularx}
+
+\item Detailed protocols:
+
+  \begin{tabularx}{\linewidth}{crX}
+    1. & \code{dynamicDM} &  Dynamic Dense Mode\\
+    2. & \code{pimDM} &  PIM Dense Mode\\
+  \end{tabularx}
+
+\end{itemize}
+
+\begin{comment}
+\item PIM sm mode currently WIP
+\item tradeoffs between implementations
+\end{comment}
+
+\foilhead{\indigo Centralised Multicast Configuration}
+Sparse Mode implementation of multicast
+
+\begin{program}\small
+            $ctrmcastcomp \textbf{compute-mroutes}
+            $ctrmcastcomp \textbf{switch-treetype} $group
+\end{program}
+
+Defaults to creating a shared tree.
+
+\begin{comment}
+\item compute-mroutes initialises routing tables at each nodes
+\item requires unicast routing sanity
+\item can be invoked anytime required; invoked automatically by netdyn
+\item switch between shared trees and source specific trees
+\item does not capture transience well
+\end{comment}
+
+\foilhead{\indigo Centralised Dense Mode Configuration}
+\begin{itemize}
+\item computes parent-child relationships prior to start of simulation
+\item Can study membership dynamics
+\item No response to topology changes
+\item Only one configuration parameter
+\begin{program}\small
+  DM set PruneTimeout \tup{newValue} \; default \(0.5s.\);
+\end{program}
+\end{itemize}
+
+\begin{comment}
+\item DVMRP-like 
+\item works well in conjunction with static unicast routing
+\end{comment}
+
+\foilhead{\indigo Dynamic Dense Mode Configuration}
+\begin{itemize}
+\item Extension of static dense mode
+\item As before, computes parent child relationships at start of simulation
+\item Also recomputes whenever topology changes,
+  or unicast route updates are received
+\item Configuration parameters are:
+  \begin{program}\small
+    dynamicDM set PruneTimout \tup{newValue} \; default \(0.5s.\);
+    dynamicDM set ReportRouteTimeout \tup{newvalue} \; default \(1s.\);
+  \end{program}
+\end{itemize}
+
+\begin{comment}
+\item one object per node
+\end{comment}
+
+\foilhead{\indigo PIM Dense Mode Configuration}
+\begin{itemize}
+\item Extension of static dense mode
+\item does not compute parent child relationships
+\item Configuration parameters are:
+  \begin{program}\small
+    pimDM set PruneTimout \tup{newValue} \; default \(0.5s.\);
+  \end{program}
+\end{itemize}
+
+\begin{comment}
+\item one object per node
+\end{comment}
+
+\foilhead{\indigo Other protocol work in progress}
+\begin{list}{}{}
+\item Detailed PIM
+  \begin{list}{}{}
+  \item Sparse mode and Dense mode
+  \end{list}
+\end{list}
+
+\begin{comment}
+  \item will be a comprehensive implementaiton of PIM
+\end{comment}
+
+\foilhead{\red Multicast Classes}
+
+\placefig{mcastArch}
+
+\begin{comment}
+\item \verb|\placefig{mcastArch}|
+\item mirros unicast route architecture
+\item global centr mcast comp module
+\item relies on centr rp compmodule
+\item default computation for rp
+\item General Multicast:
+McastProtocol      -- mcast protocol mechanism (DM, 
+dynamicDM)
+McastProtoArbiter  -- mcast arbiter
+Classifier/Replicator/Demuxer   -- mcast classifier (parse pkts, get 
+(s,g,iif), and forward to (s,g,iif) replicator)
+Classifier/Multicast/Replicator -- replicator for each (s,g, iif) (
+copy pkts and forward to all oifs)
+
+\item Centralized Multicast:
+CtrMcast     -- install mcast routing entries per node
+CtrMcastComp -- compute mcast trees via unicast routing table
+CtrRPComp    -- compute RP Set for shared trees
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{\blue Network Dynamics}
+The ability to make elements of topology fail/recover.
+\begin{itemize}
+\item Model of failure and recovery
+
+  --- Exponential, Deterministic, Trace driven, Manual (or one-shot)
+
+\item Operates on single link
+
+  --- \textsl{i.e.} takes link ``down'' or ``up''
+
+\item Operation on single node possible, translated into operation
+  on collection of links incident on node
+\end{itemize}
+\keyword{Network Dynamics}
+
+\begin{comment}
+\item currntly only possible to specify single link or node
+\item no clustering yet
+\end{comment}
+
+\foilhead{\indigo Specification}
+\begin{itemize}
+\item Create an instance of \tup{model}
+  \begin{program}
+    $ns \textbf{rtmodel} \tup{model} \tup{parameters} \tup{node|link}
+  \end{program}
+  Command returns the handle of the model created
+\item Perform \tup{operation} at \tup{time} on \tup{node|link};
+  \begin{program}
+    $ns \textbf{rtmodel-at} \tup{time} \tup{operation} \tup{node|link}
+  \end{program}
+  return handle to newly created instance of model.
+\item Delete route model specified by \tup{handle}
+  \begin{program}
+    $ns \textbf{rtmodel-delete} \tup{handle}
+  \end{program}
+\end{itemize}
+
+\begin{comment}
+\item interface through thte class simulator
+\item operates only on node and link
+\item multiple arguments are ignored
+\end{comment}
+
+\foilhead{\red Models and Configuration}
+\begin{enumerate}
+\item Exponential
+  \begin{sublist}
+  \item \tup{[startTime], upInterval, downInterval, [endTime]}
+  \end{sublist}
+\item Deterministic
+  \begin{sublist}
+  \item \tup{[startTime], upInterval, downInterval, [endTime]}
+  \end{sublist}
+\item Trace (based)
+  \begin{sublist}
+  \item \tup{fileName}
+  \end{sublist}
+\item Manual (or one-shot)
+  \begin{sublist}
+  \item \tup{operation, time}
+  \end{sublist}
+\end{enumerate}
+
+\begin{comment}
+\item time vagaries
+\item trace file format
+\item Long form of the \code{rtmodel-at}
+\end{comment}
+
+\foilhead{\red Defining your Own Model}
+Derive model from the base class, \code{rtModel}
+
+\begin{tabularx}{\linewidth}{crX}
+1. & \proc[]{set-parms} & process model parameters \\
+2. & \proc[]{set-first-event} & specify the first event \\
+3. & \proc[]{up}, \proc[]{down} & specify next action \\
+\end{tabularx}
+
+--- Use class rtQueue to schedule events.
+
+--- Instance of queue in rtModel class variable, \code{rtq_}
+
+\begin{comment}
+\item comments on each procedure; defaults
+\item use rtQueue to installe vents
+\end{comment}
+
+\foilhead{\red class rtQueue}
+Internal class to synchronise topology change activity
+
+\begin{tabularx}{\linewidth}{rX}
+\proc[]{insq} & Given \tup{time}, \tup{object},
+        and an instance procedure for that object and arguments,
+        will invoke instance procedure of object at specified time. \\
+\proc[]{insq-i} & identical to \proc[]{insq}, except \tup{time}
+        specifies increment when the procedure will be executed\\
+\proc[]{runq} & executed procedures for the specified time;
+        finish by invoking \proc[]{notify} for each object \\
+\proc[]{delq} & remove event for object at specified time
+\end{tabularx}
+
+\begin{comment}
+\item need for synchronisation: route advertisement staggerring
+\item possibly obviated by the timer interface in OTcl
+\end{comment}
+
+\foilhead{\red Interface to Unicast Routing}
+\placefig{uni-nd-intf}
+
+\begin{comment}
+\item Layer of focus in next slide
+\end{comment}
+
+\foilhead{\red Interface to Unicast Routing}
+\placefig{ndactions}
+
+\begin{comment}
+\item \verb|\placefig{ndactions}|
+\item sequence of events upto routing interfaces
+\end{comment}
+
+\foilhead{\indigo Deficiencies in the Network Dynamics API}
+\begin{itemize}
+\item Link centric
+\item Node failure not consistent with an operation model
+\item API cannot specify clusters/clouds
+\end{itemize}
+
+\begin{comment}
+\item no way to specify other than node or link
+\item node not reset on failure
+\item node emulation is broken concept
+\end{comment}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{\blue Multicast Transport}
+Currently, SRM and RTP implemented
+\begin{itemize}
+\item goals of implementation:  programmability
+\item in particular, for SRM: programming timers,
+session message handling, loss recovery
+\item and for RTP, mostly programmed in OTcl, with
+  minimalpacket related statistics counters in C++
+\end{itemize}
+\keyword{Multicast Transport}    % 20
+
+\begin{comment}
+\item most implementation is in OTcl, limited C++ handling,
+\item confined to packet level activities
+\item for RTP, per packet statistics is in C++
+\item for SRM, packet forwarding, sending/receipt of packets, and
+processing session messages
+\end{comment}
+
+\foilhead[-3ex]{\indigo Simple SRM configuration}
+\begin{program}
+  set ns [new Simulator]          \; preamble initialization;
+  $ns enableMcast
+  set node [$ns node]                \; agent to reside on this node;
+  set group [$ns allocaddr]           \; multicast group for this agent;
+
+  {\bfseries{}set srm [new Agent/SRM]}
+  $srm  set dst_ $group            \; configure the SRM agent;
+  {\bfseries{}$ns attach-agent $node $srm}
+
+  $srm set fid_ 1                \; optional configuration;
+  {\bfseries{}$srm log [open srmStats.tr w]}   \; log statistics in this file;
+  {\bfseries{}$srm trace [open srmEvents.tr w]}  \; trace events for this agent;
+
+  set packetSize 210
+  # {\cf{} configure the traffic generator and traffic source}
+  set s0 [new Agent/CBR/UDP]   \; attach traffic generator to application;
+  $s0 attach-traffic $exp0
+  {\bfseries{}$srm(0) traffic-source $s0} \; attach application to SRM agent;
+  {\bfseries{}$srm(0) set packetSize_ $packetSize} \; to generate repair packets of appropriate size;
+
+  {\bfseries{}\fcnref{$srm start}{../ns-2/srm.tcl}{Agent/SRM::start}}
+  {\bfseries{}\fcnref{$srm start-source}{../ns-2/srm.tcl}{Agent/SRM::start-source}}
+\end{program}
+
+\begin{comment}
+\item Acquire and configure agent
+\item Attach agent to node
+\item open log and trace files as required
+\item configure a traffic generator and traffic source
+\item attqach application to agent
+\item notice setting packet size
+\item start agent and traffic source separately
+\end{comment}
+
+\foilhead{\indigo Class Hierarchies}
+\placefig{srmhierarchy}
+
+\begin{comment}
+\item Separate loss recovery objects
+\item separate session message handling object
+\item Loss detection is in C++,
+\item loss recovery is in OTcl
+\item number of bottlenecks in memory are expected
+\item wait for scaling issues following
+\end{comment}
+
+\foilhead{\indigo Loss Detection}
+\begin{list}{}{}\item
+Triggered by receipt of data or control messages
+
+\item
+\begin{program}
+  $agent \textbf{request} \tup{sender} \tup{list of messages}
+\end{program}
+
+\item
+Actual loss recovery occurs in OTcl through special purpose
+loss recovery  objects
+\end{list}
+
+\begin{comment}
+\item single reqeust helps speedup scheduling
+\item also help schedule request periods for statis gathering simple
+\end{comment}
+
+\foilhead{\indigo Loss Recovery}
+\begin{itemize}
+\item Each loss is handled by separate ``SRM'' object.
+\item Nodes schedule ``request'' or ``repair'' objects following
+  a data loss
+\item Each loss recovery object handles its own scheduling and messaging
+  activity
+\end{itemize}
+
+\begin{comment}
+\item each agent also receives its messages
+\item relies on agent being able to receive its own messages
+\end{comment}
+
+\foilhead{\indigo Session messages}
+\begin{itemize}
+\item One session message handling object per agent
+\item Responsible for sending periodic session messages
+\item Session message interval controlled by class variable, 
+  \code{sessionDelay_}
+\item Two types of session functions implemented:
+  \begin{subenum}
+  \item SRM/Session uses default fixed interval session message sending
+  \item SRM/Session/logScaled uses $\log({\rm groupSize\_}) * {\rm
+      sessionDelay\_}$  to send next advertisement. 
+  \end{subenum}
+\end{itemize}
+
+\begin{comment}
+\item advantages etc.
+\end{comment}
+
+\foilhead{\indigo Statistics}
+\begin{enumerate}
+\item Agent---response to Data Loss:  Detection and Recovery
+\item Loss Object---Per Loss recovery Statistics 
+\end{enumerate}
+
+\begin{comment}
+\item data loss measures ave-recovery delay, ave dups
+\item used by adaptive algorithm to adjust the recovery parameters
+\item Loss recovery objects write out to log file when they terminate
+\end{comment}
+
+\foilhead{\indigo Tracing}
+\begin{itemize}
+\item Per event tracing by loss recovery objects
+\item Sample trace file is:
+\begin{program}
+ 3.5543 n 1 m <1:1> r 0 Q DETECT
+ 3.5543 n 1 m <1:1> r 1 Q INTERVALS C1 2.0 C2 0.0 d 0.0105 i 1
+ 3.5543 n 1 m <1:1> r 1 Q NTIMER at 3.57527
+ ...
+ 3.5753 n 1 m <1:1> r 2 Q NACK IGNORE-BACKOFF 3.59627
+ 3.5828 n 3 m <1:1> r 0 Q DETECT
+ 3.5828 n 3 m <1:1> r 1 Q NTIMER at 3.6468
+ 3.5854 n 0 m <1:1> r 0 P NACK from 257
+ 3.5854 n 0 m <1:1> r 1 P RTIMER at 3.59586
+ 3.5886 n 2 m <1:1> r 2 Q NTIMER at 3.67262
+ 3.5886 n 2 m <1:1> r 2 Q NACK IGNORE-BACKOFF 3.63062
+ 3.5959 n 0 m <1:1> r 1 P SENDREP
+ ...
+\end{program}
+\end{itemize}
+
+\begin{comment}
+\item done by loss objects
+\end{comment}
+
+\foilhead{\indigo RTP}
+\begin{itemize}
+\item Session/RTP tracks incoming data, and sends periodic delivery
+  reports.
+\item Agent/CBR/RTP sends data to the group at a specified rate.
+\end{itemize}
+
+\begin{comment}
+\item need slides on RTP
+\item RTPSource adjunct class to set src id, but not clear it if
+  generates
+data.
+\item report-interval, session bw etc. can be controlled.
+\item CBR agent generates data, and when it recvs from outside
+hands it to session to generate report
+\end{comment}
+
+\foilhead[-2ex]{\blue Multicast Transport Starter Kit}
+\begin{itemize}
+\item Code and Documentation:  SRM and RTP
+
+\item Multiple flavours of multicast
+  
+  {\small
+  includes Dense mode, Sparse mode, centralised multicast, session level
+  multicast
+  }
+
+\item Multiple flavours of unicast and network dynamics
+
+  {\small
+  Ability to study the problem under dynamic topologies, including
+  partition scenarios
+  }
+
+\item Multiple physical layers including broadcast and wireless LANs
+
+\item building a catalog of canonical topologies
+
+\item Examples in \nsf{tcl/ex}
+
+\item test suite in development
+\end{itemize}
+
+\begin{comment}
+\item vertical slice through code.
+\end{comment}
+
+\foilhead{\indigo Multicast Transport: Other types}
+\begin{itemize}
+\item Structured hierarchy mechanisms
+  \begin{sublist}\footnotesize
+  \item Exists Multicast and Network Dynamics
+  \item Exists Some of the possible timer mechanisms
+  \item Exists Different loss models
+  \item Requires building different modules for request/repair
+  \item Requires defining the hierarchy and mechanisms
+  \item Expect mostly work in OTcl
+  \end{sublist}
+\item Route Support
+  \begin{sublist}\footnotesize
+  \item Pointers to files for various models of implementation
+  \item Exists Multicast and Dynamics
+  \item Exists Loss Models
+  \item Requires modifying some network layer code
+  \item Expect Some minor work in C++, Lots of ``plumbing'' in OTcl
+  \end{sublist}
+\item Multicast Congestion Control
+\end{itemize}
+
+\begin{comment}
+\item hints
+\item throw open the floow
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{\indigo Current NS Scaling}
+NS is currently \emph{memory limited} for large simulations.
+
+To scale, we're taking two approaches:
+\begin{itemize}
+\item tuning/monitoring detailed simulations (to reduce memory usage)
+\item abstract simulations (to remove ``unimportant'' details)
+\end{itemize}
+\keyword{Scaling Considerations}
+
+\begin{comment}
+\item Acknowledge John, Polly
+\item tradeoff of extensibility vs scaling
+\item memory bottleneck for the types of simulations we are interested in.
+\item Other types may be CPU bound, such as packet level tracing via OTcl.Not yet reached this limit
+\end{comment}
+
+\foilhead{\indigo Detailed Simulations: Limits}
+Some large topology configurations are in the distribution:
+
+{\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\linewidth}{cX}
+\multicolumn{2}{l}{\nsf{tcl/ex/newmcast/cmcast-150.tcl}} \\
+150 nodes, 2200 links & Centralised multicast simulation; Uses
+        $\approx$ 53MB \\[2ex]
+2420 nodes, 2465 links & static unicast routing; path computation
+        algorithms; Uses $\approx$ 800MB \\[2ex]
+500 nodes, 815 links & sparse multicast group of 80 members; studying
+        scalable session messsages \\[2ex]
+\end{tabularx}
+}
+
+\begin{comment}
+\item the large scale topologies are output from the GT-ITM 
+  topology generation code
+\end{comment}
+
+\foilhead{\indigo Detailed Simulations: Object Sizes}
+Rough estimates of memory per object
+\begin{center}
+\begin{tabular}{lr}
+Simulator      & 268\makebox[0in][l]{KB} \\
+Node            & 2 \\
+Multicast Capable Node       & 6 \\
+duplex-link     & 9 \\
+duplex-link w. interfaces & 14 \\
+\end{tabular}
+\end{center}
+
+
+\begin{comment}
+\item Simulator is O(1) per simulation, not TclObject, only in OTcl
+\item Big because of the number of instance procedures etc.
+\item Estimates can be used to gather ballpark estimate
+        of memory reqd. per simulation. 
+\end{comment}
+
+\foilhead{\indigo Hints to reduce memory usage}
+\begin{itemize}
+\item avoid trace-all
+\item use arrays [\$a(1), \$a(2)\ldots] instead of vars [\$a1, \$a2]
+\item other hints at
+  \url{http://www-mash.cs.berkeley.edu/ns/ns-debugging.html}
+\end{itemize}
+
+\begin{comment}
+\item trace-all enables tracing on all links.
+\item each link`requires 3 objects for tracing, maybe more
+\end{comment}
+
+\foilhead{\indigo Further Memory Debugging}
+\begin{itemize}
+\item purify
+  \begin{sublist}
+  \item Use purify~3.2 if possible
+  \item purify~4.0.2 may cause \ns\ to crash.
+
+    Try using flags: -staticchecking=false -force-rebuild
+  \item Typical call syntax for purify is:
+    \begin{program}
+      purify -staticchecking=false -force-reuild -collector=\tup{ld} g++ -o ns \ldots
+    \end{program}
+  \end{sublist}
+\item Gray Watson \tup{gray@letters.com}'s dmalloc library
+
+  At \iurl{http://www.letters.com/dmalloc}
+  \begin{sublist}
+  \item Link into \ns, and analyse memory usage
+  \end{sublist}
+\end{itemize}
+
+\begin{comment}
+\item purify, paid software, lots of nice features,
+\item lots of traps for various events
+\item dmalloc free software...worth the money you paid for it
+\item good statistical summary, but requires post processing
+\end{comment}
+
+\foilhead{\indigo Sample Dmalloc Summary}
+Sample summary:
+{\footnotesize
+\begin{verbatim}
+      size      count      gross function
+               172114    6358277 total
+        84      16510    1386840 ra=0x8064846
+  subtotal      42634    1000426 TclObject::bind(char const *, int *) 
+        18         12        216 "
+        19        522       9918 "
+    ...
+        32      30263     968416 StringCreate 
+  subtotal      30158     742472 NewVar 
+        24      30077     721848 "
+        27          1         27 "
+    ...
+\end{verbatim}
+}
+
+\begin{comment}
+\item top line is total memory used
+\item next line ra=0x is function in shared library
+\item next line us TclObject::bind-allocated-memory
+\item next line are subtotals for different sizes
+\item StringCreate only has one size of allocation => no subtotals
+\end{comment}
+
+\foilhead{\violet Additional Debugging Hints}
+Instructions are at:
+\url{http://www-mash.cs.berkeley.edu/ns/ns-debugging.html}
+
+None of this impacts order of magnitude improvements
+
+Beyond this, Session Level Simulations\ldots
+
+\begin{comment}
+\item emphaise order or magnitude scaling is problematic
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{\blue Abstract or Session-level Simulations}
+\begin{itemize}
+\item Why Session-level Packet Distribution? \hfil --- Scaling
+\begin{program}\small
+        before - 150  nodes, 2180 links, ~53 MB
+        after  - 2000 nodes, 8108 links, ~40 MB
+\end{program}
+\item When to use Session-level Packet Distribution?
+  \begin{sublist}
+  \item multicast simulations
+  \item low source rate (lower than the bottlenect link)
+  \item little cross-traffic
+  \item \eg, SRM sessions
+  \end{sublist}
+\item \emph{\textbf{Caveat:  Work in Progress}}
+\end{itemize}
+\keyword{Session}
+
+\begin{comment}
+\item WORK IN PROGRESS
+\item cost of just creating the topology
+\item ensure no queueing,
+\end{comment}
+
+
+\foilhead{\indigo Tradeoff: Accuracy}
+\begin{itemize}
+\item   ignores queuing delay within the routers
+\end{itemize}
+
+\begin{comment}
+\item Abstracts out the topology, hence avoids processing delays as well
+\end{comment}
+
+\foilhead{\indigo Abstractions}
+\begin{itemize}
+\item Nodes are compacted, only store node id and port id
+
+  \ie, no classifiers, replicators, route tables, \etc
+
+\item Links only store bw/delay attributes
+
+  \ie, no queues, delay elements, tracing, classifiers, \etc
+
+\item Links get translated into a virtual end-to-end mesh\ldots sorta
+\end{itemize}
+
+\begin{comment}
+\item node only stores unicast address, no additoinal instance variables
+\item link delays and b/w are othe only attributes
+\item configuration is identical to normal detail simulation
+\end{comment}
+
+\foilhead{\indigo Configuration}
+\begin{program}\small
+  set ns [new \textbf{SessionSim}]  \; note difference in simulator;
+
+  # {\cf{}configuration of topology and multicast as usual}
+  
+  # {\cf{}configuration source agent as usual}
+  set srcAgent [new Agent/CBR]
+  $srcAgent set dst_ \tup{dst}
+  $ns attach-agent $node $srcAgent
+
+  set sessionHelper [$ns \textbf{create-session} $node $srcAgent]
+\end{program}
+
+\begin{comment}
+\item note very similar configuration mechanisms
+\item create-session because no explicit forwarding in node
+\end{comment}
+
+\foilhead{\red Internal Realisation of a Session}
+\placefig{sessionArch}
+
+\begin{comment}
+\item notice direct e2e transfer
+\item virtual link processing makes this possible
+\item creating loss through lossModules
+\end{comment}
+
+\foilhead{\indigo Realising Loss}
+\begin{program}\small
+  $node join-group $receiver $group
+  
+  $sessionHelper \textbf{insert-loss} $lossModule $receiver
+  $sessionHelper \textbf{insert-depended-loss} $receiver $srcAgent $group
+\end{program}
+
+\placefig{deploss}
+
+\begin{itemize}
+\item Location of loss impacts translation into virtual mesh
+\end{itemize}
+
+\begin{comment}
+\item Loss modules are created from the loss models separately
+\item Loss modules would be attached to the link.
+\item translating them to virtual topology is done, but implementation
+  is not in yet.
+\end{comment}
+
+\foilhead{\red Realisation and Comparisons}
+Comparison of Multicast trees
+
+\begin{minipage}{0.5\linewidth}
+\placefig{regularTree}
+\end{minipage}
+\begin{minipage}{0.5\linewidth}
+\placefig{sessionTree}
+\end{minipage}
+
+\begin{comment}
+\item 4 node topology, 1 source 3 receivers
+\end{comment}
+
+\foilhead{\indigo Abstract Simulation Summary}
+\begin{itemize}
+\item Almost identical configuration
+\item Lots of Work still in progress
+  \begin{sublist}
+  \item Loss Dependency
+  \item Queueing approximation models
+  \item Calibrating Error
+  \item Mixed simulations
+  \end{sublist}
+\item Completed but not yet checked in:
+  \begin{sublist}
+  \item Early versions of Loss Dependency completed
+  \end{sublist}
+\end{itemize}
+
+\begin{comment}
+\item two new commands, subclass of Simulator
+\item API fpr loss dependency
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\foilhead{\blue  Debugging in \ns: Overview}
+\begin{itemize}
+\item Correctness
+
+--- tcldebugger
+
+--- gdb
+
+\item Coexistence of gdb and tcldebugger
+
+\item Support in the Simulator
+\end{itemize}
+\keyword{Debugging}             % 6
+
+\begin{comment}
+\item debugging tips
+\item Discusses space debugging earlier
+\item Not run nto time scaling yet
+\item correctness analysis
+\item hard in dual environment, or is it?
+\end{comment}
+
+\foilhead{\violet Tcl debugger}
+\begin{itemize}
+\item Don Libes \tup{libes@nist.gov}'s Tcl debugger, written in Tcl
+\item At \iurl{http://expect.nist.gov/tcl-debug/}
+\item single stepping through lines of code 
+\item supports break points based on procedures, or with arbitrary
+  regular expressions
+\end{itemize}
+
+\begin{comment}
+\item debugger written in Tcl and is a Tcl parser
+\item can be used to add/modify code or data
+\item breakpoints by routine or even by reg. exp matching on 
+      code execution
+\end{comment}
+
+\foilhead{\violet Tcl debugger}
+\begin{itemize}
+\item Can also trap to debugger from the script, place \code{debug 1} 
+  at the appropriate location
+\item works with in user's simulation scripts
+\item works even through (or in) embeddedTcl code
+\item examine and set data or code using Tcl-ish commands
+\end{itemize}
+
+\begin{comment}
+\item useful to track Tcl level problems. 
+\item hard to correlate to C++ code though...
+\end{comment}
+
+\foilhead[-3.2ex]{\indigo Co-existence Semi-seamless Debugging}
+        \begin{program}
+      (gdb) run
+      Starting program: /nfs/prot/kannan/PhD/simulators/ns/ns-2/ns 
+      \ldots
+      ^C
+      Program received signal SIGINT, Interrupt.
+      0x102218 in write ()
+      (gdb) {\bfseries{}call Tcl::instance().eval("debug 1")}
+      15: lappend auto_path $dbg_library
+      dbg15.3> w
+      *0: application
+       15: lappend auto_path /usr/local/lib/dbg
+      dbg15.4> Simulator info instances
+      _o1
+      dbg15.5> _o1 now
+      0
+      dbg15.6> # and other fun stuff
+      dbg15.7> {\bfseries{}c}
+      (gdb) where
+      #0  0x102218 in write ()
+      #1  0xda684 in FileOutputProc ()
+      \ldots
+      (gdb) {\bfseries{}c}
+        \end{program}
+
+\begin{comment}
+\item power at your finger tips
+\item can be used for other things as well, such as 
+    Scheduler::instance().clock()
+\end{comment}
+
+\foilhead[-2ex]{\violet \textdollar{}ns gen-map output}
+\begin{program}
+% {\bfseries{}$ns gen-map}
+Node _o6(id 0)
+                classifier__o7(Classifier/Addr)
+                dmux_(NULL_OBJECT)
+
+        Link _o11, fromNode_ _o6(id 0) -> toNode_ _o8(id 1)
+        Components (in order) head first
+                _o10    Queue/DropTail
+                _o12    DelayLink
+                _o14    TTLChecker
+---
+Node _o8(id 1)
+                classifier__o9(Classifier/Addr)
+                dmux_(NULL_OBJECT)
+
+        Link _o16, fromNode_ _o8(id 1) -> toNode_ _o6(id 0)
+        Components (in order) head first
+                _o15    Queue/DropTail
+                _o17    DelayLink
+                _o19    TTLChecker
+---
+%
+\end{program}
+
+\begin{comment}
+\item simple topology of two nodes and one link to illustrate
+\end{comment}
+\end{document}

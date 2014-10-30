@@ -1,0 +1,78 @@
+dnl autoconf rules to find tclcl
+dnl $Header: /cvsroot/nsnam/conf/configure.in.TclCL,v 1.31 2010/02/16 06:07:43 tom_henderson Exp $ (LBL)
+
+dnl This next line is to fix old invocations.
+AC_ARG_WITH(Tcl,	--with-Tcl: old command now replaced by --with-tclcl,
+	AC_MSG_ERROR([The --with-Tcl option has been replaced with --with-tclcl.
+Please insure you have an up-to-date copy of TclCL and re-run your configuration.]))
+
+AC_ARG_WITH(tclcl,	--with-tclcl=path	specify a pathname for TclCL (the ex-libTcl), d=$withval, d="")
+
+TCLCL_VERS=1.20
+TCLCL_ALT_VERS=1.0
+
+TCLCL_H_PLACES="\
+		../tclcl-$TCLCL_VERS \
+		../tclcl-$TCLCL_ALT_VERS \
+		../tclcl \
+		../TclCL \
+		../Tcl-$TCLCL_VERS \
+		../Tcl-$TCLCL_ALT_VERS \
+		../Tcl \
+                /usr/src/local/Tcl \
+                /usr/src/local/Tcl-1.0 \
+                /import/Tcl/include \
+                /usr/local/include \
+                /usr/contrib/include \
+                /usr/include"
+TCLCL_H_PLACES_D="$d \
+ 		$d/include"
+TCLCL_LIB_PLACES="\
+		../tclcl-$TCLCL_VERS \
+		../tclcl-$TCLCL_ALT_VERS \
+		../tclcl \
+		../TclCL \
+		../Tcl-$TCLCL_VERS \
+		../Tcl-$TCLCL_ALT_VERS \
+		../Tcl \
+                $x_libraries \
+                /usr/contrib/lib \
+                /usr/local/lib \
+                /usr/lib \
+                /usr/src/local/Tcl \
+                /usr/src/local/Tcl-1.0"
+TCLCL_LIB_PLACES_D="\
+        $d \
+        $d/lib \
+        $d/bin"  
+TCLCL_PROG_PLACES="\
+		../tclcl-$TCLCL_VERS \
+		../tclcl-$TCLCL_ALT_VERS \
+		../tclcl \
+		../TclCL \
+		../Tcl-$TCLCL_VERS \
+		../Tcl-$TCLCL_ALT_VERS \
+		../Tcl \
+                $prefix/bin \
+                $x_libraries \
+                /usr/contrib/bin \
+                /usr/local/bin \
+                /usr/bin \
+                /usr/src/local/Tcl \
+                /usr/src/local/Tcl-1.0 \
+                "
+TCLCL_PROG_PLACES_D="
+	$d \
+	$d/bin"
+
+
+NS_BEGIN_PACKAGE(tclcl)
+NS_CHECK_HEADER_PATH(tclcl.h,$TCLCL_H_PLACES,$d,$TCLCL_H_PLACES_D,V_INCLUDE_TCLCL,tclcl)
+NS_CHECK_LIB_PATH(tclcl$tclcl_VERS,$TCLCL_LIB_PLACES,$d,$TCLCL_LIB_PLACES_D,V_LIB_TCLCL,tclcl)
+NS_CHECK_ANY_PATH(tcl2c++,$TCLCL_PROG_PLACES,$d,$TCLCL_PROG_PLACES_D,V_TCL2CPP_DIR,tclcl)
+
+V_TCL2CPP=$V_TCL2CPP_DIR/tcl2c++
+AC_SUBST(V_TCL2CPP)
+
+NS_END_PACKAGE(tclcl,yes)
+

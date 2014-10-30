@@ -1,0 +1,76 @@
+\chapter{Educational use of NS and NAM}
+\label{chap:edu}
+
+This chapter is about using \ns and nam for educational purpose. \ns is a discrete event simulator and supports various flavors of TCP, many different models of unicast and multicast routing, alongwith different multicast protocols. It supports mobile networking including local and satellite networks. It also supports applications like web caching. And \ns uses nam, an animation tool, developed in Tcl/Tk, to visualize the simulation packet traces which is created by running \ns scripts. Thus \ns and nam could be used together to easily demonstrate different networking issues in a classroom environment. In this chapter we'll talk mostly about an educational scripts' database that we have developed. We'll also talk about how to use nam to run namtrace files.
+
+
+\section{Using NS for educational purposes}
+\label{sec:ns-for-edu}
+We have developed a web-based interface specifically to cater to the above mentioned educational need of using \ns in the classrooms. This web-interface is serviced by a database of ns scripts that could be used for classroom demonstrations and/or other educational purposes. It can be found at {\em http://www.isi.edu/nsnam/script\_inv}. This page also serves as an interface for uploading or submitting similar scripts to the inventory. So even though we currently have only a few scripts in the inventory to start with, we hope that the inventory will eventually grow in size with script contributions from all of you. In the following paragraphs we shall talk more about this educational scripts' index webpage.
+
+
+\subsection{Installing/building/running \ns}
+In order to run the educational scripts mentioned in the previous section, you would need to have a running version of \ns in your machine. The homepage for \ns is located at {\em http://www.isi.edu/nsnam/ns}. See ns-build page at {\em http://www.isi.edu/nsnam/ns/ns-build.html} for downloading and building \ns in your machine. If you want to know about using \ns to write/run scripts, visit \ns tutorial for beginners at {\em http://www.isi.edu/nsnam/ns/tutorial/index.html}. 
+
+
+\subsection{The educational scripts' inventory page:}
+\label{sec:edu-script-inv-page}
+The educational script inventory page is located at {\em http://www.isi.edu/nsnam/script\_inv}. It may be used either to search, browse and download one or more simulation scripts (and/or related files like the namtrace, screenshot, webpage describing whatever is being demonstrated through the simulation) from the inventory or to submit simulation scripts to the inventory. We discuss both the options in the following paragraphs:
+
+\begin{description}
+\item[{\bf SEARCH/VIEW/DOWNLOAD NS SCRIPTS:}]
+You could search the database using keywords by going to the ``Search database'' page. You could also browse through the entire database by going to the ``View database'' page. The search function is very basic at the present and we hope to extend it as the database begins to grow in size.
+Each script entry in the database has the following information:
+\begin{description}
+\item[{Name of the script}] 
+\item[{Name of the author, author's email-id and webpage(if provided)}]
+\item[{Description of what the simulation does.}]
+\item[{\ns version required to run the script}]
+\item[{Any other comments about script}] and 
+\item[{The category of the script}] 
+Currently we have categories of Application, Transport (TCP and others), Routing (unicast and multicast), Multicast protocols, Queue management, Wireless and Others (to include any other category).
+\item[{Other related files}] 
+At the right hand down corner of each entry there might be links to a NamTracefile, a screenshot and a webpage for the simulation script, if these files/information have been submitted by the author along with the script.
+\end{description}
+
+In order to download any script or any of the related files, simply left-click on the filename and a download dialog box will appear where you can provide the path to download the file to.
+
+
+
+
+\item[{\bf SUBMIT NS SCRIPTS TO INVENTORY:}]
+Incase you have simulation scripts suitable for classroom demonstrations, you could submit them to the inventory. You have to {\bf ATLEAST} submit the following in order to successfully upload your script:
+\begin{description}
+\item[{Name of author}]
+\item[{Author's E-mailid}]
+\item[{Name of script (and path to the location of your script) to contribute}]
+\item[{Brief description of script}]
+\item[{Version of NS script uses}]
+\item[{Category for the script}]
+\end{description}
+
+
+You may {\bf OPTIONALLY} provide the following along with the above required fields:
+\begin{description}
+\item[{Author's WebPage}]
+\item[{Namtrace file (namdump for your script simulation)}]
+\item[{Screenshot (an image of your nam screen)}]
+\item[{Webpage (pointer to webpage you may have for the script)}]
+\item[{Other comments, if any}]
+\end{description}
+
+{\em Important:} We suggest that you provide the namtracefile alongwith your script since many users might want to use the namtrace only, for visualization, and download script only when they want to make any changes to the simulation.
+\end{description}
+
+
+\section{Using NAM for educational purposes}
+\label{sec:nam-for-edu}
+Inorder to visualize an ns simulation, you need to have the NAM tool installed. You could either simply download the nam binary for your platform or download the nam distribution and build in your machine. The link for getting nam binaries as well as nam source is {\em http://www.isi.edu/nsnam/nam} which also happens to be the nam homepage.
+
+{\em Steps to use nam in powerpoint:}
+After opening powerpoint, go to ``Slide Show'' (visible on the top menu) and click on ``action buttons''. Select the type of button you prefer. This would create a button for your slide. Clicking on your button will pop up an ``Action Setting" window. Inside the window, there is a place called ``Run Program'' where you
+can define your nam program to run.
+
+
+
+\endinput

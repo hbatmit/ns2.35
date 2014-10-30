@@ -1,0 +1,23 @@
+Description: 
+------------
+dosreduce creates a reduced network topology from 
+a larger inet topolgy based on intersection of attacker and 
+crosstraffic paths. The nodes and links that donot intersect 
+with the attack tree are pruned to create a reduced network 
+topology.
+
+Input:
+----- 
+dosreduce accepts the network topology in an inet topology file 
+and the number of attackers and active crosstraffic connections 
+at the command line.
+
+Output:
+------
+Based on the intersection of the attack tree and crosstraffic paths,
+it outputs the attacker and victim nodes and required nodes and links
+in the reduced topology.  
+
+Usage:
+------
+dosreduce inet_topology #attackers #activeconnections

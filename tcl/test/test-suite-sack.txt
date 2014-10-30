@@ -1,0 +1,63 @@
+The note describes the validation tests
+in test-suite-sack.tcl.
+
+SACK1 and SACK1Z:
+The test "sack1" shows Fast Recovery with SACK when a single packet
+is dropped.  Note the burst of packets when the ACK for packet 26
+is received at time 2.6.  Test "sack1z" shows the same test with
+maxburst_ set to 4 packets.
+
+SACK1A and SACK1AA:
+Test "sack1a" shows Fast Recovery with SACK when three packets are
+dropped from a window of data.  Notice the burst of packets at time
+1.65.  Test ""sack1aa" shows the same test with maxburst_ set to
+4 packets.
+
+SACK1B and SACK1C:
+Test "sack1b" shows Fast Recovery with SACK when many packets are
+dropped from a window of data.  Test "sack1c" is a variant of test
+"sack1b" in that is shows correct behavior when the last packet
+sent before a Fast Retransmit is dropped.
+
+SACK3:
+Test "sack3" shows, for the bottom connection, a Fast Recovery with
+SACK when packets are dropped from a connection with a small
+congestion window.
+
+SACK5 and SACK5A: 
+Test "sack5" shows the burst of packets from the bottom connection
+sent at time 3.5.  Explain!!  For the top connection, this test
+shows the behavior when half the packets are dropped from a large
+window of data.  Test ""sack5a" shows the same test with maxburst_
+set to 4 packets.
+
+SACKB2:
+Both connections in this test show show a Fast Retransmit, followed
+by a retransmit timeout for a retransmitted packet that is itself
+dropped.  Because the bottom connection's congestion window is
+relatively large when the initial Fast Retransmit occurs, it begins
+the retransmit timeout with a reasonably large value for ssthresh,
+and recovers fairly quickly.  Because the top connection's congestion
+window is small when the initial Fast Retransmit occurs, it begins
+the retransmit timeout with a smaller value for ssthresh, and
+recovers more slowly.
+
+SACKB4 and SACKB4A:
+Test "sackB4" shows the burstiness when SACK TCP recovers from
+two packets dropped early in a large window of data.
+Test "sackB4a" shows the same test when "maxburst_" is set to
+four packets.
+
+FALSEPIPE:
+Test "FalsePipe" shows that, during fast recovery, the pipe_ value
+used by SACK can be over-estimated if partial ACKs are trigered by 
+packet reordering instead of by packet loss.
+
+DELAYEDSACK:
+The "delayedSack" test from the v1 test suite should be included.
+
+TIMERSSACK:
+The test "timersSack" needs to be checked.
+
+PHASE:
+The phase tests were deleted as unnecessary to the validation test.

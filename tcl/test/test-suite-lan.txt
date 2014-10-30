@@ -1,0 +1,85 @@
+The LAN test suite (test-suite-lan.tcl) performs the following tests:
+    - lan-routing-flat
+    - lan-routing-hier - these two tests are designed to validate LANs
+      under flat and hierarchical routing and specifically the
+      functionality of the lanRouter object.  The topology is the same
+      in both cases: 
+
+	       0	  2----------5
+	       |	  |
+	    ---+----+-----+-- LAN virtual node (3)
+	            |
+      4-------------1
+      
+      
+      with a TCP sender attached to node 4 and a TCP receiver at node
+      5.  Here packets are not replicated at the LAN, because they are
+      unicast and replication is costly.  Packets flow from node 4 to
+      1, then the lanRouter object determines the next hop of the
+      packet (node 2) and packets with unicast MAC address of node 2
+      are put on the shared medium (channel).  Since the packet has a
+      unicast MAC address of 2, MAC classifier delivers it to 2 only,
+      at which point it is forwarded to 5.  TCP acknowledgements are
+      delivered in a similar fashion in reverse direction.
+
+      WARNING: the current nam animation (as of 11/23/98) shows that
+      all packets (including unicast) are replicated and delivered to
+      every node on the LAN.  This is misleading, because in the
+      unicast case packets are delivered only to the next hop node.
+
+    - lan-broadcast: tests the broadcast behavior of mac classifier.
+      
+		4-------0	 2
+			|	| \
+      (vLAN node 3)   --+-------+  5
+			        | /
+				 1
+
+      A CBR agent at node 4 is sending unicast packets to a receiver
+      at node 5.  But in this case the MAC classifier is explicitly
+      running in the broadcast mode and even though the IP
+      consequently the MAC address is unicast, packets are fanned out
+      and delivered both to 2 and to 1.  Both 2 and 1 receive the
+      packet, classify it as addressed to 5 and forward accordingly.
+      Thus the receiver at 5 receives two copies of the same packet.
+
+
+    - lan-abstract: tests the behavior of the abstract lan implemented
+      using a DropTail queue as the contention mechanism
+
+	       0	  2
+	       |	  |
+	    ---+----+-----+-- abstract LAN node (4)
+	       |	  |
+	       1          3
+      
+      A TCP senders are attached to node 0 and node 2 with TCP receivers
+      present at node 1 and node 3 respectively. Packets are queued
+      and sent on the LAN on a FIFO basis. ACK and packets share
+      the same queue. Default queue size of 50 packets.   
+
+     - lan-mactrace: validates the behavior of MAC level collision traces
+       on a LAN
+       
+               0	  2
+	       |	  |
+	    ---+----+-----+-- vLAN node (4)
+	       |	  |
+	       1          3
+
+       A CBR agent is attached to node 0 and node 2 which sends packets at
+       a regular interval of 0.5 seconds to node 1 and mode 3 respectively. 
+       Both the agents start at the same time and hence always experience a
+       collision. This is recored as a 'c' in the trace files. 
+       After a collision, the source double the time it defers, before it 
+       attempts to transfer a packet again ie: binary exponential backoff. 
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,207 @@
+# lots of hairy special cases for detecting which frame capture
+# support to compile in
+
+V_LIB_VIDEO=""
+V_INCLUDE_VIDEO=""
+V_DEFINE_VIDEO=""
+V_OBJ_VIDEO=""
+V_LIB_XIL=""
+V_OBJ_XIL=""
+
+
+AC_ARG_WITH(video-dirs,	--with-video-dirs=path	specify a pathname for locating video include files, , withval="")
+AC_ARG_WITH(vigrapix, --with-vigrapix=path	specify a pathname for locating vigrapix include and library files, , withval="")	#XXX
+AC_ARG_WITH(videopix, --with-videopix=path	specify a pathname for locating videopix include and library files, , withval="")	#XXX
+
+if test "$with_video_dirs" != "" ; then
+	for i in $with_video_dirs ; do
+		V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$i"
+	done
+fi
+
+if test -r /usr/lib/libvl.so ; then
+	V_LIB_VIDEO="$V_LIB_VIDEO -lvl -ldmedia"
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-vl.o output-vl.o"
+#	if test -r /usr/include/dmedia/cl_cosmo.h  ; then
+#		V_LIB_VIDEO="$V_LIB_VIDEO -lcl"
+#		V_OBJ_VIDEO="$V_OBJ_VIDEO video-cosmo.o"
+#	fi		
+fi
+if test -r /usr/lib/libsvideo.a ; then
+	V_LIB_VIDEO="$V_LIB_VIDEO -lsvideo"
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-svideo.o"
+fi
+if test -r /usr/lib/libXv.a ; then
+	V_LIB_VIDEO="$V_LIB_VIDEO -lXv"
+	V_DEFINE="$V_DEFINE -DXV_PSEUDO8"
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-xv.o"
+fi
+if test -r /usr/lpp/parallax/lib/libXvid.a ; then
+    V_LIB_VIDEO="$V_LIB_VIDEO -L/usr/lpp/parallax/lib -lXvid -lXv"
+    V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I/usr/lpp/parallax/include"
+    V_OBJ_VIDEO="$V_OBJ_VIDEO video-plx.o assistor-plx.o"
+fi
+if test -r /usr/lpp/UMS6000/lib/libUMSobj.a ; then
+	V_LIB_VIDEO="$V_LIB_VIDEO -L/usr/lpp/UMS6000/lib -lUMSobj"
+	V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I/usr/lpp/UMS6000/include"
+	V_DEFINE="$V_DEFINE -DSUNRISE"
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-sunrise.o output-sunrise.o"
+fi
+
+if test -r /usr/include/machine/ioctl_meteor.h ; then
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-meteor.o"
+elif test "$with_video_dirs" != "" ; then
+	for i in $with_video_dirs ; do
+		if test -r $i/ioctl_meteor.h ; then
+			V_OBJ_VIDEO="$V_OBJ_VIDEO video-meteor.o"
+			V_DEFINE_VIDEO="$V_DEFINE_VIDEO -DNON_STD_IOCTL_METEOR_H"
+			break
+		fi
+	done
+fi
+if test -r /usr/local/lib/libspigot.a ; then
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-spigot.o"
+	V_LIB_VIDEO="$V_LIB_VIDEO -lspigot"
+	V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I/usr/local/include"
+fi
+
+# Remove this for now, since device switching is broken.
+#if test -r /usr/local/lib/libqcam.a ; then
+#	V_OBJ_VIDEO="$V_OBJ_VIDEO video-qcam.o"
+#	V_LIB_VIDEO="$V_LIB_VIDEO -lqcam"
+#	V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I/usr/local/include"
+#else
+#	if test -r /dev/qcam0 ; then
+#		V_OBJ_VIDEO="$V_OBJ_VIDEO video-qcam.o"
+#	fi
+#fi
+
+#XXX
+AC_ARG_ENABLE(sccvideo, --disable-sccvideo		don't compile in the SCC video code, e=$enableval, e="yes")
+# the default is yes: you have to explicitly say "--disable-sccvideo"
+if test "$e" = yes ; then
+	if test -r /usr/include/linux/scc.h -o -r /usr/include/machine/scc.h ; then
+		V_OBJ_VIDEO="$V_OBJ_VIDEO video-scc.o"
+		echo "Compiling with SCC video code"
+	fi
+else
+	echo "Compiling without SCC video code"
+fi
+vpix_dir=/usr/src/local/vfc-1.0
+if test "$with_videopix" != "" ; then
+	vpix_dir=$with_videopix
+fi
+vpix_lib=$vpix_dir/vfc_lib
+if test -d /import/VideoPix ; then
+	vpix_dir=/import/VideoPix
+	vpix_lib=$vpix_dir/lib
+fi
+if test -d $vpix_dir ; then
+	V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$vpix_dir/sys -I$vpix_lib"
+	V_LIB_VIDEO="$V_LIB_VIDEO $vpix_lib/libvfc.a"
+	V_DEFINE="$V_DEFINE -DVIDEOPIX"
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-vpix.o"
+fi
+places="/usr/src/local/vigrapix/lib \
+	/opt/VIGRAvigrapix/lib"
+if test "$with_vigrapix" != "" ; then
+	places="${with_vigrapix}/lib \
+		${with_vigrapix}"
+fi
+for dir in $places; do
+	if test -d $dir ; then
+		V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$dir"
+		V_LIB_VIDEO="$V_LIB_VIDEO $dir/libvigrapix.a"
+		V_OBJ_VIDEO="$V_OBJ_VIDEO video-vigra.o"
+    		break
+	fi
+done
+
+d=/opt/MMACslv
+if test -d $d ; then
+	V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$d/include"
+	V_LIB_VIDEO="$V_LIB_VIDEO $d/lib/libslv.a -lintl"
+	V_OBJ_VIDEO="$V_OBJ_VIDEO video-slv.o"
+fi
+
+places="/opt/parallax \
+	/usr/src/local/parallax \
+	/usr/local/parallax \
+	/usr/local/parallax/components/Xclients_sun4.ow3_1.18 \
+	/usr/src/local/parallax/components/Xclients_sun4.ow3_1.18"
+for dir in $places; do
+	if test -d $dir/include ; then
+		V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$dir/include"
+		V_LIB_VIDEO="$V_LIB_VIDEO -L$dir/lib -lXext -lXvid"
+		V_OBJ_VIDEO="$V_OBJ_VIDEO video-plx.o assistor-plx.o"
+    		break
+	fi
+done
+
+case "$target" in 
+*-dec-*)
+	jv_dir=jv2
+	V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$jv_dir"
+	V_LIB_VIDEO="$V_LIB_VIDEO $jv_dir/jvdriverint.o"
+	V_OBJ_VIDEO="$V_OBJ_VIDEO assistor-jv.o video-jv.o"
+	if test "$target_os" = ultrix4.3 ; then
+		#XXX rtip code currently broken
+		#V_DEFINE="$V_DEFINE -DRTIP"
+		#V_LIB="$V_LIB lib.ultrix/librcap.a"
+		#V_INCLUDE="$V_INCLUDE -Ircap-include"
+		#XXX
+		#V_OBJ_VIDEO="$V_OBJ_VIDEO net-rtip.o"
+		echo no rtip support 
+	fi
+	;;
+sparc-sun-solaris*)
+	have_xil=no
+	xil_dir=/opt/SUNWits/Graphics-sw/xil
+	if test -d $xil_dir ; then
+		if test ! -d $xil_dir/include ; then
+			echo "You don't have the XIL developer's kit!"
+			echo "Building without XIL support..."
+		else
+			have_xil=yes
+		fi
+	fi
+	if test $CC = gcc ; then
+		V_DEFINE="$V_DEFINE -mv8 -msupersparc"
+	fi
+	V_DEFINE="$V_DEFINE -D__svr4__"
+	if test -f video/video-rtvc.cc || \
+			test -f video/video-rtvc.o ; then
+		V_OBJ_VIDEO="$V_OBJ_VIDEO video-rtvc.o"
+		if test "$have_xil" = yes ; then
+			V_ALL="$V_PROG $V_PROG.xil"
+			V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$xil_dir/include"
+			V_LIB_XIL="-L$xil_dir/lib -R$xil_dir/lib -lxil"
+			V_OBJ_XIL=video-xil.o
+		fi
+	elif test "$have_xil" = yes ; then
+		V_OBJ_XIL=video-xil.o
+		V_INCLUDE_VIDEO="$V_INCLUDE_VIDEO -I$xil_dir/include"
+		V_LIB_VIDEO="$V_LIB_VIDEO -L$xil_dir/lib -R$xil_dir/lib -lxil"
+	fi
+	;;
+esac
+
+#XXX video stuff needs to move to ../conf/configure.in.video
+if test -f encoder-bvc.cc ; then
+	V_OBJ="$V_OBJ encoder-bvc.o decoder-bvc.o"
+fi
+
+#XXX
+list=""
+for f in $V_OBJ_VIDEO; do
+	list="$list video/$f"
+done
+V_OBJ_VIDEO=$list
+
+AC_SUBST(V_OBJ_VIDEO)
+AC_SUBST(V_INCLUDE_VIDEO)
+AC_SUBST(V_DEFINE_VIDEO)
+AC_SUBST(V_LIB_VIDEO)
+AC_SUBST(V_LIB_XIL)
+AC_SUBST(V_OBJ_XIL)
+

@@ -1,0 +1,159 @@
+\documentclass{report}
+
+\usepackage{floatflt}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{makeidx}
+\usepackage{nsdoc}
+\usepackage{graphicx}
+\makeindex
+
+% xxx: change title in post-process.pl if you change it here, too.
+\title{The \ns\ Manual \\ (formerly \ns\ Notes and Documentation)}
+\author{The VINT Project\\[2ex]
+A Collaboration between researchers at\\
+UC Berkeley, LBL, USC/ISI, and Xerox PARC.\\[2ex]
+Kevin Fall \tup{kfall@ee.lbl.gov}, Editor\\
+Kannan Varadhan \tup{kannan@catarina.usc.edu}, Editor}
+\date{\timestamp}
+
+\begin{document}
+
+% End-Of-Header
+
+\begin{titlepage}
+  \begin{center}\makeatletter%
+    {\Large\@title\footnotemark\par}%
+    \vskip 1.5em%
+    {\normalsize
+      \begin{tabular}[t]{c}%
+        \@author
+      \end{tabular}\par}%
+    \vskip 1em%
+    {\large\@date}
+  \makeatother\end{center}
+  \par  \vfil
+  \begin{quote}\small
+    \xref{\ns}{http://www-nrg.ee.lbl.gov/ns/}
+    \xref{\copyright}{../copyright.html}
+    is LBNL's \underline{N}etwork \underline{S}imulator \cite{ns}.
+    The simulator is written in C++;
+    it uses OTcl as a command and configuration interface.
+    \ns~v2 has three substantial changes from \ns~v1:
+    (1) the more complex objects in \ns~v1
+        have been decomposed into simpler components
+        for greater flexibility and composability;
+    (2) the configuration interface is now OTcl, 
+        an object oriented version of Tcl; and
+    (3) the interface code to the OTcl interpreter is
+        separate from the main simulator.
+  \par
+    Ns documentation is available in
+        html,
+        Postscript,
+        and PDF formats.
+    See \url{http://www.isi.edu/nsnam/ns/ns-documentation.html}
+        for pointers to these.
+  \end{quote}
+  \footnotetext{
+    The VINT project is a joint effort by people from
+    UC Berkeley, USC/ISI, LBL, and Xerox PARC.
+    The project is supported by the Defense Advanced Research Projects
+    Agency (DARPA) 
+    at LBL under DARPA grant DABT63-96-C-0105,
+    at USC/ISI under DARPA grant ABT63-96-C-0054,
+    at Xerox PARC under DARPA grant DABT63-96-C-0105.
+  Any opinions, findings, and conclusions or recommendations expressed 
+  in this material are those of the author(s) and do not necessarily
+  reflect the views of the DARPA.}
+  \vfil
+\end{titlepage}
+\clearpage
+
+\tableofcontents
+\bibliographystyle{plain}
+
+\include{basic}
+\include{undocumented}
+
+\part{Interface to the Interpreter}
+\include{otcl}
+
+\part{Simulator Basics}
+\include{sim}
+\include{nodes}
+\include{links}
+\include{queue_mgmt}
+\include{delays}
+\include{diffserv}
+\include{agents}
+\include{timers}
+\include{events}
+\include{packet_format}
+\include{error_model}
+\include{lan}
+\include{address}
+\include{mobility}
+\include{satellite}
+\include{propagation}
+\include{energymodel}
+\include{diffusion}
+\include{xcp}
+\include{delaybox}
+\include{wpan}
+
+\part{Support}
+\include{debug}
+\include{math}
+\include{trace}
+\include{testsuite}
+\include{dynlib}
+\include{codestyle}
+
+\part{Routing}
+\include{unicast}
+\include{multicast}
+\include{dynamics}
+\include{hier-rtg}
+
+\part{Transport}
+\include{udp}
+\include{tcp}
+\include{sctp}
+\include{srm}
+\include{plm}
+\include{dccp}
+
+\part{Application}
+\include{applications}
+\include{webcache}
+\include{worm-model}
+\include{packmime}
+\include{tmix}
+
+\part{Scale}
+\include{session}
+\include{asim}
+
+\part{Emulation}
+\include{emulation}
+
+\part{Visualization with Nam - The Network Animator}
+\include{nam}
+\include{namtrace}
+
+\part{Other}
+\include{educational}
+
+%\include{debugging}
+
+% Start-Of-Trailer
+
+\bibliography{ns}
+
+\printindex
+
+\end{document}
+
+

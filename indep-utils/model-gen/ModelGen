@@ -1,0 +1,301 @@
+#! /bin/sh
+
+#!/usr/bin/tclsh
+
+#
+# Copyright (C) 2001 by USC/ISI
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms are permitted
+# provided that the above copyright notice and this paragraph are
+# duplicated in all such forms and that any documentation, advertising
+# materials, and other materials related to such distribution and use
+# acknowledge that the software was developed by the University of
+# Southern California, Information Sciences Institute.  The name of the
+# University may not be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+# ModelGen is a set of scripts that take tcpdump trace as input and
+# output a set of CDF files that model Web traffic. It also outputs
+# a time series of traffic size (in 1ms block) for further wavelet 
+# scaling analysis
+#
+#             usage:
+#                  ./ModelGen <tcpdump trace> <threshold> <network prefix>
+#
+#                  <tcpdump trace> : tcpdump trace file generated using
+#                                    tcpdump -w option
+#                  <threshold>     : the threshold time value (in millisecond)
+#                                    that distinguishes idle periods in order 
+#                                    to infer user "think" times between 
+#                                    requests for new top-level pages.
+#                  <network prefix>: network prefix used to distinguish
+#                                    inbound vs. outbound traffic
+#
+#             example: ./ModelGen tracefile 1000 128.9
+#
+# Note that current it's only tested on Linux system
+#
+# This work is supported by DARPA through SAMAN Project
+# (http://www.isi.edu/saman/), administered by the Space and Naval
+# Warfare System Center San Diego under Contract No. N66001-00-C-8066
+#
+#
+#
+
+date
+echo "***  parsing tcpdump file  ***"
+echo "***  parsing .all  ***"
+./tcpdump -n -tt -q -r $1  > $1.all
+date
+echo "***  parsing .www  ***"
+./tcpdump -n -tt -r $1 tcp port 80 > $1.www
+#./tcpdump -n -tt -r $1 port ftp or port ftp-data > $1.ftp
+date
+echo "***  parsing .ftp  ***"
+./tcpdump -n -tt -r $1 port ftp  > $1.ftp1
+cat $1.ftp1 | getFTPclient.pl  > $1.ftp2
+cat $1.all | getFTP.pl -r $1.ftp2 > $1.ftp
+#./tcpdump -q -n -tt -r $1 port ftp or port ftp-data > $1.ftps
+#./tcpdump -n -tt -r $1 port domain > $1.dns
+date
+echo "***  parsing .http-srv  ***"
+./tcpdump -n -tt -r $1 tcp src port 80 > $1.http-srv
+
+date
+echo "***  analyze traffic mix  ***"
+#cat $1.all | io.pl -s $3  -w $1.all
+#cat $1.all.inbound | traffic-classify > $1.traffic.cnt.inbound
+#cat $1.all.outbound | traffic-classify > $1.traffic.cnt.outbound
+
+date
+echo "***  analyze flow statistics  ***"
+#awk -f flow.awk < $1.all.outbound > $1.all.outbound.flow
+#awk -f flow.awk < $1.all.inbound > $1.all.inbound.flow
+#sort -s -o $1.all.outbound.flow.sort -T /tmp $1.all.outbound.flow
+#sort -s -o $1.all.inbound.flow.sort -T /tmp $1.all.inbound.flow
+#cat $1.all.outbound.flow.sort | flow.pl -w $1.outbound.flow
+#cat $1.all.inbound.flow.sort | flow.pl -w $1.inbound.flow
+#sort -s -o $1.inbound.flow.start.sort $1.inbound.flow.start
+#sort -s -o $1.outbound.flow.start.sort $1.outbound.flow.start
+#awk -f arrive2inter.awk < $1.outbound.flow.start.sort > $1.outbound.flow.arrival
+#awk -f arrive2inter.awk < $1.inbound.flow.start.sort > $1.inbound.flow.arrival
+#dat2cdf -e 1024 -i 1024 -d 1024 -t $1.outbound.flow.size
+#dat2cdf -e 1024 -i 1024 -d 1024 -t $1.inbound.flow.size
+#dat2cdf -e 0 -i 1 -d 1 -t $1.outbound.flow.dur
+#dat2cdf -e 0 -i 1 -d 1 -t $1.inbound.flow.dur
+#dat2cdf -e 0 -i 0.001 -d 1 -t $1.outbound.flow.arrival
+#dat2cdf -e 0 -i 0.001 -d 1 -t $1.inbound.flow.arrival
+
+date
+echo "***  seperate Inbound and Outbound traffic  ***"
+echo "DNS"
+#io.tcl $1.dns
+
+date
+echo "WWW"
+#cat $1.www | io.www.pl -s $3  -w $1.www
+cat $1.http-srv | io.www.pl -s $3  -w $1.http-srv
+
+date
+echo "FTP"
+#cat $1.ftp | io.ftp.pl -s $3  -w $1.ftp
+#cat $1.ftps | io.ftp.pl -s $3  -w $1.ftps
+
+##############################
+
+date
+
+/bin/rm -rf *.time-series
+/bin/rm -rf *connect.time*
+
+echo "***  Analyze Inbound traffic  ***"
+echo "run http_connect"
+sort -s -o $1.in.http-srv-sort +1 -2 +3 -4 +0 -1 -T /tmp $1.http-srv.inbound
+http_connect -r $1.in.http-srv-sort -w $1.in.http-srv.connect
+grep "ACT" $1.in.http-srv.connect > $1.in.http-srv.connect.time
+sort $1.in.http-srv.connect.time > $1.in.http-srv.connect.time.sort
+
+
+date
+echo "run http_active"
+sort -s -o $1.in.http-srv.connect.sort +1 -2 +0 -1 -T /tmp $1.in.http-srv.connect
+http_active -r $1.in.http-srv.connect.sort -w $1.in.http-srv.active -I $2
+
+
+date
+echo "compute CDF statistics"
+cat $1.in.http-srv.active.activity | outputCDF -e inbound
+
+
+date
+echo "compute time series (1ms block)"
+bw.tcl $1.http-srv.inbound
+cat $1.http-srv.inbound.bw | time-series.pl > $1.in.time-series
+
+##############################
+
+date
+echo "***  Analyze Outbound traffic  ***"
+echo "run http_connect"
+sort -s -o $1.out.http-srv-sort +1 -2 +3 -4 +0 -1 -T /tmp $1.http-srv.outbound
+http_connect -r $1.out.http-srv-sort -w $1.out.http-srv.connect
+grep "ACT" $1.out.http-srv.connect > $1.out.http-srv.connect.time
+sort $1.out.http-srv.connect.time > $1.out.http-srv.connect.time.sort
+
+
+date
+echo "run http_active"
+sort -s -o $1.out.http-srv.connect.sort +1 -2 +0 -1 -T /tmp $1.out.http-srv.connect
+http_active -r $1.out.http-srv.connect.sort -w $1.out.http-srv.active -I $2
+
+
+date
+echo "compute CDF statistics"
+cat $1.out.http-srv.active.activity | outputCDF -e outbound
+
+
+date
+echo "compute time series (1ms block)"
+bw.tcl $1.http-srv.outbound
+cat $1.http-srv.outbound.bw | time-series.pl > $1.out.time-series
+
+######################################
+
+echo "***  Delay and Bandwidth estimation  ***"
+
+echo "WWW traffic"
+
+date
+echo "output traffic between web servers and clients"
+cat $1.www | BW-seq.pl -s $3 -p 80
+sort inbound.seq -o inbound.seq.sorted
+sort outbound.seq -o outbound.seq.sorted
+
+date
+echo "search for DATA/ACK packets which have the same seqence number for outboun
+d traffic"
+cat outbound.seq.sorted | BW-pair.pl > $1.outbound.pair
+
+date
+echo "estimate the bandwidth for inbound/outbound traffic"
+cat $1.outbound.pair | BW.out.pl -w $1.www
+cat inbound.seq.sorted | BW.in.pl -w $1.www
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.www.outbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.www.inbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.www.outbound.delay
+
+date
+echo "Locate SYN connection"
+cat $1.www | delay.pl -p 80 > $1.sync
+sort -s -o $1.sync.sorted -T /tmp $1.sync
+
+date
+echo "compute delay for each SYN connection pair between servers and clients"
+pair.tcl $1.sync.sorted >  $1.sync.delay
+sort -s -o $1.sync.delay.sorted -T /tmp $1.sync.delay
+awk -f delay.awk < $1.sync.delay.sorted > $1.www.inbound.delay
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.www.inbound.delay
+
+######################################
+
+
+echo "FTP traffic"
+
+date
+echo "output traffic between ftp servers and clients"
+cat $1.ftp | BW-seq.pl -s $3 -p 20
+sort inbound.seq -o inbound.seq.sorted
+sort outbound.seq -o outbound.seq.sorted
+
+date
+echo "search for DATA/ACK packets which have the same seqence number for outboun
+d traffic"
+cat outbound.seq.sorted | BW-pair.pl > $1.outbound.pair
+
+date
+echo "estimate the bandwidth for inbound/outbound traffic"
+cat $1.outbound.pair | BW.out.pl -w $1.ftp
+cat inbound.seq.sorted | BW.in.pl -w $1.ftp
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.ftp.outbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.ftp.inbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.ftp.outbound.delay
+
+date
+echo "Locate SYN connection"
+cat $1.ftp | delay.pl -p 21 > $1.sync
+sort -s -o $1.sync.sorted -T /tmp $1.sync
+
+date
+echo "compute delay for each SYN connection pair between servers and clients"
+pair.tcl $1.sync.sorted >  $1.sync.delay
+sort -s -o $1.sync.delay.sorted -T /tmp $1.sync.delay
+awk -f delay.awk < $1.sync.delay.sorted > $1.ftp.inbound.delay
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.ftp.inbound.delay
+
+######################################
+echo "Output statistics for FTP traffic"
+date
+
+grep ".20 >" $1.ftps.outbound | awk -f ftp.awk | sort > $1.ftp.outbound.conn
+cat $1.ftp.outbound.conn | ftp.pl -w $1.ftp.outbound
+sort -o $1.ftp.outbound.sess.arrive.sort $1.ftp.outbound.sess.arrive
+grep ".20 >" $1.ftps.inbound | awk -f ftp.awk | sort > $1.ftp.inbound.conn
+cat $1.ftp.inbound.conn | ftp.pl -w $1.ftp.inbound
+sort -o $1.ftp.inbound.sess.arrive.sort $1.ftp.inbound.sess.arrive
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.ftp.outbound.file.inter
+dat2cdf -e 0 -i 1000 -d 1000 -t $1.ftp.outbound.size
+dat2cdf -e 0 -i 1 -d 1 -t $1.ftp.outbound.fileno
+dat2cdf -e 0 -i 0.001 -d 1 -t $1.ftp.inbound.file.inter
+dat2cdf -e 0 -i 1000 -d 1000 -t $1.ftp.inbound.size
+dat2cdf -e 0 -i 1 -d 1 -t $1.ftp.inbound.fileno
+
+awk -f arrive2inter.awk < $1.ftp.outbound.sess.arrive.sort > $1.ftp.outbound.sess.inter
+dat2cdf -e 0 -i 0.01 -d 1 -t $1.ftp.outbound.sess.inter
+awk -f arrive2inter.awk < $1.ftp.inbound.sess.arrive.sort > $1.ftp.inbound.sess.inter
+dat2cdf -e 0 -i 0.01 -d 1 -t $1.ftp.inbound.sess.inter
+
+######################################
+echo "Output TCP window size
+date
+
+echo "WWW"
+grep " S " $1.www.outbound | grep ".80 >" > $1.www.outbound.svr.win
+grep " S " $1.www.inbound | grep ".80 >" > $1.www.inbound.svr.win
+grep " S " $1.www.outbound | grep ".80:" > $1.www.outbound.clnt.win
+grep " S " $1.www.inbound | grep ".80:" > $1.www.inbound.clnt.win
+awk -f win.awk < $1.www.outbound.svr.win > $1.www.outbound.wins
+awk -f win.awk < $1.www.inbound.svr.win > $1.www.inbound.wins
+awk -f win.awk < $1.www.outbound.clnt.win > $1.www.outbound.winc
+awk -f win.awk < $1.www.inbound.clnt.win > $1.www.inbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.www.outbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.www.outbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.www.inbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.www.inbound.winc
+
+echo "FTP"
+grep " S " $1.ftp.outbound | grep ".20 >" > $1.ftp.outbound.svr.win
+grep " S " $1.ftp.inbound | grep ".20 >" > $1.ftp.inbound.svr.win
+grep " S " $1.ftp.outbound | grep ".20:" > $1.ftp.outbound.clnt.win
+grep " S " $1.ftp.inbound | grep ".20:" > $1.ftp.inbound.clnt.win
+awk -f win.awk < $1.ftp.outbound.svr.win > $1.ftp.outbound.wins
+awk -f win.awk < $1.ftp.inbound.svr.win > $1.ftp.inbound.wins
+awk -f win.awk < $1.ftp.outbound.clnt.win > $1.ftp.outbound.winc
+awk -f win.awk < $1.ftp.inbound.clnt.win > $1.ftp.inbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.ftp.outbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.ftp.outbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.ftp.inbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $1.ftp.inbound.winc
+
+
+date
+echo "execution complete"

@@ -1,0 +1,200 @@
+set udp_(0) [new Agent/UDP] 
+$udp_(0) set dst_addr_ 0xE000000
+$udp_(0) set dst_port_ 100
+$ns_ attach-agent $node_(0) $udp_(0) 
+
+set udp_(1) [new Agent/UDP]
+$udp_(1) set dst_addr_ 0xE000000
+$udp_(1) set dst_port_ 100
+$ns_ attach-agent $node_(1) $udp_(1) 
+
+set udp_(2) [new Agent/UDP]
+$udp_(2) set dst_addr_ 0xE000000
+$udp_(2) set dst_port_ 100
+$ns_ attach-agent $node_(2) $udp_(2) 
+
+set udp_(3) [new Agent/UDP]
+$udp_(3) set dst_addr_ 0xE000000
+$udp_(3) set dst_port_ 100
+$ns_ attach-agent $node_(3) $udp_(3) 
+
+set udp_(4) [new Agent/UDP]
+$udp_(4) set dst_addr_ 0xE000000
+$udp_(4) set dst_port_ 100
+$ns_ attach-agent $node_(4) $udp_(4) 
+########################################################## 
+
+set cbr_(0) [new Application/Traffic/CBR] 
+$cbr_(0) set packetSize_ 512
+$cbr_(0) set interval_ 0.1 
+$cbr_(0) set random_ 2112 
+$cbr_(0) set maxpkts_ 10000 
+$cbr_(0) set dst_ 0xE000000 
+$cbr_(0) attach-agent $udp_(0) 
+$ns_ at 2.00000000000000 "$cbr_(0) start" 
+
+set cbr_(1) [new Application/Traffic/CBR]
+$cbr_(1) set packetSize_ 512
+$cbr_(1) set interval_ 0.1
+$cbr_(1) set random_ 2112
+$cbr_(1) set maxpkts_ 10000
+$cbr_(1) set dst_ 0xE000000
+$cbr_(1) attach-agent $udp_(1)
+$ns_ at 2.20000000000000 "$cbr_(1) start"
+
+set cbr_(2) [new Application/Traffic/CBR]
+$cbr_(2) set packetSize_ 512
+$cbr_(2) set interval_ 0.1
+$cbr_(2) set random_ 2112
+$cbr_(2) set maxpkts_ 10000
+$cbr_(2) set dst_ 0xE000000
+$cbr_(2) attach-agent $udp_(2)
+$ns_ at 2.40000000000000 "$cbr_(2) start"
+
+set cbr_(3) [new Application/Traffic/CBR]
+$cbr_(3) set packetSize_ 512
+$cbr_(3) set interval_ 0.1
+$cbr_(3) set random_ 2112
+$cbr_(3) set maxpkts_ 10000
+$cbr_(3) set dst_ 0xE000000
+$cbr_(3) attach-agent $udp_(3)
+$ns_ at 2.60000000000000 "$cbr_(3) start"
+
+set cbr_(4) [new Application/Traffic/CBR]
+$cbr_(4) set packetSize_ 512
+$cbr_(4) set interval_ 0.1
+$cbr_(4) set random_ 2112
+$cbr_(4) set maxpkts_ 10000
+$cbr_(4) set dst_ 0xE000000
+$cbr_(4) attach-agent $udp_(4)
+$ns_ at 2.80000000000000 "$cbr_(4) start"
+
+$ns_ at 0.010000000000000 "$node_(0) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(1) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(2) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(3) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(4) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(5) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(6) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(7) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(8) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(9) join 0xE000000" 
+#$ns_ at 0.010000000000000 "$node_(10) join 0xE000000" 
+#$ns_ at 0.010000000000000 "$node_(11) join 0xE000000" 
+#$ns_ at 0.010000000000000 "$node_(12) join 0xE000000" 
+#$ns_ at 0.010000000000000 "$node_(13) join 0xE000000" 
+#$ns_ at 0.010000000000000 "$node_(14) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(15) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(16) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(17) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(18) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(19) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(20) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(21) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(22) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(23) join 0xE000000" 
+$ns_ at 0.010000000000000 "$node_(24) join 0xE000000" 
+
+$ns_ at 50.000000000000000 "$node_(0) leave 0xE000000" 
+$ns_ at 50.000000000000000 "$node_(1) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(2) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(3) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(4) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(5) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(6) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(7) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(8) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(9) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(10) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(11) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(12) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(13) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(14) leave 0xE000000" 
+$ns_ at 50.000000000000000 "$node_(15) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(16) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(17) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(18) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(19) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(20) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(21) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(22) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(23) leave 0xE000000"
+$ns_ at 50.000000000000000 "$node_(24) leave 0xE000000"
+
+#this is for upper level agent receiving multicast traffic at group member 
+set null_(0) [new Agent/Null] 
+$node_(0) attach $null_(0) 100
+
+set null_(1) [new Agent/Null] 
+$node_(1) attach $null_(1) 100
+
+set null_(2) [new Agent/Null] 
+$node_(2) attach $null_(2) 100
+
+set null_(3) [new Agent/Null] 
+$node_(3) attach $null_(3) 100
+
+set null_(4) [new Agent/Null] 
+$node_(4) attach $null_(4) 100
+
+set null_(5) [new Agent/Null] 
+$node_(5) attach $null_(5) 100
+
+set null_(6) [new Agent/Null] 
+$node_(6) attach $null_(6) 100
+
+set null_(7) [new Agent/Null] 
+$node_(7) attach $null_(7) 100
+
+set null_(8) [new Agent/Null] 
+$node_(8) attach $null_(8) 100
+
+set null_(9) [new Agent/Null] 
+$node_(9) attach $null_(9) 100
+
+set null_(10) [new Agent/Null] 
+$node_(10) attach $null_(10) 100
+
+set null_(11) [new Agent/Null] 
+$node_(11) attach $null_(11) 100
+
+set null_(12) [new Agent/Null] 
+$node_(12) attach $null_(12) 100
+
+set null_(13) [new Agent/Null] 
+$node_(13) attach $null_(13) 100
+
+set null_(14) [new Agent/Null] 
+$node_(14) attach $null_(14) 100
+
+set null_(15) [new Agent/Null] 
+$node_(15) attach $null_(15) 100
+
+set null_(16) [new Agent/Null] 
+$node_(16) attach $null_(16) 100
+
+set null_(17) [new Agent/Null] 
+$node_(17) attach $null_(17) 100
+
+set null_(18) [new Agent/Null] 
+$node_(18) attach $null_(18) 100
+
+set null_(19) [new Agent/Null] 
+$node_(19) attach $null_(19) 100
+
+set null_(20) [new Agent/Null] 
+$node_(20) attach $null_(20) 100
+
+set null_(21) [new Agent/Null] 
+$node_(21) attach $null_(21) 100
+
+set null_(22) [new Agent/Null] 
+$node_(22) attach $null_(22) 100
+
+set null_(23) [new Agent/Null] 
+$node_(23) attach $null_(23) 100
+
+set null_(24) [new Agent/Null] 
+$node_(24) attach $null_(24) 100
+
+##########################################################

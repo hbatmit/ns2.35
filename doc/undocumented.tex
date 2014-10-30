@@ -1,0 +1,101 @@
+
+\chapter{Undocumented Facilities}
+
+Ns is often growing to include new protocols.
+Unfortunately the documention doesn't grow quite as often.
+This section lists what remains to be documented,
+  or what needs to be improved.
+
+(The documentation is in the doc subdirectory of the ns source code
+  if you want to add to it. :-)
+
+\begin{description}
+\item[Interface to the Interpreter]
+
+        \begin{itemize}
+        \item nothing currently
+        \end{itemize}
+
+\item[Simulator Basics]
+
+        \begin{itemize}
+        \item LANs need to be updated for new wired/wireless support
+                (Yuri updated this?)
+        \item wireless support needs to be added
+                (done)
+        \item should explicitly list queueing options in the queue mgt chapter?
+        \end{itemize}
+
+\item[Support]
+
+        \begin{itemize}
+        \item should pick a single list mgt package and document it
+        \item should document the trace-post-processing utilities in bin
+        \end{itemize}
+
+\item[Routing]
+
+  \begin{itemize}
+  \item The usage and design of link state and MPLS routing modules
+    are not documented at all. (Note: link state and MPLS appeared only in
+    daily snapshots and releases after 09/14/2000.)
+  \item need to document hierarchical routing/addressing
+    (Padma has done)
+  \item need a chapter on supported ad-hoc routing protocols
+  \end{itemize}
+  
+\item[Queueing]
+
+        \begin{itemize}
+        \item CBQ needs documentation (can maybe build off of 
+                \url{ftp://ftp.ee.lbl.gov/papers/cbqsims.ps.Z}?)
+        \end{itemize}
+
+\item[Transport]
+
+        \begin{itemize}
+        \item need to document MFTP
+        \item need to document RTP (session-rtp.cc, etc.)
+        \item need to document multicast building blocks
+        \item should repair and document snoop and tcp-int
+        \end{itemize}
+
+\item[Traffic and scenarios] (new section)
+
+        \begin{itemize}
+        \item should add a description of how to drive the simulator
+                from traces
+        \item should add discussion of the scenario generator
+        \item should add discussion of http traffic sources
+        \end{itemize}
+
+\item[Application]
+
+        \begin{itemize}
+        \item is the non-Haobo http stuff documented? no.
+        \end{itemize}
+
+\item[Scale]
+
+        \begin{itemize}
+        \item should add disucssion of mixed mode (pending)
+        \end{itemize}
+
+\item[Emulation]
+
+        \begin{itemize}
+        \item nothing currently
+        \end{itemize}
+
+\item[Other]
+
+        \begin{itemize}
+        \item should document admission control policies?
+        \item should add a validation chapter and snarf
+                up the contents of ns-tests.html
+        \item should snarf up Marc Greis' tutorial
+                rather than just referring to it?
+        \end{itemize}
+
+\end{description}
+

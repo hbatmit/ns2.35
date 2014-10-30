@@ -1,0 +1,62 @@
+###############################################################
+# This file is now obsolete.
+# Use "./test-all-tcpVariants" instead. 
+###############################################################
+### #! /bin/sh
+### #holes=2		* from NSA in packet.h
+### sed -e 's/maxBurst/0/' sack.tcl > t		# for tahoe, reno
+### sed -e 's/maxBurst/4/' sack.tcl > t1		# for newreno, sack, fack
+### sed -e 's/type/taho/' t > t0.tcl
+### sed -e 's/connection tcp /connection tcp-reno /' -e s/type/reno/ t > t1.tcl
+### sed -e 's/connection tcp /connection tcp-newreno /' -e s/type/newr/ t1 > t3.tcl
+### sed -e 's/connection tcp /connection tcp-sack1 /' t1 > t2
+### sed -e 's/tcp-sink/sack1-tcp-sink/' -e 's/type/sck1/' t2 > t4.tcl
+### 
+### # fack with overdamping and rampdown
+### sed -e 's/connection tcp /connection tcp-fack /' t > t3
+### sed -e 's/tcp-sink/sack1-tcp-sink/' -e 's/type/fackOR/' t3 > t5.tcl
+### 
+### # fack without overdamping and rampdown
+### sed -e 's/tcp-sink/sack1-tcp-sink/' -e 's/type/fack/' t3 > t4
+### awk ' {print } ; /global mod ns_tcp/ { print "\tglobal mod ns_facktcp" ; \
+###  print "\tset ns_facktcp(ss-div4) 0" ; print "\tset ns_facktcp(rampdown) 0" \
+###  } ' t4 > t6.tcl
+### 
+### # newreno with ssthresh estimator
+### sed -e 's/tcpnewreno(changes) 0/tcpnewreno(changes) 1/' t3.tcl > t7.tcl
+### 
+### # vegas
+### sed -e 's/connection tcp /connection tcp-vegas /' -e s/type/vegas/ t > t8.tcl
+### 
+### 
+### for t in one_drop two_drops three_drops four_drops many_drops ; do
+###     echo
+###     echo Running test $t
+###     echo 'Tahoe:'
+###     ../../ns t0.tcl $t
+###     sleep 1
+###     echo 'Reno:'
+###     ../../ns t1.tcl $t
+###     sleep 1
+###     echo 'New Reno without Sack:'
+###     ../../ns t3.tcl $t
+###     sleep 1
+###     echo 'Sack1:'
+###     ../../ns t4.tcl $t
+###     sleep 1
+### #    echo 'Vegas:'
+### #    ../../ns t8.tcl $t
+### #    sleep 1
+### #    echo 'Fack with OverDamping and Rampdown:'
+### #    ../../ns t5.tcl $t
+### #    sleep 1
+### #    echo 'Fack without OverDamping and Rampdown:'
+### #    ../../ns t6.tcl $t
+### #    sleep 1
+### #    echo 'New Reno without Sack, but with ssthresh estimator:'
+### #    ../../ns t7.tcl $t
+###     echo 'next?'
+###     read answer
+### done
+### 
+### # ns t0.tcl one_40

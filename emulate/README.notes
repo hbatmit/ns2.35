@@ -1,0 +1,75 @@
+Test Scenarios:
+
+---------------------------------------------------
+
+Look at time-sequence plot, infer TCP characteristics.
+One-way bulk data transfer.
+
+1.  Send N data packets in all, no losses.  Check for Delayed Acks
+	(Sec. 3.7 of ID), initial windows, slow start (Sec. 3.1 of ID),
+	receivers advertised window.  Check for FIN exchange (Sec. 3.8 of ID).
+
+2.  Drop the SYN packet.  Check initial RTO.
+
+3.  Drop the first data packet.  Check RTO after one RTT measurement.
+
+3A.  Repeat 3, also dropping the first retransmitted packet.  Check for
+	retransmit timer backoff.
+
+3B:  Repeat 3, dropping every retransmitted packet.  Check for when
+	connection terminates.
+
+4.  Drop a single data packet 20 or more data packets have been sent.
+	Check for Fast Retransmit instead of Slow-Start.
+	Check for failure of receiver to retain above-sequence data
+	(Sec. 3.4 of ID).
+
+4A.  Repeat 4, also dropping the first retransmitted packet.  Check for more
+	or less aggressive implementations of SACK (depending on whether it
+	waits for a retransmit timer.)
+
+5.  Drop an entire congestion window of packets, forcing a
+	Retransmit Timeout.  (How to do this:  Drop packet N,
+	and drop all succeeding data packets until you see a
+	data packet with retransmitted data.) Check for Slow-start
+	(Sec. 3.2 of ID), check RTO and make inferences about TCP
+	clock granularity.
+
+6.  Drop a single data packet after many packets have gone by.
+	Let K dup acks go by in the other direction, and then drop
+	all succeeding dup acks until a new ack is seen.  Repeat
+	for K=1,2,3,4.  Check for dup ack threshold, any responses
+	to one or two dup acks.
+
+7.  Drop K consecutive packets after many packets have gone by.  Check for
+	Tahoe (slow-start after retransmit timeout or Fast Recovery), Reno 
+	(might or might not have to wait for a Retransmit Timeout,
+	depending both on K and on the number of dup acks), NewReno,
+	SACK (no unnecessary retransmission of packets even for K=2)
+
+8.  Multiple Fast Retransmits.  Reproduce Figure 11 of the Simulator Tests document.
+
+9.  Drop first and last packet from a congestion window.  (Figure 3 of
+	"Simulation-based Comparisons of Tahoe, Reno, and SACK TCP").  Look
+	for Tahoe vs. Reno vs. New-Reno or SACK.
+
+10.  Drop packets N, N+2, N+4, N+6, for large N.  Check for retransmit timeout
+	for Reno, not for Tahoe, NewReno, or SACK.  (Figure 4 of
+	" Simulation-based Comparisons of Tahoe, Reno, and SACK TCP".)
+
+Sec. 3.9 of ID: a large, interrupted bulk transfer.
+Sec. 3.10 of ID: a transfer in which the receiving application terminates abnormally.
+Tests of SACK vs. FACK.
+Two-way TCP
+Initial window on restart.
+
+---------------------------------------------------
+Uses:
+Testing researchers' experimental implementations - SACK, ECN, NewReno.
+Testing production TCP implementations.
+Testing beta TCP implementations (e.g., Windows 98, NT 5, etc.)
+Testing a TCP connection when you don't have access to the remote
+  end, and are curious about what generation of TCP they are using.
+Plug into tcpanaly:
+
+

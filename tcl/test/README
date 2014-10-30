@@ -1,0 +1,369 @@
+Some notes on the test suite
+
+---------------------------
+
+To run the test suites in this directory:
+
+./test-all-red
+./test-all-sack
+./test-all-schedule
+./test-all-tcp
+./test-all-red-v1
+./test-all-cbq-v1
+./test-all-sack-v1
+./test-all-v1
+./test-all-mcast
+
+OR, just for validation purposes:
+
+./test-all-red quiet
+./test-all-sack quiet
+./test-all-schedule quiet
+./test-all-tcp quiet
+./test-all-red-v1 quiet
+./test-all-cbq-v1 quiet
+./test-all-sack-v1 quiet  
+./test-all-v1 quiet
+./test-all-mcast
+
+----------------------------
+
+Each of the test suites has been split off into three parts, two of
+which are common to all of them.  The common parts are:
+
+I)  The topologies library, stored in topologies.tcl
+
+    This contains a catalogue of topologies used in the test suite.
+    Currently, four topologies are defined (net0 through net3).
+
+    Variants of the topology are classified according to the following
+    criteria:
+
+    Name of	Qs on Fall-	Dynamic		 Routing	 MultiPath
+    Variant	back links	 Links?		Protocol?	Forwarding?
+  -----------------------------------------------------------------------------
+  <none>	 DropTail	   no		 Static		    NO
+  net#-		 DropTail	   yes		 Static		    NO
+  net#-Session	 DropTail	   yes		 Session	    NO
+  net#-DV	 DropTail	   yes		   DV		    NO
+  net#RED-Session   RED		   yes		 Session	    NO
+  net#RED-DV	    RED		   yes		   DV		    NO
+  net#-DVm0	 DropTail	   no		   DV		    YES
+  net#-DVm1	 DropTail	   yes		   DV		    YES
+  net#RED-DVm0	 DropTail	   no		   DV		    YES
+  net#RED-DVm1	 DropTail	   yes		   DV		    YES
+
+    Note that the RED variants are only defined if the backbone links
+    themselves use RED queues.
+
+NOTE:  All tests that use dynamic links (otehr than net#-) use a
+tracefile to generate the dynamics events.  The variant net#- currently
+uses an Exponential distribution to decide link failure and recovery
+times.  It also writes out the trace file `dyn.tr' that is used by the
+other variants.
+
+The initialiser for each topology also invokes the instance procedure
+``config''.  Each test-suite that is defined could individually
+reconfigure a particular topology to suite its needs.  As an example,
+this feature is used by the RED test suites to redefine ``linterm_''
+for the backbone links in the net2 topology.
+
+The class hierarchy for the topologies is:
+
+    SkelTopology
+    |
+    +-----  NodeTopology/4nodes
+    |       |
+    |       +-----  Topology/net0
+    |       |       |
+    |       |       +-----  Topology/net0-
+    |       |       +-----  Topology/net0-Session
+    |       |       .
+    |       .       .
+    |       .       +-----  Topology/net0-DVm1
+    |       .
+    |
+    +-----  NodeTopology/6nodes
+    |
+    |
+    .
+    .
+    .
+
+The base class for all topologies is the Class SkelTopology.  It
+provides one ``useful'' method: add-fallback-links.  The method 
+adds fallback paths between pairs of nodes, each link in the path
+having identical characteristics.
+
+Different node topology classes are derived from the skeleton topology
+class.  There are three currently defined, NodeTopology/4nodes,
+NodeTopology/6nodes, and NodeTopology/8nodes.  The node count
+indicates the number of nodes in the topology, less those used for
+alternate (fallback) paths.  The constructor for each class
+instantiates each of the nodes in that topology.
+
+Each topology is then derived from the appropriate NodeTopology.
+Four basic topologies are currently defined, Topology/net0 through
+Topology/net4. 
+
+
+1.  net0:  Simple 4 node topology (+1 fallback node) shown as:
+
+		   s1        __ b1 __
+		     \      /  0.8Mb \
+	      8Mb,5ms \    /   100ms  \ 
+		        r1 ------------ k1
+              8Mb,5ms /    0.8Mb, 100ms
+		     /
+		   s2
+		Queue limit on <r1, k1> = 6
+
+    Variants defined: net0-, net0-Session, net0-DV, net0-DVm0, and net0-DVm1.
+    Cost on link <r1, k1> = 2 for net0-DVm0 and net0-DVm1.
+
+2.  net1:  Another simple 4 node topology (+1 fallback node) shown as:
+
+		   s1        __ b1 __
+		     \      /  1.5Mb \
+             10Mb,5ms \    /   100ms  \ 
+		        r1 ------------ k1
+             10Mb,5ms /    1.5Mb, 100ms
+		     /
+		   s2
+		Queue limit on <r1, k1> = 23
+
+    Variants defined: net1-, net1-Session, net1-DV, net1-DVm0, net1-DVm1.
+    Cost on link <r1, k1> = 2 for net1-DVm0 and net1-DVm1.
+
+3.  net2: Simple 6 node topology (+1 fallback node) shown as:
+
+	        s1       __b1__       s3
+	          \     /1.5 Mb\     /
+	  10Mb,2ms \   /  10ms  \   / 10Mb,4ms
+	            r1 ---------- r2
+	  10Mb,3ms /   1.5Mb 20ms   \ 10Mb,5ms
+		  /        RED       \
+	        s2                    s4 
+
+    Variants defined: net2-, net2-Session, net2-DV, net2-DVm0, net2-DVm1,
+	net2RED-Session, net2RED-DV, net2RED-DVm0, net2RED-DVm1.
+    Cost on link <r1, r2> = 2 for *-DVm0, *-DVm1 topology variants.
+    Note that, unlike the earlier topologies, the delay on the fallback
+    path is the same as the main path,
+    		i.e. delay(r1,b1) + delay(b1,r2) = delay(r1,r2).
+
+4.  net3: Simple 8 node topology (+3 fallback nodes) shown as:
+
+            s1       __b1__        __b2__        __b3__       s3
+              \     /1.5 Mb\      /1.5 Mb\      /1.5 Mb\     /
+      10Mb,2ms \   /  10ms  \    /  10ms  \    /  10ms  \   / 10Mb,4ms
+                r1 ---------- r2 ---------- r3 ---------- r4
+      10Mb,3ms /   1.5Mb,20ms    1.5Mb 20ms    1.5Mb 20ms   \ 10Mb,5ms
+	      /        RED           RED           RED       \
+            s2                                                s4 
+
+    Variants defined: net2-, net2-Session, net2-DV, net2-DVm0, net2-DVm1,
+	net2RED-Session, net2RED-DV, net2RED-DVm0, net2RED-DVm1.
+    Cost on link <r1, r2>, <r2, r3>, <r3, r4> = 2 for *-DVm0, *-DVm1
+	topology variants.
+
+
+II)	misc.tcl defines the base class TestSuite for the tests.
+It also defines the routines common to all the test suites.
+
+The class hierarchy for TestSuite is:
+
+	TestSuite
+	    |
+	    +-----  Test/tahoe
+	    |
+	    +-----  Test/phaseSack1
+	    .
+	    .
+	    .
+
+
+The constructor instantiates the appropriate topology.  It will
+check that the test will run on the specified topology (or its
+variant).  The testName is set to "test:topology".  It also
+enables a global trace file, all.tr.
+
+Other routines defined includes the procedure finish.  Unlike in
+the ns-1 test suites, this routine does not process the trace
+file.  It is upto an external test suite driver to process the
+output traces appropriately.  This permits us to flexibly use
+either gnuplot, xgraph, or nam as desired.
+
+tcpDump and tcpDumpAll are identical to the ns-1 test suite.
+openTrace differs, only in that, it adds the line "v testName
+$testName_" to the trace file, out.tr.  Most of the tests gather
+traces at the node `r1'.
+
+New routines traceQueues, usage, and runTest are also defined.
+
+	- traceQueues will trace the queues of all links incident on a
+	  specified now.  This allows us to trace tcp acks, as well as
+	  traffic through alternate paths conveniently.
+	- usage is a global procedure that simple prints out the usage
+	  relevant for the particular test suite being used.
+	- runTest is a static (?) procedure that should be invoked by
+	  the test suite.  It checks that the specified test and
+	  topology are correctly defined.  It instantiates the test, and
+	  then "run"s the test.
+	
+In addition, misc.tcl will source tcl/test/redefines.tcl, if present.
+This allows us (allowed me) to selectively redefine procedures
+embedded in ns for debugging, or additional tracing.
+
+
+III)	The test suites themselves are in individual files.  Currently,
+the three are routed, red, and sack.  `routed' is identical to the v2
+test suite.  Each of these define a series of tests.  The format of a
+test-suite file is:
+
+	set dir [pwd]
+	catch "cd tcl/test"
+	source misc.tcl
+	source topologies.tcl
+	catch "cd $dir"
+
+	define test 1
+	define test 2
+	.
+	.
+	.
+	TestSuite runTest
+
+The template for a typical test is:
+
+---------------------------------------------------------------------------
+Class Test/tahoe1 -superclass TestSuite
+Test/tahoe1 instproc init topo {
+	$self instvar net_ defNet_ test_
+	set net_	$topo	;# topology variant to run test on
+	set defNet_	net0	;# default topology, used in 2 ways
+				 # 1.  topology used, if $topo == ""
+				 # 2.  to verify that variant is derived 
+				 #     from $defNet_
+	set test_	tahoe	;# identity of test.  really an
+				 # ns-1 compatibility artifact.
+
+	$self next
+}
+
+Test/tahoe1 instproc run {} {
+	$self instvar ns_	;# handle for the simulator
+	$self instvar node_	;# array of nodes, key = name, val = handle
+	$self instvar testName_	;# usually $test_:$net_
+
+	# various Transport configurations, elided for brevity.
+	# See actual test suites for details.
+
+	# Trace only the bottleneck link
+	#
+	# Actually, we now trace all activity at the node around the
+	# bottleneck link.  This allows us to track acks, as well
+	# packets taking any alternate paths around the bottleneck
+	# link.
+	#
+	$self traceQueues $node_(r1) [$self openTrace 5.0 $testName_]
+	$ns_ run
+}
+---------------------------------------------------------------------------
+
+STATUS OF THE CURRENT TEST SUITES:
+
+test-suite-routed.tcl	This suite is identical to the basic ns-2 test
+	suite.   This name is a very bad misnomer, as there is no
+	separate routed test suite.
+
+	The telnet test requires a TELNET source, therefore cannot
+	currently run.  Hence, it is X'd out.
+
+test-suite-red.tcl	This suite adds additional configuration to the
+	net2 topology.  Queue plotting is still untested in ns-2.
+	Unlike the finish routine, we have left the trace processing
+	routines in plotQueue in the suite.  This suite also redefines
+	the tcpDumpAll procedure for its use.
+
+	Tests red_twoway, red_twowaybytes require the TELNET source.
+	The flow tests have not even been converted into ns-2 format.
+	The tests themselves have been X'd out.
+
+test-suite-sack.tcl	The tests in this routing previously used a
+	different tracing routine, openTraces.  It looks like this was
+	done to gather traces of returning acks.  The new traceQueues
+	procedure should supercede this routine?
+
+	Tests delayedSack and timersSack are commented out.  Is this right?
+
+IV)	In addition, there are driver routines to run these tests, or process
+the results.  
+
+1.  ktest-all <suite> [<test> ...]
+
+	Given a <suite>, ktest-all will run all the specified <test>s
+	from test-suite-<suite>.tcl, against all the topologies
+	defined in topologies in tcl.  If no test is specified, then
+	it will run all the tests defined in test-suite-<suite>.tcl.
+
+	The suite will compare the results of all.tr against a
+	previously computed result stored in test-output-raw (The result
+	is stored the first time the test is run). It will also plot
+	the results stored in out.tr.  If $DISPLAY is set, then xgraph
+	is used to show on the screen.  Otherwise, gnuplot is used to
+	generate a postscript file that is stored in ps-files.
+
+	The program also checks if a new result differs from the
+	previously computed result.  Core dumps are saved in the crash
+	subdirectory.
+
+2.  rt <suite> <test> [<topology>]
+
+	`rt' will run one <test> from test-suite-<suite>.tcl, for a
+	particular <topology>.  If the topology is unspecified, the
+	default topology applicable for that test will be used.
+
+The next set of programs are useful in processing trace files.
+
+1.  getrc [-b] [-o outfile] -s node1 [-d node2] [tracefile] 
+
+	Extract trace lines that match certain characteristics.
+
+	-s node1	extract all packets from node1.
+	-b -s node1	extract all packets to or from node1.
+	-s node1 -d node2	extract packets on link <node1 -> node2>
+	-b -s node1 -d node2	extract pkts. on link <node1 <-> node2>.
+
+2.  raw2xg [-a] [tracefile]
+
+	Translate the trace file into a format palatable to xgraph.
+	The -a option will extract acks in addition to tcp traffic.
+
+	The conversion algorithms used to be in the finish procedures
+	of the ns-1 test suite.
+
+3.  raw2gp [-a] [tracefile]
+
+	Translate the trace file into a format palatable to gnuplot.
+	The output data is placed into separate files called `packets',
+	`drops', `acks', `link-fails', and `link-recovery'.  The output
+	from raw2gp is a set of commands that can processed by gnuplot.
+	
+Other useful aliases are:
+
+	alias xg	'xgraph -bb -tk -nl -m -x time -y packets'
+	alias raw2nam	'awk -f tcl/nam-demo/nstonam.awk'
+	alias gvl	'ghostview -landscape -'
+
+
+As an example, 
+
+	% getrc -s 2 -d 3 test-output-raw/tahoe | raw2xg | xg
+
+will generate the graph of tahoe1, similar to that produced by
+
+	% ./ns test-suite.tcl tahoe1
+
+in the ns-1 test suites.
+

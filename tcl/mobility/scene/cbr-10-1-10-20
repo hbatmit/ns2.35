@@ -1,0 +1,217 @@
+#
+# nodes: 10, max conn: 5, send rate: 0, seed: 1
+#
+#Turning off all traffic node first
+$ns_ at 0 "$node_(0) shutdown"
+$ns_ at 0 "$node_(1) shutdown"
+$ns_ at 0 "$node_(2) shutdown"
+$ns_ at 0 "$node_(3) shutdown"
+$ns_ at 0 "$node_(4) shutdown"
+$ns_ at 0 "$node_(5) shutdown"
+$ns_ at 0 "$node_(6) shutdown"
+$ns_ at 0 "$node_(7) shutdown"
+$ns_ at 0 "$node_(8) shutdown"
+$ns_ at 0 "$node_(9) shutdown"
+#
+# 0 connecting to 1 at time 0
+#
+$ns_ at 0 "$node_(0) startup"
+$ns_ at 0 "$node_(1) startup"
+set udp_(0) [new Agent/UDP]
+$ns_ attach-agent $node_(0) $udp_(0)
+set null_(0) [new Agent/Null]
+$ns_ attach-agent $node_(1) $null_(0)
+set cbr_(0) [new Application/Traffic/CBR]
+$cbr_(0) set packetSize_ 512
+$cbr_(0) set rate_ 81920
+$cbr_(0) set random_ 1
+$cbr_(0) set maxpkts_ 10000
+$cbr_(0) attach-agent $udp_(0)
+$ns_ connect $udp_(0) $null_(0)
+$ns_ at 0 "$cbr_(0) start"
+$ns_ at 90 "$cbr_(0) stop"
+$ns_ at 90 "$node_(0) shutdown"
+$ns_ at 90 "$node_(1) shutdown"
+#
+# 2 connecting to 3 at time 90
+#
+$ns_ at 90 "$node_(2) startup"
+$ns_ at 90 "$node_(3) startup"
+set udp_(1) [new Agent/UDP]
+$ns_ attach-agent $node_(2) $udp_(1)
+set null_(1) [new Agent/Null]
+$ns_ attach-agent $node_(3) $null_(1)
+set cbr_(1) [new Application/Traffic/CBR]
+$cbr_(1) set packetSize_ 512
+$cbr_(1) set rate_ 81920
+$cbr_(1) set random_ 1
+$cbr_(1) set maxpkts_ 10000
+$cbr_(1) attach-agent $udp_(1)
+$ns_ connect $udp_(1) $null_(1)
+$ns_ at 90 "$cbr_(1) start"
+$ns_ at 180 "$cbr_(1) stop"
+$ns_ at 180 "$node_(2) shutdown"
+$ns_ at 180 "$node_(3) shutdown"
+#
+# 4 connecting to 5 at time 180
+#
+$ns_ at 180 "$node_(4) startup"
+$ns_ at 180 "$node_(5) startup"
+set udp_(2) [new Agent/UDP]
+$ns_ attach-agent $node_(4) $udp_(2)
+set null_(2) [new Agent/Null]
+$ns_ attach-agent $node_(5) $null_(2)
+set cbr_(2) [new Application/Traffic/CBR]
+$cbr_(2) set packetSize_ 512
+$cbr_(2) set rate_ 81920
+$cbr_(2) set random_ 1
+$cbr_(2) set maxpkts_ 10000
+$cbr_(2) attach-agent $udp_(2)
+$ns_ connect $udp_(2) $null_(2)
+$ns_ at 180 "$cbr_(2) start"
+$ns_ at 270 "$cbr_(2) stop"
+$ns_ at 270 "$node_(4) shutdown"
+$ns_ at 270 "$node_(5) shutdown"
+#
+# 6 connecting to 7 at time 270
+#
+$ns_ at 270 "$node_(6) startup"
+$ns_ at 270 "$node_(7) startup"
+set udp_(3) [new Agent/UDP]
+$ns_ attach-agent $node_(6) $udp_(3)
+set null_(3) [new Agent/Null]
+$ns_ attach-agent $node_(7) $null_(3)
+set cbr_(3) [new Application/Traffic/CBR]
+$cbr_(3) set packetSize_ 512
+$cbr_(3) set rate_ 81920
+$cbr_(3) set random_ 1
+$cbr_(3) set maxpkts_ 10000
+$cbr_(3) attach-agent $udp_(3)
+$ns_ connect $udp_(3) $null_(3)
+$ns_ at 270 "$cbr_(3) start"
+$ns_ at 360 "$cbr_(3) stop"
+$ns_ at 360 "$node_(6) shutdown"
+$ns_ at 360 "$node_(7) shutdown"
+#
+# 8 connecting to 9 at time 360
+#
+$ns_ at 360 "$node_(8) startup"
+$ns_ at 360 "$node_(9) startup"
+set udp_(4) [new Agent/UDP]
+$ns_ attach-agent $node_(8) $udp_(4)
+set null_(4) [new Agent/Null]
+$ns_ attach-agent $node_(9) $null_(4)
+set cbr_(4) [new Application/Traffic/CBR]
+$cbr_(4) set packetSize_ 512
+$cbr_(4) set rate_ 81920
+$cbr_(4) set random_ 1
+$cbr_(4) set maxpkts_ 10000
+$cbr_(4) attach-agent $udp_(4)
+$ns_ connect $udp_(4) $null_(4)
+$ns_ at 360 "$cbr_(4) start"
+$ns_ at 450 "$cbr_(4) stop"
+$ns_ at 450 "$node_(8) shutdown"
+$ns_ at 450 "$node_(9) shutdown"
+#
+# 0 connecting to 1 at time 450
+#
+$ns_ at 450 "$node_(0) startup"
+$ns_ at 450 "$node_(1) startup"
+set udp_(5) [new Agent/UDP]
+$ns_ attach-agent $node_(0) $udp_(5)
+set null_(5) [new Agent/Null]
+$ns_ attach-agent $node_(1) $null_(5)
+set cbr_(5) [new Application/Traffic/CBR]
+$cbr_(5) set packetSize_ 512
+$cbr_(5) set rate_ 81920
+$cbr_(5) set random_ 1
+$cbr_(5) set maxpkts_ 10000
+$cbr_(5) attach-agent $udp_(5)
+$ns_ connect $udp_(5) $null_(5)
+$ns_ at 450 "$cbr_(5) start"
+$ns_ at 540 "$cbr_(5) stop"
+$ns_ at 540 "$node_(0) shutdown"
+$ns_ at 540 "$node_(1) shutdown"
+#
+# 2 connecting to 3 at time 540
+#
+$ns_ at 540 "$node_(2) startup"
+$ns_ at 540 "$node_(3) startup"
+set udp_(6) [new Agent/UDP]
+$ns_ attach-agent $node_(2) $udp_(6)
+set null_(6) [new Agent/Null]
+$ns_ attach-agent $node_(3) $null_(6)
+set cbr_(6) [new Application/Traffic/CBR]
+$cbr_(6) set packetSize_ 512
+$cbr_(6) set rate_ 81920
+$cbr_(6) set random_ 1
+$cbr_(6) set maxpkts_ 10000
+$cbr_(6) attach-agent $udp_(6)
+$ns_ connect $udp_(6) $null_(6)
+$ns_ at 540 "$cbr_(6) start"
+$ns_ at 630 "$cbr_(6) stop"
+$ns_ at 630 "$node_(2) shutdown"
+$ns_ at 630 "$node_(3) shutdown"
+#
+# 4 connecting to 5 at time 630
+#
+$ns_ at 630 "$node_(4) startup"
+$ns_ at 630 "$node_(5) startup"
+set udp_(7) [new Agent/UDP]
+$ns_ attach-agent $node_(4) $udp_(7)
+set null_(7) [new Agent/Null]
+$ns_ attach-agent $node_(5) $null_(7)
+set cbr_(7) [new Application/Traffic/CBR]
+$cbr_(7) set packetSize_ 512
+$cbr_(7) set rate_ 81920
+$cbr_(7) set random_ 1
+$cbr_(7) set maxpkts_ 10000
+$cbr_(7) attach-agent $udp_(7)
+$ns_ connect $udp_(7) $null_(7)
+$ns_ at 630 "$cbr_(7) start"
+$ns_ at 720 "$cbr_(7) stop"
+$ns_ at 720 "$node_(4) shutdown"
+$ns_ at 720 "$node_(5) shutdown"
+#
+# 6 connecting to 7 at time 720
+#
+$ns_ at 720 "$node_(6) startup"
+$ns_ at 720 "$node_(7) startup"
+set udp_(8) [new Agent/UDP]
+$ns_ attach-agent $node_(6) $udp_(8)
+set null_(8) [new Agent/Null]
+$ns_ attach-agent $node_(7) $null_(8)
+set cbr_(8) [new Application/Traffic/CBR]
+$cbr_(8) set packetSize_ 512
+$cbr_(8) set rate_ 81920
+$cbr_(8) set random_ 1
+$cbr_(8) set maxpkts_ 10000
+$cbr_(8) attach-agent $udp_(8)
+$ns_ connect $udp_(8) $null_(8)
+$ns_ at 720 "$cbr_(8) start"
+$ns_ at 810 "$cbr_(8) stop"
+$ns_ at 810 "$node_(6) shutdown"
+$ns_ at 810 "$node_(7) shutdown"
+#
+# 8 connecting to 9 at time 810
+#
+$ns_ at 810 "$node_(8) startup"
+$ns_ at 810 "$node_(9) startup"
+set udp_(9) [new Agent/UDP]
+$ns_ attach-agent $node_(8) $udp_(9)
+set null_(9) [new Agent/Null]
+$ns_ attach-agent $node_(9) $null_(9)
+set cbr_(9) [new Application/Traffic/CBR]
+$cbr_(9) set packetSize_ 512
+$cbr_(9) set rate_ 81920
+$cbr_(9) set random_ 1
+$cbr_(9) set maxpkts_ 10000
+$cbr_(9) attach-agent $udp_(9)
+$ns_ connect $udp_(9) $null_(9)
+$ns_ at 810 "$cbr_(9) start"
+$ns_ at 900 "$cbr_(9) stop"
+$ns_ at 900 "$node_(8) shutdown"
+$ns_ at 900 "$node_(9) shutdown"
+#
+#Total sources/connections: 0/10
+#

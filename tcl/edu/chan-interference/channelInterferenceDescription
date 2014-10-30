@@ -1,0 +1,26 @@
+Channel Interference
+--------------------
+
+The problem of Interference occurs "when a receiver is in range of one transmitting station
+and slightly out-of-range of another transmitting station, but is unable to cleanly receive
+the closer station's signal because of the interfering presence of the other signal."
+
+In our animation, we show 2 cases :
+
+Case 1:
+-------
+
+When 2 nodes are in range of each other 
+When these 2 nodes do carrier sense at different times, they detect carrier and the node
+that senses carrier later, backs off, thus avoiding collision at the receiver.
+But if the 2 nodes do carrier sense at the same time, they are not able to detect carrier
+and hence there is a collision at the receiver.
+
+Case 2 :
+-------
+
+When 1 node is slightly out of range of the other
+In this case, when both nodes send data to the receiver, some of the packets sent by the node
+closer to the receiver get dropped, because the receiver receives some packets from the node
+slightly out of range.
+

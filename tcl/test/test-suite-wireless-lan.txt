@@ -1,0 +1,54 @@
+
+The wireless-lan test suite (test-suite-wireless-lan.tcl) consists of the following tests:
+
+    - an ad-hoc wireless network running dsdv routing protocol
+    - a wired-cum-wireless network (running dsdv)
+    - mobileIP
+
+***Note tests for DSR routing protocol was not added to the test-suite as their outputs are not consistent (events vary, even with the same random seed value) and thus could not be validated.
+
+1.Test/dsdv:
+Topology for the first test case (dsdv) consists of 50 mobilenodes forming a mulit-hop ad-hoc network. The node movements are defined in ~ns/tcl/mobility/scene/scen-670x670-50-600-20-0. The traffic patterns are defined in ~ns/tcl/mobility/scene/cbr-50-20-4-512. With the help of destination sequence distance vector routing, the nodes comunicate and exchange data among themselves. The sim runs for 1000s.
+
+
+2.Test/dsdv-wired-cum-wireless:
+The topology used in this case is as follows -
+
+
+                   0    o W1(0.0.0)                 WIRED NODES
+                        |
+                   1    o W2 (0.1.0)
+                       / \
+                      /   \                    
+--*--*--*--*--*-  2  o     o  3  base-stn nodes  --*-*-*-*-*-*-*-
+         (2.0.0)   BS1      BS2 (2.0.0)              
+                       o 5
+               4  o    WL2 (2.0.2)  
+         (2.0.1) WL1             
+                       o 6 (2.0.3)        WIRELESS NODES
+                      WL3
+
+Nodes 2 & 3 are base-station nodes that act as gateways between the wired and wireless domain. nodes 4, 5 & 6 are mobilenodes. nodes 1 & 2 are wired.
+Node 4 and 6 communicate thru node 5 who can hear the base-station node BS1. TCP flows are established between node 0 and node 6. BS2 doesnot really take any part in this test.
+
+
+3.Test/dsdv-wireless-mip:
+The topology in this case is -
+
+
+                       o W1                 WIRED NODES
+                       |
+                       o W2
+                      / \
+                     /   \                    
+--*--*--*--*--*--*- o     o MIP enabled base-stn nodes --*-*-*-*-*-*-*
+                   HA      FA               
+                       o
+                      WL                 MIP enabled WIRELESS NODE 
+					 MOVING
+		                         IN BETWEEN HA AND FA.
+
+
+The HA ad FA represents two different domains and the MH moves between them. A tcp flow established between W1 and MH. Initially MH is within range of HA and receives all pkts directly through the HA. Then at time=100, MH starts to move away from HA towards FA. All pkts now reaching HA is tunnelled towards FA that decapsulates and hands pkt over to MH. At time=200, the MH again starts to come back to HA. This simulation shows the working of mobileIP. There are some interim periods that the MH may not be within the range of either the FA or HA and thus may be dropping pkts destined to W1, temporarily. This is what we see as a "warning: Route to base_stn not known: dropping pkt"
+
+

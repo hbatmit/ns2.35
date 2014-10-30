@@ -1,0 +1,40 @@
+#!/usr/bin/perl -w
+#
+# Generate a list of all files under the current directory and dump them
+# to console in the format required by FILES
+
+use strict;
+
+sub listdir {
+    my ($curdir) = @_;
+    my ($f);
+
+    # We can only handle plain files and directories
+    foreach $f (glob("*")) {
+	# Don't go into CVS directories
+	next if ($f eq "CVS");
+	next if ($f =~ /~$/);
+	next if ($f eq "autoconf.h");
+	next if ($f =~ /\.o$/);
+	if (-d $f) {
+	    # Recurse all directories with a depth-first traversal
+	    chdir("$f");
+	    if ($curdir ne ".") {
+		listdir("$curdir/$f");
+	    } else {
+		listdir("$f");
+	    }
+	    chdir("..");
+	} else {
+	    # Print a plain file to console
+	    if ($curdir ne ".") {
+		printf "$curdir/$f\n";
+	    } else {
+		printf "$f\n";
+	    }
+	}
+    }
+}
+
+listdir(".");
+exit 0;

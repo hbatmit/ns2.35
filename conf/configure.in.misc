@@ -1,0 +1,109 @@
+dnl misc setup for vic/vat/etc. autoconf scripts.
+dnl $Header: /cvsroot/nsnam/conf/configure.in.misc,v 1.15 2007/01/03 02:40:23 mweigle Exp $ (LBL)
+
+case "$target" in 
+*-dec-*)
+	dnl Use ac define so it gets used for later configure tests,
+	dnl and use V_DEFINE so it ends up in the makefile.
+	dnl all because I don't know how to do platform-specific
+	dnl stuff in ns's autoconf.h.  Sigh.
+	V_DEFINE="$V_DEFINE -D_XOPEN_SOURCE_EXTENDED"
+	AC_DEFINE(_XOPEN_SOURCE_EXTENDED)
+	;;
+sparc-sun-solaris*)
+	if test $CC != gcc ; then
+	        V_DEFINE="$V_DEFINE -D__FUNCTION__=__func__ -features=extensions"
+	fi
+        V_DEFINE="$V_DEFINE -D__svr4__ -DSOLARIS_MIN_MAX"
+	V_LIB="$V_LIB -ldl"
+	;;
+sparc-sun-sunos*)
+	V_DEFINE="$V_DEFINE -DNEED_SUNOS_PROTOS"
+	;;
+*-sgi-irix5*)
+	V_DEFINE="$V_DEFINE -DIRIX5 -D_BSD_SIGNALS"
+	if test "$target_os" = irix5.3 ; then
+		V_DEFINE="$V_DEFINE -DIRIX5_3"
+	fi
+	V_TARCMD="tar cfL"
+	V_SHELL="SHELL = /bin/sh"
+	if test $CC != gcc ; then
+		V_DEFINE="$V_DEFINE -signed -g3"
+		V_CXXOPT="$V_CXXOPT +p -float"
+		CC="cc -xansi -D__STDC__ -Dinline="
+		CXX="CC +p -float -DSGI_COMPAT"
+	fi
+	V_RANLIB="ar ts"
+	;;
+*-sgi-irix6*)
+	V_DEFINE="$V_DEFINE -DIRIX6 -D_BSD_SIGNALS"
+	V_TARCMD="tar cfL"
+	V_SHELL="SHELL = /bin/sh"
+	if test $CC != gcc ; then
+		V_DEFINE="$V_DEFINE -signed -g3"
+		V_CXXOPT="$V_CXXOPT +p -float"
+		CC="cc -xansi -D__STDC__ -Dinline="
+		CXX="CC +p -float -DSGI_COMPAT"
+	fi
+	V_RANLIB="ar ts"
+	;;
+*-*-bsdi1*)
+	V_SHM=""
+	V_TARCMD="tar cfL"
+	;;
+*-*-bsdi2.0*)
+	V_SHM=""
+	V_TARCMD="tar cfL"
+	;;
+*-*-bsdi2.1*)
+	# bsdi2.1 added sys-v shared memory support but their implementation
+	# is broken so we have to turn it off.  If they ever fix libipc,
+	# the following line should be deleted.
+	V_SHM=""
+	V_TARCMD="tar cfL"
+	V_CCOPT="-O2 -m486"
+	V_LIB="$V_LIB -lipc -ldl"
+	;;
+*-*-bsdi3*)
+	V_SHM=""
+	V_TARCMD="tar cfL"
+	V_LIB="$V_LIB -lipc -ldl"
+	V_OBJ="$V_OBJ misc/serial.o"
+	;;
+*-*-freebsd*)
+	V_OBJ="$V_OBJ misc/serial.o"
+	;;
+*-*-netbsd*)
+	V_TARCMD="tar -h -c -f"
+	V_LIB="$V_LIB -L/usr/local/lib"
+	;;
+*-*-hpux*)
+	AC_DEFINE(random,lrand48)
+	AC_DEFINE(srandom,srand)
+	V_CCOPT="-O"
+	;;
+*-*-aix3*)
+	V_DEFINE="$V_DEFINE -DSIGARGS=int"
+	if test "$V_LIB_AIXSHM" != "" ; then
+		V_LIB="$V_LIB $V_LIB_AIXSHM"
+	else
+		V_SHM=""
+	fi
+	CXX="xlC -+"
+	;;
+*-*-aix4*)
+	V_DEFINE="$V_DEFINE -DSIGARGS=int -D_AIX41"
+	if test "$V_LIB_AIXSHM" != "" ; then
+		V_LIB="$V_LIB $V_LIB_AIXSHM"
+	else
+		V_SHM=""
+	fi
+	CXX="g++"
+	;;
+*-*-linux*)
+	V_BROKEN_OBJ=
+	;;
+powerpc-apple-darwin*)
+	V_CCOPT="-fno-common -fPIC -pipe"
+	;;
+esac

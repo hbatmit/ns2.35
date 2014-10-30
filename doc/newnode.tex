@@ -1,0 +1,263 @@
+\chapter{Restructuring ns node and new node APIs}
+\label{chap:newnode}
+
+There has been recent changes made to structure of 
+\clsref{Node}{../ns-2/node.h} in \ns. This revised node architecture would
+allow more flexible and modularised construction of different node
+definitions like a MobileNode capable of wireless communication or a
+HierNode that supports hierarchical routing or just a simple Node or a 
+completely new node type. In this chapter we will introduce the new node
+APIs, discuss the differences between the old and new
+OTcl interfaces and compare the advantages of this new structure over the
+old one. The functions and procedures relevant to the new node APIs may be
+found in \ns/tcl/lib/ns-lib.tcl.
+
+\section{New Node API}
+\label{sec:newnode-API}
+
+The new node API consists of two parts. The first part consists of
+node-configuration and second part consists of node-creation. So in order
+to create a particular type of nodes, we first have to configure for the 
+node type and then create the required number of nodes.
+
+\subsection{Node configuration}
+\label{sec:nodeconfig}
+
+Node configuration essentially consists of defining the different node
+characteristics before creating them. They may consist of the type of
+addressing structure used in the simulation, defining the network
+components for mobilenodes, turning on or off the trace options at
+Agent/Router/MAC levels, selecting the type of adhoc routing protocol for
+wirelessnodes or defining their energy model.
+The node configuration API in its entirety looks as the following:
+
+\begin{program}
+
+                   OPTION_TYPE    AVAILABLE OPTION_VALUES
+                  -------------   --------------------------
+
+ $ns_ node-config -addressingType flat or hierarchical or expanded
+                  -adhocRouting   DSDV or DSR or TORA or AODV
+                  -llType         LL
+                  -macType        Mac/802_11
+                  -propType       Propagation/TwoRayGround
+                  -ifqType        Queue/DropTail/PriQueue
+                  -ifqLen         50
+                  -phyType        Phy/WirelessPhy
+                  -antType        Antenna/OmniAntenna
+                  -channelType    Channel/WirelessChannel
+                  -topoInstance   $topo_instance
+                  -wiredRouting   ON or OFF
+                  -mobileIP       ON or OFF
+                  -energyModel    EnergyModel
+                  -initialEnergy  (in Joules)
+                  -rxPower        (in W)
+                  -txPower        (in W)
+                  -agentTrace     ON or OFF
+                  -routerTrace    ON or OFF
+                  -macTrace       ON or OFF
+                  -movementTrace  ON or OFF
+                  -reset
+
+\end{program}
+
+The default values for all the above options are NULL except -addressingType
+whose default value is flat. The option -reset can be used to reset all
+node-config parameters to their default value.
+
+Thus node-configuration for a wireless, mobile node that runs AODV as its
+adhoc routing protocol in a hierarchical topology would be as shown below.
+We decide to turn tracing on at the agent and router level only. Also we 
+assume a topology has been instantiated with "set topo [new Topography]". 
+The node-config command would look like the following:
+
+\begin{program}
+  $ns_ node-config -addressingType hierarchical
+                   -adhocRouting AODV
+                   -llType LL
+                   -macType Mac/802_11
+                   -ifqType Queue/DropTail/PriQueue
+                   -ifqLen 50
+                   -antType Antenna/OmniAntenna
+                   -propType Propagation/TwoRayGround
+                   -phyType Phy/WirelessPhy
+                   -topoInstance $topo
+                   -channelType Channel/WirelessChannel
+                   -agentTrace ON
+                   -routerTrace ON
+                   -macTrace OFF
+                   -movementTrace OFF
+\end{program}
+
+Note that the config command can be broken down into separate lines like
+\begin{program}
+  $ns_ node-config -addressingType hier
+  $ns_ node-config -macTrace ON
+\end{program}
+
+The options that need to be changed may only be called. For example after
+configuring for AODV mobilenodes as shown above (and after creating AODV
+mobilenodes), we may configure for AODV base-station nodes in the
+following way: 
+
+\begin{program}
+  $ns_ node-config -wiredRouting ON
+\end{program}
+
+While all other features for base-station nodes and mobilenodes are same,
+the base-station nodes are capable of wired routing, while mobilenodes are
+not. In this way we can change node-configuration only when it is required.
+
+All node instances created after a given node-configuration command will
+have the same property unless a part or all of the node-config command is
+executed with different parameter values. And all parameter values remain
+unchanged unless they are expicitly changed. So after creation of the AODV
+base-station and mobilenodes, if we want to create simple nodes, we will
+use the following node-configuration command:
+
+\begin{program}
+                $ns_ node-config -reset
+\end{program}
+
+This will set all parameter values to their default setting which
+basically defines configuration of a simple node.
+
+
+\subsection{Node Creation}
+\label{sec:node-creation}
+
+Once the node of the given type has been configured as shown in the
+\href{previous subsection}{subsection}{sec:nodeconfig}, the next step is
+to create the nodes. The node-creation API basically looks very similar
+to the old node creation API. Incase of hierarchical addressing the node 
+address has to be passed as an argument as shown below:
+
+\begin{program}
+        set node [$ns_ node] 
+## or
+        set node [$ns_ node $node_address]  ;# incase of hierarchical
+                                            ;# addressing.
+\end{program}
+
+Thus after having configured for AODV mobilenodes as shown in the example
+in the \href{previous subsection}{subsection}{sec:nodeconfig}, we create
+"n=4" AODV mobilenodes as follows:
+
+\begin{program}
+        set temp {1.0.0 1.0.1 1.0.2 1.0.3}   ;# list of node addresses
+        for {set i 0} {$i < $n) } {incr i} {
+                set node_($i) [$ns_ node [lindex $temp $i]]
+                $node_($i) random-motion 0       ;# disable random motion
+        }    
+\end{program}
+
+Thus 4 mobilenodes are created in cluster 0 of domain 1 (1.0.*) .
+\clearpage
+
+\section{Comparison of new API vs old API}
+\label{sec:new-vs-old-api}
+
+The new node API differs considerably from the old method of creating
+nodes in ns. Following is a list of differences between the two:
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|}\hline
+{\bf New API} & {\bf Old API}\\\hline
+ns\_ node-config & ns\_ dsdv/dsr/tora-create-mobile-node \\
+ns\_ node & \\ \hline
+No global variable dependency & Strong global dependency\\\hline
+Nam support exists (namtrace-all-wireless) & No nam support\\\hline
+Energy model support & No energy model\\\hline
+Global instance for channel and topology removed & Global instances of
+channel and topology\\\hline
+\end{tabular}
+\end{center}
+\end{table}
+\clearpage
+
+
+\section{Advantages of the new node structure}
+\label{sec:advan-newnode}
+
+The revision of the node structure was mainly made to break up the node
+srtucture into different modules that would allow much easier and
+efficient reconstruction of a new node type and give a cleaner and easily
+extensible node creation interface.
+The several advantages of the new node structure over the old model is
+listed as follows:
+
+\begin{enumerate}
+\item
+The new modularised node architecture allows much more flexibility.
+The API can now be easily extended to include other features/options in the
+node structure. 
+\item
+The node structure has been broken up into different modules like the
+basic node module (default) , the network stack, the wired routing
+agent, the adhoc routing agent, the energy model etc. And this allows
+sharing of common modules within the node structure between different
+types of node.
+\item
+Now we can create a new node type by simply plumbing - donot need to
+recreate the whole node. Also there is no need to create node classes
+obeying the Node class-hierarchy. 
+\item
+The more flexible, modular, efficient and easily extensible node model
+thus promotes easier and faster future development compared to the older,
+more rigid version.
+\end{enumerate}
+
+
+\section{Compatibility}
+\label{sec:compat}
+
+The new node API doesnot interfere with any of the older codes including
+the OTcl interface for old node construction, i.e it is fully backward
+compatible.
+
+
+\section{Example scripts}
+\label{sec:ex}
+
+Example scripts that demonstrates use of new node API can be found in
+\ns/tcl/ex/wireless-demo-csci694.tcl. In this example the new node API is
+used to create mobilenodes for a  wireless simulation. You can also see
+examples (wireless1.tcl, wireless2.tcl and wireless3.tcl) used in wireless
+chapters (chap IX and X) in the ns-tutorial available from 
+http://www-mash.cs.berkeley.edu/ns/tutorial/index.html .
+
+
+\section{Validation tests for new node API}
+\label{sec:valid-test}
+
+Validation test script for new node API can be found in
+\ns/tcl/test/test-suite-wireless-lan-newnode.tcl 
+
+
+\section{Commands at a glance}
+\label{sec:newnodecommand}
+
+Following is a list of new node APIs that are commonly used in simulation
+scripts:
+
+\begin{flushleft}
+\code{$ns_ node-config -<config-parameter> <optional-val>}\\
+This command is used to configure nodes. The different config-parameters
+are addressingType, different type of the network stack components,
+whether tracing will be turned on or not, mobileIP flag is truned or not,
+energy model is being used or not etc. An option -reset maybe used to set
+the node configuration to its default state. The default setting of 
+node-config, i.e if no values are specified, creates a simple node (base
+class Node) with flat addressing/routing. For the syntax details see
+section \ref{sec:nodeconfig} of this chapter.  
+
+
+\code{$ns_ node <optional:node-address>}\\
+This command creates a node of the type configured by the command
+\code{$ns_ node-configure} described above. This returns a handle to the
+node thus created. The optional argument <node-address> is passed only
+incase of creating hierarchical nodes. A node-address is normally a
+string denoting the hierarchical address of the node, viz."3.1.1".
+
+\end{flushleft}

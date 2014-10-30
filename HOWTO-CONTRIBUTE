@@ -1,0 +1,37 @@
+We support two methods to advertise your contributed code for ns:
+
+First, we need the following in order to add a pointer to your 
+code in the ns contributed code web page 
+(http://mash.cs.berkeley.edu/ns/ns-contributed.html): 
+
+(1) which version of ns was the code written for; 
+(2) a pointer to C/C++/OTcl code as well as simulation scripts on 
+    your web server;
+
+and hopefully also:
+
+(3) a simple README explaining special setups needed to run the
+    simulations or tests.
+(4) an example script illustrating the use of your protocol.
+
+Second, we're also happy to work with developers to integrate their 
+code into the ns distribution.  To do this, we need (in addition 
+to 1-4 above):
+
+(5) code which works with the most recently released version of ns
+(6) a test script exercising most important points of your protocol
+    (see the sample tests in tcl/test of the ns directory)
+(7) documentation comparable to the Agent/SRM chapter of ``ns notes
+    and documentation''
+
+(We realize that 5-7 are more work than simply 1-4.  Without a test
+suite we cannot insure that your code will work in future ns releases;
+without documentation your code won't be very useful to others.  The
+advantage is that with these it will be much easier for other
+researchers to build on your hard work.)
+
+Please send your pointers to the ns-users mailing list
+(ns-users@mash.cs.berkeley.edu). Suggestions and
+comments are also welcome.
+
+- The ns Team

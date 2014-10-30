@@ -1,0 +1,738 @@
+\chapter{Nam Trace}
+\label{chap:namtrace}
+
+Nam is a Tcl/Tk based animation tool that is used to visualize the ns
+simulations and real world packet trace data. The first step to use nam is
+to produce a nam trace file. The nam trace file should contain topology
+information like nodes, links, queues, node connectivity etc as well as
+packet trace information. In this chapter we shall describe the nam trace
+format and simple ns commands/APIs that can be used to produce topology 
+configurations and control animation in nam.
+
+The underlying design constraints for nam were that it is able to handle large amounts of trace data and that its animation primitives be adaptable so that it may be used in different types of network visualization. As a result, internally nam reads information from a file and keeps only a minimum amount of animation event information in memory.  Its animation event has a fairly simple and consistent structure so that it can many different visualization situations. 
+
+\section{Nam Trace Format}
+\label{sec:namtraceformat}
+The C++ class Trace used for ns tracing is used for nam tracing as
+well. Description of this class may be found under section
+\ref{sec:tracemoncplus}. The method Trace::format() defines nam 
+format used in nam trace files which are used by nam for
+visualization of ns simulations. Trace class method Trace::format() is
+described in section \ref{sec:traceformat} of chapter \ref{chap:trace}. If
+the macro NAM\_TRACE has been defined (by default it is defined in
+trace.h), then the following code is executed as part of the
+Trace::format() function:
+
+\begin{program}
+        if (namChan_ != 0)
+                sprintf(nwrk_,
+                        "%c -t "TIME_FORMAT" -s %d -d %d -p %s -e %d -c %d
+-i %d -a %d -x {%s.%s %s.%s %d %s %s}",
+                        tt,
+                        Scheduler::instance().clock(),
+                        s,
+                        d,
+                        name,
+                        th->size(),
+                        iph->flowid(),
+                        th->uid(),
+                        iph->flowid(),
+                        src\_nodeaddr,
+                        src\_portaddr,
+                        dst\_nodeaddr,
+                        dst\_portaddr,
+                        seqno,flags,sname);
+\end{program}
+
+A nam trace file has a basic format to it. Each line is a nam event. The first character on the line defines the type of event and is followed by several flags to set options on that event. Each event is terminated by a newline character.
+\begin{verbatim}
+<event-type> -t <time> <more flags>...
+\end{verbatim}
+Depending on the event type, there are different flags following the
+time flag. 
+
+There are 2 sections in that file, static intial configuration events and animation events.  All events with -t * in them are configuration events and should be at the beginning of the file.  One thing to note is that nam can also be fed the trace file from a stream which enables it to be used with realtime applications.  See the section \textbf{Using Streams with Realtime Applications} for more information.
+
+
+Following we describe nam trace file format for different classes events and animation objects.
+
+\subsection {Initialization Events}
+
+The first section of a trace file must contain initialization information. All initialization events will have the flag \code{-t *}.  This tells nam that this event needs to be parsed before any animation has started. 
+\begin{description}
+\item[Version]
+  The following line define the nam version as required to visualize
+  the given trace:
+\begin{verbatim}
+V -t <time> -v <version> -a <attr>
+\end{verbatim}
+  Normally there is only one version string in a given tracefile, and
+  it is usually the first line of the file.
+An example is the following:
+\begin{program}
+V -t * -v 1.0a5 -a 0
+\end{program}
+
+The flag \code{-v 1.0a5} tells nam that this script requires a version of nam > 1.0a5.  For more information on this event look at the file tcl/stats.tcl under the procedure nam\_analysis.
+
+\item[Wireless]
+If you want to use wireless nodes in nam you need the wireless intialization event.
+\begin{program}
+W -t * -x 600 -y 600
+\end{program}
+
+This gives nam the size of the layout for the wireless world.  The -x value is the width and -y is height. For more information look at the file animator.tcl in the procedure infer-network-model.
+
+\item[Hierarchy] Hierarchical address information is defined by:
+
+  \code{A -t <time> -n <levels> -o <address-space size> -c <mcastshift> -a <mcastmask> -h <nth level> -m <mask in nth level> -s <shift in nth level>}\\
+  
+  This trace gives the details of hierarchy, if hierarchical
+  addressing is being used for simulation. 
+  Flag {\tt -n <levels>}
+  indicate the total number of hierarchical tiers, which is 1 for flat
+  addressing, 2 for a 2-level hierarchy etc. 
+  Flag {\tt -o <address-space size>} 
+  denotes the total number of bits used for addressing. 
+  Flag {\tt -h <nth level>} specifies the level of the address
+  hierarchy. 
+  Flag {\tt -m <mask>} and {\tt -s <shift>} describes the address mask
+  and the bit shift of a given level in the address hierarchy,
+  respectively. 
+  Here is an example of a trace for topology with 3 level hierachy:
+\begin{program}
+A -t * -n 3 -p 0 -o 0xffffffff -c 31 -a 1
+A -t * -h 1 -m 1023 -s 22
+A -t * -h 2 -m 2047 -s 11
+A -t * -h 3 -m 2047 -s 0 
+\end{program}
+Look at tcl/netModel.tcl under the nam\_addressing procedure for more information.
+
+\item[Color Table Entry]
+A table of color entries can be built using:\\
+\code{c -t <time> -i <color id> -n <color name>}\\
+Nam allows one to associate color names with
+integers. This is very useful in coloring packets. The flow id of
+a packet is used to color the packet using the corresponding color
+table entry color.
+Notice the color name should be one of the names
+listed in color database in X11 (/usr/X11/lib/rgb.txt). 
+
+\end{description}
+
+In addition to the above node and link layout events are also included in the initialization section.
+
+\subsection{Nodes}
+
+The nam trace format defining node state is:\\
+\code{n -t <time> -a <src-addr> -s <src-id> -S <state> -v <shape> -c <color> -i <l-color> -o <color>}\\
+"n" denotes the node state.\\
+Flags "-t" indicates time and "-a" and "-s" denotes the node address and id.\\
+"-S" gives the node state transition. The possible state transition values are: 
+\begin{itemize}
+\item UP, DOWN indicates node recovery and failure.
+\item COLOR indicates node color change. If COLOR is given, a
+  following {\tt -c <color>} is expected which gives the new color
+  value. Also, flag {\tt -o} is expected so that backtracing can
+  restore the old color of a node. 
+\item DLABEL indicates addition of label to node. If DLABEL is
+  given, a following -l <old-label> -L <new-label> is expected that gives
+  the old-label, if any (for backtracing) and current label. Shape gives
+  the node shape. The color of a node label can be specified via the
+  {\tt -i} flag. 
+\end{itemize}
+
+"-v" is the shape of the node. The possible values are:
+\begin{itemize}
+\item circle
+\item box
+\item hexagon
+\end{itemize}
+
+As an example, the line\\
+\code{n -t * -a 4 -s 4 -S UP -v circle -c tan -i tan}\\
+defines a node with address and id of 4 that has the shape of a
+circle, and color of tan and label-color (-i) of tan.
+
+\subsection{Links}
+
+The nam trace for link states is given by:\\
+\code{l -t <time> -s <src> -d <dst> -S <state> -c <color> -o orientation -r <bw> -D <delay>}\\
+where {\tt <state>} and {\tt <color>} indicate the same attributes
+(and the same format) as described above in the node state traces. 
+Flag {\tt -o} gives the link orientation (angle between link and
+the horizon).  Valid orientation values are:
+\begin{itemize}
+\item up
+\item down
+\item right
+\item left
+\item up-right
+\item down-right
+\item up-left
+\item down-left
+\item angle between 0 and 2pi
+\end{itemize}
+
+Flags {\tt -r} and {\tt -D} give the bandwidth (in Mb) and delay (in
+ms), respectively.
+An example of a link trace is:
+\begin{program}
+l -t * -s 0 -d 1 -S UP -r 1500000 -D 0.01 -c black -o right
+\end{program}
+
+
+\subsection{Queues}
+
+The nam trace queue states is given by:\\
+\code{q -t <time> -s <src> -d <dst> -a <attr>}\\
+Queues are visualized in nam as a straight line along which packets
+(small squares) are packed.
+In queue trace events, the flag {\tt -a} specifies the orientation of the
+line of the queue (angle between the queue line and the horizontal
+line, counter-clockwise). 
+For example, the following line specifies a queue that grows
+vertically upwards with respect to the screen (here {\tt 0.5} means
+the angle of the queue line is pi/2):
+
+\begin{program}
+q -t * -s 0 -d 1 -a 0.5
+\end{program}
+
+
+\subsection{Packets}
+
+When a trace line describes a packet, the event type may be
+ + (enqueue), - (dequeue), r (receive), d (drop), 
+or h (hop). 
+
+\code{<type> -t <time> -e <extent> -s <source id> -d <destination id> -c <conv> -i <id>}\\
+
+\code{<type>} is one of:
+\begin{description}
+\item[h] Hop: The packet started to be transmitted on the link from
+<source id> to <destination id> and is forwarded to the next hop.
+
+\item[r] Receive: The packet finished transmission and started to be
+received at the destination.
+
+\item[d] Drop: The packet was dropped from the queue or link from <source id> 
+to <destination id>. Drop here doesn't distinguish between dropping from queue or
+link. This is decided by the drop time.  
+
+\item[+] Enter queue: The packet entered the queue from <source id> to
+<destination id>.
+
+\item[-] Leave queue: The packet left the queue from <source id> to
+<destination id>.  
+\end{description}
+
+The other flags have the following meaning:
+\begin{description}
+\item[-t <time>] is the time the event occurred.
+\item[-s <source id>] is the originating node.
+\item[-d <destination id>] is the destination node.
+\item[-p <pkt-type>] is the descriptive name of the type of packet seen.
+See section \ref{sec:traceptype} for the different types of packets 
+supported in \ns.
+\item[-e <extent>] is the size (in bytes) of the packet.
+\item[-c <conv>] is the conversation id or flow-id of that session.
+\item[-i <id>] is the packet id in the conversation.
+\item[-a <attr>] is the packet attribute, which is currently used as color
+id. 
+\item[-x <src-na.pa> <dst-sa.na> <seq> <flags> <sname>] is taken from
+ns-traces and it gives the source and destination node and port
+addresses, sequence number, flags (if any) and the type of message.
+For example \code{ -x \{0.1 -2147483648.0 -1 ------- SRM_SESS\} } denotes an
+SRM message being sent from node 0 (port 1).
+\end{description}
+
+Additional flags may be added for some protocols.
+\begin{description}
+\item[-P <packet type>] gives an ASCII string specifying a comma separated list of packet types.
+     Some values  are:
+     \begin{description}
+       \item[TCP]  A  tcp  data  packet.
+       \item[ACK]  Generic  acknowledgement.
+       \item[NACK] Generic  negative acknowledgement.
+       \item[SRM]  SRM data packet.
+     \end{description}
+
+\item[-n <sequence number>] gives the packet sequence number.
+\end{description}
+
+
+\subsection{Node Marking}
+
+Node marks are colored concentric circles, boxes, or hexagons around nodes. 
+They are created by:\\
+\code{m -t <time> -n <mark name> -s <node> -c <color> -h <shape> -o <color>}\\
+and can be deleted by:\\
+\code{m -t <time> -n <mark name> -s <node> -X}\\
+Note that once created, a node mark cannot change its shape. The possible
+choices for shapes are, circle, box, and hexagon. They are defined as 
+lowercase strings exactly as above. A nam trace showing a node mark is:
+\begin{program}
+m -t 4 -s 0 -n m1 -c blue -h circle
+\end{program}
+indicating node 0 is marked with a blue circle at time 4.0. The name of
+the mark is m1.
+
+\subsection{Agent Tracing}
+
+Agent trace events are used to visualize protocol state.
+They are always associated with nodes. 
+An agent event has a name, which is a {\it unique} identifier of the
+agent. 
+An agent is shown as a square with its name inside, and a line link
+the square to its associated node 
+
+Agent events are constructed using the following format:\\
+\code{a -t <time> -n <agent name> -s <src>}\\
+Because in \ns, agents may be detached from nodes, an agent may be 
+deleted in nam with:\\
+\code{a -t <time> -n <agent name> -s <src> -X}\\
+For example, the following nam trace line creates an agent named {\tt
+  srm(5)} associated with node 5 at time 0:
+\begin{program}
+a -t 0.00000000000000000 -s 5 -n srm(5)
+\end{program}
+
+\subsection{Variable Tracing}
+
+To visualize state variables associated with a protocol agent, we use
+feature trace events.
+% three types of features: timers, lists and simple variable
+Currently we allow a feature to display a simple variable, i.e., a
+variable with a single value. 
+Notice that the value is simple treated as a string (without
+white space).
+Every feature is required to be associated with an agent. 
+Then, it can be added or modified at any time after its agent is created.
+The trace line to create a feature is:\\
+\code{f -t <time> -s <src> -a <agentname> -T <type> -n <varname> -v <value> -o <prev value>}\\
+Flag {\tt <type>} is 
+\begin{description}
+\item[v] for a simple variable
+\item[l] for a list
+\item[s] for a stopped timer
+\item[u] for an up-counting timer
+\item[d] for a down-counting timer.
+\end{description}
+
+However, only {\tt v} is implemented in \ns. 
+Flag {\tt -v <value>} gives the new value of the variable. 
+Variable values are simple ASCII strings obeying the TCL string
+quoting conventions. 
+List values obey the TCL list conventions. 
+Timer values are ASCII numeric. 
+Flag {\tt -o <prev value>} gives the previous value of the variable. 
+This is used in backward animation.
+Here is an example of a simple feature event:\\
+\code{f -t 0.00000000000000000 -s 1 -n C1_ -a srm(1) -v 2.25000 -T v}\\
+
+Features may be deleted using:\\
+\code{f -t <time> -a <agent name> -n <var name> -o <prev value> -X}\\
+
+\subsection{Executing Tcl Procedures and External Code from within Nam}
+
+There is a special event that can be put in a nam tracefile which allows us
+to run different tcl procedures. This event is represented by event type {\tt v}.\\
+\code{v -t <time> -e <nam tcl procedure call>}\\
+This event is very generic, in that it may execute several different procedures
+at a given time, as long as it is in one line (no more than 256 characters).
+There may be white spaces in the string which are passed as arguments to the tcl
+procedure.  Unlike other events, the order of flags and the tcl procedure
+call is important.
+
+Here are some examples of this event in use:
+
+\subsubsection{Setting playback speed}
+Normally the user chooses a playback rate via the rate slider in the animation window.  A trace file may set the playback rate via the \code{set_rate_ext} command:
+
+\code{v -t <time> -e set_rate_ext <time> <update-peers?>}
+
+For example:\\
+\code{v -t 2.5 -e set_rate_ext 20ms 1}
+
+For compatibility with earlier versions of nam, the \code{set_rate} command is also supported.  Instead of specifying the step size directly, you use $10\times\log_{10} \textit{<time-in-seconds>}$.  For example:
+
+\code{v -t 2.5 -16.9897000433602 1}
+
+In order to have more readable files, \code{set_rate_ext} is preferred.
+
+\subsubsection{Annotation}
+This procedure is used for displaying text annotation at specfic times:
+
+\code{v -t <time> -e sim_annotation <time> <unique sequence id> <text to display>}\\
+
+For example:\\
+\code{v -t 4 -e sim_annotation 4 3 node 0 added one mark}\\
+
+This line calls a special tcl function {\tt sim\_annotation} in
+nam, which inserts the given string \code{node 0 added one mark}
+into nam's annotation pane.  Look at  
+\code{Animator instproc sim_annotation} in 
+tcl/annotation.tcl for the implementation details.
+
+\subsubsection{Node Exec Button}
+In nam releases, version 1.0a10 and later there is support for running external
+userdefinable scripts or programs from nam by clicking on a node button.
+
+\code{v -t 1.0 -e node_tclscript <node_id> <button label> <tcl script>}\\
+
+This line when read in a tracefile will add an extra button to node objects that
+will execute a tcl script when clicked.
+
+For example:\\
+\code{v -t 1.0 -e node_tclscript 2 "Echo Hello" \{puts [exec echo hello]\}}\\
+
+The above line adds a button to node 2's info window with the label 
+"Echo Hello" and when this button is pressed the shell command 
+"echo hello" will be run and it's output will be returned to nam and
+then output to the terminal via the tcl procedure puts.
+
+
+The functions that implement the different nam trace formats described
+above may be found in the following files: \ns/trace.cc, 
+\ns/trace.h, \ns/tcl/lib/ns-namsupp.tcl.
+
+
+\subsection{Using Streams for Realtime Applications}
+
+In addtion to reading from files nam can also read from a stream such as
+STDIN. Here is a little tutorial on how to send a nam trace stream to nam to
+make it operate with real-time data.  First some
+background on how nam works internally.  Basically, it thinks it is
+reading from a nam tracefile.  The file has a format to it.  Each line
+is a nam event.  The first character on the line defines the type of
+event and is followed by several flags to set options on that event.
+Each event is terminated by a newline character.  A nam tracefile has 2
+sections, static configuration events and animation events.  All events
+with -t * in them are configuration events and should be sent to nam in
+one burst.  Lines beginning with a \# are comment lines.  Currently
+comments should only be place in the animation section of the file after
+the first animation event.
+
+First of all you need to pipe your data to nam's stdin and add the '-'
+flag to the nam command.
+
+For example:
+
+\begin{program}
+% cat wireless.nam | nam -
+\end{program}
+
+nam will read the information from stdin
+
+Following is a short wireless animation example.  The first part of the
+script has line with -t * which tells nam that these are initial
+configuration information.
+
+\begin{program}
+V -t * -v 1.0a5 -a 0
+W -t * -x 600 -y 600
+\end{program}
+
+The first 2 lines are used in the nam initialization.  They need to be
+the first 2 lines sent to nam from your program. V is the minimum nam
+version needed to correctly run this script.  W means this is script
+contains wireless nodes which will be within the canvas size of width x
+and height y.
+
+\begin{program}
+n -t * -s 0 -x 0.0 -y 0.0 -z 20 -v circle -c black -w
+n -t * -s 1 -x 0.0 -y 200.0 -z 20 -v box -c black -w
+\end{program}
+
+Next is the network layout information.  The first line n creates a
+wireless (-w) circular (-v circle) node with id 0 (-s 0) at position
+0.0,0.0 (-x 0.0 -y 0.0). It's size (-z) is 20 and it's color (-c) is
+black.  The second is a wireless square (-v box) node with id 1 (-s 1)
+at 0.0,200.0.  Each node has to have a unique id number given by the -s
+flag.
+
+\begin{program}
+A -t * -n 1 -p 0 -o 0xffffffff -c 31 -a 1
+A -t * -h 1 -m 2147483647 -s 0
+\end{program}
+
+The A event line has to do with setting up hierarchical addressing in
+nam.  It is necessary in wireless nam because packets are treated as
+broadcast to every node.
+
+Now we are done with the configuration part of the nam file.  Next are
+the animation events.  In order for nam to operate in a close to
+real-time mode it needs to constantly receive updates.  As it is playing
+it will  keeps reading lines from the nam trace and playing them back.
+The sequence of events must be in chronological order.  For example the
+following lines change the color of node 1 from black to green back to
+black and then to black again.
+\begin{program}
+n -t 0.0 -s 1 -S COLOR -c green -o black
+n -t 0.01 -s 1 -S COLOR -c black -o green
+n -t 0.02 -s 1 -S COLOR -c black -o black
+\end{program}
+
+Notice that the "-t <time>" flags are always increasing.  You cannot
+issue one event at -t 0.2 and then another later on at -t 0.1.  Nam has
+an internal counter of time and it executes an event once it's time
+counter passes that event time.  It will execute events in chronological
+order but only if they are given to it in chronological order.  So the
+following WILL NOT work.
+\begin{program}
+n -t 0.0 -s 1 -S COLOR -c black -o black
+n -t 0.02 -s 1 -S COLOR -c green -o black
+n -t 0.01 -s 1 -S COLOR -c black -o green
+\end{program}
+
+Since nam has its own internal representation of time which is different
+than current real world time you have to try and synchronize them.
+There is no explicit and totally accurate way to do this but you can
+have a rough synchronization of time by having you application
+periodically send nam events even if nothing has happened. We have 
+created a dummy or "no-op" event (T) for this purpose.
+\begin{program}
+T -t 0.5
+\end{program}
+
+As described above, you MUST feed events to nam in non-decreasing
+timestamp order. Successive events at the same time are OK. 
+Before animating to a given time, nam needs to know that it's got all
+the events for that time, and so it actually has to read an event
+AFTER that time.  Therefore if you're driving nam from an external
+process in real-time it will refuse to animate time t until it sees an
+event at time t+i (for any i > 0).  To make nam play out events
+smoothly, you may therefore need to generate dummy events with
+intermediate timestamps (so that nam knows it can advance).  Events of
+type "T" are dummy events, so this stream would produce jerky
+animatation:
+
+\begin{program}
+n -t 1.0 -s 1 -S COLOR -c green -o black
+n -t 2.0 -s 1 -S COLOR -c black -o green
+n -t 3.0 -s 1 -S COLOR -c black -o black
+\end{program}
+
+while this would be animatated much smoother:
+
+\begin{program}
+T -t 0.0
+T -t 0.5
+n -t 1.0 -s 1 -S COLOR -c green -o black
+T -t 1.5
+n -t 2.0 -s 1 -S COLOR -c black -o green
+T -t 2.5
+n -t 3.0 -s 1 -S COLOR -c black -o black
+T -t 3.5
+T -t 4.0
+...
+\end{program}
+
+If nam ever gets to the end of an
+event stream it will block and the program will appear as if it
+has frozen.  The screen will not be updated until it can read another event
+so you must be sure to feed events to nam faster than or as fast as it
+can read them.  This technique works pretty well and allows nam to look
+as if it is running in real-time although in reality there will be a
+slight delay which is usually acceptable.
+
+One other thing to remember is that your application should send these events
+based on it's representation of time from when the application started.
+Also, when sending events to nam they should be unbuffered so you 
+will want to fflush(stdout); after each event.
+
+Another event which you can keep sending to nam would be an note which
+will show a the bottom of the nam window.
+\begin{program}
+v -t 0.08 -e sim\_annotation 0.08 1 Time is 0.08
+v -t 0.09 -e sim\_annotation 0.09 2 Time is 0.09
+v -t 0.10 -e sim\_annotation 0.08 3 Time is 0.10
+\end{program}
+
+The 'v' event means that you will execute a tcl script at time -t,
+everything after -e is the script to execute.  sim\_annotation writes a
+note at the bottom of the screen.  The numbers after it are the time to
+write and a unique note id.  Notice how I incremented the note id with
+each successive note.   The remaining is what is written to the screen.
+For example "Time is 0.08" followed by "Time is 0.09", etc...
+
+That is the basic idea behind making nam work in a real-time fashion.
+Following are two examples on how to generate wireless packet animations
+when using nam.  To make a wireless broadcast which is shown as quickly
+expanding circle you can use the following.
+
+\begin{program}
++ -t 0.16 -s 0 -d -1 -p AODV -e 100 -c 2 -a 0 -i 0 -k MAC
+- -t 0.16 -s 0 -d -1 -p AODV -e 100 -c 2 -a 0 -i 0 -k MAC
+h -t 0.16 -s 0 -d -1 -p AODV -e 100 -c 2 -a 0 -i 0 -k MAC
+\end{program}
+
+'+' event puts the packet onto the transmission queue
+'-' event remove the packet from the queue and makes it ready to
+broadcast
+'h' send the packet to the next hop which actually causes the animation
+Here are the meanings of the flags
+  -t time
+  -s transmitting node id
+  -d destination node id (-1 indicates broadcast to world)
+  -e size of transmission
+  -c ultimate destination of the packet
+
+To show a packet being send from one particular node to another use the
+following
+
+\begin{program}
+r -t 0.255 -s 1 -d -1 -p MAC -e 512 -c 0 -a 0 -i 0 -k MAC
++ -t 0.255 -s 1 -d 0 -p AODV -e 512 -c 0 -a 0 -i 0 -k MAC
+- -t 0.255 -s 1 -d 0 -p AODV -e 512 -c 0 -a 0 -i 0 -k MAC
+h -t 0.255 -s 1 -d 0 -p AODV -e 512 -c 0 -a 0 -i 0 -k MAC
+r -t 0.255 -s 0 -d 1 -p AODV -e 512 -c 0 -a 0 -i 0 -k MAC
+\end{program}
+
+First the packet is received ('r') from the wireless broadcast to node
+1.  It is then added to the outgoing queue ('+') on node 1.  Next, it is
+removed from the queue('-') and ready to be sent to node 0.  Then the
+packet is sent to the next hop ('h') node 0.  This will trigger an
+animation of a line the length of the packet size moving from node 1 to
+node 0.  Finally it is received ('r') by node 0 from node 1.
+
+For more nam events you can look at the nam section in the ns manual
+
+Also, you can save a copy of the trace from a realtime
+source using the unix 'tee' command. For example:
+
+\begin{program}
+% cat wireless.nam | tee saved_tracefile.nam | nam -
+\end{program}
+
+Sometimes it is a bug in nam and sometimes it is a problem with the way
+your tracefile is formatted.  You may expect nam to do something that it
+won't do.  Part of the philosophy in the design of nam is that the detail of
+an animation is handled by the tracefile which makes nam more flexible
+but pushes some of the animation complexity on to the programmer
+generating the tracefile. 
+
+\subsection{Nam Trace File Format Lookup Table}
+This is a listing of all possible nam trace event codes and the flags associated with them.  It was taken from the source code in the file parser.cc.  You can generate your own table by running \code{nam -p}.
+
+\input{nam_trace_format_table}
+
+
+\section{Ns commands for creating and controlling nam animations}
+\label{sec:namcommands}
+
+This section describes different APIs in \ns that may be used to
+manipulate nam animations for objects like nodes, links, queues and
+agents. 
+The implementation of most of these APIs is contained in
+\ns/tcl/lib/ns-namsupp.tcl.
+Demonstration of nam APIs may be found in \ns/tcl/ex/nam-example.tcl.
+
+\subsection{Node}
+
+Nodes are created from the ''n'' trace event in trace file. 
+Each node represents a host or a router. 
+Nam terminates if there are duplicate definitions of the same node.
+Attributes specific to node are color, shape, label, label-color,
+position of label and adding/deleting mark on the node.
+Each node can have 3 shapes: circle (default), square, or hexagon.
+But once created, the shape of a node cannot be changed during the
+simulation.
+Different node may have different colors, and its color may be changed
+during animation. 
+The following OTcl procedures are used to set node attributes, they
+are methods of the class Node:
+
+\begin{program}
+$node color [color]      ;# sets color of node
+$node shape [shape]      ;# sets shape of node
+$node label [label]      ;# sets label on node
+$node label-color [lcolor]  ;# sets color of label
+$node label-at [ldirection] ;# sets position of label
+$node add-mark [name] [color] [shape]   ;# adds a mark to node
+$node delete-mark [name]    ;# deletes mark from node
+\end{program} %$
+
+\subsection{Link/Queue}
+
+Links are created between nodes to form a network topology. 
+\nam links
+are internally simplex, but it is invisible to the users. The trace
+event ''l'' creates two simplex links and other necessary setups, hence
+it looks to users identical to a duplex link. Link may have many
+colors and it can change its color during animation. Queues are
+constructed in nam between two nodes. Unlike link, nam queue is
+associated to a simplex link.  The trace event ``q'' only creates a
+queue for a simplex link. In nam, queues are visualized as stacked
+packets. Packets are stacked along a line, and the angle between the
+line and the horizontal line can be specified in the trace event ``q''.
+Commands to setup different animation attributes of a link are as
+follows:
+
+\code{$ns duplex-link-op <attribute> <value>} %$
+
+The <attribute> may be one of the following: orient, color, queuePos, label.
+Orient or the link orientation defines the angle between the link and
+horizontal. The optional orientation values may be difined in
+degrees or by text like right (0), right-up (45), right-down (-45), left
+(180), left-up (135), left-down (-135), up (90), down (-90). The queuePos
+or position of queue is defined as the angle of the queue line with
+horizontal. 
+Examples for each attribute are given as following : 
+\begin{program}
+$ns duplex-link-op orient right      ;# orientation is set as right. The order
+                                     ;# in which links are created in nam
+                                     ;# depends on calling order of this function.
+$ns duplex-link-op color "green"
+$ns duplex-link-op queuePos 0.5
+$ns duplex-link-op label "A"
+\end{program} %$
+
+\subsection{Agent and Features}
+
+Agents are used to separate protocol states from nodes. They are always
+associated with nodes. An agent has a name, which is a unique identifier
+of the agent. It is shown as a square with its name inside, and a line
+link the square to its associated node. The following are commands that
+support agent tracing:
+\begin{program}
+$ns add-agent-trace <agent> <name> <optional:tracefile>
+$ns delete-agent-trace <agent>
+$ns monitor-agent-trace <agent>
+\end{program} %$
+
+Once the above command is used to create an agent in nam trace, the
+{\tt tracevar} method of the \ns agent can be used to create feature
+traces of a given variable in the agent. 
+For example, the following code segment creates traces of the variable
+{\tt C1\_} in an SRM agent {\tt \$srm(0)}:
+
+\begin{program}
+        $ns attach-agent $n($i) $srm(0)
+        $ns add-agent-trace $srm($i) srm(0)
+        $ns monitor-agent-trace $srm(0) ;\# turn nam monitor on from the start
+        $srm(0) tracevar C1_
+\end{program} %$
+
+\subsection{Some Generic Commands}
+
+\code{$ns color <color-id>} %$
+defines color index for nam. Once
+specified, {\tt color-id} can be used in place of the color name in
+nam traces.
+
+\code{$ns trace-annotate <annotation>} %$
+inserts an annotation in nam. Notice that if {\tt <annotation>} 
+contains white spaces, it must be quoted using the double quote.
+An example of this would be
+\code{$ns at $time ''$ns trace-annotate ''Event A happened''''} %$
+This annotation appears in the nam window and is used to control
+playing of nam by events. 
+
+\code{$ns set-animation-rate <timestep>} %$
+causes nam to set the animation playout rate to
+the given timestep value.
+Time is in seconds, with optional prefixes (for example, 1 is 1 second, or 2ms is 0.002 seconds).
+
+

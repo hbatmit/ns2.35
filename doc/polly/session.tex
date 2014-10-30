@@ -1,0 +1,285 @@
+\chapter{Session-level Packet Distribution}
+\label{chap:session}
+
+This section describes the internals of the Session-level Packet Distribution
+implementation in \ns.
+The section is in two parts:
+the first part is an overview of 
+a basic Session configuration,
+and a ``complete'' description of the configuration parameters 
+of a Session.
+The second part describes the architecture, internals, and the code path
+of the Session-level Packet distribution.
+
+Session-level Packet Distribution enables simulations with large-scale 
+topologies.  A 2048 node and 8 connectivity degree topology takes roughly 
+40 MB in memory, 2049-4096 node topology takes about 167 MB, and 4097-
+8194 node topology takes about 671 MB.  However, the queuing delays that
+may occur in routers are ignored.  Therefore, if simulations are involved 
+with high source rate or multiple sources merging at some point resulting
+a high aggregated rate, please avoid using Session-level Packet Distribution.
+
+\section{Configuration}
+
+\subsection{Basic Configuration}
+\label{sec:basic-config}
+
+Each Session (i.e., a multicast tree) must be configured strictly in
+this order:
+creating(obtaining) the session source,
+assigning the destination address,
+creating the session helper, 
+attaching to session source, and
+the session members joining the group.
+
+
+\begin{program}
+        set ns [new SessionSim]          \; preamble initialization;
+        set node [$ns node]              \; source and receiver to reside on this node;
+        set group [$ns allocaddr]        \; multicast group for this session;
+
+        set src [new Agent/CBR]
+        $src set dst_ $group            \; configure the source;
+        $ns attach-agent $node $src
+
+        $ns create-session $node $src   \; creating the session helper and attaching to the source;
+
+        set rcvr [new Agent/NULL]        \; configure the receiver;
+        $ns attach-agent $node $rcvr
+        $ns at 0.0 "$node join-group $rcvr $group" \; joining the session;
+
+        $ns at 0.1 "$src start"          \; start the source;
+
+\end{program}
+
+\subsection{Inserting a Loss Module}
+\label{sec:loss-config}
+
+When simulating mechanism robustness(e.g., SRM error recovery mechanism), 
+modules like lossy links are desired to create error senarios.  This 
+subsection is describe how to create a lossy link, meaning inserting 
+a loss module for a 'virtual link' (a link directly connecting source
+and receiver with accumulative bandwidth and delay).
+
+Please note that packets dropped at a particular link in a
+multicast tree will not be received by
+the receivers in the particular downstream subtree. We have worked 
+on this dependency problem and now the loss modules for the downstream 
+receivers will be installed automatically when a lossy link is created.
+
+
+\paragraph{Creating a Loss Module}
+Before we can insert a loss module in between a source-receiver pair,
+we have to create the loss module.  Basically,
+a loss module compares two values to decide whether to drop a packet.
+The first value is obtained every time when the loss module receives 
+a packet from a random variable.  The second value
+is fixed and configured when the loss module is created.
+
+The following code gives an example to create a uniform 
+0.1 loss rate.
+
+\begin{program}
+        # creating the uniform distribution random variable
+        set loss_random_variable [new RandomVariable/Uniform] 
+        # setting the range of random variable
+        $loss_random_variable set min_ 0
+        $loss_random_variable set max_ 100
+
+        # creating an error module;
+        set loss_module [new ErrorModel]
+        # set target for dropped packets;
+        $loss_module drop-target [new Agent/Null]
+        # setting error rate to 0.1, 10/(100-0);
+        $loss_module set rate_ 10
+        # attaching the random variable to the loss module;
+        $loss_module ranvar $loss_random_variable 
+
+\end{program}
+
+Several random variable distributions are available.
+%%% Need xref to ranvar pages
+Please refer to tcl/ex/ranvar.tcl.
+
+\paragraph{Inserting a Loss Module}
+
+If it is intended to insert a loss module for a receiver, keep a handle to the 
+loss module when created.  Loss modules can only be inserted after the
+corresponding receivers finish joining the group.
+
+\begin{program}
+        # keep a handle to the loss module;
+        set sessionhelper [$ns create-session $node $src] 
+        # insert the loss module;
+        $ns at 0.1 "$sessionhelper insert-depended-loss $loss_module $rcvr" 
+\end{program}
+
+\section{Architecture}
+\label{sec:session-arch}
+The purpose of Session-level packet distribution is to
+speed up simulations and reduce memory consumption while 
+maintaining reasonable accuracy(if no queuing involved).  The first
+bottleneck observed is the memory consumption by heavy-weight
+links and nodes.  Therefore, in SessionSim (Simulator for Session-level
+packet distribution), we keep only minimal amount of 
+states for links and nodes, and connect the higher level source and 
+receiver applications with appropriate delay and loss modules.  When
+a connection is a multicast group, we attach a replicator 
+to the source application, so the replicator replicates packets
+to all loss or delay modules attached to the receiver applications.
+
+In short, almost the entire network layer(routing and queuing)
+is abstract out.  Packets in SessionSim do not get routed.  
+They only follow the established Session.
+
+\section{Internals}
+In this section, we explain the internals of Session-level Packet 
+Distribution.  The implementation is split into two parts:
+\begin{list}{}{}
+\item  Linkage of objects to make a Session in OTcl 
+\item  Packet forwarding activities are executed by C++ methods.  
+\end{list}
+
+\subsection{Object Linkage}
+\label{sec:session-objlink}
+
+\begin{list}{}{}
+\item  Simplified links and nodes.
+\item  Replicator
+\item  Delay and loss modules
+\end{list}
+
+\paragraph{Nodes and Links}
+A link only contains the values of
+its bandwidth and delay, and a node contains only its id and port number
+for next agent.
+
+\begin{program}
+SessionSim instproc simplex-link \{ n1 n2 bw delay type \} \{
+    $self instvar bw_ delay_
+    set sid [$n1 id]
+    set did [$n2 id]
+
+    set bw_($sid:$did) [expr [string trimright $bw Mb] * 1000000]
+    set delay_($sid:$did) [expr [string trimright $delay ms] * 0.001]
+\}
+
+SessionNode instproc init \{\} \{
+    $self instvar id_ np_
+    set id_ [Node getid]
+    set np_ 0
+\}
+\end{program}
+
+\paragraph{Replicator}
+One replicator is required per source.  While the source is configured,
+a replicator (session helper) need to be attached to the source.  By
+calling \proc[]{create-session}, a replicator is:
+created,
+attached to the source application, and 
+kept in a SessionSim instance variable \code{session_} array with 
+its source and destination addresses as the index.
+
+Note that the destination of source agent must be set before
+calling \proc[]{create-session}.
+
+\begin{program}
+SessionSim instproc create-session \{ node agent \} \{
+    $self instvar session_
+
+    set nid [$node id]                           \; get source address;
+    set dst [$agent set dst_]                    \; get destination address;
+    set session_($nid:$dst) [new Classifier/Replicator/Demuxer]  \; creating the replicator;
+    $agent target $session_($nid:$dst)           \; attach the replicator to the source;
+    return $session_($nid:$dst) \; keep the replicator in the SessionSim instance variable session_ array;
+\}
+\end{program}
+
+\paragraph{Delay and Loss Modules}
+
+At least one delay module is required per receiver.
+See Section~\ref{sec:loss-config} for inserting a loss module for a receiver.
+When a receiver joins a group, 
+the \proc[]{join-group} method goes through
+all replicators (session helpers) maintained in \code{session_}.
+If the destination index matches the group address
+the receiver are joining, then the following actions are performed.
+
+1. A new slot of the replicator (session helper) is created and assigned to the receiver.
+
+2. An accumulated bandwidth and delay between the source and receiver are obtained by SessionSim instance procedure \proc[]{get-bw} and \proc[]{get-delay}.
+
+3. A constant random variable is created and assigned with the
+accumulative delay.
+
+4. A delay module is created and assigned with the constant random 
+variable and the accumulative bandwidth.
+
+5. The delay module in inserted into the replicator slot in
+front of the receiver.
+
+\begin{program}
+SessionSim instproc join-group \{ agent group \} \{
+    $self instvar session_
+
+    foreach index [array names session_] \{
+        set pair [split $index :]
+        if \{[lindex $pair 1] == $group\} \{
+            # Note: must insert the chain of loss, delay, 
+            # and destination agent in this order:
+
+            #1. insert destination agent into session replicator
+            $session_($index) insert $agent
+
+            #2. find accumulative bandwidth and delay
+            set src [lindex $pair 0]
+            set dst [[$agent set node_] id]
+            set accu_bw [$self get-bw $dst $src]
+            set delay [$self get-delay $dst $src]
+
+            #3. set up a constant delay random variable
+            set random_variable [new RandomVariable/Constant]
+            $random_variable set avg_ $delay
+
+            #4. set up the delay module
+            set delay_module [new DelayModel]
+            $delay_module bandwidth $accu_bw
+            $delay_module ranvar $random_variable
+
+            #5. insert the delay module in front of the dest agent
+            $session_($index) insert-module $delay_module $agent
+        \}
+    \}
+\}
+\end{program}
+
+
+\subsection{Packet Forwarding}
+\label{sec:session-pktforward}
+Packet forwarding activities are executed in C++.  A source application 
+generates a packet and forwards to its target which must be a replicator 
+(session helper).  The replicator copies the packet and forwards 
+to targets in the active slots which are either delay modules or loss modules. If loss modules, a decision is made whether to drop the packet.
+If yes, the packet is forwarded to the loss modules drop target.  If not,
+the loss module forwards it to its target which must be a delay module.
+The delay module will forward the packet with a delay to its target which
+must be a receiver application.
+
+%% PH: not sure this will come out right
+%% PH: make .eps picture but not sure how to import that
+
+\begin{program}
+                    / Loss module - Delay module - Receiver 1
+Source - Replicator --------------- Delay module - Receiver 2
+    (Session Helper)\bs Loss module - Delay module - Receiver 3
+
+\end{program}
+
+\endinput
+
+### Local Variables:
+### mode: latex
+### comment-column: 60
+### backup-by-copying-when-linked: t
+### file-precious-flag: nil
+### End:

@@ -1,0 +1,34 @@
+This is a quick readme file for an early version of the topology generator,
+running with the GAtech itm generator.
+
+Getting the files and packages:
+	- get the GT-ITM package for topology generation from GAtech:
+
+	directly from:
+	http://www.cc.gatech.edu/fac/Ellen.Zegura/graphs.html
+	then go to 'Software' and click on GT-ITM,
+
+	or go thru the vint web pages:
+	http://www-mash.cs.berkeley.edu/ns/ns-topogen.html
+
+	- get the conversion program 'sgb2ns' from
+	http://www-mash.cs.berkeley.edu/ns/ns-topogen.html
+	go to 'Conversion of GT-ITM output to ns-2 format
+
+	- add itm and sgb2ns to your path
+
+	- get files topo-gen.tcl, topo-view.tcl, topo-gen-script.tcl
+		topo-gen.tcl: provides an API for the topology generator
+		topo-view.tcl: to view the topology using nam after generation
+				and before actual simulation
+		topo-gen-script.tcl: an example of using the functions provided 
+			by the above 2 files
+
+you're ready to go... ! run topo-gen-script.tcl and view the output 
+topologies [nam may not do a good job in viewing large and complex 
+topologies... see what you think !].
+
+If you want more help on how to use the 'topology' proc in topo-gen.tcl, run 
+ns, source topo-gen.tcl, then type 'topology -h' and follow instructions.
+
+date: 5/23/98, Ahmed Helmy, ahelmy@usc.edu

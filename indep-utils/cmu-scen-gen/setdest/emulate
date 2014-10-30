@@ -1,0 +1,83 @@
+#!/usr/bin/perl
+
+use strict subs, vars;
+
+use FileHandle;
+use English;
+
+#my $dir = "/usr/local/sbin";
+my $dir = "/root";   # easier to use if files go into /root
+my $nodes = 0;
+my $addrmap = "addrmap";
+my @NODES;
+my $user = "root";
+
+sub ReadAddrMap {
+    my ($fname) = @ARG;
+
+    open(F,$fname) or die "Can't open address map file '$fname'";
+    while (<F>) {
+	if (/[^\#]*(\d+)\s+([\w\.]+)\s+([0-9a-fA-F\.:]+)/) {
+	    $NODES[$1]->{ip} = $2;
+	    $NODES[$1]->{mac} = $3;
+	    print "$1 $2 $3\n"
+	} 
+    }
+    close F;
+}
+
+while ($#ARGV >= 0) {
+    if ($ARGV[0] eq '-d') {
+	$dir = $ARGV[1];	
+	shift; shift;
+    } elsif ($ARGV[0] eq '-n') {
+	$nodes = $ARGV[1];
+	shift; shift;
+    }  elsif ($ARGV[0] eq '-am') {
+	$addrmap = $ARGV[1];
+	shift; shift;
+    } elsif ($ARGV[0] eq '-u') {
+	$user = $ARGV[1];
+	shift; shift;
+    } else {
+	last;
+    }
+}
+
+if ($#ARGV != 0){
+    print "usage: emulate [-d <dir>] [-n nodes] [-am <addr map>] [-u <user>] <scenario>\n";
+    exit -1;
+}
+
+my $scen = $ARGV[0];
+my $SCEN = new FileHandle;
+open $SCEN,$scen or die "Can't open scenario file $scen";
+    
+if (0 == $nodes) {
+    while (<$SCEN>) {
+	if (/\# nodes: (\d+),/) {
+	    $nodes = $1;
+	    last;
+	}
+    }
+}
+if (0 == $nodes) { 
+    die "Number of nodes not set and not found in scenario";
+}
+
+ReadAddrMap($addrmap);
+
+unlink("tmpdests");
+0 == system("calcdest -i $scen -o tmpdests") or die "calcdest on $scen failed";
+
+my $i;
+for ($i = 1; $i <= $nodes ; $i++) {
+    unlink("tmpdest$i");
+    print "\n Making tracefile for node $i\n";
+    0 == system("gentracefiles tmpdests $addrmap $i > tmpdest$i") 
+	or die "gentracefiles for node $i failed!";
+    my $host = $NODES[$i]->{ip};
+    if ($host eq "") {die "no ip address for node $i in $addrmap";}
+    print ("moving trace for $i to $host\n");
+    system("scp tmpdest$i $user\@$host:$dir/$scen");
+}

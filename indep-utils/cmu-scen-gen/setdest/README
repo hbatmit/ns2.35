@@ -1,0 +1,33 @@
+# $Header: /cvsroot/nsnam/ns-2/indep-utils/cmu-scen-gen/setdest/README,v 1.4 2003/12/15 23:30:42 haldar Exp $
+
+********** README for using CMU's node-movement **************
+            ************** file generators ************
+
+A.scenario or node-movement file generator
+---------------------------
+Directory:
+~ns/indep-utils/cmu-scen-gen/setdest
+
+Files:
+Makefile
+setdest.h setdest.cc
+make-scen.csh
+
+
+Steps for creating scenario files for mobility simulations :
+
+1. Go to ns directory and run "configure" (you probably have done that
+already while building ns). This creates a makefile for setdest. 
+
+2.Go to indep-utils/cmu-scen-gen/setdest. Run "make" , which first creates
+a stand-alone object file for ~ns/rng.cc (the stand-alone version doesnot
+use Tclcl libs) and then creates the executable setdest. 
+
+3. Run setdest with arguments as shown below: ./setdest [-v version of setdest; 1 for original 1999 CMU version or 2 for modified 2003 U.Michigan version ] [-n num_of_nodes] [-p pausetime] [-s maxspeed] [-t simtime] [-x maxx] [-y maxy] > [outdir/movement-file]
+ 
+Example: ./setdest -v 1 -n 20 -p 2.0 -s 10.0 -t 200 -x 500 -y 500 >
+scen-20-test
+and the output will be written in a file called scen-20-test.
+
+4a. OR run make-scen.csh to generate multiple scenario files.
+

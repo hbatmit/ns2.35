@@ -1,0 +1,143 @@
+# lots of hairy special cases for detecting which audio device
+# support to compile in
+#
+V_LIB_AUDIO=""
+V_INCLUDE_AUDIO=""
+V_INCLUDE_GSM=""
+V_OBJ_AUDIO=""
+
+AC_ARG_WITH(gsm,	--with-gsm=path	specify a pathname for gsm, d=$withval, d="")
+if test "$d" != "" ; then
+	if test ! -d $d ; then 
+		echo "'$d' is not a directory"
+		exit 1
+	fi
+	libgsm=$d/lib/libgsm.a
+	if test ! -r $libgsm ; then
+		echo "can't find libgsm.a in $d/lib"
+		exit 1
+	fi
+	V_INCLUDE_GSM="-I$d/inc"
+	if test ! -r $d/inc/private.h ; then
+		echo "can't find gsm includes in $d/inc"
+		exit 1
+	fi
+else
+	echo "checking for libgsm.a"
+	libgsm=FAIL
+	places="\
+		$PWD/../gsm-1.0-pl10 \
+		$PWD/../gsm-1.0 \
+		$PWD/../gsm-1.0-pl7 \
+		$PWD/../gsm \
+		/usr/src/local/gsm-1.0-pl10 \
+		/usr/src/local/gsm-1.0 \
+		/usr/src/local/gsm-1.0-pl7 \
+		/usr/src/local/gsm \
+		/usr/opt/gsm"
+	for dir in $places; do
+		if test -r $dir/lib/libgsm.a -a -r $dir/inc/private.h ; then
+			libgsm=$dir/lib/libgsm.a
+			V_INCLUDE_GSM="-I$dir/inc"
+			break
+		fi
+	done
+	if test "$libgsm" = FAIL; then
+		echo "configure: can't find gsm library ... you can get it at"
+		echo "   http://www.cs.tu-berlin.de/~jutta/toast.html"
+		exit 1
+	fi
+fi
+V_LIB_AUDIO="$V_LIB_AUDIO $libgsm"
+
+AC_ARG_WITH(af,	--with-af=path	specify a pathname for AudioFile, d=$withval, d="")
+if test "$d" != "" ; then
+	if test ! -d $d ; then 
+		echo "'$d' is not a directory"
+		exit 1
+	fi
+	if test ! -r $d/AF/lib/AF/libAF.a ; then
+		echo "can't find libAF.a in $d/AF/lib/AF"
+		exit 1
+	fi
+	if test ! -r $d/AF/lib/AF/AFlib.h ; then
+		echo "can't find AFlib.h in $d/AF/lib/AF"
+		exit 1
+	fi
+	V_LIB="$V_LIB $d/AF/lib/AF/libAF.a"
+	V_INCLUDE="$V_INCLUDE -I$d/AF/lib -I$d/AF"
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-af.o"
+else
+	echo "checking for AudioFile"
+	places="../AudioFile-3.1 \
+		../AudioFile-3 \
+		../AudioFile \
+		/usr/src/local/AudioFile-3.1 \
+		/usr/src/local/AudioFile-3 \
+		/usr/src/local/AudioFile"
+	V_AF=FAIL
+	for d in $places; do
+		if test -f $d/AF/lib/AF/libAF.a -a -f $d/AF/lib/AF/AFlib.h; then
+			V_LIB="$V_LIB $d/AF/lib/AF/libAF.a"
+			V_INCLUDE="$V_INCLUDE -I$d/AF/lib -I$d/AF"
+			V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-af.o"
+			V_AF=$d
+			break
+		fi
+	done
+	if test $V_AF = FAIL ; then
+		echo "can't find AudioFile - vat AF support won't be compiled"
+	fi
+fi
+
+AC_TEST_CPP([#include <sys/audioio.h>], x=audio/audio-sun.o, x="")
+V_OBJ_AUDIO="$V_OBJ_AUDIO $x"
+
+AC_TEST_CPP([#include <sun/audioio.h>], x=audio/audio-sun.o, x="")
+V_OBJ_AUDIO="$V_OBJ_AUDIO $x"
+
+case "$target" in 
+*-sgi-irix*)
+	V_LIB_AUDIO="$V_LIB_AUDIO -laudio"
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-sgi.o"
+	;;
+*-*-bsdi1*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-pc.o"
+	;;
+*-*-bsdi2.0*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-pc.o"
+	;;
+*-*-bsdi*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-voxware.o"
+	;;
+*-*-freebsd*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-freebsd.o"
+	;;
+*-*-sco*)
+	V_DEFINE="$V_DEFINE -DSIGARGS=int -Dsco"
+	if test $CC != gcc ; then
+		CC="cc -Dinline="
+		CXX="CC +.cc"
+	fi
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-voxware.o"
+	V_BROKEN_OBJ=
+	;;
+*-*-hpux*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-hp.o"
+	;;
+*-*-aix3*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-ibm.o"
+	;;
+*-*-aix4*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-ibm.o"
+	;;
+*-*-linux*)
+	V_OBJ_AUDIO="$V_OBJ_AUDIO audio/audio-voxware.o"
+	V_BROKEN_OBJ=
+	;;
+esac
+
+AC_SUBST(V_LIB_AUDIO)
+AC_SUBST(V_INCLUDE_AUDIO)
+AC_SUBST(V_OBJ_AUDIO)
+AC_SUBST(V_INCLUDE_GSM)

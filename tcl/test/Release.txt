@@ -1,0 +1,31 @@
+Verification tests that should be run before a release:
+
+In ns-2:
+./test-all quiet
+
+In ns-2/tcl/test:
+./test-all-red quiet
+./test-all-sack quiet
+./test-all-schedule quiet
+./test-all-tcp quiet
+./test-all-cbq quiet
+./test-all-red-v1 quiet
+./test-all-cbq-v1 quiet
+./test-all-sack-v1 quiet  
+./test-all-v1 quiet
+./test-all-mcast
+
+Each of the above tests passes the validation test if the last
+line of the printout is the following:
+
+"All test output agrees with reference output"
+
+--------------------------------------------------------------
+
+
+
+
+
+
+
+

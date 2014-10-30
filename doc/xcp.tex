@@ -1,0 +1,451 @@
+%\documentstyle[11pt,fullpage]{article}
+%\setlength{\parindent}{0 in}
+%\setlength{\parskip}{.1in}
+%\setlength{\topmargin}{-0.5in}
+%\setlength{\textheight}{8.5in}
+%\begin{document}
+\chapter{XCP: eXplicit Congestion control Protocol}
+\label{chap:xcp}
+
+XCP is a feedback-based congestion control system that uses direct,
+explicit, router feedback to avoid congestion in the network.  It is
+designed for both scalability and generality.  It was developed by
+Dina Katabi, starting from a suggestion by Mark Handley (refer
+to~\cite{Katabi02} for detailed descriptions). 
+The \ns{} code for XCP which was originally developed by Dina Katabi was
+modified, extended and integrated into ns-2.28 at USC/ISI. It still
+continues to evolve as of today. If you are interested in looking at
+Dina's original source code please go to her website at
+http://www.ana.lcs.mit.edu/dina/XCP/ 
+
+\section{What is XCP?}
+\label{sec:xcp?}
+XCP is a congestion control protocol that can be applied to any
+transport protocol. It performs especially well in very high
+delay-bandwidth product networks. Typically in large bandwidth-delay
+product networks, efficiency of TCP goes down in the event of multiple of
+packet losses and becomes unstable irrespective of queueing schemes
+used. However in similar environments, XCP, using a control theory
+based feedback
+model, achieves much more efficiency, stability and fairness by
+sending feedback from the network to the sender for setting the data
+flow into the network.
+
+XCP's scalability results from the fact that it requires no per-flow
+state in the router to calculate the feedback.  Most router-assisted
+congestion control systems maintain per-flow information used to
+allocate the resources.  XCP keeps very little information in the
+router, and this information is chosen to minimize both the amount of
+router state and the per-packet operations needed to update that state.
+
+For generality, XCP divides the resource allocation function between
+two controllers: a congestion controller that ensures that flows use
+all available capacity, and a fairness controller that ensures that
+flows are allocated the capacity fairly.  Most congestion control
+systems fail to make this division, much less to implement as two
+conceptually distinct systems.  This division allows a clear
+exposition and implementation of two basic resource allocation
+functions in XCP. XCP sources send additional information about their
+current round-trip times and router-assigned throughput in each
+packet. XCP routers insert feedback into the packets that is
+interpreted by the sources. 
+  
+Although XCP may be implemented for any transport protocol, however as an
+initial test it has been implemented in TCP. The next section
+gives details of the way XCP is implemented in \ns{}.
+
+
+\section{Implementation of XCP in NS}
+\label{sec:xcp in ns}
+
+In \ns{}, the XCP implementation can be found under \nsf{xcp} directory. 
+The protocol needs to be deployed in the TCP end points (source and
+receiver) as well within the intermediate nodes which is mostly the
+router and may sometimes be a link-layer switch as well. The end-point
+part of XCP code may be found under xcp-end-sys.{cc,h} and the router
+portion of the code may be found under xcp.{cc,h} and xcpq.{cc,h}. 
+
+\subsection{Endpoints in XCP}
+\label{sec:endpoints}
+
+The end points consist of TCP source and sink agents using XCP as their
+congestion control mechanism. The
+intermediate node or router writes feedback in each packet header as
+the delta\_throughput value, about the data capacity that may be
+incremented if feedback is positive and should be decreased if
+negative. When this packet reaches the receiver this delta\_throughput
+value is returned to the sender in a reverse\_feedback field of a
+congestion header in the returning packet, which is an ACK packet in
+case of TCP. 
+  
+The sender upon receiving this reverse\_feedback value adjusts its
+sending rate by increasing or decreasing its congestion window size as
+the case maybe. 
+
+The packet header that is used by XCP is implemented as a structure
+called hdr\_xcp in \ns{} and is defined as follows:
+\begin{program}
+  double	x_;					// idealized inter-packet time
+  double	rtt_;
+  enum \{
+    XCP_DISABLED = 0,
+    XCP_ENABLED,
+    XCP_ACK,
+  \} 		xcp_enabled_;		// to indicate that the flow is XCP enabled
+  int	    xcpId_;				// Sender's ID (debugging only)
+  double	cwnd_;				// The current window (debugging only) 
+  double	reverse_feedback_; 
+  
+  // --- Initialized by source and Updated by Router 
+  double 	delta_throughput_;
+  unsigned int controlling_hop_;// router ID (debugging only)
+\end{program}
+  
+    The xcp receiver is responsible for copying the delta\_throughput
+    value into the reverse\_feedback field of the ack packets. In some
+    cases where delayed ack is used, the receiver calculates the sum of
+    the delta\_throughput values in arriving packets for copying into the
+    reverse\_feedback field of the outgoing ack packet.
+
+    The controlling\_hop\_ field that carries the address of the router
+    who has last updated the feedback is used for debugging purposes only.
+
+    In case of a packet loss in the network, TCP's Van Jacobson
+    congestion control should most likely override XCP.  However in \ns
+    this happens 
+    a little differently. With receiving of duplicate acks indicating
+    packet loss, the cwnd gets halved and fast retransmit and fast
+    recovery algorithms come into play. However xcp routers continue to send
+    feedback to the source based on which the source tries to open its
+    cwnd. So it seems to be a mish-mash of VJCC and XCP
+    algorithms. However for most cases this issue doesnot arise as XCP
+    router very rarely experiences a pkt drop as the queue is
+    continuously regulated and drained by XCP. Understanding the correct
+    behaviour of XCP in face of pkt loss is an area of current study and
+    shall be implemented in the future. 
+
+    \subsection{XCP Router}
+    \label {sec:xcp_wrapper}
+    The XCP router consists of a wrapper class that holds virtual queues
+    for XCP, TCP and OTHER traffic flows. OTHER flow maybe anything other
+    than XCP and TCP. In the current implementation, the XCP queue is a
+    drop-tail queue while those for TCP and OTHER use RED. 
+
+    These underlying queues are bundled in a
+    wrapper class XCPWrapQ that provides necessary interface to the XCP
+    router. The XCP/TCP/OTHER queues are serviced in a Weighted Round-Robin
+    manner. Each queue has a weight that determines the percentage of the
+    service it receives. The current queue weights of 0.5 each for the XCP
+    and TCP allows equal service between the two. The third queue reserved
+    for OTHER flows has not been used as yet and has a weight of 0.0. 
+    
+    OTCL Class Queue/XCP has a flag named tcp\_xcp\_on\_ which is set to
+    a default 
+    value of 0. This should be set to 1 for those simulations that use
+    both XCP and TCP flows. This flag is used to split the link capacity
+    of the router between the XCP and TCP queues in simulations that
+    use both flow types. This is supposed to be a temporary fix and
+    should go away once the dynamic queue weights come into effect. A
+    caveat for the tcp\_xcp flag is that it is set as an OTcl class variable
+    and not per instance variable. This might cause some 
+    problems in topologies that uses mix of intermittent xcp and tcp
+    flows for which some router would require to support both TCP and
+    XCP and some wouldn't.
+    
+    Every packet received by the wrapper queue class is first marked or
+    assigned a code point depending on the type of the packet. Packets,
+    for the current TCP implementation, are marked for XCP, TCP/TCP-ACK
+    and OTHER packets. This code point is used to enque packets in the right
+    queue. The wrapper class is implemented in xcp.{cc,h}.
+    
+    
+    \subsection{XCP queue}
+    \label{sec:xcp_queue}
+
+    The XCP queue is responsible for sending back feedback in every packet
+    header which is used by the sender to control rate of sending data
+    packets into the network. XCP uses two control algorithms, the
+    congestion controller and the fairness controller that are executed
+    once every estimation control interval, Te. 
+
+    In \ns{}  the
+    estimation\_timer is used to maintain this interval which is based on
+    the average rtt values of the (xcp) flows seen through the router. However
+    there may be better ways of defining this interval. The outstanding
+    queue in the router is measured at a separate interval Tq, for which a
+    queue\_timer is used. Finally an rtt\_timer is used to measure certain
+    parameters in the router like packet drops, queue size, utilization 
+    etc for a given interval Tr, that may either be set by user from tcl
+    scripts or it may use the highest rtt value seen for all flows in the
+    router. 
+
+    The rtt\_timer interval value, Tr maybe set from tcl using the
+    following API: 
+    
+    \code{ $queue queue-sample-everyrtt $rtt_value}
+    
+    where \$queue is a handle to the xcp router and \$rtt\_value is the
+    interval for which xcp queue parameters like packet drop , queue size etc
+    shall be measured. See example script under
+    \nsf{tcl/ex/xcp/parking\_lot\_topo/parking\_lot\_topo.tcl} for use of
+    this API.
+    
+    On packet arrival the total input traffic seen at the XCP queue is
+    incremented by the size of the packet received. The sum of inversed
+    throughput and sum of rtt by throughput is incremented as
+    well. Values for throughput and rtt are read from the xcp header as
+    set by the TCP source. Each value is normalised by the packet size.
+    
+    On the event of the estimation timer going off, average rtt of all
+    flows is estimated using the above two sums as follows
+
+    \code { avg_rtt = sum_rtt_by_throughput/ sum_inv_throughput }
+    
+    The aggregate feedback is calculated based on the available bandwidth
+    capacity of the router, arriving traffic bandwidth and the persistent
+    queue length in the router. Further detailed explanation of
+    calculations used by the XCP router algorithm can be found in XCP
+    specification available from XCP's website at
+    http://www.isi.edu/isi-xcp/docs/draft-falk-xcp-spec-00.txt 
+    
+    Each packet carries the current throughput value of the flow and a
+    throughput adjustment or the delta\_throughput in its header. The XCP
+    router based on the feedback values it calculates in the estimation
+    control timeout, calculates a per-packet throughput adjustment
+    feedback for every packet. Positive feedback is applied equally
+    per-flow while negative feedback is made proportional to each flow's
+    capacity. Also a downsream router can change the delta\_throughput
+    value in a packet's header only if the feedback value calculated is
+    less than that in the header (written by an less congested upstream
+    router). The implementation of XCP queue in \ns{} may be found in
+    xcpq.\{cc,h\}. 
+    
+  
+    \section{XCP example script}
+    \label{sec:example}
+    
+    Let's walk through a simple xcp script that is similar to
+    \nsf{tcl/ex/xcp/xcp\_test.tcl} 
+    The example uses a small dumbbell topology having 3 xcp sources
+    running over a bottleneck link.
+    
+    The topology is setup using the node and link creation APIs. The bottleneck
+    is a duplex link that has a xcp router in both directions. For
+    details on creating nodes, links etc in \ns{} see Marc Greis' NS
+    tutorial at http://www.isi.edu/nsnam/ns/tutorial.
+  
+    The bottleneck link having a XCP queue is created as follows:
+  \begin{program}
+    set R0 [$ns node]       ;# create Bottleneck between nodes R0 and R1 
+    set R1 [$ns node]
+    $ns duplex-link $R0 $R1 <BW>Mb <delay>ms XCP 
+  \end{program} %$
+
+  The side links connecting source nodes to the bottleneck link have
+  XCP queues as well. 
+  The API \code{queue-limit} allows users to set the buffer size in the queue.
+  
+  The xcp source and sink is created as follows (very similar to tcp):
+  \begin{program}
+    set xcp [new Agent/TCP/Reno/XCP]
+    $ns attach-agent $src_node $xcp
+    set xcp_sink [new Agent/TCPSink/XCPSink]
+    $ns attach-agent $rcvr_node $xcp_sink
+    $ns connect $xcp $xcp_sink
+    ...
+    ...
+  \end{program} %$
+  
+  There is a tcl class GeneralSender used in the example script that
+  sets up xcp agents in the source nodes and then connects them to the
+  xcp receiver in the destination node. An FTP source is used in all the
+  3 sources. 
+
+  Note that once the topology is set up the link bandwidth information
+  needs to be propagated to the xcp queue as this is used by the xcp
+  router for feedback calculation. So for every xcp queue use the
+  following tcl command:
+  
+  \code{ $xcp_queue set-link-capacity <bandwidth_in_bits_per_sec>}
+  %$
+  Next we need to trace variables in the xcp router and xcp
+  sources. The GeneralSender class procedure trace-xcp sets up tracing
+  for xcp sources using variable-tracing in \ns{}. 
+  
+  \begin{program}
+    GeneralSender instproc trace-xcp parameters \{
+      $self instvar tcp_ id_ tcpTrace_
+      global ftracetcp$id_ 
+      set ftracetcp$id_ [open  xcp$id_.tr  w]
+      set tcpTrace_ [set ftracetcp$id_]
+      $tcp_ attach-trace [set ftracetcp$id_]
+      if \{ -1 < [lsearch $parameters cwnd]  \} \{ $tcp_ tracevar cwnd_ \}
+      if \{ -1 < [lsearch $parameters seqno] \} \{ $tcp_ tracevar t_seqno_ \}
+      \}
+  \end{program} %$
+    
+  For tracing xcp queue it is required to attach a file descriptor to
+  the xcp queue.  
+  \begin{program} 
+    $xcpq attach <file-descriptor> 
+  \end{program} %$
+    
+  This is an example of how the trace at an xcp source looks like:
+  \begin{program}
+    0.00000  2  0  1  0  cwnd_ 1.000 
+    0.00000  2  0  1  0  t_seqno_ 0
+    0.079 x x x x throughput 0.1
+    0.07900  2  0  1  0  t_seqno_ 1
+    0.119064 x x x x reverse_feedback_ 0
+    0.119064 x x x x controlling_hop_ 0
+    0.119064 x x x x newcwnd 1
+    0.11906  2  0  1  0  cwnd_ 2.000 
+    0.119064 x x x x throughput 50000
+    0.11906  2  0  1  0  t_seqno_ 2
+    0.119064 x x x x throughput 50000
+    0.11906  2  0  1  0  t_seqno_ 3
+  \end{program} %$
+  
+  The first field gives the timestamp; the next 4 fields give the
+  source id (node/port) and destination id (node/port) for the xcp
+  flow. The next field gives the name of the variable being traced
+  followed by the value of the variable. Note that variables like 
+  cwnd\_, t\_seqno\_ are using variable tracing which is a function
+  supported by the OTcl lib. While variables like throughput,
+  reverse\_feedback use the XCPAgent class function trace\_var defined
+  in xcp-end-sys.cc. For more on variable tracing in \ns{} please read
+  section 3.4.3 in the ns manual at
+  http://www.isi.edu/nsnam/ns/doc/index.html  
+    
+    
+  And example of trace output at a xcp bottleneck router looks like below:
+  \begin{program}
+    Tq_ 0.0472859 0.025
+    queue_bytes_ 0.0472859 0
+    routerId_ 0.0472859 0
+    pos_fbk 0.053544 0
+    neg_fbk 0.053544 0
+    delta_throughput 0.053544 0
+    Thruput2 0.053544 60000
+    pos_fbk 0.054024 0
+    neg_fbk 0.054024 0
+    delta_throughput 0.054024 0
+    Thruput2 0.054024 60000
+    residue_pos_fbk_not_allocated 0.0638023 0
+    residue_neg_fbk_not_allocated 0.0638023 0
+    input_traffic_bytes_ 0.0638023 2480
+    avg_rtt_ 0.0638023 0.04
+  \end{program}
+  
+  Here the first field describes the name of the variable, the
+  second field gives the timestamp and the third field gives the
+  value of the variable. The XCPQueue class function \code{trace_var()}
+  is used to trace variables in the xcp queue.
+  
+  Additionally packet traces may be created in \ns{} using the following
+  tcl APIs:
+  \begin{program}
+    set f_all [open out.tr w]
+    $ns trace-all $f_all
+  \end{program}
+  
+  First open a file and then attach the file descriptor to the \ns{}
+  trace object such that a trace of each packet as it travels through
+  the network is logged and dumped into the output file.
+  
+  An example of such a file would look like:
+  \begin{program}
+    + 0.003 4 0 xcp 40 ------- 2 4.0 1.2 0 0
+    - 0.003 4 0 xcp 40 ------- 2 4.0 1.2 0 0
+    r 0.013016 4 0 xcp 40 ------- 2 4.0 1.2 0 0
+    + 0.013016 0 1 xcp 40 ------- 2 4.0 1.2 0 0
+    - 0.013016 0 1 xcp 40 ------- 2 4.0 1.2 0 0
+    r 0.023032 0 1 xcp 40 ------- 2 4.0 1.2 0 0
+    + 0.023032 1 0 ack 40 ------- 2 1.2 4.0 0 1
+    - 0.023032 1 0 ack 40 ------- 2 1.2 4.0 0 1
+    r 0.033048 1 0 ack 40 ------- 2 1.2 4.0 0 1
+    + 0.033048 0 4 ack 40 ------- 2 1.2 4.0 0 1
+    - 0.033048 0 4 ack 40 ------- 2 1.2 4.0 0 1
+    r 0.043064 0 4 ack 40 ------- 2 1.2 4.0 0 1
+    + 0.043064 4 0 xcp 1200 ------- 2 4.0 1.2 1 2
+    - 0.043064 4 0 xcp 1200 ------- 2 4.0 1.2 1 2
+    + 0.043064 4 0 xcp 1200 ------- 2 4.0 1.2 2 3
+    - 0.043544 4 0 xcp 1200 ------- 2 4.0 1.2 2 3
+  \end{program}
+
+  Lets try to read the first line:
+
+  \code{+ 0.003 4 0 xcp 40 ------- 2 4.0 1.2 0 0}
+  
+  + means a packet is enqueued in the queue (in node 4) as it hopped
+  between node 4 to node 0. You'll find traces showing packets enqued
+  (+) and then dequed (-) at the queue, after which it is transmitted
+  over the link to be received by the next node. packet
+  type is xcp and it is of size 40 bytes. The xcp flow has an id of 2
+  and the packet header has a source node/port id of 4.0 and dest
+  node/port id of 1.2 and the unique packet id is 0.
+    
+  \section{Test-suites for XCP}
+  \label{sec:test for xcp}
+  
+  The xcp test-suite uses 3 tests. The first one is similar to the one
+  we discussed in the earlier section. It consists of a dumb-bell
+  topology where 3 xcp flows share a bottleneck link. The second test
+  has a similar topology having 3 xcp and 1 tcp flow sharing the same
+  bottleneck. And finally the last test is built on Dina Katabi's
+  parking-lot experiment referred in her SIGCOMM'02 paper. It is a
+  downsized version of Dina's example. The test uses a 9-hop
+  link string topology. It has 10 long XCP flows that flow through the
+  entire length of the chain topology. Then it has 10 XCP flows that run
+  through each hop, starting at (n-1)th hop and ending at nth hop and so
+  on creating the intermittent flows. And finally there are long XCP
+  flows in the reverse direction, 
+  starting from the last (10th) node and ending in the first (1st) node.
+  There is a bottleneck at the middle of the chain topology. Thus the
+  third test employs a large and complex topology and shows the
+  utilization, queue length and packet drop values at every link.
+  
+
+  \section{Commands at a glance}
+  \label{sec:commands-xcp}
+  
+  Following is a list of commands used for xcp related simulation in ns.
+  \begin{flushleft}
+
+    \code{set xcp_src [new Agent/TCP/Reno/XCP]}\\
+    This command creates an XCP source agent.
+
+    \code{set xcp_dst [new Agent/TCPSink/XCPSink]}\\
+    This command creates an XCP sink.
+
+    \code{$ns duplex-link $R0 $R1 <BW>Mb <delay>ms XCP}\\
+    %$
+    This code creates a duplex link with specified bandwidth and link
+    delay using an XCP router between node R0 and R1.
+
+    \code{$xcp_queue set-link-capacity <bandwidth_in_bits_per_sec>}\\
+    %$
+    This command propagates the link bandwidth information to the xcp
+    queue which uses it for the router feedback calculation.
+
+    \code{ set tfile [open tfile w] } \\
+    \code{ $xcp_queue attach $tfile } \\
+    This Tcl command allows a file to be attached for tracing xcp queue
+    parameters. 
+    
+    \code{$xcp_src attach-trace <file-descriptor>} %$
+    \code{$xcp_src tracevar <var-to-traced>}\\
+    This command allows the xcp sources to trace variables.
+    
+    \code{$queue queue-sample-everyrtt $rtt_value}\\ %$
+    This command allows the user to set rtt interval values at which
+    variables like packet\_drops and queue lengths are measured at the
+    xcp queue.
+
+    \code{Queue/XCP set tcp_xcp_on_ 1}\\
+    This flag lets tcp and xcp flows to use the same xcp router. This
+    flag is a temporary fix and should go away when dynamic queue
+    weights come into effect.
+    
+  \end{flushleft}
+  %\end{document}

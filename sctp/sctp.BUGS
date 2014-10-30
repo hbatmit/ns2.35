@@ -1,0 +1,30 @@
+sctp.BUGS - List of known bugs in the NS-2 SCTP module.
+   Armando L. Caro Jr. <acaro@@cis,udel,edu>
+
+@(#) $Header: /cvsroot/nsnam/ns-2/sctp/sctp.BUGS,v 1.2 2005/10/07 05:58:29 tomh Exp $
+
+------------------------------------------------------------------------------
+
+- The "one heartbeat timer per association" functionality has a quirk due
+  to the one way it is coded. The problem is that since not much state is
+  maintained for HBs, an outstanding HB may be forgotten about if another
+  HB is sent to any destination before the outstanding HB gets acked or
+  times out. This behavior may cause some occasional quirks such as
+  incorrect RTT measurements, extended failure periods, etc. I'll need to
+  address this issue at a later point in time.
+
+- In ProcessSackChunk(), the T3Rtx timer is sometimes restarted for
+  destinations that have not acknowledged their first outstanding. The
+  code below assumes that if the timer isn't running, then the first
+  outstanding for that destination has been acked, but that isn't always
+  the case. Reported by Martin Duke <martin.duke@@boeing,com>
+
+      if(spCurrDestNodeData->iOutstandingBytes > 0 &&
+	 spCurrDestNodeData->eRtxTimerIsRunning == FALSE)
+        {
+	  StartT3RtxTimer(spCurrDestNodeData);
+        }
+
+  The fix is to either maintain a list of outstanding per destination, or
+  maintain a LowestOutstandingTsn variable in SctpDest_S. The latter seems
+  easier at this point, but I need to get around to doing it.

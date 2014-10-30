@@ -1,0 +1,428 @@
+%!
+%%BoundingBox: 54 593 451 737
+%%Title: sessionArch
+%%CreationDate: Thu Sep 11 16:15:16 1997
+%%Creator: Tgif-2.16-p12 by William Chia-Wei Cheng (william@cs.UCLA.edu)
+
+/tgifdict 6 dict def
+tgifdict begin
+
+/tgifellipsedict 6 dict def
+tgifellipsedict /mtrx matrix put
+
+/tgifellipse
+ { tgifellipsedict begin
+      /yrad exch def
+      /xrad exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      xrad yrad scale
+      0 0 1 0 360 arc
+      savematrix setmatrix
+   end
+ } def
+
+/tgifarrowtipdict 8 dict def
+tgifarrowtipdict /mtrx matrix put
+
+/tgifarrowtip
+ { tgifarrowtipdict begin
+      /dy exch def
+      /dx exch def
+      /h exch def
+      /w exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      dy dx atan rotate
+      0 0 moveto
+      w neg h lineto
+      w neg h neg lineto
+      savematrix setmatrix
+   end
+ } def
+
+/tgifcentertext { dup stringwidth pop 2 div neg 0 rmoveto } def
+
+end
+
+%%PageBoundingBox: 54 593 451 737
+tgifdict begin
+/tgifsavedpage save def
+
+1 setmiterlimit
+1 setlinewidth
+
+0 setgray
+
+72 0 mul 72 11.00 mul translate
+72 128 div 100 mul 100 div dup neg scale
+
+gsave
+
+% OVAL
+0 setgray
+gsave
+   newpath 125 225 25 25 tgifellipse stroke
+grestore
+
+% POLYGON/CLOSED-SPLINE
+0 setgray
+newpath
+   200 150 moveto
+   200 300 lineto
+   300 350 lineto
+   300 100 lineto
+closepath
+gsave
+grestore
+gsave
+   stroke
+grestore
+
+% RCBOX
+0 setgray
+gsave
+   newpath
+      464 100 moveto
+      480 100 480 150 16 arcto 4 {pop} repeat
+      480 134 lineto
+      480 150 400 150 16 arcto 4 {pop} repeat
+      416 150 lineto
+      400 150 400 100 16 arcto 4 {pop} repeat
+      400 116 lineto
+      400 100 480 100 16 arcto 4 {pop} repeat
+   closepath stroke
+grestore
+
+% RCBOX
+0 setgray
+gsave
+   newpath
+      654 100 moveto
+      670 100 670 150 16 arcto 4 {pop} repeat
+      670 134 lineto
+      670 150 550 150 16 arcto 4 {pop} repeat
+      566 150 lineto
+      550 150 550 100 16 arcto 4 {pop} repeat
+      550 116 lineto
+      550 100 670 100 16 arcto 4 {pop} repeat
+   closepath stroke
+grestore
+
+% OVAL
+0 setgray
+gsave
+   newpath 775 325 25 25 tgifellipse stroke
+grestore
+
+% OVAL
+0 setgray
+gsave
+   newpath 775 225 25 25 tgifellipse stroke
+grestore
+
+% OVAL
+0 setgray
+gsave
+   newpath 775 125 25 25 tgifellipse stroke
+grestore
+
+% RCBOX
+0 setgray
+gsave
+   newpath
+      654 200 moveto
+      670 200 670 250 16 arcto 4 {pop} repeat
+      670 234 lineto
+      670 250 550 250 16 arcto 4 {pop} repeat
+      566 250 lineto
+      550 250 550 200 16 arcto 4 {pop} repeat
+      550 216 lineto
+      550 200 670 200 16 arcto 4 {pop} repeat
+   closepath stroke
+grestore
+
+% RCBOX
+0 setgray
+gsave
+   newpath
+      464 300 moveto
+      480 300 480 350 16 arcto 4 {pop} repeat
+      480 334 lineto
+      480 350 400 350 16 arcto 4 {pop} repeat
+      416 350 lineto
+      400 350 400 300 16 arcto 4 {pop} repeat
+      400 316 lineto
+      400 300 480 300 16 arcto 4 {pop} repeat
+   closepath stroke
+grestore
+
+% RCBOX
+0 setgray
+gsave
+   newpath
+      654 300 moveto
+      670 300 670 350 16 arcto 4 {pop} repeat
+      670 334 lineto
+      670 350 550 350 16 arcto 4 {pop} repeat
+      566 350 lineto
+      550 350 550 300 16 arcto 4 {pop} repeat
+      550 316 lineto
+      550 300 670 300 16 arcto 4 {pop} repeat
+   closepath stroke
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      300 125 moveto
+      0 100 atan dup cos 8 mul 400 exch sub
+      exch sin 8 mul 125 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      400 125 8 3 100 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      400 125 8 3 100 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      480 125 moveto
+      0 70 atan dup cos 8 mul 550 exch sub
+      exch sin 8 mul 125 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      550 125 8 3 70 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      550 125 8 3 70 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      670 125 moveto
+      0 80 atan dup cos 8 mul 750 exch sub
+      exch sin 8 mul 125 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      750 125 8 3 80 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      750 125 8 3 80 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      300 225 moveto
+      0 250 atan dup cos 8 mul 550 exch sub
+      exch sin 8 mul 225 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      550 225 8 3 250 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      550 225 8 3 250 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      671 225 moveto
+      0 80 atan dup cos 8 mul 751 exch sub
+      exch sin 8 mul 225 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      751 225 8 3 80 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      751 225 8 3 80 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      300 325 moveto
+      0 100 atan dup cos 8 mul 400 exch sub
+      exch sin 8 mul 325 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      400 325 8 3 100 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      400 325 8 3 100 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      480 325 moveto
+      0 70 atan dup cos 8 mul 550 exch sub
+      exch sin 8 mul 325 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      550 325 8 3 70 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      550 325 8 3 70 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      671 325 moveto
+      0 80 atan dup cos 8 mul 751 exch sub
+      exch sin 8 mul 325 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      751 325 8 3 80 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      751 325 8 3 80 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      149 225 moveto
+      0 50 atan dup cos 8 mul 199 exch sub
+      exch sin 8 mul 225 exch sub lineto
+   stroke
+grestore
+gsave
+   newpath
+      199 225 8 3 50 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      199 225 8 3 50 0 tgifarrowtip
+   closepath fill
+grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      125 231 moveto (S) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      775 132 moveto (R1) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      775 232 moveto (R2) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      775 332 moveto (R3) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      440 122 moveto (Loss) tgifcentertext show
+      440 141 moveto (Module) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      440 322 moveto (Loss) tgifcentertext show
+      440 341 moveto (Module) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      610 122 moveto (Delay) tgifcentertext show
+      610 141 moveto (Module) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      250 232 moveto (Replicator) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      610 222 moveto (Delay) tgifcentertext show
+      610 241 moveto (Module) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      610 322 moveto (Delay) tgifcentertext show
+      610 341 moveto (Module) tgifcentertext show
+   grestore
+
+grestore
+tgifsavedpage restore
+end
+%MatchingCreationDate: Thu Sep 11 16:15:16 1997

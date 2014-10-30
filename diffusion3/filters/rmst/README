@@ -1,0 +1,71 @@
+Rmst Filter README
+June 12, 2003
+
+Fred Stann
+fstann@usc.edu
+
+The code in this directory constitutes the initial release of the Rmst
+Filter. The Rmst filter provides guranteed delivery and fragmentation
+/ reassembly of large blobs. Rmst has had limited deployment in an
+actual sensor network. To that extent the Rmst filter should be
+considered experimental.  It has been "tuned" to the environment in
+which it was deployed (the ISI testbed). New environments may present
+traffic scenerios that cause Rmst to have sub-optimal behavior. The
+best way to receive help debugging such scenerios is to run the filter
+with the "-d 10" command line option and capture the DiffPrint screen
+output at key nodes (like sources and sinks), then email them to
+fstann@usc.edu along with a problem description file.
+
+Major Caveats:
+
+Rmst has only been tested in conjunction with the "two_phase_pull"
+routing algorithm in Diffusion.
+
+This initial release does not have ns-2 support. A release with ns-2
+support should follow shortly.
+
+Rmst has only been tested with a single sink.
+
+This release is only intended to run on top of an ARQ MAC layer like
+S-MAC that provides hop-by-hop repair.  Rmst "caching mode" support
+(in which each node caches fragments rather than just sources and
+sinks) is not available in this release. Future releases will
+re-enable this feature which was present in the simulation code used
+during research and development.
+
+Rmst has a coarse grained pacing mechanism for applications. After
+sources call sendRmst, they should not send another large blob until
+they get an RMST_CONT message from the filter.
+
+
+Users may need to manually adjust certain parameters to tailor Rmst to
+their particular environment. Down the road these parameters may
+become self adjusting or adaptive. The most important are enumerated
+here:
+
+1.) Refer to the Diffusion API and sample rmst application code in
+  this release. You will note that the call to dr_->sendRmst has a
+  third parameter called "fragment_size."  Different sensor nets have
+  different MTU limitations.  Even MAC layers that do
+  fragmentation/reassembly can only handle a modest sized payload.
+  You must adjust fragment_size such that the combination of all your
+  attributes, packet overhead, and payload do not exceed your network
+  MTU. Rmst will break up any blob that is larger than the
+  fragment_size into multiple fragments.
+
+2.) In rmst_filter.hh you will find some tunable parameters. Most
+  notable is the "SEND_INTERVAL." This dictates how often packets are
+  injected into the sensor network at the source.  The fragment send
+  rate is not controlled by the application when sending a large
+  blob. Rmst must interleave NAK responses and new packets while
+  pacing the overall load that it presents to the network. This rate
+  could be made adaptive given the addition of some sort of
+  backpressure mechanism to diffusion.
+
+3.) Rmst has a coarse grained blacklisting mechanism whereby links
+  that deliver a low percentage of the packets placed on them are
+  eliminated from contention during path discovery. This percentage is
+  tunable in rmst_filter.hh.
+
+Thanks,
+Fred Stann

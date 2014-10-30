@@ -1,0 +1,9 @@
+Neither ns-2 nor nam-1 is developed on (nor for) the win32 platform. However from ns release 2.26 and later, the package has been tested to build and validate under cygwin for win9X/2000/XP. Please see "Tips for building ns on windows" in the ns build page at http://www.isi.edu/nsnam/ns/ns-build.html for detailed instructions to build ns in windows.
+Also note that from ns-2.26 and later we donot test it to build/validate under windows using visual C++. 
+
+Before you build, notice that you can get nam and ns binaries for windows at
+http://www.isi.edu/nsnam/dist/binary/. If you only want to do tcl scripting in
+ns, they were probably what you want.
+
+
+

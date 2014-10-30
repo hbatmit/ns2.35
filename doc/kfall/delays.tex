@@ -1,0 +1,181 @@
+%
+% personal commentary:
+%        DRAFT DRAFT DRAFT
+%        - KFALL
+%
+\section{\shdr{Delays and Links}{delay.cc}{sec:delays}}
+
+Delays represent the time required for a packet to
+traverse a link.
+A special form of this object (``dynamic link'')
+also captures the possibility of a link failure.
+The amount of time required for a packet to traverse a link
+is defined to be $s/b + d$ where $s$ is the packet size
+(as recorded in its IP header), $b$ is the speed of the link
+in bits/sec, and $d$ is the link delay in seconds.
+The implementation of link delays is closely associated with
+the blocking procedures described for Queues in
+Section\ref{sec:qblock}.
+
+\subsection{\shdr{The LinkDelay Class}{delay.cc}{sec:delayclass}}
+
+The \code{LinkDelay} class is derived from a
+\code{Connector} base class.
+The following definitions are provided in \code{delay.cc}
+for the \code{DelayLink} object:
+\begin{small}
+\begin{verbatim}
+        class LinkDelay : public Connector {
+         public:
+                LinkDelay();
+                void recv(Packet* p, Handler*);
+		void send(Packet* p, Handler*);
+		double delay();    /* line latency on this link */
+		double bandwidth(); /* bandwidth on this link */
+		double txtime(Packet* p); /* time to send pkt p on this link */
+         protected:
+                double bandwidth_; /* bandwidth of underlying link (bits/sec) */
+                double delay_;     /* line latency */
+                Event intr_;
+        };
+
+\end{verbatim}
+\end{small}
+
+The \code{recv} function overrides the \code{Connector} base class version.
+It is defined as follows:
+\begin{small}
+\begin{verbatim}
+        void LinkDelay::recv(Packet* p, Handler* h)
+        {    
+        	double txt = txtime(p);
+        	Scheduler& s = Scheduler::instance();
+        	if (dynamic_) {
+        		Event* e = (Event*)p;
+        		e->time_ = s.clock() + txt + delay_; 
+        		itq_->enque(p);
+        		schedule_next();
+        	} else {
+        		s.schedule(target_, p, txt + delay_);
+        	}       
+        	/*XXX only need one intr_ since upstream object should
+        	 * block until it's handler is called
+        	 *       
+        	 * This only holds if the link is not dynamic.  If it is, then
+        	 * the link itself will hold the packet, and call the upstream
+        	 * object at the appropriate time.  This second interrupt is
+        	 * called inTransit_, and is invoked through schedule_next()
+        	 */      
+        	s.schedule(h, &intr_, txt);
+        }   
+
+\end{verbatim}
+\end{small}
+For ``non-dynamic'' links,
+this method operates by receiving a packet and scheduling two
+events.
+Assume these two events are called $E_1$ and $E_2$, and that
+event $E_1$ is scheduled to occur before $E_2$.
+$E_1$ is scheduled to occur when the upstream node attached to this
+delay element has completed sending the current packet
+(which takes time equal to the packet size divided by the link bandwidth).
+$E_1$ is usually associated with a \code{Queue} object, and will
+cause it to (possibly) become unblocked (see section \ref{sec:qblock}).
+$E_2$ represents the packet arrival event at the downstream neighbor
+of the delay element.
+Event $E_2$ occurs a number of seconds later than $E_1$ equal to the
+link delay.
+
+\subsection{\shdr{The Otcl Link Class}{ns-link.tcl}{sec:nslink}}
+
+The \code{Link} class is one of a handful of classes implemented
+entirely in Otcl.  It has a subclass called \code{SimpleLink}
+used frequently in the simulator.
+The OTcl \code{SimpleLink} class uses the C++ \code{LinkDelay} class
+to simulate packet delivery delays as described above.
+The \code{Link} class is defined as follows:
+\begin{small}
+\begin{verbatim}
+        Class Link
+        Link instproc init { src dst } {
+                $self next
+                $self instvar trace_ fromNode_ toNode_
+                set fromNode_ $src
+                set toNode_ $dst
+                set trace_ ""
+        }
+
+        Link instproc head {} {
+                $self instvar head_
+                return $head_
+        }
+
+        Link instproc queue {} {
+                $self instvar queue_
+                return $queue_
+        }
+
+        Link instproc link {} {
+                $self instvar link_
+                return $link_
+        }
+\end{verbatim}
+\end{small}
+This class really just holds enough state to describe what nodes the two
+endpoints of the link are attached to and also hold references to
+C++ \code{Queue} and \code{LinkDelay} objects which are used by classes
+derived from \code{Link}, such as \code{SimpleLink}.
+The \code{head\_} member indicates the first object to receive
+a packet that traverses down the link.
+Orinarily this would be the \code{Queue} object, but
+sometimes it is some form of trace object (see Section\ref{sec:trace}).
+
+
+\subsection{\shdr{The Otcl SimpleLink Class}{ns-link.tcl}{sec:nslink}}
+
+The Otcl class \code{SimpleLink} implements a simple point-to-point
+link with an associated queue and
+delay.\footnote{The current
+version also includes an object to examine the
+network layer ``ttl'' field and discard packets if the
+field reaches zero.}
+It is derived from the base Otcl class \code{Link} as follows:
+\begin{small}
+\begin{verbatim}
+        Class SimpleLink -superclass Link
+        SimpleLink instproc init { src dst bw delay q { lltype "DelayLink" } } {
+                $self next $src $dst
+                $self instvar link_ queue_ head_ toNode_ ttl_
+                ...
+                set queue_ $q
+                set link_ [new Delay/Link]
+                $link_ set bandwidth_ $bw
+                $link_ set delay_ $delay
+
+                $queue_ target $link_
+                $link_ target [$toNode_ entry]
+
+                ...
+                # XXX
+                # put the ttl checker after the delay
+                # so we don't have to worry about accounting
+                # for ttl-drops within the trace and/or monitor
+                # fabric
+                #
+                set ttl_ [new TTLChecker]
+                $ttl_ target [$link_ target]
+                $link_ target $ttl_
+        }
+\end{verbatim}
+\end{small}
+The ``init'' proc listed here is the Otcl analogue of a C++
+constructor.
+Thus, when a \code{SimpleLink} object is created,
+new \code{Delay/Link} and \code{TTLChecker} objects are
+also created.
+Note that a \code{Queue} object must have already been created.
+
+There are two additional methods implemented (in OTcl) as part
+of the \code{SimpleLink} class: \code{trace} and \code{init-monitor}.
+These functions are further described in the section about tracing
+(see Section\ref{sec:trace}).

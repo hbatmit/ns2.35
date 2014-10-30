@@ -1,0 +1,1180 @@
+Emacs BibTeX mode:
+LFD		bibtex-next-field	TAB	bibtex-find-text
+ESC C-e		end-of-bibtex-entry	ESC C-a	beginning-of-bibtex-entry
+C-c C-o		bibtex-remove-OPT	C-c C-b	bibtex-entry
+C-c $		ispell-bibtex-entry	C-c C-d	bibtex-empty-field
+C-c C-k		bibtex-kill-optional-field
+C-c C-n		bibtex-pop-next		C-c C-p	bibtex-pop-previous
+C-c C-c		bibtex-clean-entry	C-c "	bibtex-remove-double-quotes
+
+Article		C-c C-e C-a		Book		C-c C-e C-b
+InBook		C-c C-e TAB		InCollection	C-c C-e i
+InProceedings	C-c C-e C-c		InProceedings	C-c C-e I
+Manual		C-c C-e RET		MastersThesis	C-c C-e m
+Misc		C-c C-e M		PhdThesis	C-c C-e C-p
+preamble	C-c C-e P		Proceedings	C-c C-e p
+string		C-c C-e C-s		TechReport	C-c C-e C-t
+Unpublished	C-c C-e C-u
+
+STANDARD MACROS DEFINED IN plain.bst are:
+MACRO {jan} {"January"}			MACRO {jul} {"July"}
+MACRO {feb} {"February"}		MACRO {aug} {"August"}
+MACRO {mar} {"March"}			MACRO {sep} {"September"}
+MACRO {apr} {"April"}			MACRO {oct} {"October"}
+MACRO {may} {"May"}			MACRO {nov} {"November"}
+MACRO {jun} {"June"}			MACRO {dec} {"December"}
+
+MACRO {acmcs} {"ACM Computing Surveys"}
+MACRO {acta} {"Acta Informatica"}
+MACRO {cacm} {"Communications of the ACM"}
+MACRO {ibmjrd} {"IBM Journal of Research and Development"}
+MACRO {ibmsj} {"IBM Systems Journal"}
+MACRO {ieeese} {"IEEE Transactions on Software Engineering"}
+MACRO {ieeetc} {"IEEE Transactions on Computers"}
+MACRO {ieeetcad}
+MACRO {ipl} {"Information Processing Letters"}
+MACRO {jacm} {"Journal of the ACM"}
+MACRO {jcss} {"Journal of Computer and System Sciences"}
+MACRO {scp} {"Science of Computer Programming"}
+MACRO {sicomp} {"SIAM Journal on Computing"}
+MACRO {tocs} {"ACM Transactions on Computer Systems"}
+MACRO {tods} {"ACM Transactions on Database Systems"}
+MACRO {tog} {"ACM Transactions on Graphics"}
+MACRO {toms} {"ACM Transactions on Mathematical Software"}
+MACRO {toois} {"ACM Transactions on Office Information Systems"}
+MACRO {toplas} {"ACM Transactions on Programming Languages and Systems"}
+MACRO {tcs} {"Theoretical Computer Science"}
+
+@preamble{ "\def\url#1{\texttt{{\small #1}}}" }
+%string{cacm = "Communications of the ACM"}
+@string{acmcr = "ACM Computing Reviews"}
+@string{acmcs = "ACM Computing Surveys"}
+@string{cn = "Computer Networks"}
+@string{cnis = "Computer Networks and {ISDN} Systems"}
+%string{jacm = "Journal of the ACM"}
+@string{sigcomm = "ACM SIG Computer Communications Review"}
+
+% Proceedings
+@string{ proceedings = "Proceedings of the"}
+@string{ p-sigcomm = proceedings # "~ACM SIGCOMM"}
+@string{ p-infocom = "IEEE~" # proceedings # "~INFOCOM"}
+@string{ p-i3cn = proceedings # "~International Conference on Computer
+		  Communications and Networks"}
+@string{ p-simulation = "Annual Simulation Symposium"}
+@string{ p-swtesting = proceedings # "~International Symposium on
+		  Software Testing and Analysis"}
+
+
+@string{ joi = "Internetworking: Research and Experience"}
+@string{ ieeecomm = "IEEE Transactions on Communications"}
+@string{ ieeenet = "IEEE Network"}		  
+@string{ ton = "IEEE/ACM Transactions on Networking"}
+@string{ ieeejsac = "IEEE Journal on Selected Areas in Communications"}
+@string{ jpadc = "Journal of Parallel and Distributed Computation"}
+@string{ spe = "Software---Practise and Experience"}
+@string{ jsys = "Journal of Systems Software"}
+@string{ ieeeproceedings = "Proceedings of the IEEE"}
+@string{ acmccr = "ACM Computer Communications Review"}
+
+@string{ pstv = "Protocol Specification, Testing, and Verification"}
+@string{ lncs = "Lecture Notes in Computer Science"}
+@string{ elseiver = "Elseiver Science Publishing B.V. (North-Holland)"}
+
+string{ sigcomm = proceedings # "~ACM SIGCOMM"}
+string{ infocom = "IEEE~" # proceedings # "~INFOCOM"}
+@string{ i3cn = proceedings # "~International Conference on Computer
+		  Communications and Networks"}
+@string{ simulation = "Annual Simulation Symposium"}
+@string{ swtesting = proceedings # "~International Symposium on
+		  Software Testing and Analysis"}
+
+@STRING{rfceds = "USC/Information Sciences Institute"}
+
+
+@Misc{nam,
+  crossref =	 "McCaXX:nam"
+}
+
+@Misc{ns,
+  crossref =	 "McCaXX:ns"
+}
+
+
+@Article{Alae94:Design,
+  author = 	 "Alaettino\u{g}lu, C. and Shankar, A.U. and
+		  Dussa-Zeiger, K. and Matta, I.",
+  title = 	 "Design and Implementation of {MaRS}: A Routing Testbed",
+  journal =	 joi,
+  year =	 1994,
+  volume =	 5,
+  pages =	 "17--41"
+}
+
+@InProceedings{Brak94:TCP,
+  author = 	 "Brakmo, L.S. and O'Malley, S. and Peterson, L.L.",
+  title = 	 "{TCP} Vegas: New Techniques for Congestion Detection
+		  and Avoidance",
+  pages =	 "24--35",
+  booktitle =	 p-sigcomm,
+  year =	 1994,
+  month =	 oct
+}
+
+@Unpublished{Almq91:Ruminations,
+  author = 	 "Almquist, P.",
+  title = 	 "Ruminations on Route Leaking",
+  note = 	 "Work in Progress;  Document is available from the author",
+  year =	 1991,
+  month =	 jul,
+  summary =	 "The paper discusses some issues related to route
+                  leaking between different routing domains.
+                  Different models of route exchange are considered,
+                  as well as summarization, control, route attributes etc."
+}
+
+@Unpublished{Almq93:Ruminations,
+  author = 	 "Almquist, P.",
+  title = 	 "Ruminations on the Next Hop",
+  note = 	 "Work in Progress; Document is available from the author",
+  year =	 1993,
+  month =	 mar,
+  summary =	 "The paper is concerned with how a router arbitrates
+                  between the multiple routing protocols that compute
+                  routes to any particular destination, and how it
+                  arbitrates between them to compute its next hop.
+                  This document, and its companion document,
+                  \cite{Almq91:Ruminations} was written up to better
+                  understand gateway design by the router requirements
+                  working group."
+}
+
+@InProceedings{Barf98:WebWorkload,
+  author = 	 {Paul Barford and Mark Crovella},
+  title = 	 {Generating Representative Web Workloads for Network and Server Peformance Evaluation},
+  booktitle = 	 proceedings # "~ACM SIGMETRICS",
+  pages =	 {151-160},
+  year =	 1998,
+  month =	 jun
+}
+
+@InProceedings{Cao97:CacheConsistency,
+  author = 	 {Pei Cao and Chengjie Liu},
+  title = 	 {Maintaining Strong Cache Consistency in the {World-Wide Web}},
+  booktitle = 	 proceedings # "~IEEE ICDCS",
+  pages =	 {12-21},
+  year =	 1997,
+  month =	 may
+}
+
+@InProceedings{BarN90:Topology,
+  author =       "Bar-Noy, A. and Gopal, M.",
+  title =        "Topology Distribution Cost vs. Efficient Routing in
+                  Large Networks",
+  pages =        "242--252",
+  year =         1990,
+  booktitle =	 p-sigcomm,
+  month =        sep
+}
+
+@Article{Bert82:Dynamic,
+  author = 	 "Bertsekas, D.P.",
+  title = 	 "Dynamic Behavior of Shortest Path Routing
+		  Algorithms for Communication Networks",
+  journal =	 "IEEE Transactions on Automatic Control",
+  year =	 1982,
+  volume =	 "{AC-27}",
+  number =	 1,
+  pages =	 "60--74",
+  month =	 feb,
+  annote =	 "*"
+}
+
+@TechReport{Brak94a:TCP,
+  author = 	 "Brakmo, L.S. and O'Malley, S. and Peterson, L.L.",
+  title = 	 "{TCP} Vegas: New Techniques for Congestion Detection
+		  and Avoidance",
+  institution =  "Department of Computer Science, The University of Arizona",
+  year = 	 1994,
+  number =	 "TR 94 04",
+  address =	 "Tucson, AZ 85721",
+  month =	 feb,
+  keyword =	 "Network/Transport"
+}
+
+@InProceedings{Brak96:Experiences,
+  author = 	 "Brakmo, L.S. and Peterson, L.L.",
+  title = 	 "Experiences with Network Simulation",
+  booktitle =	 proceedings # "~ACM SIGMETRICS",
+  year =	 1996,
+  month =	 may
+}
+
+@Article{Brow88:Calendar,
+  author = 	 "Brown, R.",
+  title = 	 "Calendar Queues: A Fast {O(1)} Priority Queue
+                  Implementation for the Simulation Event Set Problem",
+  journal = 	 cacm,
+  year = 	 1988,
+  volume =	 31,
+  number =	 10,
+  month =	 oct,
+  pages =	 "1220--1227"
+}
+
+@TechReport{Brya77:Simulation,
+  author = 	 "Bryant, R.E.",
+  title = 	 "Simulation of Packet Communication Architecture
+		  Computer Systems",
+  institution =  "Massachusetts Institute of Technology",
+  year = 	 1977,
+  number =	 "MIT/LCS/TR-188"
+}
+
+@InProceedings{CBT,
+  crossref =	 "Ball93:Architecture"
+}
+
+@InProceedings{Cace91:Characteristics,
+  author = 	 "C\`aceres, R. and Danzig, P. and Jamin, S. and
+		  Mitzel, D.",
+  title = 	 "Characteristics of Wide-area {TCP/IP} Conversations",
+  pages =	 "101--112",
+  booktitle =	 p-sigcomm,
+  year =	 1991,
+  month =	 sep
+}
+
+
+@InProceedings{Ches89:XTP,
+  author = 	 "Chesson, G.",
+  title = 	 "{XTP/PE} Design Considerations",
+  booktitle = 	 "Protocols for High-Speed Networks",
+  editor =	 "Rudin, H. and Williamson, R.",
+  year =	 1989,
+  organization = "IFIP",
+  publisher =	 elseiver,
+  pages =	 "27--33"
+}
+
+@InProceedings{Chin93:Dynamics,
+  author = 	 "Chinoy, B.",
+  title = 	 "Dynamics of {I}nternet Routing Information",
+  pages =	 "45--52",
+  year =	 1993,
+  booktitle =	 p-sigcomm,
+  annote =	 "The paper comparisons the size of the network
+		  failure as a cluster, and its relation to the
+		  distance of its occurrence."
+}
+
+@Misc{ChriXX:Nachos,
+  author =	 "Christopher, W.A. and Procter, S.J. and Anderson, T.E.",
+  title =	 "The Nachos Instructional Operating System",
+  howpublished = "Nachos is available at
+		  \url{ftp://sprite.berkeley.edu/nachos/}"
+}
+
+@InProceedings{Clar88:Design,
+  author = 	 "Clark, D.D.",
+  title = 	 "The Design Philosophy of the {DARPA} {I}nternet Protocols",
+  booktitle = 	 p-sigcomm,
+  year =	 1988,
+  pages =	 "106--114"
+}
+
+@InProceedings{Clar90:Architectural,
+  author = 	 "Clark, D.D. and Tennenhouse, D.L.",
+  title = 	 "Architectural Considerations for a New Generation of
+                  Protocols",
+  booktitle = 	 p-sigcomm,
+  year =	 1990,
+  pages =	 "200--208",
+}
+
+@InProceedings{Clar92:Supporting,
+  author = 	 "Clark, D.D. and Shenker, S. and Zhang, L.",
+  title = 	 "Supporting Real-time Applications in an Integrated
+		  Services Packet Network: Architecture and Mechanism",
+  pages =	 "14--26",
+  booktitle =	 p-sigcomm,
+  year =	 1992,
+  month =	 aug
+}
+
+@Article{Colt89:OSPF,
+  author = 	 "Coltun, R.",
+  title = 	 "The {OSPF} Routing Protocol",
+  key =		 "COL89",
+  journal =	 "ConneXions: The Interoperability Report",
+  year =	 1989,
+  volume =	 3,
+  number =	 8,
+  pages =	 "19--25",
+  month =	 aug
+}
+
+@Article{Dala78:Reverse,
+  author = 	 "Dalal, Y.K. and Metcalfe, R.M.",
+  title = 	 "Reverse Path Forwarding of Broadcast Packets",
+  journal = 	 cacm,
+  year = 	 1978,
+  volume =	 21,
+  number =	 12,
+  month =	 dec,
+  pages =	 "1040-1048"
+}
+
+@TechReport{Danz91:tcplib,
+  author = 	 "Danzig, P. and Jamin, S.",
+  title = 	 "tcp\-lib: A Library of {TCP/IP} Traffic
+		  Characteristics",
+  institution =  "University of Southern California",
+  year = 	 1991,
+  number =	 "CS-SYS-91-01",
+  address =	 "Networks and Distributed Systems Laboratory,
+		  Department of Computer Science",
+  month =	 oct,
+  note =	 "Available at \url{ftp://catarina.usc.edu/pub/jamin/tcplib}"
+}
+
+@Article{Deer90:Multicast,
+  author = 	 "Deering, S. and Cheriton, D.R.",
+  title = 	 "Multicast Routing in Datagram Internetworks and
+                  Extended {LAN}s",
+  journal = 	 tocs,
+  year = 	 1990,
+  volume =	 8,
+  number =	 2,
+  month =	 may,
+  pages =	 "85--110",
+  summary =	 "2 key ideas are ``efficient multi-destination
+                  delivery'', and ``robust unknown destination
+                  delivery''.  Multicast groups as the indirection
+                  between sources and group members,  Reverse Path
+                  Forwarding for data delivery, routing protocols, DV
+                  and LS to detect group members.",
+  keyword =	 "Routing/multicast"
+}
+
+@InProceedings{Deer94:Architecture,
+  author = 	 "Deering, S. and Estrin, D. and Farinacci, D. and
+		  Jacobson, V. and Liu, C-G. and Wei, L.",
+  title = 	 "An Architecture for Wise-area Multicast ROuting",
+  pages =	 "126--135",
+  booktitle =	 p-sigcomm,
+  year =	 1994,
+  month =	 sep,
+  annote =	 "PIM",
+  summary =	 "See Deer94a:Architecture"
+}
+
+@TechReport{Deer94a:Architecture,
+  author = 	 "Deering, S. and Estrin, D. and Farinacci, D. and
+		  Jacobson, V. and Liu, Ching-{G}ung and Wei, L.",
+  title = 	 "An Architecture for Wise-area Multicast ROuting",
+  institution =  "Computer Science Department, University of Southern California",
+  year = 	 1994,
+  number =	 "USC-SC-94-565",
+  address =	 "Los Angeles, CA 90089.",
+  summary =	 "Protocol Independent Multicast: A combination of
+                  Dense Mode DVMRP-like multicast for local groups,
+                  and Sparse Mode, Core-Based-Tree-like multicast for
+                  wide area multicast groups",
+  keyword =	 "Routing/multicast"
+}
+
+@Article{Deme90:Analysis,
+  author = 	 "Demers, A. and Keshav, S. and Shenker, S.",
+  title = 	 "Analysis and Simulation of a Fair Queueing Algorithm",
+  journal =	 joi,
+  year =	 1990,
+  volume =	 1,
+  number =	 1,
+  pages =	 "3--26",
+  month =	 jan,
+  summary =	 "bit-wise implementation of weighted fair queueing,
+                  with simulation and analysis.",
+  keyword =	 "Network/intserv"
+}
+
+@InProceedings{Math96:Forward,
+  author =	 "Mathis, M. and Mahdavi, J.",
+  title =	 "Forward Acknowledgement: Refining {TCP} Congestion Control",
+  booktitle =	 p-sigcomm,
+  year =	 1996,
+  month =	 aug
+}
+
+@Article{Dijk59:Note,
+  author = 	 "Dijkstra, E. W.",
+  title = 	 "A Note on Two Problems in Connection with Graphs",
+  journal =	 "Numerical Mathematics",
+  year =	 1959,
+  volume =	 1,
+  pages =	 "269--271"
+}
+
+@Article{Doer96:Routing,
+  author = 	 "Doeringer, W. and Karjoth, G. and Nassehi, M.",
+  title = 	 "Routing on Longest-Matching Prefixes",
+  journal = 	 ton,
+  year = 	 1996,
+  volume =	 4,
+  number =	 1,
+  month =	 feb,
+  pages =	 "86--97",
+  abstract =	 "This article describes the Dynamic Prefix Tries - a
+                  novel data structure with algorithms for insertion,
+                  deletion and retrieval to build and maintain a
+                  dynamic database of binary keys of arbitrary
+                  length. These tries extend the concepts of compact
+                  digital (Patricia) tries to support the storage of
+                  prefixes and to guarantee retrieval times at most
+                  linear in the length of the input key irrespective
+                  of the trie size, even when searching for
+                  longest-matching prefixes. The new design permits
+                  very efficient, simple and non-recursive
+                  implementations of small code size and minimal
+                  storage requirements. Insert and delete operations
+                  have strictly local effects, and their particular
+                  sequence is irrelevant for the structure of the
+                  resulting trie, thus maintaining at all times the
+                  desired storage and computational efficiency. The
+                  algorithms have been successfully employed in
+                  experimental communication systems and products for
+                  a variety of networking functions such as address
+                  resolution, maintenance and verification of access
+                  control lists, and high-performance routing tables
+                  in operating system kernels",
+  keyword =	 "Trie, binary trie, Patricia trie, dynamic prefix
+                  trie, DP-Trie, routing table, address prefixes,
+                  longest matching prefix, searches, pattern matching,
+                  dictionary, address resolution, access control
+                  lists.",
+  comments =	 "Talks about patricia trees for route lookup
+                  algorithms.  Suggests modifications for delete
+                  operations.  Compares via simulation the operation
+                  of patricia for fixed length keys with AVL balanced trees."
+}
+
+@Article{Dupu90:NEST,
+  author = 	 "Dupuy, A. and Schwartz, J. and Yemini, Y. and Bacon, D.",
+  title = 	 "{NEST}: A Network Simulation and Prototyping Method",
+  journal =	 cacm,
+  year =	 1990,
+  volume =	 33,
+  number =	 10,
+  pages =	 "64--74",
+  month =	 oct
+}
+
+@TechReport{Estr91:Protocol,
+  author = 	 "Estrin, D. and Breslau, L. and Zhang, L.",
+  title = 	 "Protocol Mechanisms for Adaptive Routing in Global
+		  Multimedia Internets",
+  institution =  "University of Southern California",
+  year = 	 1991,
+  number =	 "CS-SYS-91-04",
+  month =	 nov
+}
+
+@TechReport{Fall95:Simulation-Based,
+  author = 	 "Fall, K. and Floyd, S.",
+  title = 	 "Simulation-based Comparisons of {T}ahoe, {R}eno, and
+		  {SACK} {TCP}",
+  institution =  "Lawrence Berkeley Labs",
+  year = 	 1995,
+  month =	 dec,
+  note =	 "Available at \url{ftp://ftp.ee.lbl.gov/papers/sacks.ps.Z}"
+}
+
+@Article{Fall96:Simulation-Based,
+  author = 	 "Fall, K. and Floyd, S.",
+  title = 	 "Simulation-based Comparisons of {T}ahoe, {R}eno, and
+		  {SACK} {TCP}",
+  journal =	 sigcomm-ccr,
+  year =	 1996,
+  volume =	 26,
+  number =	 3,
+  pages =	 "5--21",
+  month =	 jul,
+  summary =	 " A simulation based comparison of SACK in TCP
+                  against Reno and Tahoe flavours in ns.  It shwos
+                  that Reno outperforms Tahoe with 1-packet loss, and
+                  is comparable to SACK.  With 2 packet loss in a
+                  single window, Reno waits for a retransmit timeout
+                  and then goes into slow start.   A variant of Reno
+                  that stays in the fast retransmit phase performs as
+                  well as SACK.  With 3 packet losses in a window,
+                  Reno goes into slow start, while the variant
+                  sputters and then recovers, and SACK goes along
+                  swimmingly. (Hows that for a technical summary? :-)
+                  With multiple packet drops, SACK clearly performs
+                  better than the other protocols.",
+  keyword =	 "Network/real-time"
+}
+
+@InProceedings{Floy93:Synchronization,
+  author = 	 "Floyd, S. and Jacobson, V.",
+  title = 	 "The Synchronization of Periodic Routing Messages",
+  booktitle =	 p-sigcomm,
+  pages =	 "33--44",
+  year =	 1993,
+  month =	 sep
+}
+
+@InProceedings{BPF93,
+  author =	"McCanne, S. and Jacobson, V.",
+  title =	"The BSD Packet Filter: A New Architecture for User-level Packet Capture",
+  pages =	"259--269",
+  year =	1993,
+  month =	jan
+}
+
+@Article{Floy94:Synchronisation,
+  author = 	 "Floyd, S. and Jacobson, V.",
+  title = 	 "The Synchronisation of Periodic Routing Messages",
+  journal = 	 ton,
+  year = 	 1994,
+  month =	 apr
+}
+@Article{Floy94:Synchronization,
+  author = 	 "Floyd, S. and Jacobson, V.",
+  title = 	 "The Synchronization of Periodic Routing Messages",
+  journal =	 ton,
+  year =	 1994,
+  month =	 apr,
+  annote =	 "This paper is an expanded version of
+		  \cite{Floy93:Synchronization}"
+}
+
+@InProceedings{Floy95:Reliable,
+  author = 	 "Floyd, S. and Jacobson, V. and Liu, C. and McCanne,
+		  S. and Zhang, L.",
+  title = 	 "A Reliable Multicast Framework for Light-weight
+		  Sessions and Application Level Framing",
+  pages =	 "342--356",
+  booktitle =	 p-sigcomm,
+  year =	 1995,
+  month =	 aug,
+  annote =	 "SRM"
+}
+
+@Misc{Floy95:Simulator,
+  author =	 "Floyd, S.",
+  title =	 "Simulator Tests",
+  howpublished = "\url{ftp://ftp.ee.lbl.gov/papers/simtests.ps.Z}",
+  year =	 1995,
+  month =	 jul
+}
+
+@TechReport{Floy95a:Reliable,
+  institution =  "Lawrence Berkeley Laboratory",
+  year = 	 1995,
+  crossref =	 "Floy95:Reliable",
+  address =	 "University of California, Berkeley, CA 94720",
+  month =	 nov,
+  note =	 "This is an extended version of \cite{Floy95:Reliable}"
+}
+
+@Misc{Floy96:Ns,
+  author =	 "Floyd, S.",
+  title =	 "Ns Simulator Tests for Class-Based Queueing",
+  howpublished = "\url{ftp://ftp.ee.lbl.gov/papers/cbqsims.ps.Z}",
+  year =	 1996,
+  month =	 feb
+}
+
+@Unpublished{Floy96:Phase,
+  author = 	 "Floyd, S.",
+  title = 	 "Phase Effects in Simulation Studies",
+  note = 	 "Personal Communication",
+  year =	 1997,
+  month =	 aug
+}
+
+@Article{Floy97:Reliable,
+  author = 	 "Floyd, S. and Jacobson, V. and McCanne, S. and Liu,
+		  C-G. and Zhang, L.",
+  title = 	 "A Reliable Multicast Framework for Light-weight
+		  Sessions and Application Level Framing",
+  journal = 	 ton,
+  year = 	 1997,
+  note =	 "To appear"
+}
+
+@Unpublished{FloyXX:Reliable,
+  author = 	 "Floyd, S. and Jacobson, V. and McCanne, S. and Liu,
+		  C-G. and Zhang, L.",
+  title = 	 "A Reliable Multicast Framework for Light-weight
+		  Sessions and Application Level Framing",
+  note = 	 "Sumbitted to~" # ton
+}
+
+@Book{Ford62:Flows,
+  author = 	 "Ford, L.R. and Fulkerson, D.R.",
+  title = 	 "Flows in Networks",
+  publisher = 	 "Princeton University Press",
+  year = 	 1962,
+  address =	 "Princeton, N.J., U.S.A.",
+  summary =	 "Bellman-Ford or Ford-Fulkerson reference"
+}
+
+@Unpublished{Halp91:Modifications,
+  author = 	 "Halpern, J.M.",
+  title = 	 "Modifications of Patricia Trees fir Handling Values
+                  with Discontiguous Masks with Emphasis on Internet
+                  Routing Applications",
+  note = 	 "Pre-publication copy",
+  year =	 1991,
+  month =	 oct # "~15",
+  summary =	 ""
+}
+
+@Article{Hethcote00inf,
+    author =  "H. W. Hethcote ",
+    title =   "The Mathematics of Infectious Diseases",
+    journal = "SIAM Review",
+    volume =  "42",
+    number =  "4",
+    pages =   "599--653",
+    year =    2000,
+    month =   oct,
+    keywords ="thresholds, basic reproduction number, contact number, epidemiology, infectious diseases",
+    url =     "http://epubs.siam.org/sam-bin/dbq/article/37190",
+}
+                                                                               
+
+@Manual{Heyb89:Netsim,
+  title = 	 "Netsim Manual",
+  author =	 "Heybey, A.",
+  organization = "MIT",
+  year =	 1989,
+  annote =	 "Netsim"
+}
+
+@Article{Hutc91:x-kernel,
+  author = 	 "Hutchinson, N.C. and Peterson, L.L.",
+  title = 	 "The $x$-kernel: An Architecture for Implementing
+		  Network Protocols",
+  journal =	 "ieeese",
+  year =	 1991,
+  volume =	 17,
+  number =	 1,
+  pages =	 "64--76",
+  month =	 jan
+}
+
+@InProceedings{Jaco88:Congestion,
+  author = 	 "Jacobson, V.",
+  title = 	 "Congestion Avoidance and Control",
+  booktitle = 	 p-sigcomm,
+  year =	 1988,
+  month =	 aug,
+  address =	 "Stanford, CA, U.S.A.",
+  pages =	 "314--329"
+}
+
+@Book{Jain91:Art,
+  author = 	 "Jain, R.",
+  title = 	 "The Art of Computer Systems Performance Analysis",
+  publisher = 	 "John Wiley and Sons, Inc.",
+  year = 	 1996,
+  LOCnumber =	 "LOC: QA76.9.E94J32 1991"
+}
+
+@TechReport{Kesh88:REAL,
+  author = 	 "Keshav, S.",
+  title = 	 "{REAL}: A Network Simulator",
+  institution =  "University of California, Berkeley",
+  year = 	 1988,
+  number =	 "UCB/CSD 88/472"
+}
+
+@Article{Klie77:Hierarchical,
+  author = 	 "Kleinrock, L. and Kamoun, F.",
+  title = 	 "Hierarchical Routing for Large Networks: Performance
+		  Evaluation and Optimization",
+  journal =	 cn,
+  year =	 1977,
+  volume =	 1,
+  pages =	 "155--174"
+}
+
+@InProceedings{Labo97:Internet,
+  author = 	 "Labovitz, C. and Malan, G.R. and Jahanian, F.",
+  title = 	 "Internet Routing Instability",
+  booktitle = 	 p-sigcomm,
+  year =	 1997,
+  organization = "ACM",
+  month =	 sep,
+  abstract =	 "This paper examines the network inter-domain routing
+                  information exchanged between backbone service
+                  providers at the major U.S. public Internet exchange
+                  points. Internet routing instability, or the rapid
+                  fluctuation of network reachability information, is
+                  an important problem currently facing the Internet
+                  engineering community. High levels of network
+                  instability can lead to packet loss, increased
+                  network latency and time to convergence. At the
+                  extreme, high levels of routing instability have
+                  lead to the loss of internal connectivity in
+                  wide-area, national networks.  In this paper, we
+                  describe several unexpected trends in routing
+                  instability, and examine a number of anomalies and
+                  pathologies observed in the exchange of inter-domain
+                  routing information.  The analysis in this paper is
+                  based on data collected from BGP routing messages
+                  generated by border routers at five of the Internet
+                  core's public exchange points during a nine month
+                  period.  We show that the volume of these routing
+                  updates is several orders of magnitude more than
+                  expected and that the majority of this routing
+                  information is redundant, or
+                  pathological. Furthermore, our analysis reveals
+                  several unexpected trends and ill-behaved systematic
+                  properties in Internet routing.  We finally posit a
+                  number of explanations for these anomalies and
+                  evaluate their potential impact on the Internet
+                  infrastructure.",
+  location =	 "http://www.merit.edu/ipma/analysis/"
+}
+
+@InProceedings{McCa95:Joint,
+  author = 	 "McCanne, S. and Vetterli, M.",
+  title = 	 "Joint Source/Channel Coding for Multicast Packet Video",
+  booktitle =	 proceedings # "~IEEE International Conference on
+		  Image Processing",
+  year =	 1995,
+  address =	 "Washington D.C., U.S.A.",
+  month =	 oct
+}
+
+@InProceedings{McCa96:Receiver-Driven,
+  author = 	 "McCanne, S. and Jacobson, V. and Vetterli, M.",
+  title = 	 "Receiver-driven Layered Multicast",
+  booktitle = 	 p-sigcomm,
+  year =	 1996,
+  address =	 "Stanford, CA, U.S.A.",
+  month =	 aug,
+  pages =	 "117--130"
+}
+
+@Misc{McCaXX:nam,
+  author =	 "McCanne, S. and Jacobson, V.",
+  title =	 "nam---{N}etwork {AN}imator",
+  howpublished = "Available from the authors"
+}
+
+@Misc{McCaXX:ns,
+  author =	 "McCanne, S. and Floyd, S.",
+  title =	 "ns---{N}etwork {S}imulator",
+  howpublished = "\url{http://www-mash.cs.berkeley.edu/ns/}"
+}
+
+@Misc{McCaXX:wb,
+  author =	 "McCanne, S. and Jacobson, V.",
+  title =	 "wb--{W}hite{b}oard",
+  howpublished = "\url{ftp://ftp.ee.lbl.gov/wb.tar.Z}"
+}
+
+@Misc{McQu77:Routing,
+  author =	 "McQuillan, J.M.",
+  title =	 "Routing Algorithms for Computer Networks---A Survey",
+  year =	 1977,
+  month =	 dec,
+  note =	 "presented at the National Telecommunication COnference",
+  abstract =	 "Recent developments in routing algorithms for
+                  computer networks are summarized in a comprehensive
+                  review covering the period 1974--1977.  An
+                  explanation of some of the basic concepts in routing
+                  is followed by a survey of various network
+                  implementations, and a description of the wide
+                  variety of recent research activities.  An extensive
+                  bibliography is provided."
+}
+
+@Unpublished{MuraXX:Introduction,
+  author = 	 "Murayama, Y. and Fujiwara, K. and Shimizu, A. and
+                  Nakamura, M. and Aikawa, H. and Yoshida, S. and
+                  Matsuo, H.",
+  title = 	 "An Introduction to Routing by Preference",
+  note = 	 "Pre-publication copy",
+  summary =	 " "
+}
+
+@Article{Park88:Random,
+  author = 	 "Park, S.K. and Miller, R.W.",
+  title = 	 "Random Number Generation: Good Ones are Hard to Find",
+  journal = 	 cacm,
+  year = 	 1988,
+  volume =	 31,
+  number =	 10,
+  month =	 oct,
+  pages =	 "1192--1201"
+}
+
+@Article{Paxs94:Empirically,
+  author = 	 "Paxson, V.",
+  title = 	 "Empirically-derived Analytic Models of Wide-area
+		  {TCP} Connections",
+  journal =	 ton,
+  year =	 1994,
+  volume =	 2,
+  number =	 4,
+  month =	 aug
+}
+
+@Article{Paxs95:Wide,
+  author = 	 "Paxson, V. and Floyd, S.",
+  title = 	 "Wide Area Traffic: The Failure of Poisson Modeling",
+  journal =	 ton,
+  year =	 1995,
+  volume =	 3,
+  number =	 3,
+  pages =	 "226-244",
+  month =	 jun
+}
+
+@Article{Perl85:Hierarchical,
+	AUTHOR="Perlman, R.",
+	TITLE="Hierarchical Networks and the Subnetwork Partition Problem",
+	YEAR=1985,
+	JOURNAL=cnis,
+	VOLUME=9,
+	PAGES="297--303",
+	ENTRYBY=Sn
+}
+
+@TechReport{Perl88:Layer,
+	AUTHOR="Perlman, Radia",
+	TITLE="Network Layer Protocols With Byzantine Robustness",
+	NUMBER="TR-429",
+	INSTITUTION="MIT Laboratory for Computer Science",
+	MONTH=oct,
+	YEAR=1988,
+	TYPE="Technical Report",
+	ENTRYBY=ccr
+}
+
+@InProceedings{Perl88:Pitfalls,
+	AUTHOR="Perlman, R. and Varghese, G.",
+	TITLE="Pitfalls in the Design of Distributed Routing Algorithms",
+	BOOKTITLE=p-sigcomm,
+	ADDRESS="Stanford, CA, U.S.A.",
+	YEAR=1988,
+	MONTH=aug,
+	PAGES="43--54",
+	ABSTRACT="The bridge algorithm adopted by the IEEE 802.1
+		  committee for interconnecting 802 LANs requires the
+		  topology of the extended LAN to be a spanning tree. A
+		  distributed algorithm to compute a spanning tree
+		  dynamically has already been published and adopted by
+		  the IEEE 802.1 committee. In this paper, however, we
+		  describe an alternative distributed spanning tree
+		  algorithm. This algorithm, variants of which have
+		  been implemented, initially appears simpler than the
+		  IEEE 802.1 algorithm; we show, however, that it has
+		  subtle failure modes that make it unattractive in
+		  practice. We also show some failure modes of the
+		  spanning tree algorithm introduced in this paper are
+		  characteristic of a broader class of distributed
+		  graph algorithms. Such algorithms potentially examine
+		  all possible path combinations between a source and a
+		  destination in a graph. Thus, they suffer from
+		  exponential message overhead in topologies that have
+		  an exponential number of paths between source and
+		  destination. Attempts to fix this problem lead to
+		  extra complexity (in terms of CPU, bandwidth, memory)
+		  when compared to other algorithms. We briefly
+		  describe a second example belonging to this class,
+		  and propose that designers avoid such algorithms if
+		  restricting the topology or scale of the network is
+		  unacceptable.",
+	KEYWORDS="spanning tree; LAN interconnection; routing; bridges;
+		  complexity",
+	NOTE="also in {\em Computer Communication Review} 18 (4), Aug. 1992",
+	SUMMARY="The paper describes a design process of developing an
+                  algorithm that bridges in a LAN can use to compute
+                  spanning trees.  The algorithm must be reliable,
+                  robust, and deal with differetn topologies, and
+                  failure modes. The paper is more interesting for the
+                  design process methodology than the actual
+                  algorithms presented.",
+	ENTRYBY=Sc
+}
+
+@Article{Rekh91:Border,
+  author = 	 "Rekhter, Y. and Katz, D.",
+  title = 	 "The Border Gateway Protocol",
+  journal =	 "ConneXions",
+  year =	 1991,
+  volume =	 5,
+  number =	 1,
+  month =	 jan
+}
+
+@TechReport{Rekh93:Constraints,
+  author = 	 "Rekhter, Y. and Hotz, S. and Estrin, D.",
+  title = 	 "Constraints on Forming Clusters with Link-State
+		  Hop-by-Hop Routing",
+  institution =  "IBM",
+  year = 	 1993,
+  number =	 "RC 19203 (83635) 10/6/93",
+  address =	 "IBM Research Division, T.J.Watson Research Center,
+		  YorkTown Heights, NY 10598"
+}
+
+@InProceedings{Shar97:Scalable,
+  author = 	 "Sharma, P. and Estrin, D. and Floyd, S. and
+                  Jacobson, V.",
+  title = 	 "Scalable Timers for Soft State Protocols",
+  booktitle = 	 p-infocom,
+  year =	 1997,
+  summary =	 "The paper considers the bandwidth consumed by soft
+                  state protocols using fixed perioidic timers to
+                  maintain state in intermediate systems.    It
+                  observes that the bandwidth is proportional to the
+                  state that must be maintained, which can get
+                  expensive if the state is large.  It proposes an
+                  alternative of maintaining the bandwidth constant,
+                  and varying the timers, and discusses the tradeoffs
+                  that must be made.",
+  keyword =	 "PIM, Exponential Weighted Moving Average (EWMA),
+                  Control trffic, Soft State"
+}
+
+@TechReport{Thom94:Generation,
+  author = 	 "Thomas, M. and Zegura, E.",
+  title = 	 "Generation and Analysis of Random Graphs to Model
+		  Internetworks",
+  institution =  "Georgia Institute of Technology",
+  year = 	 1994,
+  number =	 "GIT-CC-94-46"
+}
+
+@TechReport{Wei95:Multicast,
+  author = 	 "Wei, L. and Estrin, D.",
+  title = 	 "Multicast Routing in Dense and Sparse Modes:
+                  Simulation Study of Tradeoffs and Dynamics",
+  institution =  "Department of Computer Science, University of
+                  Southern California",
+  year = 	 1995,
+  number =	 "TR 95-613",
+  summary =	 "PIMsim documentation"
+}
+
+@InProceedings{Zegu96:How,
+  author = 	 "Zegura, E.W. and Calvert, K.L. and Bhattacharjee, S.",
+  title = 	 "How to Model an Internetwork",
+  booktitle = 	 p-infocom,
+  volume =	 3,
+  year =	 1996,
+  address =	 "San Francisco, CA, U.S.A.",
+  month =	 mar,
+  pages =	 "594--602",
+  LOC_CAT  =	 "TK5105.5 I48 1996 V.3"
+}
+
+@Manual{rfc1075,
+  author =	"D. Waitzman and C. Partridge and S.E. Deering.",
+  title =	"{Distance Vector Multicast Routing Protocol}",
+  edition =	"{RFC 1075}",
+  year =	1988,
+  format =	"TXT=54731 bytes",
+  annote =	rfceds
+}
+
+@Manual{rfc2018,
+  title = 	 "{TCP} Selective Acknowledgement Options",
+  author =	 "Mathis, M. and Mahdavi, J. and Floyd, S. and
+                  Romanov, A.",
+  edition =	 "{RFC 2018}",
+  year =	 1996,
+  annote =	 rfceds
+}
+
+@Misc{wb,
+  crossref =	 "McCaXX:wb"
+}
+
+@InProceedings{Tan00SNOOPyQueue,
+  author = 	"Kah Leong Tan and Li-Jin Thng", 
+  title = 	"SNOOPy Calendar Queue",
+  booktitle =	"Proceedings of the 32nd conference on Winter simulation Orlando, Florida",
+  pages =        {487-495},
+  year =         2000
+}
+
+@InProceedings{WeiCao06NSLinuxTCP,
+  author = "Xiaoliang (David) Wei and Pei Cao",
+  title = "{NS-2 TCP-Linux: an NS-2 TCP implementation with congestion control algorithms from Linux}",
+  booktitle = "{WNS2 '06: Proceeding from the 2006 workshop on ns-2: the IP network simulator}",
+  year = {2006},
+  pages = {9},
+  publisher = {ACM Press},
+  address = {New York, NY, USA},
+}
+
+
+@string{usc = "University of Southern California"}
+@string{usc-isi = "USC/Information Sciences Institute"}
+@string{ieee-computer = "{IEEE} Computer"};
+
+@Article{Ousterhout98a,
+	author = 	"John Ousterhout",
+	title = 	"Scripting: Higher-Level Programming for the 21st Century",
+	journal = 	ieee-computer,
+	year = 		1998,
+	volume =	31,
+	number =	3,
+	month =		mar,
+	pages =		"23--30",
+	location =	"johnh: folder: lang/tcl",
+	keywords =	"tcl, recent paper",
+	url =		"http://computer.org/computer/co1998/r3023abs.htm",
+}
+
+@TechReport{Bajaj99a,
+	author = 	"Sandeep Bajaj and Lee Breslau and Deborah
+                         Estrin and Kevin Fall and Sally Floyd and
+                         Padma Haldar and Mark Handley and Ahmed Helmy
+                         and John Heidemann and Polly Huang and Satish
+                         Kumar and Steven McCanne and Reza Rejaie and
+                         Puneet Sharma and Kannan Varadhan and Ya Xu
+                         and Haobo Yu and Daniel Zappala",
+	title = "Improving Simulation for Network Research",
+	institution = usc,
+	year = 1999,
+	number =	"99-702b",
+	month = mar,
+	location =	"johnh: folder: vint",
+	keywords =	"vint, ns, nam, network simulation",
+	url =		"http://www.isi.edu/~johnh/PAPERS/Bajaj99a.html",
+	note = "(revised September 1999)",
+	copyrightholder = "author",
+	organization =	usc-isi,
+	abstract = "None",
+}
+
+@InProceedings{legout_sigmetrics2000,
+  author = 	 "A. Legout and E.W. Biersack",
+  title = 	 "{PLM}: Fast Convergence for Cumulative Layered
+                  Multicast Transmission Schemes",
+  booktitle =	 proceedings # "~ACM SIGMETRICS",
+  year =	 2000,
+  address =	 "Santa Clara, CA, U.S.A.",
+  month =	 jun
+}
+
+@Article{Friis46,
+  author = 	 "Friis, H. T.",
+  title = 	 "A note on a simple transmission formula",
+  journal =	 "Proc. IRE",
+  year =	 1946,
+  volume =	 34,
+}
+
+@Book{Rappaport96,
+  author = 	 "Rappaport, T. S.",
+  title = 	 "Wireless communications, principles and practice",
+  publisher = 	 "Prentice Hall",
+  year = 	 1996,
+}
+
+@InProceedings{ChLiAb02a,
+  author = "N. Christin and J. Liebeherr and T. Abdelzaher",
+ title = "A quantitative assured forwarding service",
+  booktitle = "Proceedings of {IEEE INFOCOM 2002}",
+  year = 2002,
+  address = "New York, NY",
+  month = jun,
+  volume = 2,
+  pages = "864--873"
+}
+
+@InProceedings{LiCh01,
+  author = "J. Liebeherr and N. Christin",
+  title = "{JoBS}: Joint buffer management and scheduling for differentiated services",
+  booktitle = "Proceedings of {IWQoS 2001}",
+  pages = "404--418",
+  year = 2001,
+  address = "Karlsruhe, Germany",
+  month = jun
+}
+
+@Article{LiCh02,
+  author = "J. Liebeherr and N. Christin",
+  title = "Rate allocation and buffer management for differentiated services",
+  journal = "Computer Networks",
+  year = 2002,
+  month = sep,
+  volume = 40,
+  number = 1,
+  pages = "89--110"
+}
+
+@Manual{Diffserv,
+  author = 	 "Peter Pieda and Jeremy Ethridge and Mandeep Baines and Farhan Shallwani",
+  title = 	 "A Network Simulator, Differentiated Services Implementation",
+  organization = "Open IP, Nortel Networks",
+  year =	 2000,
+  annote =	 "diffserv"
+}
+
+@InProceedings{Feldmann99a,
+        author =  "Anja Feldmann and Anna C. Gilbert and Polly Huang and Walter Willinger",
+	title = "Dynamics of {IP} traffic: A study of the role of variability and the impact of control",
+        booktitle =     proc # acm-sigcomm,
+        year =          1999,
+        publisher =     pub-acm,
+        address =       "Cambridge, MA, USA",
+        month =         aug,
+        pages =         "301--313",
+        location =      "johnh: folder: network/traffic",
+        keywords =      "network traffic, tcp, wavelet analysis",
+        url =           "http://www.acm.org/sigcomm/sigcomm99/papers/session8-3.html",
+} 
+
+@Article{lecuyer99,
+  author = 	 {Pierre L'Ecuyer},
+  title = 	 {Good Parameters and Implementations for Combined Multiple Recursive Random Number Generators},
+  journal = 	 {Operations Research},
+  year = 	 1999,
+  volume =	 47,
+  number =	 1,
+  pages =	 {159-164},
+}
+
+
+
+@Article{lecuyer01,
+  author = 	 {Pierre L'Ecuyer and Richard Simard and E. Jack Chen and W. David Kelton},
+  title = 	 {An Object-Oriented Random Number Package with Many Long Streams and Substreams},
+  journal = 	 {Operations Research},
+  year = 	 2001,
+}
+
+
+
+@InProceedings{lecuyer-wsc,
+  author = 	 {Pierre L'Ecuyer},
+  title = 	 {Software for Uniform Random Number Generation: Distinguishing the Good and the Bad},
+  booktitle = 	 {Proceedings of the 2001 Winter Simulation Conference},
+  pages =	 {95-105},
+  year =	 2001,
+  month =	 {December},
+  url =          {http://www.iro.umontreal.ca/~lecuyer/myftp/papers/wsc01rng.pdf}
+}
+
+@Misc{Wei07NSLinuxTutorial,
+  author =	 "Xiaoliang (David) Wei",
+  title =	 "{A mini-tutorial for TCP-Linux in NS-2}",
+  howpublished = "\url{http://netlab.caltech.edu/projects/ns2tcplinux/}"
+}
+
+
+
+Local Variables:
+bibtex-maintain-sorted-entries: t
+End:

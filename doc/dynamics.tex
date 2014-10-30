@@ -1,0 +1,600 @@
+\chapter{Network Dynamics}
+\label{chap:net-dynamics}
+
+This chapter describes the capabilities in \ns\
+to make the simulation topologies dynamic.
+We start with the instance procedures to the class Simulator
+that are \href{useful to a simulation script}{Section}{sec:userAPI}.
+The next section describes
+\href{the internal architecture}{Section}{sec:nd-internal-arch},
+including the different classes and instance variables and procedures;
+the following section describes
+\href{the interaction with unicast routing}{Section}{sec:unicast-int}.
+This aspect of network dynamics is still somewhat experimental in \ns.
+The last section of this chapter outlines some of
+\href{the deficiencies in the current realization}{Section}{sec:deficiencies}
+of network dynamics, some one or which
+may be fixed in the future.
+
+The procedures and functions described in this chapter can be found in
+\nsf{tcl/rtglib/dynamics.tcl} and \nsf{tcl/lib/route-proto.tcl}.
+
+\section{The user level API}
+\label{sec:userAPI}
+
+The user level interface to network dynamics is a collection 
+of instance procedures in the class Simulator,
+and one procedure to trace and log the dynamics activity.
+Reflecting a rather poor choice of names,
+these procedures are
+\code{rtmodel}, \code{rtmodel-delete}, and \code{rtmodel-at}.
+There is one other procedure, \code{rtmodel-configure},
+that is used internally by the class Simulator to configure
+the rtmodels just prior to simulation start.
+We describe this method \href{later}{Section}{sec:nd-internal-arch}.
+\begin{list}{---}{}
+\item The instance procedure
+\fcnref{\proc[]{rtmodel}}{../ns-2/dynamics.tcl}{Simulator::rtmodel}
+defines a model to be applied to the nodes and links in the topology.
+Some examples of this command as it would be used in a simulation script are:
+\begin{program}
+        $ns rtmodel Exponential {0.8 1.0 1.0} $n1
+        $ns rtmodel Trace dynamics.trc  $n2 $n3
+        $ns rtmodel Deterministic {20.0 20.0} $node(1) $node(5)
+\end{program}
+The procedure requires at least three arguments:
+\begin{itemize}
+\item % the model definition
+The first two arguments define the model that will be used, and the
+parameters to configure the model.
+
+The currently implemented models in \ns\ are
+Exponential (On/Off), Deterministic (On/Off), Trace (driven), or
+Manual (one-shot) models.
+
+\item % the parameters
+The number, format, and interpretation of the configuration parameters
+is specific to the particular model.
+\begin{enumerate}\itemsep0pt
+\item The exponential on/off model takes four parameters:
+\tup{[start time], up interval, down interval, [finish time]}.
+\tup{start time} defaults to $0.5s.$ from the start of the simulation,
+\tup{finish time} defaults to the end of the simulation.
+\tup{up interval} and \tup{down interval} specify
+the mean of the exponential distribution defining the time
+that the node or link will be up and down respectively.
+The default up and down interval values are $10s.$ and $1s.$ respectively.
+Any of these values can be specified as ``$-$'' to default to the
+original value.
+
+The following are example specifications of parameters to this model:
+\begin{program}
+      0.8 1.0 1.0       \; start at \(0.8s.\), up/down = \(1.0s.\), finish is default;
+      5.0 0.5           \; start is default, up/down = \(5.0s, 0.5s.\), finish is default;
+      - 0.7             \; start, up interval are default, down = \(0.7s.\), finish is default;
+      - - - 10          \; start, up, down are default, finish at \(10s.\);
+\end{program}
+
+\item The deterministic on/off model
+is similar to the exponential model above, and  takes four parameters:
+\tup{[start time], up interval, down interval, [finish time]}.
+\tup{start time} defaults to the start of the simulation,
+\tup{finish time} defaults to the end of the simulation.
+Only the interpretation of the up and down interval is different;
+\tup{up interval} and \tup{down interval} specify the exact duration
+that the node or link will be up and down respectively.
+The default values for these parameters are:
+\tup{start time} is $0.5s.$ from start of simulation,
+\tup{up interval} is $2.0s.$,
+\tup{down interval} is $1.0s.$, and
+\tup{finish time} is the duration of the simulation.
+\item The trace driven model takes one parameter:
+the name of the trace file.
+The format of the input trace file is identical to that 
+output by the dynamics trace modules, \viz,
+\code{v \tup{time} link-\tup{operation} \tup{node1} \tup{node2}}.
+Lines that do not correspond to the node or link specified are ignored.
+{\small
+\begin{verbatim}
+        v 0.8123 link-up 3 5
+        v 3.5124 link-down 3 5
+\end{verbatim}
+}
+\item The manual one-shot model takes two parameters:
+the operation to be performed, and the time that it is to be
+performed.
+\end{enumerate}
+
+\item % the elements
+The rest of the arguments to the \proc[]{rtmodel} procedure
+define the node or link that the model will be applied to.
+If only one node is specified,
+it is assumed that the node will fail.
+This is modeled by making the links incident on the node fail.
+If two nodes are specified, then the command assumes that
+the two are adjacent to each other, and the model is applied to the
+link incident on the two nodes.
+If more than two nodes are specified, only the first is considered,
+the subsequent arguments are ignored.
+
+\item % \proc[]{rtmodel} will also enable tracing if the Simulator
+  instance variable, \code{traceAllFile_} is set.
+\end{itemize}
+The command returns the handle to the model that was created in this call.
+
+Internally, \proc[]{rtmodel} stores the list of route models created
+in the class Simulator instance variable, \code{rtModel_}.
+
+\item The instance procedure
+\fcnref{\proc[]{rtmodel-delete}}{../ns-2/dynamics.tcl}{Simulator::rtmodel-delete}
+takes the handle of a route model as argument, removes it from the
+\code{rtModel_} list, and deletes the route model.
+
+\item The instance procedure
+\fcnref{\proc[]{rtmodel-at}}{../ns-2/dynamics.tcl}{Simulator::rtmodel-at}
+is a special interface to the Manual model of network dynamics.
+
+The command takes the time, operation, and node or link as arguments,
+and applies the operation to the node or link at the specified time.
+Example uses of this command are:
+\begin{program}
+        $ns rtmodel-at 3.5 up $n0
+        $ns rtmodel-at 3.9 up $n(3) $n(5)
+        $ns rtmodel-at 40  down  $n4
+\end{program}
+\end{list}
+
+Finally, the instance procedure \proc[]{trace-dynamics} of the class rtModel
+enables tracing of the dynamics effected by this model.
+It is used as:
+\begin{program}
+        set fh [open "dyn.tr" w]
+        $rtmodel1 trace-dynamics $fh
+        $rtmodel2 trace-dynamics $fh
+        $rtmodel1 trace-dynamics stdout
+\end{program}
+In this example, \code{$rtmodel1} writes out trace entries to both
+dyn.tr and stdout; \code{$rtmodel2} only writes out trace entries to dyn.tr.
+A typical sequence of trace entries written out by either model might be:
+{\small
+\begin{verbatim}
+        v 0.8123 link-up 3 5
+        v 0.8123 link-up 5 3
+        v 3.5124 link-down 3 5
+        v 3.5124 link-down 5 3
+\end{verbatim}
+}
+These lines above indicate that Link~\tup{3, 5} failed at $0.8123s.$,
+and recovered at time $3.5124s.$
+
+\section{The Internal Architecture}
+\label{sec:nd-internal-arch}
+
+Each model of network dynamics is implemented as a separate class,
+derived from the base \clsref{rtModel}{../ns-2/dynamics.tcl}.
+We begin by describing
+\href{the base class rtModel and the derived classes}{Section}{sec:rtmodel}.
+The network dynamics models use an internal queuing structure
+to ensure that simultaneous events are correctly handled,
+the \clsref{rtQueue}{../ns-2/dynamics.tcl}.
+\href{The next subsection}{Section}{sec:rtqueue}
+describes the internals of this structure.
+Finally, we describe
+\href{the extensions to the existing classes}{Section}{sec:nd-extensions}:
+the Node, Link, and others.
+
+\subsection{The class rtModel}
+\label{sec:rtmodel}
+
+To use a new route model, the routine \proc[]{rtmodel}
+creates an instance of the appropriate type,
+defines the node or link that the model will operate upon,
+configures the model,
+and possibly enables tracing;
+The individual instance procedures that accomplish this in pieces are:
+\begin{list}{}{}
+\item The 
+  \fcnref{constructor for the base class}{../ns-2/dynamics.tcl}{rtModel::init}
+  stores a reference to the Simulator in its instance variable, \code{ns_}.
+  It also initializes the \code{startTime_} and \code{finishTime_}
+  from the class variables of the same name.
+\item The instance procedure 
+  \fcnref{set-elements}{../ns-2/dynamics.tcl}{rtModel::set-elements}
+  identifies the node or link that the model will operate upon.
+  The command stores two arrays: \code{links_}, of the links that the
+  model will act upon; \code{nodes_}, of the incident nodes
+  that will be affected by the link failure or recovery caused by the model.
+\item The default procedure in the base class
+   to set the model configuration parameters is
+  \fcnref{set-parms}{../ns-2/dynamics.tcl}{rtModel::set-parms}.
+  It assumes a well defined
+  start time, up interval, down interval, and a finish time,
+  and sets up configuration parameters for some class of models.
+  It stores these values in the instance variables:
+  \code{startTime_}, \code{upInterval_}, \code{downInterval_},
+  \code{finishTime_}.
+    The exponential and deterministic models use this default routine,
+  the trace based and manual models define their own procedures.
+\item % trace
+  The instance procedure
+  \fcnref{\proc[]{trace}}{../ns-2/dynamics.tcl}{rtModel::trace}
+  enables \proc[]{trace-dynamics} on each of the links that it affects.
+  Additional details on \proc[]{trace-dynamics} is discussed in the
+  \href{section on extensions to the class Link}{Section}{sec:nd-extensions}.
+\end{list}
+The next sequence of configuration steps are taken just prior to
+the start of the simulator.
+\ns\ invokes 
+\fcnref{\proc[]{rtmodel-configure}}{../ns-2/dynamics.tcl}{Simulator::rtmodel-configure}
+just before starting the simulation.
+This instance procedure first acquires an instance of the class rtQueue,
+and then invokes \proc[]{configure} for each route model in its list,
+\code{rtModel_}.
+\begin{list}{}{}
+\item The instance procedure
+  \fcnref{\proc[]{configure}}{../ns-2/dynamics.tcl}{rtModel::configure}
+  makes each link that is is applied to dynamic;
+  this is the set of links stored in its instance variable array,
+  \code{links_}.
+  Then the procedure schedules its first event.
+\item The default instance procedure
+  \fcnref{\proc[]{set-first-event}}{../ns-w/dynamics.tcl}{rtModel::set-first-event}
+  schedules the first event to take all the links ``down'' at \\
+  \code{$startTime_} + \code{upInterval_}.
+  Individual types of route models derived from this base class should
+  redefine tihs function.
+\item Two instance procedures in the base class ,
+  \fcnref{\proc[]{set-event}}{../ns-2/dynamics.tcl}{rtModel::set-event} and
+  \fcnref{\proc[]{set-event-exact}}{../ns-2/dynamics.tcl}{rtModel::set-event-exact},
+  can be used to schedule events in the route queue.
+
+  \proc[interval, operation]{set-event} schedules \code{operation}
+  after \code{interval} seconds from the current time; it uses the
+  procedure \proc[]{set-event-exact} below.
+
+  \proc[fireTime, operation]{set-event-exact} schedules \code{operation}
+  to execute at \code{fireTime}.
+
+  If the time for execution is greater than the \code{finishTime_},
+  then the only possible action is to take a failed link ``up''.
+
+\item  Finally, the base class provides the methods to take the links
+  \fcnref{\proc[]{up}}{../ns-2/dynamics.tcl}{rtModel::up} or
+  \fcnref{\proc[]{down}}{../ns-2/dynamics.tcl}{rtModel::down}.
+  Each method invokes the appropriate procedure on each of the links
+  in the instance variable, \code{links_}.
+\end{list}
+
+\paragraph{Exponential}
+The model schedules its first event to take the links down
+at \code{startTime_} + E(\code{upInterval_});
+
+It also defines the procedures, \proc[]{up} and \proc[]{down};
+each procedure invokes the base class procedure to perform the actual operation.
+This routine then reschedules the next event at
+E(\code{upInterval}) or E(\code{downInterval_}) respectively.
+
+\paragraph{Deterministic}
+The model defines the procedures, \proc[]{up} and \proc[]{down};
+each procedure invokes the base class procedure to perform the actual operation.
+This routine then reschedules the next event at
+\code{upInterval} or \code{downInterval_} respectively.
+
+\paragraph{Trace}
+The model redefines the instance procedure
+\fcnref{\proc[]{set-parms}}{../ns-2/dynamics.tcl}{rtModel/Trace::set-parms}
+to operan a trace file, and set events based on that input.
+
+The instance procedure
+\fcnref{\proc[]{get-next-event}}{../ns-2/dynamics.tcl}{rtModel/Trace::get-next-event}
+returns the next valid event from the trace file.
+A valid event is an event that is applicable to one of the links 
+in this object's \code{links_} variable.
+
+The instance procedure
+\fcnref{\proc[]{set-trace-events}}{../ns-2/dynamics.tcl}{rtModel/Trace::set-trace-events}
+uses \proc[]{get-next-event}
+to schedule the next valid event.
+
+The model redefines
+\fcnref{\proc[]{set-first-event}}{../ns-2/dynamics.tcl}{rtModel/Trace::set-first-event},
+\fcnref{\proc[]{up}}{../ns-2/dynamics.tcl}{rtModel/Trace::up}, and
+\fcnref{\proc[]{down}}{../ns-2/dynamics.tcl}{rtModel/Trace::down}
+to use \proc[]{set-trace-events}.
+
+\paragraph{Manual}
+The model is designed to fire exactly once.
+The instance procedure
+\fcnref{\proc[]{set-parms}}{../ns-2/dynamics.tcl}{rtModel/Manual::set-parms}
+takes an operation and the time to execute that operation as arguments.
+\fcnref{\proc[]{set-first-event}}{../ns-2/dynamics.tcl}{rtModel/Manual::set-first-event}
+will schedule the event at the appropriate moment.
+
+This routine also redefines
+\fcnref{\proc[]{notify}}{../ns-2/dynamics.tcl}{rtModel/Manual::notify}
+to delete the object instance when the operation is completed.
+This notion of the object deleting itself is fragile code.
+
+Since the object only fires once and does nto have to be rescheduled,
+it does not overload the procedures \proc[]{up} or \proc[]{down}.
+
+\subsection{\protect\clsref{rtQueue}{../ns-2/dynamics.tcl}}
+\label{sec:rtqueue}
+
+The simulator needs to co-ordinate multiple simultaneous network
+dynamics events, especially to ensure the right coherent behaviour.
+Hence, the network dynamics models use their own internal 
+route queue to schedule dynamics events.
+There is one instance of this object in the simulator, in the
+class Simulator instance variable \code{rtq_}.
+
+The queue object stores an array of queued operations
+in its instance variable, \code{rtq_}.
+The index is the time at which the event will execute.
+Each element is the list of operations that will execute at that time.
+
+The instance procedures
+\fcnref{\proc[]{insq}}{../ns-2/dynamics.tcl}{rtQueue::insq} and
+\fcnref{\proc[]{insq-i}}{../ns-2/dynamics.tcl}{rtQueue::insq-i}
+can insert an element into the queue.
+\begin{list}{}{}
+\item The first argument is the time at which this operation will execute.
+  \proc[]{insq} takes the exact time as argument;
+  \proc[]{insq-i} takes the interval as argument, and schedules the
+  operation \code{interval} seconds after the current time.
+\item The following arguments specify the object, \code{$obj},
+  the instance procedure of that object, \code{$iproc},
+  and the arguments to that procedure, \code{$args}.
+
+  These arguments are placed into the route queue
+  for execution at the appropriate time.
+\end{list}
+
+The instance procedure
+\fcnref{\proc[]{runq}}{../ns-2/dynamics.tcl}{rtQueue::runq}
+executes \code{eval $obj $iproc $args} at the appropriate instant.
+After all the events for that instance are executed,
+\proc[]{runq} will \proc[]{notify} each object about the execution.
+
+Finally, the instance procedure
+\fcnref{\proc[]{delq}}{../ns-2/dynamics.tcl}{rtQueue::delq}
+can remove a queued action with the time and the name of the object.
+
+\section{Interaction with Unicast Routing}
+\label{sec:unicast-int}
+
+In an earlier section,
+we had described how
+\href{unicast routing reacts}{Section}{sec:rtglibAPI}
+to changes to the topology.
+This section details the steps by which 
+the network dynamics code will notify the nodes and routing
+about the changes to the topology.
+\begin{enumerate}
+\item \proc[]{rtQueue::runq} will invoke the procedures
+  specified by each of the route model instances.
+  After all of the actions are completed,
+  \proc[]{runq} will notify each of the models.
+\item
+  \fcnref{\proc[]{notify}}{../ns-2/dynamics.tcl}{rtModel::notify}
+  will then invoke instance procedures at all of the nodes
+  that were incident to the affected links.
+  Each route model stores the list of nodes in its instance variable
+  array, \code{nodes_}.
+
+  It will then notify the RouteLogic instance of topology changes.
+\item
+  The rtModel object invokes the class Node instance procedure
+  \fcnref{\proc[]{intf-changed}}{../ns-2/dynamics.tcl}{Node::intf-changed}
+  for each of the affected nodes.
+\item
+  \proc[]{Node::intf-changed} will notify any \code{rtObject}
+  at the node of the possible changes to the topology.
+
+  Recall that these route objects are created when the simulation uses
+  detailed dynamic unicast routing.
+\end{enumerate}
+
+\subsection{Extensions to Other Classes}
+\label{sec:nd-extensions}
+
+The existing classes assume that the topology is static by default.
+In this section, we document the necessary changes to these
+classes to support dynamic topologies.
+
+We have already described the instance procedures
+in the \clsref{Simulator}{../ns-2/ns-lib.tcl} to create or manipulate
+route models, \ie,
+\proc[]{rtmodel}, \proc[]{rtmodel-at}, \proc[]{rtmodel-delete}, and
+\proc[]{rtmodel-configure} \href{in earlier sections}{Section}{sec:rtmodel}.
+Similarly, the \clsref{Node}{../ns-2/ns-node.tcl}
+contains the instance procedure \proc[]{intf-changed}
+that we described in \href{the previous section}{Section}{sec:unicast-int}.
+
+The network dynamics code operates on individual links.
+Each model currently translates its specification into
+operations on the appropriate links.
+The following paragraphs describe the class Link and related classes.
+
+\paragraph{\protect\clsref{DynamicLink}{../ns-2/dynalink.cc.tcl}}
+This class is the only TclObject in the network dynamics code.
+The shadow class is called \clsref{DynaLink}{../ns-2/dynalink.h}.
+The class supports one bound variable, \code{status_}.
+\code{status_} is 1 when the link is up, and 0 when the link is down.
+The shadow object's \fcnref{\fcn[]{recv}}{../ns-2/dynalink.cc}{DynaLink::recv}
+method checks the \code{status_} variable, to decide whether or not
+a packet should be forwarded.
+
+\paragraph{\protect\clsref{Link}{../ns-2/ns-link.tcl}}
+This class supports the primitives:
+up and down, and up? to set and query \code{status_}.
+These primitives are instance procedures of the class.
+\begin{list}{}{}
+\item  The instance procedures
+  \fcnref{\proc[]{up}}{../ns-2/dynamics.tcl}{Link::up} and
+  \fcnref{\proc[]{down}}{../ns-2/dynamics.tcl}{Link::down}
+  set \code{status_} to 1 and 0 respectively.
+
+  In addition, when the link fails, \proc[]{down}
+  will reset all connectors that make up the link.
+  Each connector, including all queues and the delay object
+  will flush and drop any packets that it currently stores.
+  This emulates the packet drop due to link failure.
+
+  Both procedures then write trace entries to each file handle
+  in the list, \code{dynT_}.
+
+\item The instance procedure
+  \fcnref{\proc[]{up?}}{../ns-2/dynamics.tcl}{Link::up?}
+  returns the current value of \code{status_}.
+\end{list}
+In addition, the class contains the instance procedure
+\fcnref{\proc[]{all-connectors}}{../ns-2/dynamics.tcl}{Link::all-connectors}.
+This procedure takes an operation as argument, and applies
+the operation uniformly to all of the class instance variables
+that are handles for TclObjects.
+
+\paragraph{\protect\clsref{SimpleLink}{../ns-2/ns-link.tcl}}
+The class supports two instance procedures
+\fcnref{\proc[]{dynamic}}{../ns-2/dynamics.tcl}{SimpleLink::dynamic} and
+\fcnref{\proc[]{trace-dynamics}}{../ns-2/dynamics.tcl}{SimpleLink::trace-dynamics}.
+We have already described the latter procedure when describing the
+\proc[]{trace} procedure in the class rtModel.
+
+The instance procedure \proc[]{dynamic} inserts a 
+\href{DynamicLink object}{Section}{sec:links:connectors}
+at the head of the queue.
+It points the down-target of the object to the 
+drop target of the link, \code{drpT_}, if the object is defined,
+or to the \code{nullAgent_} in the simulator.
+It also signals each connector in the link that the link is now
+dynamic.
+
+Most connectors ignore this signal to be become dynamic;
+the exception is \code{DelayLink} object.
+This object will normally schedule each packet it receives
+for reception by the destination node at the appropriate time.
+When the link is dynamic, the object will queue each packet 
+internally; it schedules only one event for the next packet
+that will be delivered, instead of one event per packet normally.
+If the link fails, the route model will signal a \code{reset},
+at which point, the shadow object will execute its
+\fcnref{reset instproc-like}{../ns-2/dynalink.cc}{DynaLink::command},
+and flush all packets in its internal queue.
+Additional details about the DelayLink can be found
+\href{in another chapter}{Chapter}{chap:delays}.
+
+\section{Deficencies in the Current Network Dynamics API}
+\label{sec:deficiencies}
+
+There are a number of deficencies in the current API that should be
+changed in the next iteration:
+\begin{enumerate}
+\item  There is no way to specify a cluster of nodes or links that
+behave in lock-step dynamic synchrony.
+\item  Node failure should be dealt with as its own mechanism,
+rather than a second grade citizen of link failure.
+This shows up in a number of situations, such as:
+\begin{enumerate}
+\item  The method of emulating node failure as the failure of the
+incident links is broken.  Ideally, node failure should cause all
+agents incident on the node to be reset.
+\item  There is no tracing associated with node failure.
+\end{enumerate}
+\item  If two distinct route models are applied to two separate links
+incident on a common node, and the two links experience a topology change
+at the same instant, then the node will be notified more than once.
+\end{enumerate}
+
+
+
+\section{Commands at a glance}
+\label{sec:dynamicscommand}
+
+Following is a list of commands used to simulate dynamic scenarios in \ns:
+
+\begin{flushleft}
+\code{$ns_ rtmodel <model> <model-params> <args>}\\
+This command defines the dynamic model (currently implemented models are:
+Deterministic, Exponential, Manual or Trace) to be applied to nodes and
+links in the topology. The first two arguments consists of the rtmodel and
+the parameter to configure the model. <args> stands for different type of
+arguments expected with different dynamic model types. This returns a
+handle to a model object corresponding to the specified model. 
+\begin{itemize}
+\item In the Deterministic model <model-params> is <start-time>, 
+<up-interval>, <down-interval>, <finish-time>. Starting from start-time
+the link is made up for up-interval and down for down-interval till
+finish-time is reached. The default values for start-time, up-interval,
+downinterval are 0.5s, 2.0s, 1.0s respectively. finishtime defaults to the
+end of the simulation. The start-time defaults to 0.5s in order to let the
+routing protocol computation quiesce. 
+
+\item If the Exponential model is used model-params is of the form
+<up-interval>, <down-interval> where the link up-time is an exponential
+distribution around the mean upinterval and the link down-time is an
+exponential distribution around the mean down-interval. Default values for
+up-interval and down-interval are 10s and 1s respectively. 
+
+\item If the Manual distribution is used model-params is <at> <op> where
+at
+specifies the time at which the operation op should occur. op is one of
+up, down. The Manual distribution could be specified alternately using the
+rtmodel-at method described later in the section. 
+
+\item If Trace is specified as the model the link/node dynamics is read
+from a
+Tracefile. The model-params argument would in this case be the file-handle
+of the Tracefile that has the dynamics information. The tracefile format
+is identical to the trace output generated by the trace-dynamics link
+method (see TRACE AND MONITORING METHODS SECTION). 
+\end{itemize}
+
+
+\code{$ns_ rtmodel-delete <model>}\\
+This command takes the handle of the routemodel <model> as an argument,
+removes  it from the list of rtmodels maintained by simulator and deletes
+the model.
+
+
+\code{$ns_ rtmodel-at  <at> <op> <args>}\\
+This command is a special interface to the Manual model of network dynamics.
+It takes the time <at>, type of operation <op> and node or link on which
+to apply the operation <args> as the arguments. At time <at>, the operation <op>
+which maybe up or down is applied to a node or link.
+
+\code{$rtmodel trace <ns> <f> <optional:op>}\\
+This enables tracing of dynamics effected by this model in the links. <ns>
+is an instance of the simulator, <f> the output file to write the traces to
+and <op> is an optional argument that may be used to define a type of
+operation (like nam). This is a wrapper for the class Link procedure
+\code{trace-dynamics}.
+
+
+\code{$link trace-dynamics <ns> <f> <optional:op>}\\
+This is a class link instance procedure that is used to setup tracing of
+dynamics in that particular link. The arguments are same as that of class
+rtModel's procedure \code{trace} described above.
+
+
+\code{$link dynamic}\\
+This command inserts a DynamicLink object at the head of the queue and signals
+to all connectors in the link that the link is now dynamic.
+
+
+Internal procedures:\\
+
+\code{$ns_ rtmodel-configure}\\
+This is an internal procedure that configures all dynamic models that are
+present in the list of models maintained by the simulator.
+
+\end{flushleft}
+
+\endinput
+
+### Local Variables:
+### mode: latex
+### comment-column: 60
+### backup-by-copying-when-linked: t
+### file-precious-flag: nil
+### End:

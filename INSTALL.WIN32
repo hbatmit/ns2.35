@@ -1,0 +1,81 @@
+Neither ns-2 nor nam-1 is developed on (nor for) the win32
+platform. We can only guarantee that they compile on windows, but not
+their correct functioning.  If you have anything to contribute in this
+respect, we would like to hear from you.
+
+Before you build, notice that you can get nam and ns binaries for
+windows at http://www.isi.edu/nsnam/dist/binary/. If you only want to
+do tcl scripting in ns, they were probably what you want.
+
+Procedures to compile on windows. For more information, whose details
+about ns might be obsolete but others apply, see
+http://www.isi.edu/nsnam/ns/ns-win32-build.html
+
+- Make sure your msvc works (and your environment variables are setup
+  correctly)
+
+- Get Cygwin and perl
+
+- IMPORTANT: otcl/tclcl/ns can be built and work with supplied tcl/tk
+  8.3.2, but nam will not (it builds, but does not run). To solve this
+  problem one has to use a hacked tcl/tk 8.0p2 that supports static
+  lib instead of DLLs. See the following discussion in nam for
+  detail. For this reason, there is a switch in otcl/makefile.vc and
+  conf/makefile.win in tclcl/ns/nam that controls using static build
+  or DLLs. It is a macro STATIC_LIB, which is turned on by
+  default. You must download the hacked tcl/tk 8.0p2 to compile the
+  default ns-allinone on windows. Alternatively, if you do not use nam
+  at all, comment that macro and you'll be able to compile with tcl/tk
+  8.3.2
+
+  NOTE: none of the indep-utils/ are tested (nor known to be compiled)
+  on windows. If you did, please submit a patch/report to ns-users
+  mailing list (ns-users@isi.edu). Thank you.
+
+- After compilation, you should do (1) copy the DLLs (if you are using
+  tcl/tk 8.3.2) to one of yours paths (you can see it in the system
+  applet from your control panel, or autoexec.bat if you are using
+  win98/95, or you can open a tcsh (dos prompt) and do echo $PATH
+  (%PATH%)); (2) copy the tcl library files (~tcl/library) to one of
+  the default paths (somehow setenv TCL_LIBRARY did not work for me on
+  windows, but you can certainly try). If you don't know the default
+  paths, run ns and you'll see it in its complaints.
+
+  IMPORTANT: you should avoid both these two steps if you are using
+  the hacked tcl/tk 8.0p2.
+
+- Tcl8.3.2
+  - go into win, do nmake -f makefile.vc
+  - result binaries/libraries should be in win/Release
+  - you can also import makefile.vc into you ide and go from there
+
+- Tk8.3.2
+  - pretty much the same as tcl8.3.2
+
+- otcl
+  - correct the paths to your vc, tcl, and tk in makefile.vc, then do 
+    nmake -f makefile.vc
+
+- tclcl
+  - correct the paths to your vc, tcl, tk, and otcl in conf/makefile.win
+    (do NOT touch makefile.vc), then do nmake -f makefile.vc
+
+- ns-2
+  - same as tclcl, except you need to correct paths to tclcl and tclsh as well.
+  - about validate, see
+    http://www.isi.edu/nsnam/ns/ns-win32-build.html for detail. Notice
+    that many test suites will fail on windows platform, and you are
+    on your own to make sure the simulator works for your purpose.
+
+- nam-1
+  - IMPORTANT: nam-1 will NOT work when compiled with tcl8.3.2 and
+    tk8.3.2. It requires that a STATIC build of tcl/tk, which the
+    current release does not support. To solve the problem, you can
+    download a patched tcl/tk 8.0.2 that can be compiled into static
+    libraries (i.e., not DLLs) from this pointer:
+    http://www.isi.edu/nsnam/dist/tcltk/tcl80p2-win32-static.zip and
+    http://www.isi.edu/nsnam/dist/tcltk/tk80p2-win32-static.zip Then
+    you should uncomment the STATIC_LIB macro in
+    ~nam/conf/makefile.win, and correct other paths to your vc, otcl,
+    tclcl, tclsh, then compile.
+

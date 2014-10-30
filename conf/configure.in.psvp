@@ -1,0 +1,30 @@
+# configuration for Parallal Software Video Processing Support.
+# Disabled by default
+
+PSVP_DEFINES=""
+PSVP_OBJS=""
+PSVP_INCLUDES=""
+PSVP_LIBS=""
+DALI_SRC_LOCATION="../dali"
+
+AC_ARG_ENABLE(psvp, --enable-psvp=yes  enable parallel software video processing package, psvp_flag=$enableval, psvp_flag="no")
+
+AC_ARG_WITH(dali, --with-dali=path specify location of dali source tree, , withval="")
+
+if test "$with_dali" != "" ; then
+	DALI_SRC_LOCATION="$with_dali";
+fi
+
+if test "$psvp_flag" != "no" ; then
+	PSVP_DEFINES="-D__PSVP_ENABLED__"
+	PSVP_OBJS="\$(PSVP_OBJ)"
+	PSVP_INCLUDES="-I${DALI_SRC_LOCATION}/include"
+	PSVP_LIBS="\$(PSVP_LIB)"
+	
+fi
+
+AC_SUBST(PSVP_DEFINES)
+AC_SUBST(PSVP_OBJS)
+AC_SUBST(PSVP_INCLUDES)
+AC_SUBST(PSVP_LIBS)
+AC_SUBST(DALI_SRC_LOCATION)

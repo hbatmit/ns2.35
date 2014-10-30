@@ -1,0 +1,90 @@
+# 
+#  Copyright (c) 1999 by the University of Southern California
+#  All rights reserved.
+# 
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License,
+#  version 2, as published by the Free Software Foundation.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License along
+#  with this program; if not, write to the Free Software Foundation, Inc.,
+#  59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
+#
+#  The copyright of this module includes the following
+#  linking-with-specific-other-licenses addition:
+#
+#  In addition, as a special exception, the copyright holders of
+#  this module give you permission to combine (via static or
+#  dynamic linking) this module with free software programs or
+#  libraries that are released under the GNU LGPL and with code
+#  included in the standard release of ns-2 under the Apache 2.0
+#  license or under otherwise-compatible licenses with advertising
+#  requirements (or modified versions of such code, with unchanged
+#  license).  You may copy and distribute such a system following the
+#  terms of the GNU GPL for this module and the licenses of the
+#  other code concerned, provided that you include the source code of
+#  that other code when and as the GNU GPL requires distribution of
+#  source code.
+#
+#  Note that people who make modified versions of this module
+#  are not obligated to grant this special exception for their
+#  modified versions; it is their choice whether to do so.  The GNU
+#  General Public License gives permission to release a modified
+#  version without this exception; this exception also makes it
+#  possible to release a modified version which carries forward this
+#  exception.
+#
+# Makefile for CMU mobile code scenario generation.
+#
+# $Header: /cvsroot/nsnam/ns-2/indep-utils/cmu-scen-gen/setdest/Makefile.in,v 1.12 2005/09/16 03:05:40 tomh Exp $
+
+# Top level hierarchy
+prefix	= @prefix@
+# Pathname of directory to install the binary
+BINDEST	= @prefix@/bin
+
+CCX = @CXX@
+CC = @CC@
+MKDEP	= ../../../conf/mkdep
+
+# when including files from ns, we need to take care STL_NAMESPACE
+DEFINE = -Dstand_alone -DSTL_NAMESPACE=@STL_NAMESPACE@ -DCPP_NAMESPACE=@CPP_NAMESPACE@
+CFLAGS = @V_CCOPT@ 
+LDFLAGS = @V_STATIC@
+LIBS = @V_LIB@ -lm @LIBS@
+INSTALL = @INSTALL@
+
+all: setdest calcdest
+
+install: setdest calcdest
+	$(INSTALL) -m 555 -o bin -g bin setdest $(DESTDIR)$(BINDEST)
+	$(INSTALL) -m 555 -o bin -g bin calcdest $(DESTDIR)$(BINDEST)
+
+setdest: rng.o setdest.o
+	$(CCX) -o setdest $@.o rng.o $(DEFINE) $(LDFLAGS) $(CFLAGS) \
+	$(LIBS)
+
+calcdest: rng.o calcdest.o
+	$(CCX) -o calcdest $@.o rng.o $(DEFINE) $(LDFLAGS) $(CFLAGS) \
+	$(LIBS)
+
+rng.o:
+	@rm -f $@
+	$(CCX) -c $(DEFINE) -I../../.. -o $@ ../../../tools/rng.cc
+
+setbox: setbox.o
+	$(CCX) -o setbox $@.o $(LDFLAGS) $(CFLAGS) $(LIBS)
+
+clean:
+	@rm -f setdest setbox *.o *.core
+
+.SUFFIXES: .cc
+
+.cc.o:
+	$(CCX) -c $(DEFINE) $(CFLAGS) -o $@ $*.cc
+

@@ -1,0 +1,30 @@
+dnl autoconf rules to find dmalloc
+dnl $Header: /cvsroot/nsnam/conf/configure.in.dmalloc,v 1.5 1998/09/15 17:21:14 heideman Exp $ (USC/ISI)
+
+AC_ARG_WITH(dmalloc,	--with-dmalloc=path specify a pathname for the dmalloc debugger (path=no disables the dmalloc), d="$withval", d="UNDEF")
+
+DMALLOC_VERS=3.2.1
+
+DMALLOC_PATH="$PWD/../dmalloc \
+	$PWD/../dmalloc-$DMALLOC_VERS \
+	/usr/contrib/lib \
+	/usr/local/lib \
+	/usr/lib \
+	/usr/contrib/include \
+	/usr/local/include \
+	/usr/include \
+	"
+DMALLOC_PATH_D="$d $d/lib $d/include"
+
+if test "x$d" = xUNDEF; then
+	AC_MSG_CHECKING(dmalloc)
+	AC_MSG_RESULT([not requested with --with-dmalloc])
+else
+	NS_BEGIN_PACKAGE(dmalloc)
+	NS_CHECK_LIB_PATH(dmalloc,$DMALLOC_PATH,$d,$DMALLOC_PATH_D,V_LIB_DMALLOC,dmalloc)
+	NS_CHECK_HEADER_PATH(dmalloc.h,$DMALLOC_PATH,$d,$DMALLOC_PATH_D,V_HEADER_DMALLOC,dmalloc)
+	NS_CHECK_HEADER_PATH(return.h,$DMALLOC_PATH,$d,$DMALLOC_PATH_D,V_HEADER_RETURN,dmalloc)
+	NS_END_PACKAGE(dmalloc,no)
+fi
+
+

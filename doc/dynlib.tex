@@ -1,0 +1,98 @@
+\chapter{Dynamic Libraries}
+\label{chap:dynlib}
+
+Starting with the ns-2.33 release, ns-2 has support for dynamically
+loadable libraries.  
+\section{Motivation}
+Many researchers around the world are developing 
+modified versions of ns2 in order to introduce new features such as 
+agents, protocols, algorithms, etc. The standard practice adopted in 
+doing this is to get an official version of the ns2 source distribution, 
+make the needed modifications on the source code, add new files 
+somewhere in the existing code tree, and finally build everything 
+into the ns2 executable.
+
+The introduction of dynamically loadable libraries provides a new way
+to extend ns-2, with the following features:
+\begin{itemize}
+    \item People can develop add-ons for ns2 (e.g. introducing new agents, 
+packet types, protocols) without having to modify the core simulator.
+    \item New packet headers and types, as well as packet tracers, could 
+be defined to assist debugging, collection of statistics and inter-module 
+communication. These can also be loaded on demand according to user's needs.
+    \item Dynamic libraries can be loaded at simulation time, with no 
+need to recompile the whole ns2 distribution or to keep different ns2 
+binaries.
+    \item The installation of third-party ns2 extensions is made easier, 
+thereby facilitating their dissemination.
+    \item Dynamic libraries will make life easier for lab technicians and 
+students. In fact, an official ns2 version can be installed by the 
+administrator and students can just build and use their preferred 
+extensions independently.
+    \item Besides, these modifications will make ns2 more modular and 
+scalable. Adding new features to the simulator will be easier and 
+backward compatibility will be preserved.
+\end{itemize}
+
+The below sections briefly summarize the more complete documentation
+that can be found at:
+http://www.dei.unipd.it/\%7Ebaldo/ns\_dl\_patch/ns\_dl\_patch.html
+
+\section{Support}
+\label{sec:dynlib:support}
+
+The dynamic libraries extension is available for the ns-allinone-2.33 release, 
+with support existing in ns-2 from the ns-2.33 release.
+
+It has been tested on Linux i386, Linux x86\_64, and Cygwin (32-bit) systems.
+It has not been tested with OS X and likely further extensions are necessary.
+
+The best way to use the system in Cygwin is to install the 
+ns-allinone-2.33 release, since there have been two small patches 
+to the tcl.m4 files in the tcl and tk directories.
+
+If you are using an older version of ns-2, one of the below patches
+may work:
+http://www.dei.unipd.it/\%7Ebaldo/ns\_dl\_patch/Download.html
+
+\section{Usage}
+\label{sec:dynlib:usage}
+From a user's perspective, the only thing to do in order to use a 
+dynamic module in ns is to load it. After this operation, the module 
+itself can be used exactly as if it had been embedded in the ns binary.
+
+The loading of a dynamic module should be performed at the beginning 
+of the tcl script used for the simulation. The loading consists of the 
+following tcl instruction:
+\begin{verbatim}
+load libmodulename.so
+\end{verbatim}
+where libmodulename.so is the filename of the shared library.
+
+One thing we have to take care of is to use the right path to the library. 
+Relative and absolute paths can be used for this purpose; e.g., respectively,
+\begin{verbatim}
+load ../src/.libs/libmodulename.so
+load /locale/baldo/lib/somethingelse.so
+\end{verbatim}
+
+Note that you can just provide the file name without any path, 
+if the path it resides in is in the LD\_LIBRARY\_PATH environmental 
+variable in Linux, or the PATH environment variable on Cygwin.
+
+Also remember that the format of the shared libraries is OS-dependent: .so 
+libraries are found in unix systems, while for instance on cygwin 
+you will need to use .dll libraries, and on OS X the .dylib suffix
+is used.  With respect to this point, it is to be noted that also the 
+actual name of the library file might change - for instance, the same 
+library mentioned before would be called cygmodule-0.dll when built using 
+libtool on a cygwin system. Just remember to chek the actual filename 
+if you load command fails.
+
+We note that, for libraries built using libtool (which is the 
+method we propose in this document), when you install the 
+library on cygwin - i.e., when you type make install -, the dll 
+file gets installed in YOUR\_PREFIX/bin, and not in YOUR\_PREFIX/lib as 
+you might expect. Therefore, you should add YOUR\_PREFIX/bin to your 
+PATH to make everything work smoothly. 
+

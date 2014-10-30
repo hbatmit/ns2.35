@@ -1,0 +1,157 @@
+\chapter{Multicast Routing}
+\label{chap:multicast}
+This section describes the usage and the internals of multicast
+routing implementation in ns.
+We first describe the user interface to enable multicast routing,
+specify the multicast routing protocol to be used and the
+various methods and configuration parameters specific to the
+protocols currently supported in ns.
+Then we describe in detail the internals and the architecture of the
+multicast routing implementation in ns.
+
+\section{Multicast API}
+\label{sec:mcast-api}
+Multicast routing is enabled in the simulation by setting 
+the \code{EnableMcast_} Simulator variable to 1
+before any node, link or agent objects are created.
+This is so that the subsequently created 
+node, link and agent objects are appropriately
+be configured during creation to support multicast routing.
+For example the link objects are created with interface labels that
+are required by some multicast routing protocols, 
+node objects are created with the 
+appropriate multicast classifier objects
+and agent objects are made to point to the 
+appropriate classifier at that node
+[need to point to descriptions of interfaces, multicast-enabled node
+and multicast classifiers].
+
+A multicast routing strategy is the mechanism by which
+the multicast distribution tree
+is computed in the simulation.
+The multicast routing strategy or protocol
+to be used is specified through the mrtproto command.
+A handle is returned to an object that has 
+methods and configuration parameters specific to a
+particular multicast routing strategy or protocol.
+A null string is returned otherwise.
+There are currently 4 multicast routing strategies in ns: Centralized
+Multicast, static Dense Mode, dynamic Dense Mode (i.e., adapts to
+network changes), Protocol Independent Multicast - Dense Mode.
+Currently only Centralized Multicast returns an object that has
+methods and configuration parameters.
+
+Need to describe how an agent joins and leaves multicast groups.
+Also need to talk about multicast addresses.
+
+An example configuration would be:
+\begin{program}
+	set ns [new Simulator]
+	Simulator set EnableMcast_ 1 \; enable multicast routing;
+        set node0 [$ns node]
+\end{program}
+
+\subsection{Protocol Specific configuration}
+
+\paragraph{Centralized Multicast}
+A Rendezvous Point (RP) rooted shared tree is built
+for a multicast group.
+The actual sending
+of prune, join messages etc.
+to set up state at the nodes is not simulated.
+A centralized computation agent is used
+to compute the fowarding trees and set up 
+multicast forwarding state, (*,G) at the relevant nodes
+as new receivers join a group.
+Data packets from the senders to a group
+are unicast to the RP.
+Note that data packets
+from the senders are unicast to the RP
+even if there are no receivers for the group.
+Description of available methods:
+	shared tree
+		setting nodes to be candidate RPs
+                getting RP for group
+	switching to source-specific trees
+Description of behavior under network dynamics
+	mention causality violations
+Should give example configuration
+
+\paragraph{Static Dense Mode}
+The Static Dense Mode protocol 
+is based on DVMRP with the exception
+that it does not adapt to network dynamics.
+It uses parent-child lists as in DVMRP
+to reduce the number of links over which the
+data packets are broadcast.
+Prune messages for a particular group
+are sent upstream by nodes in case they do not lead
+to any group members.
+These prune messages instantiate prune state
+in the appropriate upstream nodes to prevent multicast
+packets from being forwarded down links
+that do not lead to any group members.
+The prune state at the nodes times out
+after a prune timeout value that is 0.5s by default.
+The prune timeout is a class variable in Agent/DM.
+Should give example configuration.
+
+\paragraph{Dynamic dense mode}
+DVMRP-like dense mode protocol that
+adapts to network changes is simulated.
+'Poison-reverse' information
+(i.e. the information that a particular neighbouring node
+uses me to reach a particular network)
+is read from the routing tables of neighbouring nodes
+in order to adapt to network dynamics
+(DVMRP runs its own unicast routing protocol
+that exchanges this information).
+Prune Timeout value etc.
+Should give example configuration.
+
+\paragraph{PIM dense mode}
+
+\section{Internals of multicast routing}
+\label{sec:mcast-internals}
+
+We first describe the main classes that are
+used to implement multicast routing and
+then describe how each multicast routing strategy
+or protocol is implemented.
+
+\subsection{The classes}
+The main classes in the implementation are
+the McastProtoArbiter class and the McastProtocol class 
+that is the base class for the
+various multicast routing strategy and protocol objects.
+In addition some methods and configuration parameters
+have been defined in the Simulator, Node, Agent 
+and Classifier objects for multicast routing.
+
+\paragraph{McastProtoArbiter class}
+
+\paragraph{McastProtocol class}
+
+\paragraph{Simulator class}
+
+\paragraph{Node class}
+
+\paragraph{Agent class}
+
+\paragraph{Classifier class}
+
+\subsection{Protocol Internals}
+\label{sec:mcastproto-internals}
+
+We describe the implementation of the
+multicast routing protocol agents in this section.
+
+\paragraph{Centralized Multicast}
+
+\paragraph{Static Dense Mode}
+
+\paragraph{Dynamic Dense Mode}
+
+\paragraph{PIM Dense Mode}
+
+\endinput

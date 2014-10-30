@@ -1,0 +1,513 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+   <TITLE>ns TODO list</TITLE>
+<!-- Changed by: Sandeep Bajaj, 24-Apr-1998 -->
+   <META NAME="GENERATOR" CONTENT="Mozilla/3.01Gold (X11; U; SunOS 4.1.3_U1 sun4m) [Netscape]">
+</HEAD>
+<BODY>
+
+<P><!-- @(#) $Header: /cvsroot/nsnam/ns-2/TODO.html,v 1.32 2003/08/06 18:21:53 haldar Exp $--><!-- Changed by: Sandeep Bajaj, 31-Mar-1997 --></P>
+
+<H1>ns: TODO list</H1>
+
+<P><!--
+ This ChangeLog is updated in the reverse order
+  with the most recent changes coming first.
+  --></P>
+<p><i>
+The person who recommends the todo work does not necessarily do them 
+by him/herself.
+<p></i>
+
+<p>
+List of topics:
+Using hash classifier in hierarchical nodes
+introduction,
+code cleanup,
+interfaces,
+queueing,
+full-tcp,
+validation,
+documentation,
+research results,
+release,
+logging,
+test suite for error models
+<hr>
+
+<ul>
+  <hr>
+
+  <p>
+  <li>
+       <b>introduction</b>
+       Here's the format:  a boldface set of keywords about what
+       part of ns is relevant,
+       text describing what's going on,
+       then a signature and date.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Thu Jun 17 18:04:37 PDT 1999)</em>
+
+  <hr>
+<!-----add stuff AFTER here----------------------------->
+
+<p><li>
+<b>Tcp-int</b>
+<br>Need to fix tcp-int. see tcp-int.tcl under tcl/ex. Also need to add a test-suite for same. Currently no testcase which is not good for code that got merged into ns way back in '97.
+
+<p><li>
+<b>Documentation</b>
+<br>Add doc for event-tracing.	
+<br>Convert README file in PGM into doc for PGM for ns-manual.
+<em>(<a href="http://www.isi.edu/~haldar">[haldar]</a>
+Mon Jul 22 11:51:54 PDT 2002</em>
+
+<p><li>
+<b>wireless code</b>
+<br> Cleanup of wireless code; move out from ns-lib into under mobility.
+move aodv.tcl from ~ns/aodv to tcl/mobility. cleanup for rtg-module much in the same way it 's been done for wired nodes. remove redundant codes in ns-mobilenode.tcl.
+<em>(<a href="http://www.isi.edu/~haldar">[haldar]</a>
+Wed Jun 12 09:08:41 PDT 2002</em>
+
+<p><li>
+    <B>Port mac/null</B>
+    <BR>Look at the <A HREF="http://www.isi.edu/nsnam/archive/ns-users/webarch/2000/msg05314.html">mailing list archive</A> for porting information.  Basically the code needs to be added to the current ns version and a test script needs to be written for it.
+    <EM>(<A HREF="mailto:mehringe@isi.edu">[John Mehringer]</A>
+        Thu Nov  9 17:27:57 EST 2000)
+    </EM>  
+	<p><li>
+	<b>Node Structure:</b>
+	<ul> 
+	<li> New node structure should be documented.
+
+	<li> For this purpose, Node::*[nodetype_] instprocs
+	should be cleaned up: the base Node should provide a set of
+	customization interfaces, and each add-on routing module
+	be an independent object which uses these interfaces to
+	customize classifier settings inside the node; 
+	<br>
+	Also, numerous Simulator condition checks should be moved to
+	the initialization process of individual modules instead of 
+	staying in the Simulator; 
+
+	<li> We should get rid of all wireless code that is _really_
+	for backward compatibility only, and move them to a separate
+	directory instead of polluting tcl/lib and so on.
+	</ul>
+	<em>(<a href="http://catarina.usc.edu/~haoboy/">[haoboy]</a>
+	Thu Aug 24 14:25:08 PDT 2000)</em>
+       
+  <p>
+  <li>
+       <b>Queueing:</b>
+       Change the Drop-Tail queue size so that it includes the
+       packet currently being transmitted, and add a
+       backward-compatibility mode so that we don't break all of the
+       validation tests.  This will result in Drop-Tail and RED
+       queues having the same size in packets (now they are off by one
+       packet).
+       <em> (<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Tue Jul  4 15:13:34 PDT 2000</em>
+  <p>
+  <li>
+  	<b> Test suite for error models</b>: Currently we have 8+ different
+	error models in ns. They seem to be used frequently but there is no 
+	test suite to guarantee that they function correctly in every release. 
+	What's more, there is little documentation about their expected behavior,
+	especially for the newer error models, e.g. two state. What we need is
+	first a test suite for all error models, then a fairly detailed doc on 
+	their expected behavior. This will save users' time and help them 
+	customize
+	these models for their own purpose.
+	<em>(<a href="http://www.isi.edu/~haoboy">[haoboy]</a>
+	Mon Nov 29 16:31:59 PST 1999)</em>
+  <p>
+  <li>
+	<b>Using hash classifier in hierarchical node</b>
+	The classifier cannot be used because of some strange problem
+	with the hash table.  It seems like there is either a bug
+	with the Tcl hash function or the way we use it.
+	<em>(<a href="http://www.isi.edu/~salehi/">[salehi]</a>
+	  Thu Sep 30 15:30:37 PDT 1999)</em>
+	<p>
+
+  <p>
+  <li>
+       <b>gen-map update</b>
+       $ns gen-map needs a cleanup + adding lan support.
+       <em>(<a href="mailto:yuri@isi.edu">[yuri]</a>
+       Thu Sep  9 12:13:41 PDT 1999)</em>
+
+  <p>
+  <li>
+       <b>This looks like a bug to look into</b>
+       After I edited mobility/scene/cbr-50-20-4-512 to replace all 
+       <pre> 
+       $cbr_(xx) set packetSize_ 512
+       </pre>
+       with
+       <pre>
+       $cbr_(xx) set packetSize_ 210
+       </pre>
+       and tried to re-run the test-suite-wireless-gridkeeper/dsdv,
+       ns got into a dead loop in DSDV_Agent::processUpdate() right
+       where the XXX-ed comment says it might:
+       <pre>
+	  while ((queued_p = rte.q->deque()))
+	  // XXX possible loop here  
+	  // while ((queued_p = rte.q->deque()))
+	  // Only retry once to avoid looping
+	  // for (int jj = 0; jj < rte.q->length(); jj++){
+	  //  queued_p = rte.q->deque();
+	    recv(queued_p, 0); // give the packets to ourselves to forward
+	  // }
+	  delete rte.q;
+	  rte.q = 0;
+	  table_->AddEntry(rte); // record the now zero'd queue
+	</pre>
+	Yet it works with packetSize_ set to 512.
+       <em>(<a href="mailto:yuri@isi.edu">[yuri]</a>
+       Thu Aug  5 15:58:36 PDT 1999)</em>
+
+  <p>
+  <li> <strong>code cleanup, interfaces</strong>
+       <b>Aligning bound variable names</b>
+              [ns3?]
+       Aligning bound variable names in OTcl and C++, where possible
+       (change the C++ name, not the OTcl name).
+       <em>(<a href="http://www.cs.berkeley.edu/~tomh">[tomh]</a>
+       Jul 1 19:19:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>queueing</b>
+       Adding FRED, from the contributed code web page, into the
+       main NS distribution.
+       <em>(<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Thu May 13 14:34:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>queueuing?</b>
+       Adding RIO into the main NS distribution.  (The original authors 
+       of RIO did many simulations in NS, so I would assume that they
+       have an implementation somewhere...)
+       <em>(<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Thu May 13 14:34:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>one-way-tcp, full-tcp</b>
+       Implement the "careful" variant of bug-fix as
+       described in rfc2582.
+       See ns-users messages subject "Bug in TCPReno ?..."
+       posted September 1999.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Fri Sep 24 10:00:10 PDT 1999)</em>
+       
+       <p>
+  <li>
+       <b>full-tcp, validation</b>
+       Validating ECN functionality for full-TCP (and, in the process,
+       updating full-TCP to make sure that ECN functions the same in full-TCP
+       as in one-way TCP).
+       <em>(<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Thu May 13 14:34:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>full-tcp, validation</b>
+       Replicating all of the TCP validation tests to make sure that
+       they work as we would like with full-TCP also.  (There are a number
+       of things that are tested in the one-way validation tests, but that
+       are not verified in two-way (i.e., full-TCP) validation tests.
+       <em>(<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Thu May 13 14:34:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>validation</b>
+       Adding either short *.txt files, or longer documents, for each
+       validation test that does not now have one, so that users can
+       tell reasonably easily what is and is not tested in each validation
+       test.
+       <em>(<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Thu May 13 14:34:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>documentation, validation</b>
+       Standardize documentation for valdation tests.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Thu Jun 17 18:04:37 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>validation</b>
+       Expanding the validation tests for all of the various scheduling
+       algorithms.
+       <em>(<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Thu May 13 14:34:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>research results, validation</b>
+       More simulation scripts on-line somewhere.  (Has everyone in the
+       VINT project made all of the simulation scripts for all of the
+       simulations that they have writted papers about publically available,
+       so that readers can easily reproduce those simulations themselves?)
+       <em>(<a href="http://www.aciri.org/floyd/">[floyd]</a>
+       Thu May 13 14:34:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>documentation</b>
+       Better document trace file format
+       (both ns output trace)
+       and the 32-bit integer thing.
+       (A very FAQ.)
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Thu Jun 17 18:04:37 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>documentation</b>
+       Describe the ns programming model (event driven and the IO model).
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>Wed Sep  8 13:38:19 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>release, allinone</b>
+       Allinone should add tcl-debug
+       and update dmalloc.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>Thu Nov  9 10:01:41 PST 2000)</em>
+
+       <p>
+  <li>
+       <b>logging</b>
+       Trace output is a mess.  There are currently two different formats
+       (wired and wireless), neither of which is easily extnesible.
+       Switching to something like what nam uses seems like a win.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>Fri Aug 27 17:24:44 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>full-tcp, application APIs</b>
+       We need to compare the ns full-tcp with the south-bay full-tcp
+       in terms of corner cases and APIs (i.e., with the cisco http models).
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>Mon Aug 30 15:17:59 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>queueing</b>
+       Make sure that all ns constructs (1-way and full-tcp, queueing protocols)
+       have both packet and byte-oriented modes and that they are selected consistently.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>Mon Aug 30 15:20:00 PDT 1999)</em>
+
+       <p>
+  <li>
+       <b>emulation</b>
+       merge nse into ns, have emulation controled by a configure option
+       (--with-emulation or something).
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>Thu Oct 14 10:25:47 PDT 1999)</em>
+
+  <p>
+  <li>
+       <b>debugging</b>
+       Insure that gen-map works correctly with lans and wireless.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Fri Sep  3 21:26:38 PDT 1999)</em>
+
+  <p>
+  <li>
+       <b>test suites, error models</b>
+       Create tests suites for the error models.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Wed Nov 24 13:20:55 PST 1999)</em>
+
+	    
+       <p>
+  <li>
+       <b>routing</b>
+       Add source routing to ns.
+       Suggested by several people, including ashish.
+       Could possibly start with MPLS contributed code? 
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Mon Dec 20 15:57:11 PST 1999)</em>
+       
+       <p>
+  <li>
+       <b>optimization, routing, classifiers</b>
+       An optimization in classifier sizing:
+   When Polly mentioned that Classifiers just double their routing
+   tables when the currently allocated space is exceeded, I thought it
+   was a bug: Classifiers normally are populated when all nodes are
+   created, which means that we know what the routing size will be and
+   can give Classifiers a hint, so we don't need to double.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Tue Dec 21 10:25:56 PST 1999
+)</em>
+
+       <p>
+  <li>
+       <b>topology generation</b>
+       Contributed topology generators to possibly integrate
+       from Graham Phillips &lt;graham@ISI.EDU&gt;:
+       I've written some topology generator programs that the ns
+community is more than welcome to use.  These programs are 
+reasonably mature and I've used them over the past year
+while preparing a sigcomm paper about multicast trees.  
+
+<p>
+      The programs essentially create and manipulate Standford Graph 
+Base topology files, but there are also programs for converting from 
+1) tiers to SGB, and 
+2) ISI's mbone collection format to SGB.
+Obviously the ns community would use the existing SGB to ns 
+converter to create the appropriate ns topologies.
+
+<p>
+The basic idea was to widen the range of real and artificial 
+topologies that might be constructed.  All utilities and 
+documentation are available
+from <a href="http://www-scf.usc.edu/~grahamph/contrib/index.html">http://www-scf.usc.edu/~grahamph/contrib/index.html</a>.
+       <p>
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Tue Dec 21 10:30:47 PST 1999)</em>
+
+       
+       <p>
+  <li>
+       <b>tracing, visualization</b>
+       Need to review MAC-layer tracing, support tracing at multiple levels.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Tue Dec 21 10:50:34 PST 1999)</em>
+
+       <p>
+  <li>
+       <b>binding</b> [ns3?]
+       We need to clean up inconsistent binding of variables
+       (but this is hard to do while keeping backwards compatibility).
+       <pre>
+Date: Fri, 23 Jul 1999 17:37:04 +0100 (BST)
+From: Lloyd Wood <L.Wood@surrey.ac.uk>
+In:
+
+http://www-mash.cs.berkeley.edu/dist/archive/ns-users/9906/0304.html
+http://www-mash.cs.berkeley.edu/dist/archive/ns-users/9906/0313.html
+
+I grumbled about consistent use of bind, so that OTcl and C++ users
+can talk about the same variables and you don't have to go hunting for
+the bind statement to see what maps to what when you're working across
+the divide.
+
+The thing is, once you start going a bit deeper into the ns code,
+however reluctantly, there's a second level of confusion. A search on
+'return ' in headers for member functions returning variables produces
+rather similar results for bind; almost all are obvious and sensibly
+mapped: blah() to blah_, but the odd thing like:
+
+tcp.h:  int& flags() { return (tcp_flags_); }
+rtp.h:  u_int16_t& flags() { return (flags_); }
+
+(or
+ip.h:   int& flowid() { return (fid_); }
+address.h:      inline int portshift() {return PortShift_;}
+address.h:      inline int portmask() {return PortMask_;}
+packet.h:       inline double& timestamp() { return (ts_); }  )
+
+can really throw you for a loop and complicate digging up responsible
+bits of code affected by changes.
+</pre>
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Tue Jan  4 10:55:56 PST 2000)</em>
+
+              
+       <p>
+  <li>
+       <b>routing, scaling</b>
+       Should reimplement algorithm routing solely in C++.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Wed Jan 19 07:42:32 PST 2000)</em>
+       <p>
+
+  <li>
+       <b>mixed-mode, scaling</b>
+       Should check, change code so that packets can stay completely
+       in C++ when being forwarded between regions in mixed-model simulations.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Wed Jan 19 07:46:49 PST 2000)</em>
+
+  <p>
+    <li> <b>TCP</b> Check the TCP reset function.
+    From email with "Subject: Re: TCP reset bug" and
+    "Subject: question about TCPAgent reset()" on the
+    ns-users mailing list.
+    <em> (<a href="http://www.aciri.org/floyd/">[floyd]</a>
+    Fri Feb 25 09:06:59 PST 2000) </em>
+
+  <p>
+      <li> <b>one-way TCP</b>  Deal with the issue of segment size vs.
+      header size.  From email on the ns-users mailing list.
+    <em> (<a href="http://www.aciri.org/floyd/">[floyd]</a>  
+    Fri Feb 25 09:06:59 PST 2000) </em>
+
+  <p>
+    <li> <b>documentation</b> Make sure that documentation includes
+    all variables in ns-default.tcl.
+   <em> (<a href="http://www.aciri.org/floyd/">[floyd]</a>
+    Fri Feb 25 09:06:59 PST 2000) </em>
+
+  <p>
+    <li> <b>validation</b> Suppress "using backward
+  compatibility mode" message during *-v1.tcl validation tests?
+  Correct procedures for V1 validation tests that are not run:
+  e.g., test cbqForOld in "./test-all-cbq-v1".
+  From email on "Subject: Re: a validation question" on the ns-users
+  mailing list.
+  <em> (<a href="http://www.aciri.org/floyd/">[floyd]</a>
+    Fri Feb 25 09:06:59 PST 2000) </em>
+
+  <p>
+    <li> <b>probability distributions</b> Add validation tests.
+      <em> (<a href="http://www.aciri.org/floyd/">[floyd]</a>
+    Fri Feb 25 09:06:59 PST 2000) </em>
+
+
+	   <p>
+  <li>
+       <b>LANs</b>
+       Make LAN nodes be generated with [$ns node] and node-config
+       rather than special APIs.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Tue Jun 20 17:19:27 PDT 2000)</em>
+
+	   <p>
+  <li>
+       <b>SRM/event tracing</b>
+       SRM's tcl tracing code should use real event tracing
+       (which should include tcl support),
+       not the current hack (see srm.tcl for commands "$self evTrace Q NTIMER").
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Wed Jul 24 10:41:06 PDT 2002)</em>
+</ul>
+
+
+
+
+
+<H1>DONE list</H1>
+
+These things have been completed:
+<ul>
+
+       <p>
+  <li>
+       <b>hier addressing</b>
+       str2addr in address.cc should do some error checking
+       to insure that fields are not larger than they should be.
+       <em>(<a href="http://www.isi.edu/~johnh/">[johnh]</a>
+       Mon Oct 30 22:52:32 PST 2000); completed by Padma in 2001</em>
+
+</ul>

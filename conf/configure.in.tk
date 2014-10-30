@@ -1,0 +1,183 @@
+dnl autoconf rules to find tk 
+dnl $Header: /cvsroot/nsnam/conf/configure.in.tk,v 1.40 2009/12/30 22:05:32 tom_henderson Exp $ (LBL)
+
+
+AC_ARG_WITH(tk,	--with-tk=path	specify a pathname for tk, d=$withval, d="")
+
+dnl library version defaults to 8.0
+AC_ARG_WITH(tk-ver, --with-tk-ver=path specify the version of tcl/tk, TK_VERS=$withval, TK_VERS=$TCL_VERS)
+
+dnl Truncate anything beyond and including the second decimal point
+
+TK_HI_VERS=`echo $TK_VERS | sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\)/\1.\2/'`
+TK_MAJOR_VERS=`echo $TK_VERS | sed 's/\([[0-9]]*\)\.\([[0-9]]*\)\.\([[0-9]]*\)/\1/'`
+TK_ALT_VERS=8.5
+
+dnl work with one version in the past
+TK_OLD_VERS=8.4
+TK_OLD_ALT_VERS=`echo $TK_OLD_VERS | sed 's/\.//'`
+
+dnl Also, 64-bit support is just hacked on for the common cases.
+TK_TCL_PLACES_D="$d \
+                $d/lib64/tk$TK_VERS \
+                $d/lib64/tk$TK_ALT_VERS \
+                $d/lib64/tk$TK_VERS \
+                $d/lib/tk$TK_ALT_VERS \
+		$d/lib/tk$TK_HI_VERS \
+                $d/library \
+                $d/lib/tk \
+                $d/../lib/tk$TK_VERS \
+                $d/../lib/tk$TK_ALT_VERS \
+                $d/../lib/tk$TK_HI_VERS \
+                $d/../lib/tk \
+                $d/lib/tk$TK_OLD_VERS \
+                $d/lib/tk$TK_OLD_ALT_VERS \
+                $d/../lib/tk$TK_OLD_VERS \
+                $d/../lib/tk$TK_OLD_ALT_VERS \
+                $d/../lib/tk \
+                $d/lib \
+                $d/library"
+TK_TCL_PLACES=" \
+		../lib/tk$TK_HI_VERS \
+		../lib/tk$TK_VERS \
+		../lib/tk$TK_ALT_VERS \
+		../tk$TK_VERS/library \
+                ../tk$TK_ALT_VERS/library \
+                ../tk$TK_HI_VERS/library \
+		../tk/library \
+                /usr/src/local/tk$TK_VERS/library \
+                /usr/src/local/tk$TK_ALT_VERS/library \
+                /usr/src/local/tk$TK_HI_VERS/library \
+                /usr/contrib/include \
+                /usr/local/lib/tk$TK_VERS \
+                /usr/local/lib/tk$TK_ALT_VERS \
+                /usr/local/lib/tk$TK_HI_VERS \
+                /usr/local/include/tk$TK_VERS \
+                /usr/local/include/tk$TK_ALT_VERS \
+                /usr/local/include/tk$TK_HI_VERS \
+                /usr/local/include \ 
+                /usr/lib64/tk$TK_VERS \
+                /usr/lib64/tk$TK_ALT_VERS \
+                /usr/lib64/tk$TK_HI_VERS \
+                /usr/lib64/tk \
+                /usr/lib/tk$TK_VERS \
+                /usr/lib/tk$TK_ALT_VERS \
+                /usr/lib/tk$TK_HI_VERS \
+                /usr/lib/tk \
+                /usr/share/tk$TK_VERS \
+                /usr/share/tk$TK_ALT_VERS \
+                /usr/share/tk$TK_HI_VERS \
+                /usr/share/tcltk/k$TK_VERS \
+                /usr/share/tcltk/tk$TK_ALT_VERS \
+                /usr/share/tcltk/tk$TK_HI_VERS \
+                /usr/share/tk \
+		../tk$TK_OLD_VERS/library \
+                ../tk$TK_OLD_ALT_VERS/library \
+                /usr/src/local/tk$TK_OLD_VERS/library \
+                /usr/src/local/tk$TK_OLD_ALT_VERS/library \
+                /usr/local/lib/tk$TK_OLD_VERS \
+                /usr/local/lib/tk$TK_OLD_ALT_VERS \
+                /usr/local/include/tk$TK_OLD_VERS \
+                /usr/local/include/tk$TK_OLD_ALT_VERS \
+                /usr/lib/tk$TK_OLD_VERS \
+                /usr/lib/tk$TK_OLD_ALT_VERS \
+                $prefix/include \
+		$prefix/lib/tk \
+                $x_includes/tk \
+                $x_includes \
+                /usr/include"
+TK_H_PLACES_D="$d \
+                $d/generic \
+                $d/../include/tk$TK_VERS \
+                $d/../include/tk$TK_HI_VERS \
+                $d/../include/tk$TK_OLD_VERS \
+		$d/include/tk$TK_VERS \
+		$d/include/tk$TK_HI_VERS \
+		$d/include/tk$TK_OLD_VERS \
+                $d/include"
+TK_H_PLACES=" \
+		../include \
+		../tk$TK_VERS/generic \
+                ../tk$TK_ALT_VERS/generic \
+                ../tk$TK_HI_VERS/generic \
+		/usr/src/local/tk$TK_VERS/generic \
+                /usr/src/local/tk$TK_ALT_VERS/generic \
+                /usr/src/local/tk$TK_HI_VERS/generic \
+                /usr/contrib/include \
+                /usr/local/lib/tk$TK_VERS \
+                /usr/local/lib/tk$TK_ALT_VERS \
+                /usr/local/lib/tk$TK_HI_VERS \
+                /usr/local/include/tk$TK_VERS \
+                /usr/local/include/tk$TK_ALT_VERS \
+                /usr/local/include/tk$TK_HI_VERS \
+                /usr/local/include \
+                /import/tk/include/tk$TK_VERS \
+                /import/tk/include/tk$TK_ALT_VERS \
+                /import/tk/include/tk$TK_HI_VERS \
+		../tk$TK_OLD_VERS/generic \
+                ../tk$TK_OLD_ALT_VERS/generic \
+		/usr/src/local/tk$TK_OLD_VERS/generic \
+                /usr/src/local/tk$TK_OLD_ALT_VERS/generic \
+                /usr/local/lib/tk$TK_OLD_VERS \
+                /usr/local/lib/tk$TK_OLD_ALT_VERS \
+                /usr/local/include/tk$TK_OLD_VERS \
+                /usr/local/include/tk$TK_OLD_ALT_VERS \
+                /import/tk/include/tk$TK_OLD_VERS \
+                /import/tk/include/tk$TK_OLD_ALT_VERS \
+                $prefix/include \
+                $x_includes/tk \
+                $x_includes \
+                /usr/include \
+                /usr/include/tcl \
+                /usr/include/tcl$TK_VERS \
+                /usr/include/tcl$TK_ALT_VERS \
+                /usr/include/tcl$TK_HI_VERS \
+                "
+dnl /usr/include/tcl for debian/linux
+TK_LIB_PLACES_D="$d \ 
+                $d/lib \
+		$d/unix"
+TK_LIB_PLACES=" \
+		../lib \
+		../lib/tk$TK_HI_VERS \
+		../lib/tk$TK_VERS \
+		../lib/tk$TK_ALT_VERS \
+		../tk$TK_VERS/unix \
+                ../tk$TK_ALT_VERS/unix \
+                ../tk$TK_HI_VERS/unix \
+                /usr/src/local/tk$TK_VERS/unix \
+                /usr/src/local/tk$TK_ALT_VERS/unix \
+                /usr/src/local/tk$TK_HI_VERS/unix \
+                /usr/contrib/lib \
+                /usr/local/lib/tk$TK_VERS \
+                /usr/local/lib/tk$TK_ALT_VERS \
+                /usr/local/lib/tk$TK_HI_VERS \
+		../tk$TK_OLD_VERS/unix \
+                ../tk$TK_OLD_ALT_VERS/unix \
+                /usr/src/local/tk$TK_OLD_VERS/unix \
+                /usr/src/local/tk$TK_OLD_ALT_VERS/unix \
+                /usr/local/lib/tk$TK_OLD_VERS \
+                /usr/local/lib/tk$TK_OLD_ALT_VERS \
+                /usr/local/lib \
+                $prefix/lib \
+                $x_libs/tk \
+                $x_libs \
+                /usr/lib64 \
+                /usr/lib"
+
+NS_BEGIN_PACKAGE(tk)
+NS_CHECK_HEADER_PATH(tk.h,$TK_H_PLACES,$d,$TK_H_PLACES_D,V_INCLUDE_TK,tk)
+NS_CHECK_LIB_PATH(tk$TK_HI_VERS,$TK_LIB_PLACES,$d,$TK_LIB_PLACES_D,V_LIB_TK,tk)
+NS_CHECK_ANY_PATH(tk.tcl,$TK_TCL_PLACES,$d,$TK_TCL_PLACES_D,V_LIBRARY_TK,tk)
+NS_END_PACKAGE(tk,no)
+
+if test -r $V_LIBRARY_TK/optionMenu.tcl ; then
+	V_TKDOSNAMES='$(LIBRARY_TK)/optionMenu.tcl $(LIBRARY_TK)/scrollbar.tcl'
+	V_NEED_DL=""
+else
+	V_TKDOSNAMES='$(LIBRARY_TK)/optMenu.tcl $(LIBRARY_TK)/scrlbar.tcl'
+	V_NEED_DL=YES
+fi
+
+AC_SUBST(V_TKDOSNAMES)
+AC_SUBST(V_LIBRARY_TK)

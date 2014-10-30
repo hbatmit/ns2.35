@@ -1,0 +1,42 @@
+The source files in NS contain a number of different copyrights and
+software licenses from various individuals and institutions.  In 2005, 
+the code base was relicensed to a collection of GNU GPL compatible, 
+free software licenses.  See
+http://www.gnu.org/philosophy/license-list.html
+for a collection of definitions of these terms.
+
+Note:  See also the LICENSES file in this directory regarding the
+software licenses..
+
+To find copyright types:
+
+find . -print | xargs grep Copyright | \
+	awk '{print $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12;}'   | \
+	sed -e 's/199./XXXX/g' -e 's/200./XXXX/g' | sort | uniq
+
+Copyright holders include:
+- Free Software Foundation,       
+- Regents of the University of California,  
+- Intel Corporation,
+- Sun Microsystems, Inc.,
+- Xerox Corporation,
+- Gaeil Ahn,
+- Mingzhou Sun,
+- Protocol Engineering Lab, University of Delaware,
+- University of Southern California  
+- USC/ISI     
+- International Computer Science Institute   
+- Nortel Networks     
+- Pierre L'Ecuyer,
+- Samsung/CUNY,
+- Tom Kelly, University of Cambridge  
+- Trustees of Boston University,    
+- John Heidemann, 
+- University of Virginia,
+- Samsung Advanced Institute of Technology,
+- Gray Watson,     
+- Digital Equipment Corporation,      
+- Carnegie Mellon University,
+- University of North Carolina at Chapel Hill
+- StarBurst Communications, Inc.
+

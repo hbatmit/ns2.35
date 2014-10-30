@@ -1,0 +1,32 @@
+This file lists people who have contributed to the NS-2 SCTP module:
+
+The current maintainers (and original authors):
+
+   Armando L. Caro Jr.          <acaro@@cis,udel,edu>
+   Janardhan R. Iyengar         <iyengar@@cis,udel,edu>
+
+Additional people who have contributed bug reports and/or fixes:
+
+   Florina Almenárez            <florina@@it,uc3m,es>
+   Paul D. Amer                 <amer@@cis,udel,edu>
+   Mohammed Atiquzzaman         <atiq@@ou,edu>
+   Patricio Barletta            <patricio@@fuegolabs,com>
+   Stephan Baucke               <stephan.baucke@@ericsson,com>
+   Lukasz Budzisz               <Lukasz.Budzisz@@nuim,ie>
+   Martin Duke                  <martin.duke@@boeing,com>
+   Sumathi Elangovan            <Sumathi.Elangovan@@uk,thalesgroup,com>
+   Nasif Ekiz                   <nekiz@@cis,udel,edu>
+   ShaoJian Fu (Jerick)         <sfu@@ou,edu>
+   Igor Gavriloff               <digitalbrainstorm@@gmail,com>
+   Ye Guanhua                   <yegh98@@yahoo,com>
+   Gerard Heinz                 <heinz@@cis,udel,edu>
+   Tonci Juric                  <tonci.juric@@ericsson,com>
+   Sourabh Ladha                <ladha@@cis,udel,edu> 
+   Denio Mariz                  <dmts@@cin,ufpe,br>
+   Preethi Natarajan		<nataraja@@cis,udel,edu>
+   Marcello Pantaleo            <Marcello.Pantaleo@@eed,ericsson,se>
+   Damir Prusac                 <Damir.Prusac@@eed,ericsson,se>
+   Eduardo Parente Ribeiro      <edu@@eletrica,ufpr,br>
+   Keyur Shah                   <shah@@cis,udel,edu>
+   Michael Tüxen                <Michael.Tuexen@@micmac,franken,de>
+   Zhengliang Yi                <yizhengl@@hotmail,com>

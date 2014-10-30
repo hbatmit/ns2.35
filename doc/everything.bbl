@@ -1,0 +1,194 @@
+\def\url#1{\texttt{{\small #1}}}
+\begin{thebibliography}{10}
+
+\bibitem{Alae94:Design}
+C.~Alaettino\u{g}lu, A.U. Shankar, K.~Dussa-Zeiger, and I.~Matta.
+\newblock Design and implementation of {MaRS}: A routing testbed.
+\newblock {\em Internetworking: Research and Experience}, 5:17--41, 1994.
+
+\bibitem{Bajaj99a}
+Sandeep Bajaj, Lee Breslau, Deborah Estrin, Kevin Fall, Sally Floyd, Padma
+  Haldar, Mark Handley, Ahmed Helmy, John Heidemann, Polly Huang, Satish Kumar,
+  Steven McCanne, Reza Rejaie, Puneet Sharma, Kannan Varadhan, Ya~Xu, Haobo Yu,
+  and Daniel Zappala.
+\newblock Improving simulation for network research.
+\newblock Technical Report 99-702b, University of Southern California, March
+  1999.
+\newblock (revised September 1999).
+
+\bibitem{Barf98:WebWorkload}
+Paul Barford and Mark Crovella.
+\newblock Generating representative web workloads for network and server
+  peformance evaluation.
+\newblock In {\em Proceedings of the~ACM SIGMETRICS}, pages 151--160, June
+  1998.
+
+\bibitem{Brak94:TCP}
+L.S. Brakmo, S.~O'Malley, and L.L. Peterson.
+\newblock {TCP} vegas: New techniques for congestion detection and avoidance.
+\newblock In {\em Proceedings of the~ACM SIGCOMM}, pages 24--35, October 1994.
+
+\bibitem{Brak94a:TCP}
+L.S. Brakmo, S.~O'Malley, and L.L. Peterson.
+\newblock {TCP} vegas: New techniques for congestion detection and avoidance.
+\newblock Technical Report TR 94 04, Department of Computer Science, The
+  University of Arizona, Tucson, AZ 85721, February 1994.
+
+\bibitem{Brow88:Calendar}
+R.~Brown.
+\newblock Calendar queues: A fast {O(1)} priority queue implementation for the
+  simulation event set problem.
+\newblock {\em Communications of the ACM}, 31(10):1220--1227, October 1988.
+
+\bibitem{Cao97:CacheConsistency}
+Pei Cao and Chengjie Liu.
+\newblock Maintaining strong cache consistency in the {World-Wide Web}.
+\newblock In {\em Proceedings of the~IEEE ICDCS}, pages 12--21, May 1997.
+
+\bibitem{ChLiAb02a}
+N.~Christin, J.~Liebeherr, and T.~Abdelzaher.
+\newblock A quantitative assured forwarding service.
+\newblock In {\em Proceedings of {IEEE INFOCOM 2002}}, volume~2, pages
+  864--873, New York, NY, June 2002.
+
+\bibitem{Deer94a:Architecture}
+S.~Deering, D.~Estrin, D.~Farinacci, V.~Jacobson, Ching-{G}ung Liu, and L.~Wei.
+\newblock An architecture for wise-area multicast routing.
+\newblock Technical Report USC-SC-94-565, Computer Science Department,
+  University of Southern California, Los Angeles, CA 90089., 1994.
+
+\bibitem{Feldmann99a}
+Anja Feldmann, Anna~C. Gilbert, Polly Huang, and Walter Willinger.
+\newblock Dynamics of {IP} traffic: A study of the role of variability and the
+  impact of control.
+\newblock pages 301--313, Cambridge, MA, USA, August 1999.
+
+\bibitem{Floy95:Reliable}
+S.~Floyd, V.~Jacobson, C.~Liu, S.~McCanne, and L.~Zhang.
+\newblock A reliable multicast framework for light-weight sessions and
+  application level framing.
+\newblock In {\em Proceedings of the~ACM SIGCOMM}, pages 342--356, August 1995.
+
+\bibitem{Friis46}
+H.~T. Friis.
+\newblock A note on a simple transmission formula.
+\newblock {\em Proc. IRE}, 34, 1946.
+
+\bibitem{Hethcote00inf}
+H.~W. Hethcote.
+\newblock The mathematics of infectious diseases.
+\newblock {\em SIAM Review}, 42(4):599--653, October 2000.
+
+\bibitem{Heyb89:Netsim}
+A.~Heybey.
+\newblock {\em Netsim Manual}.
+\newblock MIT, 1989.
+
+\bibitem{Jain91:Art}
+R.~Jain.
+\newblock {\em The Art of Computer Systems Performance Analysis}.
+\newblock John Wiley and Sons, Inc., 1996.
+
+\bibitem{lecuyer99}
+Pierre L'Ecuyer.
+\newblock Good parameters and implementations for combined multiple recursive
+  random number generators.
+\newblock {\em Operations Research}, 47(1):159--164, 1999.
+
+\bibitem{lecuyer-wsc}
+Pierre L'Ecuyer.
+\newblock Software for uniform random number generation: Distinguishing the
+  good and the bad.
+\newblock In {\em Proceedings of the 2001 Winter Simulation Conference}, pages
+  95--105, December 2001.
+
+\bibitem{lecuyer01}
+Pierre L'Ecuyer, Richard Simard, E.~Jack Chen, and W.~David Kelton.
+\newblock An object-oriented random number package with many long streams and
+  substreams.
+\newblock {\em Operations Research}, 2001.
+
+\bibitem{legout_sigmetrics2000}
+A.~Legout and E.W. Biersack.
+\newblock {PLM}: Fast convergence for cumulative layered multicast transmission
+  schemes.
+\newblock In {\em Proceedings of the~ACM SIGMETRICS}, Santa Clara, CA, U.S.A.,
+  June 2000.
+
+\bibitem{LiCh01}
+J.~Liebeherr and N.~Christin.
+\newblock {JoBS}: Joint buffer management and scheduling for differentiated
+  services.
+\newblock In {\em Proceedings of {IWQoS 2001}}, pages 404--418, Karlsruhe,
+  Germany, June 2001.
+
+\bibitem{LiCh02}
+J.~Liebeherr and N.~Christin.
+\newblock Rate allocation and buffer management for differentiated services.
+\newblock {\em Computer Networks}, 40(1):89--110, September 2002.
+
+\bibitem{Math96:Forward}
+M.~Mathis and J.~Mahdavi.
+\newblock Forward acknowledgement: Refining {TCP} congestion control.
+\newblock In {\em Proceedings of the~ACM SIGCOMM}, August 1996.
+
+\bibitem{rfc2018}
+M.~Mathis, J.~Mahdavi, S.~Floyd, and A.~Romanov.
+\newblock {\em {TCP} Selective Acknowledgement Options}, {RFC 2018} edition,
+  1996.
+
+\bibitem{ns}
+S.~McCanne and S.~Floyd.
+\newblock ns---{N}etwork {S}imulator.
+\newblock \url{http://www-mash.cs.berkeley.edu/ns/}.
+
+\bibitem{BPF93}
+S.~McCanne and V.~Jacobson.
+\newblock The bsd packet filter: A new architecture for user-level packet
+  capture.
+\newblock pages 259--269, January 1993.
+
+\bibitem{Ousterhout98a}
+John Ousterhout.
+\newblock Scripting: Higher-level programming for the 21st century.
+\newblock {\em {IEEE} Computer}, 31(3):23--30, March 1998.
+
+\bibitem{Park88:Random}
+S.K. Park and R.W. Miller.
+\newblock Random number generation: Good ones are hard to find.
+\newblock {\em Communications of the ACM}, 31(10):1192--1201, October 1988.
+
+\bibitem{Diffserv}
+Peter Pieda, Jeremy Ethridge, Mandeep Baines, and Farhan Shallwani.
+\newblock {\em A Network Simulator, Differentiated Services Implementation}.
+\newblock Open IP, Nortel Networks, 2000.
+
+\bibitem{Rappaport96}
+T.~S. Rappaport.
+\newblock {\em Wireless communications, principles and practice}.
+\newblock Prentice Hall, 1996.
+
+\bibitem{Tan00SNOOPyQueue}
+Kah~Leong Tan and Li-Jin Thng.
+\newblock Snoopy calendar queue.
+\newblock In {\em Proceedings of the 32nd conference on Winter simulation
+  Orlando, Florida}, pages 487--495, 2000.
+
+\bibitem{rfc1075}
+D.~Waitzman, C.~Partridge, and S.E. Deering.
+\newblock {\em {Distance Vector Multicast Routing Protocol}}, {RFC 1075}
+  edition, 1988.
+
+\bibitem{Wei07NSLinuxTutorial}
+Xiaoliang~(David) Wei.
+\newblock {A mini-tutorial for TCP-Linux in NS-2}.
+\newblock \url{http://netlab.caltech.edu/projects/ns2tcplinux/}.
+
+\bibitem{WeiCao06NSLinuxTCP}
+Xiaoliang~(David) Wei and Pei Cao.
+\newblock {NS-2 TCP-Linux: an NS-2 TCP implementation with congestion control
+  algorithms from Linux}.
+\newblock In {\em {WNS2 '06: Proceeding from the 2006 workshop on ns-2: the IP
+  network simulator}}, page~9, New York, NY, USA, 2006. ACM Press.
+
+\end{thebibliography}

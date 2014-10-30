@@ -1,0 +1,1410 @@
+\chapter{OTcl Linkage}
+\label{chap:otcl:intro}
+
+\ns\ is an object oriented simulator,
+written in C++, with an OTcl interpreter as a frontend.
+The simulator supports a class hierarchy in C++
+(also called the compiled hierarchy in this document),
+and a similar class hierarchy within the OTcl interpreter
+(also called the interpreted hierarchy in this document).
+The two hierarchies are closely related to each other;
+from the user's perspective,
+there is a one-to-one correspondence
+between a class in the interpreted hierarchy
+and one in the compiled hierarchy.
+The root of this hierarchy is the class TclObject.
+Users create new simulator objects through the interpreter;
+these objects are instantiated within the interpreter, 
+and are closely mirrored by a corresponding object
+in the compiled hierarchy.
+The interpreted class hierarchy is automatically established through
+methods defined in the class TclClass.
+user instantiated objects are mirrored through methods
+defined in the class TclObject.
+There are other hierarchies in the C++ code and OTcl scripts;
+these other hierarchies are not mirrored in the manner of TclObject.
+
+\section{Concept Overview}
+
+\emph{Why two languages?}
+\ns\ uses two languages because simulator has two different
+  kinds of things it needs to do.
+On one hand, detailed simulations of protocols
+  requires a systems programming language
+  which can efficiently manipulate bytes, packet headers,
+  and implement algorithms that run over large data sets.
+For these tasks run-time speed is important and
+  turn-around time (run simulation, find bug, fix bug, recompile, re-run)
+  is less important.
+
+On the other hand,
+  a large part of network research involves slightly varying
+  parameters or configurations,
+  or quickly exploring a number of scenarios.
+In these cases, iteration time (change the model and re-run)
+  is more important.
+Since configuration runs once (at the beginning of the simulation),
+  run-time of this part of the task is less important.
+
+\ns\ meets both of these needs with two languages,
+  C++ and OTcl.
+C++ is fast to run but slower to change, making it suitable
+  for detailed protocol implementation.
+OTcl runs much slower but can be changed very quickly (and interactively),
+  making it ideal for simulation configuration.
+\ns\ (via \code{tclcl})
+  provides glue to make objects and variables appear on both langauges.
+
+For more information about the idea of scripting languages
+  and split-language programming, see Ousterhout's article
+  in IEEE Computer~\cite{Ousterhout98a}.
+For more information about split level programming for network simulation,
+  see the ns paper~\cite{Bajaj99a}.
+
+
+\emph{Which language for what?}
+Having two languages raises the question of which language should
+be used for what purpose.
+
+Our basic advice is to use OTcl:
+\begin{itemize}
+\item for configuration, setup, and ``one-time'' stuff
+\item if you can do what you want by manipulating existing C++ objects
+\end{itemize}
+
+and use C++:
+\begin{itemize}
+\item if you are doing \emph{anything} that requires processing
+        each packet of a flow
+\item if you have to change the behavior of an existing C++ class
+        in ways that weren't anticipated
+\end{itemize}
+
+For example, links are OTcl objects that assemble delay, queueing, and
+possibly loss modules.  If your experiment can be done with those
+pieces, great.  If instead you want do something fancier (a special
+queueing dicipline or model of loss), then you'll need a new C++
+object.
+
+There are certainly grey areas in this spectrum:
+most routing is done in OTcl
+(although the core Dijkstra algorithm is in C++).
+We've had HTTP simulations where each flow was started in OTcl
+  and per-packet processing was all in C++.
+This approache worked OK until we had 100s of flows
+  starting per second of simulated time.
+In general, if you're ever having to invoke Tcl many times per second,
+  you problably should move that code to C++.
+
+
+\section{Code Overview}
+
+In this document,
+we use the term ``interpreter''
+to be synonymous with the OTcl interpreter.
+The code to interface with the interpreter resides
+in a separate directory, \code{tclcl}.
+The rest of the simulator code resides in the directory, \code{ns-2}.
+We will use the notation \Tclf{\tup{file}}\
+to refer to a particular \tup{file}\ in the
+\code{Tcl}\ directory.
+Similarly, we will use the notation, \nsf{\tup{file}}
+to refer to a particular \tup{file}\ in the \code{ns-2} directory.
+
+There are a number of classes defined in \Tclf{}.
+We only focus on the six that are used in \ns:
+The \href{Class Tcl}{Section}{sec:Tcl} contains the methods that
+C++ code will use to access the interpreter.
+The \href{class TclObject}{Section}{sec:TclObject}
+is the base class for all simulator objects that are also mirrored 
+in the compiled hierarchy.
+The \href{class TclClass}{Section}{sec:TclClass} defines
+the interpreted class hierarchy, and 
+the methods to permit the user to instantiate TclObjects.
+The \href{class TclCommand}{Section}{sec:TclCommand}
+is used to define simple global interpreter commands.
+The \href{class EmbeddedTcl}{Section}{sec:EmbeddedTcl}
+contains the methods to load higher level builtin commands
+that make configuring simulations easier.
+Finally, the \href{class InstVar}{Section}{sec:InstVar}
+contains methods to access C++ member variables
+as OTcl instance variables.
+
+The procedures and functions described in this chapter can be found in
+\Tclf{Tcl.\{cc, h\}}, \Tclf{Tcl2.cc}, \Tclf{tcl-object.tcl}, and,
+\Tclf{tracedvar.\{cc, h\}}.
+The file \Tclf{tcl2c++.c} is used in building \ns, and is mentioned
+briefly in this chapter.
+
+\section{Class Tcl}
+\label{sec:Tcl}
+
+The \clsref{Tcl}{../Tcl/Tcl.h} encapsulates the actual instance of
+the OTcl interpreter, and provides the methods
+to access and communicate with that interpreter.
+The methods described in this section are relevant to the
+\ns\ programmer who is writing C++ code.
+The class provides methods for the following operations:
+\begin{list}{\textbullet}{}\itemsep0pt
+\item obtain a reference to the Tcl instance;
+%  {\tt
+%    \begin{list}{}{}
+%    \item \fcn[]{Tc::instance}
+%    \end{list}
+%  }
+\item invoke OTcl procedures through the interpreter;
+%  {\tt
+%    \begin{list}{}{}
+%    \item \fcn[char* $s$]{Tcl::eval}
+%    \item \fcn[const char* $s$]{Tcl::evalc}
+%    \item \fcn[]{Tcl::eval}
+%    \item \fcn[const char* $\mathit{fmt}$, \ldots]{Tcl::evalf}
+%    \end{list}
+%  }
+\item retrieve, or pass back results to the interpreter;
+%  {\tt
+%    \begin{list}{}{}
+%    \item \fcn[const char* $s$]{Tcl::result}
+%    \item \fcn[const char* $\mathit{fmt}$, \ldots]{Tcl::resultf}
+%    \item \fcn[]{Tcl::result}
+%    \end{list}
+%  }
+\item report error situations and exit in an uniform manner; and
+%  {\tt
+%    \begin{list}{}{}
+%    \item \fcn[const char* $s$]{Tcl::error}
+%    \end{list}
+%  }
+\item store and lookup ``TclObjects''.
+%  {\tt
+%    \begin{list}{}{}
+%    \item \fcn[const char* $s$]{Tcl::lookup}
+%    \item \fcn[TclObject* $o$]{Tcl::enter}
+%    \item \fcn[TclObject* $o$]{Tcl::remove}
+%    \end{list}
+%  }
+\item acquire direct access to the interpreter.
+%  {\tt
+%    \begin{list}{}{}
+%    \item \fcn[]{Tcl::interp}
+%    \end{list}
+%  }
+\end{list}
+We describe each of the methods in the following subsections.
+
+\subsection{Obtain a Reference to the class Tcl instance}
+\label{sec:instance}
+
+A single instance of the class is declared in \Tclf{Tcl.cc}
+as a static member variable;
+the programmer must obtain a reference to this instance
+to access other methods described in this section.
+The statement required to access this instance is:
+\begin{program}
+        Tcl& tcl = Tcl::instance();
+\end{program}
+
+\subsection{Invoking OTcl Procedures}
+\label{sec:Invoke}
+There are four different methods to invoke an OTcl command
+through the instance, \code{tcl}.
+They differ essentially in their calling arguments.
+Each function passes a string to the interpreter,
+that then evaluates the string in a global context.
+These methods will return to the caller if the interpreter returns TCL\_OK.
+On the other hand, if the interpreter returns TCL\_ERROR,
+the methods will call \proc{tkerror}.
+The user can overload this procedure to selectively disregard
+certain types of errors.
+Such intricacies of OTcl programming are outside the
+scope of this document.
+\href{The next section}{Section}{sec:Result}
+describes methods to access the result returned by the interpreter.
+\begin{itemize}\itemsep0pt
+\item \fcnref{\fcn[char* $s$]{tcl.eval}}{../Tcl/Tcl.cc}{Tcl::eval}
+  invokes \fcn[]{Tcl\_GlobalEval} to execute $s$ through the interpreter.
+
+\item \fcnref{\fcn[const char* $s$]{tcl.evalc}}{../Tcl/Tcl.cc}{Tcl::evalc}
+  preserves the argument string $s$.
+  It copies the string $s$ into its internal buffer;
+  it then invokes the previous \fcn[char* $s$]{eval} on the internal buffer.
+
+\item \fcnref{\fcn[]{tcl.eval}}{../Tcl/Tcl.cc}{Tcl::eval}
+  assumes that the command is already stored in the class' internal
+  \code{bp_}; it directly invokes \fcn[char* bp\_]{tcl.eval}.
+  A handle to the buffer itself is available through the method
+  \fcnref{\fcn{tcl.buffer}}{../Tcl/Tcl.h}{Tcl::buffer}.
+
+\item
+  \fcnref{\fcn[const char* $s$, \ldots]{tcl.evalf}}{../Tcl/Tcl2.cc}{Tcl::evalf}
+  is a \code{Printf}(3) like equivalent.
+  It uses \code{vsprintf}(3) internally to create the input string.
+\end{itemize}
+As an example, here are some of the ways of using the above methods:
+\begin{program}
+        Tcl& tcl = {\bfseries{}Tcl::instance}();
+        char wrk[128];
+        strcpy(wrk, "Simulator set NumberInterfaces_ 1");
+        {\bfseries{}tcl.eval}(wrk);
+
+        sprintf({\bfseries{}tcl.buffer}(), "Agent/SRM set requestFunction_ %s", "Fixed");
+        {\bfseries{}tcl.eval}();
+
+        {\bfseries{}tcl.evalc}("puts stdout {hello world}");
+        {\bfseries{}tcl.evalf}("%s request %d %d", name_, sender, msgid);
+\end{program}
+
+\subsection{Passing Results to/from the Interpreter}
+\label{sec:Result}
+
+When the interpreter invokes a C++ method,
+it expects the result back in the private member variable,
+\code{tcl_->result}.
+Two methods are available to set this variable.
+\begin{list}{\textbullet}{}
+\item \fcnref{\fcn[const char* $s$]{tcl.result}}{../Tcl/Tcl.h}{Tcl::result}
+
+        Pass the result string $s$ back to the interpreter.
+\item
+  \fcnref{\fcn[const char* fmt, \ldots]{tcl.resultf}}{../Tcl/Tcl2.cc}{Tcl::resultf}
+
+        \code{varargs}(3) variant of above
+        to format the result using \code{vsprintf}(3),
+        pass the result string back to the interpreter.
+\end{list}
+\begin{program}
+        if (strcmp(argv[1], "now") == 0) \{
+                {\bfseries{}tcl.resultf}("%.17g", clock());
+                return TCL_OK;
+        \}
+        {\bfseries{}tcl.result}("Invalid operation specified");
+        return TCL_ERROR;
+\end{program}
+
+Likewise, when a C++ method invokes an OTcl command,
+the interpreter returns the result in \code{tcl_->result}.
+\begin{list}{\textbullet}{}
+\item \fcnref{\fcn{tcl.result}}{../Tcl/Tcl.h}{Tcl::result}
+      must be used to retrieve the result.
+      Note that the result is a string, that must be converted
+      into an internal format appropriate to the type of result.
+\end{list}
+\begin{program}
+        tcl.evalc("Simulator set NumberInterfaces_");
+        char* ni = {\bfseries{}tcl.result}();
+        if (atoi(ni) != 1)
+                tcl.evalc("Simulator set NumberInterfaces_ 1");
+\end{program}
+        
+\subsection{Error Reporting and Exit}
+\label{sec:ErrorReporting}
+
+This method provides a uniform way to report errors in the compiled code.
+\begin{list}{\textbullet}{}
+\item \fcnref{\fcn[const char* $s$]{tcl.error}}{../Tcl/Tcl.cc}{Tcl::error}
+performs the following functions:
+write $s$ to stdout; write \code{tcl_->result} to stdout;
+exit with error code 1.
+\end{list}
+\begin{program}
+        {\bfseries{}tcl.resultf}("cmd = %s", cmd);
+        {\bfseries{}tcl.error}("invalid command specified");
+        /*{\cf{}NOTREACHED}*/
+\end{program}
+
+Note that
+there are minor differences between returning TCL\_ERROR
+\href{as we did in the previous subsection}{Section}{sec:Result},
+and calling \fcn[]{Tcl::error}.
+The former generates an exception within the interpreter;
+the user can trap the exception and possibly recover from the error.
+If the user has not specified any traps, 
+the interpreter will print a stack trace and exit.
+However, if the code invokes \fcn[]{error},
+then the simulation user cannot trap the error;
+in addition, \ns\ will not print any stack trace.
+
+\subsection{Hash Functions within the Interpreter}
+\label{sec:HashTables}
+
+\ns\ stores a reference to every TclObject in the compiled hierarchy
+in a hash table;
+this permits quick access to the objects.
+The hash table is internal to the interpreter.
+\ns\ uses the name of the \code{TclObject} as the key
+to enter, lookup, or delete the TclObject in the hash table.
+\begin{list}{\textbullet}{}
+\item \fcnref{\fcn[TclObject* $o$]{tcl.enter}}{../Tcl/Tcl.cc}{Tcl::enter}
+  will insert a pointer to the TclObject $o$ into the hash table.
+
+  It is used by
+  \fcnref{\fcn[]{TclClass::create\_shadow}}{../Tcl/Tcl.cc}{TclClass::create\_shadow}
+  to insert an object into the table, when that object is created.
+
+\item \fcnref{\fcn[char* $s$]{tcl.lookup}}{../Tcl/Tcl.h}{Tcl::lookup}
+  will retrieve the TclObject with the name $s$.
+
+  It is used by
+  \fcnref{\fcn[]{TclObject::lookup}}{../Tcl/Tcl.h}{TclObject::lookup}.
+\item \fcnref{\fcn[TclObject* $o$]{tcl.remove}}{../Tcl/Tcl.cc}{Tcl::remove}
+  will delete references to the TclObject $o$ from the hash table.
+
+  It is used by
+  \fcnref{\fcn[]{TclClass::delete\_shadow}}{../Tcl/Tcl.cc}{TclClass::delete\_shadow}
+  to remove an existing entry from the hash table,
+  when that object is deleted.
+\end{list}
+These functions are used internally by
+the class TclObject and class TclClass.
+
+\subsection{Other Operations on the Interpreter}
+\label{sec:otcl:other}
+
+If the above methods are not sufficient,
+then we must acquire the handle to the interpreter,
+and write our own functions.
+\begin{list}{\textbullet}{}
+\item \fcnref{\fcn{tcl.interp}}{../Tcl/Tcl.h}{Tcl::interp}
+        returns the handle to the interpreter that is stored
+        within the class Tcl.
+\end{list}
+
+\section{Class TclObject}
+\label{sec:TclObject}
+
+\clsref{TclObject}{../Tcl/Tcl.h}
+is the base class for most of the other classes
+in the interpreted and compiled hierarchies.
+Every object in the class TclObject is created by the user
+from within the interpreter.
+An equivalent shadow object is created in the compiled hierarchy.
+The two objects are closely associated with each other.
+The class TclClass, described in the next section,
+contains the mechanisms that perform this shadowing.
+
+In the rest of this document, we often refer to an object as a TclObject%
+\footnote{In the latest release of \ns\ and \nsTcl,
+  this object has been renamed to \code{SplitObjefct},
+  which more accurately reflects its nature of existence.
+  However, for the moment,
+  we will continue to use the term TclObject
+  to refer to these objects and this class.}.
+By this, we refer to a particular object that is either in the class
+TclObject, or in a class that is derived from the class TclObject.
+If it is necessary, we will explicitly qualify whether that object is
+an object within the interpreter, or an object within the compiled code.
+In such cases,
+we will use the abbreviations ``interpreted object'', and
+``compiled object'' to distinguish the two.
+and within the compiled code respectively.
+
+\paragraph{Differences from \ns~v1}
+Unlike \ns~v1, the class TclObject
+subsumes the earlier functions of the NsObject class.
+It therefore stores the
+\href{interface variable bindings}{Section}{sec:VarBinds}
+that tie OTcl instance variables in the interpreted object
+to corresponding C++ member variables in the compiled object.
+The binding is stronger than in \ns~v1 in that
+any changes to the OTcl variables are trapped,
+and the current C++ and OTcl values
+are made consistent after each access through the interpreter.
+The consistency is done through the
+\href{class InstVar}{Section}{sec:InstVar}.
+Also unlike \ns~v1, objects in the class TclObject
+are no longer stored as a global link list.
+Instead, they are stored in a hash table in the
+\href{class Tcl}{Section}{sec:HashTables}.
+
+\paragraph{Example configuration of a TclObject}
+The following example illustrates the configuration of
+an SRM agent (\clsref{Agent/SRM/Adaptive}{../ns-2/srm-adaptive.tcl}).
+\begin{program}
+        set srm [new Agent/SRM/Adaptive]
+        \$srm set packetSize_ 1024
+        \$srm traffic-source \$s0
+\end{program}
+By convention in \ns,
+the class Agent/SRM/Adaptive is a subclass of Agent/SRM,
+is a subclass of Agent, is a subclass of TclObject.
+The corresponding compiled class hierarchy is
+the ASRMAgent, derived from SRMAgent, derived from Agent,
+derived from TclObject respectively.
+The first line of the above example shows how a TclObject is 
+\href{created (or destroyed)}{Section}{sec:Creation};
+the next line configures
+\href{a bound variable}{Section}{sec:VarBinds};
+and finally, the last line illustrates
+the interpreted object invoking a C++ method
+\href{as if they were an instance procedure}{Section}{sec:Commands}.
+
+\subsection{Creating and Destroying TclObjects}
+\label{sec:Creation}
+
+When the user creates a new TclObject,
+using the procedures \proc[]{new} and \proc[]{delete};
+these procedures are defined in \Tclf{tcl-object.tcl}.
+They can be used to create and destroy objects in all classes,
+including TclObjects.%
+\footnote{As an example, the classes Simulator, Node, Link, or rtObject,
+are classes that are \emph{not} derived from the class TclObject.
+Objects in these classes  are not, therefore, TclObjects.
+However, a Simulator, Node, Link, or route Object is also instantiated
+using the \code{new} procedure in \ns.}.
+In this section,
+we describe the internal actions executed when a TclObject
+is created.
+
+\paragraph{Creating TclObjects}
+By using \proc[]{new}, the user creates an interpreted TclObject.
+the interpreter will execute the constructor for that object, \proc[]{init},
+passing it any arguments provided by the user.
+\ns\ is responsible for automatically  creating the compiled object.
+The shadow object gets created by the base class TclObject's constructor.
+Therefore, the constructor for the new TclObject
+must call the parent class constructor first.
+\proc[]{new} returns a handle to the object, that can then be used
+for further operations upon that object.
+
+The following example illustrates the Agent/SRM/Adaptive constructor:
+\begin{program}
+        Agent/SRM/Adaptive instproc init args \{
+                eval \$self next \$args
+                \$self array set closest_ "requestor 0 repairor 0"
+                \$self set eps_    [\$class set eps_]
+        \}
+\end{program}
+
+The following sequence of actions are performed by the interpreter
+as part of instantiating a new TclObject.
+For ease of exposition, we describe the steps that are executed
+to create an Agent/SRM/Adaptive object.
+The steps are:
+\begin{enumerate}
+\item
+  Obtain an unique handle for the new object   from the TclObject name space.
+  The handle is returned to the user.
+  Most handles in \ns\ have the form \code{_o\tup{NNN}}, where \tup{NNN}
+  is an integer.  This handle is created by
+  \fcnref{\proc{getid}}{../tclcl/tcl-object.tcl}{TclObject::getid}.
+  It can be retrieved from C++ with the
+  \fcnref{\proc{name()}}{../tclcl/tclcl.h}{TclObject::name()}
+  method.
+\item Execute the constructor for the new object.
+  Any user-specified arguments are passed as arguments to the constructor.
+  This constructor must invoke the constructor
+  associated with its parent class.
+
+  In our example above, the Agent/SRM/Adaptive calls its parent class
+  in the very first line.  
+
+  Note that each constructor,
+  in turn invokes its parent class' constructor \textit{ad nauseum}.
+  The last constructor in \ns\ is
+  \fcnref{the TclObject constructor}{../Tcl/tcl-object.tcl}{TclObject::init}.
+  This constructor is responsible for setting up the shadow object, and 
+  performing other initializations and bindings, as we explain below.
+  \emph{It is preferable to call the parent constructors first before
+    performing the initializations required in this class.}
+  This allows the shadow objects to be set up,
+  and the variable bindings established.
+\item The TclObject constructor invokes the instance procedure
+  \proc[]{create-shadow} for the class Agent/SRM/Adaptive.
+\item When the shadow object is created,
+  \ns\ calls all of the constructors for the compiled object,
+  each of which may establish variable bindings for objects in that class,
+  and perform other necessary initializations.
+  Hence our earlier injunction that it is preferable to invoke the parent
+  constructors prior to performing the class initializations.
+\item After the shadow object is successfully created,
+  \fcnref{\fcn{create\_shadow}}{../Tcl/Tcl.cc}{TclClass::create\_shadow}
+  \begin{enumerate}
+  \item adds the new object to hash table of TclObjects
+        \href{described earlier}{Section}{sec:HashTables}.
+  \item makes \proc[]{cmd} an instance procedure of the newly created
+    interpreted object.
+    This instance procedure
+    invokes the \fcn[]{command} method of the compiled object.
+    In \href{a later subsection}{Section}{sec:Commands},
+    we describe how the \code{command} method is defined, and invoked.
+  \end{enumerate}
+\end{enumerate}
+Note that all of the above shadowing mechanisms only work when
+the user creates a new TclObject through the interpreter.
+It will not work if the programmer creates a compiled TclObject unilaterally.
+Therefore, the programmer is enjoined not to use the C++ new method
+to create compiled objects directly.
+
+\paragraph{Deletion of TclObjects}
+The \code{delete} operation
+destroys the interpreted object, and the corresponding shadow object.
+For example,
+\fcnref{\proc[\tup{scheduler}]{use-scheduler}}{%
+  ../ns-2/ns-lib.tcl}{Simulator::use-scheduler}
+uses the \code{delete} procedure to remove the default list scheduler,
+and instantiate an alternate scheduler in its place.
+\begin{program}
+        Simulator instproc use-scheduler type \{
+                $self instvar scheduler_
+
+                delete scheduler_ \; first delete the existing list scheduler;
+                set scheduler_ [new Scheduler/$type]
+        \}
+\end{program}
+
+As with the constructor, the object destructor must call the destructor
+for the parent class explicitly as the very last statement of the destructor.
+The TclObject destructor
+will invoke the instance procedure \code{delete-shadow},
+that in turn invokes \fcnref{the equivalent compiled method}{%
+  ../Tcl/Tcl.cc}{TclClass::delete\_shadow}
+to destroy the shadow object.
+The interpreter itself will destroy the interpreted object.
+
+\subsection{Variable Bindings}
+\label{sec:VarBinds}
+
+In most cases,
+access to compiled member variables is restricted to compiled code,
+and access to interpreted member variables is likewise
+confined to access via interpreted code;
+however, it is possible to establish bi-directional bindings
+such that both the interpreted member variable
+and the compiled member variable access the same data, 
+and changing the value of either variable
+changes the value of the corresponding paired variable to same value.
+
+The binding is established by the compiled constructor
+when that object is instantiated;
+it is automatically accessible by the interpreted object as 
+an instance variable.
+\ns\ supports five different data types: reals, bandwidth valued variables, 
+time valued variables, integers, and booleans.
+The syntax of how these values can be specified in OTcl is different
+for each variable type.
+\begin{itemize}\itemsep0pt
+\item Real and Integer valued variables are specified in the ``normal'' form.
+        For example,
+        \begin{program}
+        $object set realvar 1.2e3
+        $object set intvar  12
+        \end{program}
+\item Bandwidth is specified as a real value, optionally
+  suffixed by a `k' or `K' to mean kilo-quantities, or `m' or `M' to
+  mean mega-quantities.
+  A final optional suffix of `B' indicates that the quantity expressed
+  is in Bytes per second.
+  The default is bandwidth expressed in bits per second.
+        For example, all of the following are equivalent:
+        \begin{program}
+        $object set bwvar 1.5m
+        $object set bwvar 1.5mb
+        $object set bwvar 1500k
+        $object set bwvar 1500kb
+        $object set bwvar .1875MB
+        $object set bwvar 187.5kB
+        \$object set bwvar 1.5e6
+        \end{program}
+
+\item Time is specified as a real value, optionally suffixed by a
+  `m' to express time in milli-seconds, `n' to express time in
+  nano-seconds, or `p' to express time in pico-seconds.
+  The default is time expressed in seconds.
+        For example, all of the following are equivalent:
+        \begin{program}
+        $object set timevar 1500m
+        $object set timevar 1.5
+        $object set timevar 1.5e9n
+        $object set timevar 1500e9p
+        \end{program}
+  Note that we can also safely add a $s$ to reflect the time unit of seconds.
+  \ns\ will ignore anything other than a valid real number specification,
+  or a trailing `m', `n', or `p'.
+
+\item Booleans can be expressed either as an integer, or as `T' or `t'
+  for true.  Subsequent characters after the first letter are ignored.
+  If the value is neither an integer, nor a true value,
+  then it is assumed to be false.
+        For example,
+        \begin{program}
+        \$object set boolvar t           \; set to true;
+        \$object set boolvar true
+        \$object set boolvar 1   \; or any non-zero value;
+
+        \$object set boolvar false       \; set to false;
+        \$object set boolvar junk        
+        \$object set boolvar 0
+        \end{program}
+
+\end{itemize}
+
+The following example shows the constructor for the ASRMAgent%
+\footnote{Note that this constructor is embellished to illustrate
+        the features of the variable binding mechanism.}.
+\begin{program}
+        ASRMAgent::ASRMAgent() \{
+                bind("pdistance_", &pdistance_);      \* real variable */
+                bind("requestor_", &requestor_);      \* integer variable */
+                bind_time("lastSent_", &lastSessSent_); \* time variable */
+                bind_bw("ctrlLimit_", &ctrlBWLimit_); \* bandwidth variable */
+                bind_bool("running_", &running_);     \* boolean variable */
+        \}
+\end{program}
+Note that all of the functions above take two arguments,
+the name of an OTcl variable,
+and the address of the corresponding compiled member variable
+that is linked.
+While it is often the case that these bindings are established
+by the constructor of the object, 
+it need not always be done in this manner.
+We will discuss such alternate methods
+when we describe \href{the class InstVar}{Section}{sec:InstVar}
+in detail later.
+
+Each of the variables that is bound is automatically initialised
+with default values when the object is created.
+The default values are specified as interpreted class variables.
+This initialisation is done by the routing \proc[]{init-instvar},
+invoked by methods in the class Instvar,
+\href{described later}{Section}{sec:InstVar}.
+\proc[]{init-instvar} checks the class of the interpreted object,
+and all of the parent class of that object, to find the first
+class in which the variable is defined.
+It uses the value of the variable in that class to initialise the object.
+Most of the bind initialisation values are defined in
+\nsf{tcl/lib/ns-default.tcl}.
+
+For example, if the following class variables are defined for the ASRMAgent:
+\begin{program}
+        Agent/SRM/Adaptive set pdistance_ 15.0
+        Agent/SRM set pdistance_ 10.0
+        Agent/SRM set lastSent_ 8.345m
+        Agent set ctrlLimit_    1.44M
+        Agent/SRM/Adaptive set running_ f
+\end{program}
+Therefore, every new Agent/SRM/Adaptive object will have
+\code{pdistance_} set to 15.0;
+\code{lastSent_} is set to 8.345m
+from the setting of the class variable of the parent class;
+\code{ctrlLimit_} is set to 1.44M
+using the class variable of the parent class twice removed;
+\code{running} is set to false;
+the instance variable \code{pdistance_} is not initialised,
+because no class variable
+exists in any of the class hierarchy of the interpreted object.
+In such instance, \proc[]{init-instvar} will invoke 
+\proc[]{warn-instvar}, to print out a warning about such a variable.
+The user can selectively override this procedure
+in their simulation scripts, to elide this warning.
+
+Note that the actual binding
+is done by instantiating objects in the class InstVar.
+Each object in the class InstVar binds 
+one compiled member variable to one interpreted member variable.
+A TclObject stores a list of InstVar objects corresponding
+to each of its member variable that is bound in this fashion.
+The head of this list is stored in its member variable
+\code{instvar_} of the TclObject.
+
+One last point to consider is that
+\ns\ will guarantee that the actual values
+of the variable, both in the interpreted object and the compiled object,
+will be identical at all times.
+However, if there are methods and other variables
+of the compiled object that track the value of this variable,
+they must be explicitly invoked or changed whenever the
+value of this variable is changed.
+This usually requires additional primitives that the user should invoke.
+One way of providing such primitives in \ns\ is through
+the \fcn[]{command} method described in the next section.
+
+
+\subsection{Variable Tracing}
+\label{sec:VarTrace}
+
+In addition to variable bindings, TclObject also supports tracing of
+both C++ and Tcl instance variables.  A traced variable can be created
+and configured either in C++ or Tcl.  To establish variable tracing at
+the Tcl level, the variable must be visible in Tcl, which means that it
+must be a bounded C++/Tcl or a pure Tcl instance variable.  In addition,
+the object that owns the traced variable is also required to establish
+tracing using the Tcl \code{trace} method of TclObject.  The first
+argument to the \code{trace} method must be the name of the variable.
+The optional second argument specifies the trace object that is
+responsible for tracing that variable.  If the trace object is not
+specified, the object that own the variable is responsible for tracing
+it.
+
+For a TclObject to trace variables, it must extend the C++
+\code{trace} method that is virtually defined in TclObject.  The Trace
+class implements a simple \code{trace} method, thereby, it can act as a
+generic tracer for variables.
+
+\begin{verbatim}
+class Trace : public Connector {
+        ...
+        virtual void trace(TracedVar*);
+};
+\end{verbatim}
+
+Below is a simple example for setting up variable tracing in Tcl:
+
+\begin{small}
+\begin{verbatim}
+        # $tcp tracing its own variable cwnd_
+        $tcp trace cwnd_
+
+        # the variable ssthresh_ of $tcp is traced by a generic $tracer
+        set tracer [new Trace/Var]
+        $tcp trace ssthresh_ $tracer
+\end{verbatim}
+\end{small}
+
+For a C++ variable to be traceable, it must belong to a class that
+derives from TracedVar.  The virtual base class TracedVar keeps track of
+the variable's name, owner, and tracer.  Classes that derives from
+TracedVar must implement the virtual method \code{value}, that takes a
+character buffer as an argument and writes the value of the variable
+into that buffer.
+
+\begin{small}
+\begin{verbatim}
+class TracedVar {
+        ...
+        virtual char* value(char* buf) = 0;
+protected:
+        TracedVar(const char* name);
+        const char* name_;      // name of the variable
+        TclObject* owner_;      // the object that owns this variable
+        TclObject* tracer_;     // callback when the variable is changed
+        ...
+};
+\end{verbatim}
+\end{small}
+
+The TclCL library exports two classes of TracedVar:  \code{TracedInt} and
+\code{TracedDouble}.  These classes can be used in place of the basic
+type int and double respectively.  Both TracedInt and TracedDouble
+overload all the operators that can change the value of the variable
+such as assignment, increment, and decrement.  These overloaded
+operators use the \code{assign} method to assign the new value to the
+variable and call the tracer if the new value is different from the old
+one.  TracedInt and TracedDouble also implement their \code{value}
+methods that output the value of the variable into string.  The width
+and precision of the output can be pre-specified.
+
+\subsection{\code{command} Methods: Definition and Invocation}
+\label{sec:Commands}
+
+For every TclObject that is created, \ns\ establishes
+the instance procedure, \proc[]{cmd},
+as a hook to executing methods through the compiled shadow object.
+The procedure \proc[]{cmd} invokes the method \fcn[]{command}
+of the shadow object automatically, passing the arguments to \proc[]{cmd}
+as an argument vector to the \fcn[]{command} method.
+
+The user can invoke the \proc[]{cmd} method in one of two ways:
+by explicitly invoking the procedure, specifying the desired
+operation as the first argument, or
+implicitly, as if there were an instance procedure of the same name as the
+desired operation.
+Most simulation scripts will use the latter form, hence, we will
+describe that mode of invocation first.
+
+Consider the that the distance computation in SRM is done by
+the compiled object; however, it is often used by the interpreted object.
+It is usually invoked as:
+\begin{program}
+        \$srmObject distance? \tup{agentAddress}
+\end{program}
+If there is no instance procedure called \code{distance?},
+the interpreter will invoke the instance procedure
+\proc[]{unknown}, defined in the base class TclObject.
+The unknown procedure then invokes
+\begin{program}
+        \$srmObject cmd distance? \tup{agentAddress}
+\end{program}
+to execute the operation through the compiled object's
+\fcn[]{command} procedure.
+
+Ofcourse, the user could explicitly invoke the operation directly.
+One reason for this might be to overload the operation by using
+an instance procedure of the same name.
+For example,
+\begin{program}
+        Agent/SRM/Adaptive instproc distance? addr \{
+                \$self instvar distanceCache_
+                if ![info exists distanceCache_(\$addr)] \{
+                        set distanceCache_(\$addr) [{\bfseries{}\$self cmd distance? \$addr}]
+                \}
+                set distanceCache_(\$addr)
+        \}
+\end{program}
+
+We now illustrate how the \fcn[]{command} method using
+\fcn[]{ASRMAgent::command} as an example.
+\begin{program}
+        int ASRMAgent::command(int argc, const char*const*argv) \{
+                Tcl& tcl = Tcl::instance();
+                if (argc == 3) \{
+                        if (strcmp(argv[1], "distance?") == 0) \{
+                                int sender = atoi(argv[2]);
+                                SRMinfo* sp = get_state(sender);
+                                tcl.tesultf("%f", sp->distance_);
+                                return TCL_OK;
+                        \}
+                \}
+                return (SRMAgent::command(argc, argv));
+        \}
+\end{program}
+We can make the following observations from this piece of code:
+\begin{itemize}
+\item The function is called with two arguments:
+  
+  The first argument (\code{argc}) indicates
+  the number of arguments specified in the command line to the interpreter.
+
+  The command line arguments vector (\code{argv}) consists of
+  
+  --- \code{argv[0]} contains the name of the method, ``\code{cmd}''.
+
+  --- \code{argv[1]} specifies the desired operation.
+
+  --- If the user specified any arguments, then they are placed in
+  \code{argv[2\ldots(argc - 1)]}.
+
+  The arguments are passed as strings;
+  they must be converted to the appropriate data type.
+\item If the operation is successfully matched,
+  the match should return the result of the operation
+  using methods \href{described earlier}{Section}{sec:Result}.
+\item \fcn[]{command} itself must return either \code{TCL_OK} or \code{TCL_ERROR}
+  to indicate success or failure as its return code.
+\item If the operation is not matched in this method, it must
+  invoke its parent's command method, and return the corresponding result.
+
+  This permits the user to concieve of operations as having the same
+  inheritance properties as instance procedures or compiled methods.
+
+  In the event that this \code{command} method 
+  is defined for a class with multiple inheritance,
+  the programmer has the liberty to choose one of two implementations:
+
+  1) Either they can invoke one of the parent's \code{command} method,
+  and return the result of that invocation, or
+
+  2) They can each of the parent's \code{command} methods in some sequence,
+  and return the result of the first invocation that is successful.
+  If none of them are successful, then they should return an error.
+\end{itemize}
+In our document, we call operations executed through the 
+\fcn[]{command} \emph{instproc-like}s.
+This reflects the usage of these operations as if they were
+OTcl instance procedures of an object,
+but can be very subtly different in their realisation and usage.
+
+
+\section{Class TclClass}
+\label{sec:TclClass}
+
+This compiled class (\clsref{TclClass}{../Tcl/Tcl.h})
+is a pure virtual class.
+Classes derived from this base class provide two functions:
+construct the interpreted class hierarchy
+to mirror the compiled class hierarchy; and
+provide methods to instantiate new TclObjects.
+Each such derived class is associated with a particular compiled class
+in the compiled class hierarchy, and can instantiate new objects in the
+associated class.
+
+As an example, consider a class such as the
+class \code{RenoTcpClass}.
+It is derived from class \code{TclClass}, and
+is associated with the class \code{RenoTcpAgent}.
+It will instantiate new objects in the class \code{RenoTcpAgent}.
+The compiled class hierarchy for \code{RenoTcpAgent} is that
+it derives from \code{TcpAgent}, that in turn derives from \code{Agent},
+that in turn derives (roughly) from \code{TclObject}.
+\code{RenoTcpClass} is defined as
+\begin{program}
+        static class RenoTcpClass: public TclClass \{
+        public:
+                RenoTcpClass() : TclClass("Agent/TCP/Reno") \{\}
+                TclObject* create(int argc, const char*const* argv) \{
+                        return (new RenoTcpAgent());
+                \}
+        \} class_reno;
+\end{program}
+We can make the following observations from this definition:
+\begin{enumerate}
+\item The class defines only the constructor, and one additional method,
+  to \code{create} instances of the associated TclObject.
+\item \ns\ will execute the \code{RenoTcpClass} constructor
+  for the static variable \code{class_reno}, when it is first started.
+  This sets up the appropriate methods and the interpreted class hierarchy.
+\item The constructor specifies the interpreted class explicitly as
+  \code{Agent/TCP/Reno}.  This also specifies the interpreted class
+  hierarchy implicitly.
+
+  Recall that the convention in \ns\ is to use
+  the character slash ('/') is a separator.
+  For any given class \code{A/B/C/D},
+  the class \code{A/B/C/D} is a sub-class of \code{A/B/C},
+  that is itself a sub-class of \code{A/B},
+  that, in turn, is a sub-class of \code{A}.
+  \code{A} itself is a sub-class of \code{TclObject}.
+
+  In our case above, the TclClass constructor creates three classes,
+  \code{Agent/TCP/Reno} sub-class of \code{Agent/TCP}
+  sub-class of \code{Agent} sub-class of \code{TclObject}.
+\item This class is associated with the class \code{RenoTcpAgent};
+  it creats new objects in this associated class.
+\item The \code{RenoTcpClass::create} method returns TclObjects in the
+  class \code{RenoTcpAgent}.
+\item When the user specifies \code{new Agent/TCP/Reno},
+  the routine \code{RenoTcpClass::create} is invoked.
+\item The arguments vector (\code{argv}) consists of
+
+  --- \code{argv[0]} contains the name of the object.
+
+  --- \code{argv[1\ldots3]} contain
+  \code{$self}, \code{$class}, and \code{$proc}.%$
+  Since \code{create} is called
+  through the instance procedure \code{create-shadow},
+  \code{argv[3]} contains \code{create-shadow}.
+
+  --- \code{argv[4]}
+  contain any additional arguments (passed as a string) provided by the user.
+\end{enumerate}
+The \clsref{Trace}{../ns-2/trace.cc} illustrates
+argument handling by TclClass methods.
+\begin{program}
+        class TraceClass : public TclClass \{
+        public:
+                TraceClass() : TclClass("Trace") \{\}
+                TclObject* create(int args, const char*const* argv) \{
+                        if (args >= 5)
+                                return (new Trace(*argv[4]));
+                        else
+                                return NULL;
+                \}
+        \} trace_class;
+\end{program}
+A new Trace object is created as
+\begin{program}
+        new Trace "X"
+\end{program}
+Finally, the nitty-gritty details of how the 
+interpreted class hierarchy is constructed:
+\begin{enumerate}
+\item The object constructor is executed when \ns\ first starts.
+\item This constructor calls the TclClass constructor
+  with the name of the interpreted class as its argument.
+\item The TclClass constructor stores the name of the class,
+  and inserts this object into a linked list of the TclClass objects.
+\item During initialization of the simulator,
+  \fcnref{\fcn{Tcl\_AppInit}}{../ns-2/ns_tclsh.cc}{::Tcl\_AppInit}
+  invokes 
+  \fcnref{\fcn{TclClass::bind}}{../Tcl/Tcl.cc}{TclClass::bind}
+\item For each object in the list of TclClass objects,
+  \fcn[]{bind} invokes 
+  \fcnref{\proc[]{register}}{../Tcl/tcl-object.tcl}{TclObject::register},
+  specifying the name of the interpreted class as its argument.
+\item \proc[]{register} establishes the class hierarchy,
+  creating the classes that are required, and not yet created.
+\item Finally, \fcn[]{bind} defines instance procedures
+  \code{create-shadow} and \code{delete-shadow} for this new class.
+\end{enumerate}
+
+\subsection{How to Bind Static C++ Class Member Variables}
+
+In Section~\ref{sec:TclObject}, we have seen how to expose member
+variables of a C++ object into OTcl space. 
+This, however, does not apply to static member variables of a C++
+class. 
+Of course, one may create an OTcl variable for the static member
+variable of every C++ object; obviously this defeats the whole meaning
+of static members.
+
+We cannot solve this binding problem using a similar solution as
+binding in TclObject, which is based on InstVar, because InstVars in
+TclCL require the presence of a TclObject.
+However, we can create a method of the corresponding TclClass and
+access static members of a C++ class through the methods of its
+corresponding TclClass.
+The procedure is as follows:
+\begin{enumerate}
+\item Create your own derived TclClass as described above;
+\item Declare methods \fcn[]{bind} and \fcn[]{method} in your derived
+  class;
+\item Create your binding methods in the implementation of your
+  \fcn[]{bind} with \code{add_method("your_method")}, then implement
+  the handler in \fcn[]{method} in a similar way as you would do in
+  \fcn[]{TclObject::command}. 
+  Notice that the number of arguments passed to
+  \fcn[]{TclClass::method} are different from those passed to
+  \fcn[]{TclObject::command}.
+  The former has two more arguments in the front. 
+\end{enumerate}
+
+As an example, we show a simplified version of
+\code{PacketHeaderClass} in \nsf{packet.cc}. 
+Suppose we have the following class \code{Packet} which has a static
+variable \code{hdrlen_} that we want to access from OTcl:
+\begin{program}
+class Packet \{
+        ......
+        static int hdrlen_;
+\};
+\end{program}
+Then we do the following to construct an accessor for this variable:
+\begin{program}
+class PacketHeaderClass : public TclClass \{
+protected:
+        PacketHeaderClass(const char* classname, int hdrsize);
+        TclObject* create(int argc, const char*const* argv);
+        \* These two implements OTcl class access methods */
+        virtual void bind();
+        virtual int method(int argc, const char*const* argv);
+\};
+
+void PacketHeaderClass::bind()
+\{
+        \* Call to base class bind() must precede add_method() */
+        TclClass::bind();
+        add_method("hdrlen");
+\}
+
+int PacketHeaderClass::method(int ac, const char*const* av)
+\{
+        Tcl& tcl = Tcl::instance();
+        \* Notice this argument translation; we can then handle them \
+as if in TclObject::command() */
+        int argc = ac - 2;
+        const char*const* argv = av + 2;
+        if (argc == 2) \{
+                if (strcmp(argv[1], "hdrlen") == 0) \{
+                        tcl.resultf("%d", Packet::hdrlen_);
+                        return (TCL_OK);
+                \}
+        \} else if (argc == 3) \{
+                if (strcmp(argv[1], "hdrlen") == 0) \{
+                        Packet::hdrlen_ = atoi(argv[2]);
+                        return (TCL_OK);
+                \}
+        \}
+        return TclClass::method(ac, av);
+\}
+\end{program}
+After this, we can then use the following OTcl command to access and
+change values of \code{Packet::hdrlen_}:
+\begin{program}
+        PacketHeader hdrlen 120
+        set i [PacketHeader hdrlen]
+\end{program}
+
+\section{Class TclCommand}
+\label{sec:TclCommand}
+
+This class (\clsref{TclCommand}{../Tcl/Tcl.h})
+provides just the mechanism for \ns\ to export
+simple commands to the interpreter, 
+that can then be executed within a global context by the interpreter.
+There are two functions defined in \nsf{misc.cc}:
+\code{ns-random} and \code{ns-version}.
+These two functions are initialized by the function
+\fcnref{\fcn{init\_misc}}{../ns-2/misc.cc}{::init\_misc},
+defined in \nsf{misc.cc};
+\code{init_misc} is invoked by
+\fcnref{\fcn{Tcl\_AppInit}}{../ns-2/ns_tclsh.cc}{::Tcl\_AppInit}
+during startup.
+\begin{itemize}\itemsep0pt
+\item \clsref{VersionCommand}{../ns-2/misc.cc}
+  defines the command \code{ns-version}.
+  It takes no argument, and returns the current \ns\ version string.
+\begin{program}
+            % ns-version                \; get the current version;
+            2.0a12
+\end{program}
+
+\item \clsref{RandomCommand}{../ns-2/misc.cc}
+  defines the command \code{ns-random}.
+  With no argument, \code{ns-random} returns an integer,
+  uniformly distributed in the interval $[0, 2^{31}-1]$.
+
+  When specified an argument, it takes that argument as the seed.
+  If this seed value is 0, the command uses a heuristic seed value;
+  otherwise, it sets the seed for the random number generator to the
+  specified value.
+\begin{program}
+            % ns-random                 \; return a random number;
+            2078917053
+            % ns-random 0               \;set the seed heuristically;
+            858190129
+            % ns-random 23786           \;set seed to specified value;
+            23786
+\end{program}
+\end{itemize}
+
+\emph{Note that, it is generally not advisable to construct
+  top-level commands that are available to the user.}
+We now describe how to define a new command
+using the example \code{class say_hello}.
+The example defines the command \code{hi},
+to print the string ``hello world'',
+followed by any command line arguments specified by the user.
+For example,
+\begin{program}
+            % hi this is ns [ns-version]
+            hello world, this is ns 2.0a12
+\end{program}
+\begin{enumerate}
+\item The command must be defined within a class
+  derived from the \clsref{TclCommand}{../Tcl/Tcl.h}.
+  The class definition is:
+  \begin{program}
+        class say_hello : public TclCommand \{
+        public:
+                say_hello();
+                int command(int argc, const char*const* argv);
+        \};
+  \end{program}
+\item The constructor for the class must invoke the
+  \fcnref{TclCommand constructor}{../Tcl/Tcl.cc}{TclCommand::TclCommand}
+  with the command as argument; \ie,
+  \begin{program}
+        say_hello() : TclCommand("hi") \{\}
+  \end{program}
+  The \code{TclCommand} constructor sets up "hi"
+  as a global procedure that invokes
+  \fcnref{\fcn[]{TclCommand::dispatch\_cmd}}{../ns-2/Tcl.cc}{TclCommand::dispatch\_cmd}.
+\item  The method \fcn[]{command} must perform the desired action.
+
+  The method is passed two arguments.  The first argument, \code{argc},
+  contains the number of actual arguments passed by the user.
+
+  The actual arguments passed by the user are passed as an
+  argument vector (\code{argv}) and contains the following:
+  
+  --- \code{argv[0]} contains the name of the command (\code{hi}).
+
+  --- \code{argv[1\ldots(argc - 1)]} contains additional arguments
+  specified on the command line by the user.
+
+  \fcn[]{command} is invoked by \fcn[]{dispatch\_cmd}.
+\begin{program}
+        #include <streams.h>        \* because we are using stream I/O */
+        
+        int say_hello::command(int argc, const char*const* argv) \{
+                cout << "hello world:";
+                for (int i = 1; i < argc; i++)
+                        cout << ' ' << argv[i];
+                cout << '\bs n';
+                return TCL_OK;
+        \}
+\end{program}
+\item Finally, we require an instance of this class.
+  \code{TclCommand} instances are created in the routine
+  \fcnref{\fcn{init\_misc}}{../ns-2/misc.cc}{::init\_misc}.
+  \begin{program}
+        new say_hello;
+  \end{program}
+\end{enumerate}
+Note that there used to be more functions such as \code{ns-at}\ and
+\code{ns-now}\ that were accessible in this manner.
+Most of these functions have been subsumed into existing classes.
+In particular, \code{ns-at}\ and \code{ns-now}\ are accessible
+through the
+\fcnref{scheduler TclObject}{../ns-2/scheduler.cc}{Scheduler::command}.
+These functions are defined in \nsf{tcl/lib/ns-lib.tcl}.
+\begin{program}
+            % set ns [new Simulator]    \; get new instance of simulator;
+            _o1
+            % $ns now                   \; query simulator for current time;
+            0
+            % $ns at \ldots             \; specify at operations for simulator;
+            \ldots
+\end{program}
+          
+
+\section{Class EmbeddedTcl}
+\label{sec:EmbeddedTcl}
+
+\ns\ permits the development of functionality in either compiled code,
+or through interpreter code, that is evaluated at initialization.
+For example, the scripts \Tclf{tcl-object.tcl} or the scripts in
+\nsf{tcl/lib}.
+Such loading and evaluation of scripts is done through objects in the
+\clsref{EmbeddedTcl}{../Tcl/Tcl.h}.
+
+The easiest way to extend \ns\ is to add OTcl code
+to either \Tclf{tcl-object.tcl} or through scripts
+in the \nsf{tcl/lib} directory.
+Note that, in the latter case, \ns\ sources
+\nsf{tcl/lib/ns-lib.tcl} automatically, and hence
+the programmer must add a couple of lines to this file
+so that their script will also get automatically sourced by \ns\
+at startup.
+As an example,
+the file \nsf{tcl/mcast/srm.tcl} defines some of the instance procedures
+to run SRM.
+In \nsf{tcl/lib/ns-lib.tcl}, we have the lines:
+\begin{program}
+        source tcl/mcast/srm.tcl
+\end{program}
+to automatically get srm.tcl sourced by \ns\ at startup.
+
+Three points to note with EmbeddedTcl code are that
+firstly, if the code has an error that is caught during the eval,
+then \ns\ will not run.
+Secondly, the user can explicitly override any of the code in the scripts.
+In particular, they can re-source the entire script after making their own
+changes. 
+Finally, after adding the scripts to \nsf{tcl/lib/ns-lib.tcl}, and
+every time thereafter that they change their script, the user
+must recompile \ns\ for their changes to take effect.
+Of course, in most cases\footnote{%
+The few places where this might not work
+are when certain variables might have to be defined or undefined,
+or otherwise the script contains code
+other than procedure and variable definitions and 
+executes actions directly that might not be reversible.},
+the user can source their script
+to override the embedded code.
+
+
+The rest of this subsection illustrate
+how to integrate individual scripts directly into \ns.
+The first step is convert the script into an EmbeddedTcl object.
+The lines below expand ns-lib.tcl and create the EmbeddedTcl object
+instance called \code{et_ns_lib}:
+\begin{program}
+        tclsh bin/tcl-expand.tcl tcl/lib/ns-lib.tcl | \bs
+                               ../Tcl/tcl2c++ et_ns_lib > gen/ns_tcl.cc
+\end{program}
+The script, \xref{\nsf{bin/tcl-expand.tcl}}{../ns-2/tcl-expand.tcl}
+expands \code{ns-lib.tcl} by replacing all \code{source} lines
+with the corresponding source files.
+The program, \xref{\Tclf{tcl2cc.c}}{../Tcl/tcl2c++.c.html},
+converts the OTcl code into an equivalent EmbeddedTcl object, \code{et_ns_lib}.
+
+During initialization, invoking the method \code{EmbeddedTcl::load}
+explicitly evaluates the array.
+\begin{list}{---}{}
+\item
+  \xref{\Tclf{tcl-object.tcl}}{../Tcl/tcl-object.tcl}
+  is evaluated by the method
+  \fcnref{\fcn{Tcl::init}}{../Tcl/Tcl.cc}{Tcl::init};
+  \fcnref{\fcn[]{Tcl\_AppInit}}{../ns-2/tclAppInit.cc}{::Tcl\_AppInit}
+  invokes \fcn[]{Tcl::Init}.
+  The exact command syntax for the load is:
+  \begin{program}
+        et_tclobject.load();
+  \end{program}
+\item
+  Similarly,
+  \xref{\nsf{tcl/lib/ns-lib.tcl}}{../ns-2/tcl/lib/ns-lib.tcl}
+  is evaluated directly by \code{Tcl_AppInit} in \nsf{ns\_tclsh.cc}.
+  \begin{program}
+        et_ns_lib.load();
+  \end{program}
+\end{list}
+
+\section{Class InstVar}
+\label{sec:InstVar}
+
+This section describes the internals of the \clsref{InstVar}{../Tcl/Tcl.cc}.
+This class defines the methods and mechanisms to bind
+a C++ member variable in the compiled shadow object
+to a specified OTcl instance variable in the equivalent interpreted object.
+The binding is set up such that the value of the variable can be
+set or accessed either from within the interpreter, or from
+within the compiled code at all times.
+
+There are five instance variable classes:
+\clsref{InstVarReal}{../Tcl/Tcl.cc},
+\clsref{InstVarTime}{../Tcl/Tcl.cc},
+\clsref{InstVarBandwidth}{../Tcl/Tcl.cc},
+\clsref{InstVarInt}{../Tcl/Tcl.cc},
+and \clsref{InstVarBool}{../Tcl/Tcl.cc},
+corresponding to bindings for real, time, bandwidth, integer, and
+boolean valued variables respectively.
+
+We now describe the mechanism by which instance variables are set up.
+We use the \clsref{InstVarReal}{../Tcl/Tcl.cc}
+to illustrate the concept.
+However, this mechanism is applicable to all five types of instance variables.
+
+When setting up an interpreted variable to access a member variable,
+the member functions of the class InstVar assume that they are executing
+in the appropriate method execution context;
+therefore, they do not query the interpreter to determine the context in
+which this variable must exist.
+
+In order to guarantee the correct method execution context,
+a variable must only be bound if its class is already established within
+the interpreter, and
+the interpreter is currently operating on an object in that class.
+Note that the former requires that when a method in a given class is
+going to make its variables accessible via the interpreter,
+there must be an associated 
+\href{class TclClass}{Section}{sec:TclClass}
+defined that identifies the appropriate class hierarchy to the interpreter.
+The appropriate method execution context can therefore be created in one
+of two ways.
+
+An implicit solution occurs whenever a new TclObject is created within
+the interpreter.
+This sets up the method execution context within the interpreter.
+When the compiled shadow object of the interpreted TclObject is created,
+the constructor for that compiled object can bind its member variables
+of that object
+to interpreted instance variables in the context of the newly created
+interpreted object.
+
+An explicit solution is to define a \code{bind-variables} operation
+within a \code{command} function, that can then be invoked via the
+\code{cmd} method.
+The correct method execution context is established in order to execute
+the \code{cmd} method.
+Likewise, the compiled code is now operating on the appropriate
+shadow object, and can therefore safely bind the required member variables.
+
+An instance variable is created by specifying the name of the
+interpreted variable, and the address of the member variable in the
+compiled object.
+The
+\fcnref{constructor}{../Tcl/Tcl.cc}{InstVar::InstVar}
+for the base class InstVar 
+creates an instance of the variable in the interpreter,
+and then sets up a
+\fcnref{trap routine}{../Tcl/Tcl.cc}{InstVar::catch_var}
+to  catch all accesses to the variable through the interpreter.
+
+Whenever the variable is read through the interpreter, the
+\fcnref{trap routine}{../Tcl/Tcl.cc}{InstVar::catch_read}
+is invoked just prior to the occurrence of the read.
+The routine invokes the appropriate
+\fcnref{\code{get} function}{../Tcl/Tcl.cc}{InstVarReal::get}
+that returns the current value of the variable.
+This value is then used to set the value of the interpreted variable
+that is then read by the interpreter.
+
+Likewise,
+whenever the variable is set through the interpreter, the
+\fcnref{trap routine}{../Tcl/Tcl.cc}{InstVar::catch_write}
+is invoked just after to the write is completed.
+The routine gets the current value set by the interpreter, 
+and invokes the appropriate
+\fcnref{\code{set} function}{../Tcl/Tcl.cc}{InstVarReal::set}
+that sets the value of the compiled member to the current value set
+within the interpreter.
+
+\endinput
+
+### Local Variables:
+### mode: latex
+### comment-column: 60
+### backup-by-copying-when-linked: t
+### file-precious-flag: nil
+### End:

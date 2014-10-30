@@ -1,0 +1,88 @@
+eval 'exec perl $0 -S ${1+"$@"}'	# -*- perl -*-
+    if 0;
+
+require 5.001;
+
+#
+# set_flow_id.pl
+# Copyright (C) 1997 by USC/ISI
+#
+# Derived from
+# Id: rbp_hack_attr.pl,v 1.1 1997/10/08 20:31:46 johnh Exp 
+# from LSAM Project's rate-based pacing work.
+#
+# Copyright (c) 1997 University of Southern California.
+# All rights reserved.                                            
+#                                                                
+# Redistribution and use in source and binary forms are permitted
+# provided that the above copyright notice and this paragraph are
+# duplicated in all such forms and that any documentation, advertising
+# materials, and other materials related to such distribution and use
+# acknowledge that the software was developed by the University of
+# Southern California, Information Sciences Institute.  The name of the
+# University may not be used to endorse or promote products derived from
+# this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+# 
+
+
+sub usage {
+    print STDERR <<END;
+usage: $0
+
+Hack the attribute field in ns trace output to make it
+be the source/dest we want.
+
+By default, sets the attribute to the minimum of the source or destination.
+Options:
+    -m	    take minimum (default)
+    -s	    take source
+    -d	    take destination
+END
+    exit 1;
+}
+
+#use strict;
+
+use Getopt::Long;
+&usage if ($#ARGV >= 0 && $ARGV[0] eq '-?');
+my(%opts);
+&GetOptions(\%opts, qw(m s d));
+# &usage if ($#ARGV < 0);
+
+my($MODE_MIN, $MODE_SRC, $MODE_DEST) = (0..10);
+my($mode) = $MODE_MIN;
+$mode = $MODE_MIN if (defined($opts{'m'}));
+$mode = $MODE_SRC if (defined($opts{'s'}));
+$mode = $MODE_DEST if (defined($opts{'d'}));
+
+while (<>) {
+    if (/^[^-+hdrE]/) {
+	print;
+    } else {
+	chomp;
+	my(@f) = split(/ /);
+	if ($f[0] ne "E") {
+	    ($hacky_src, $hacky_dest) = @f[8,9];
+	    ($src) = split(/\./, $hacky_src);
+	    ($dest) = split(/\./, $hacky_dest);
+	    ($min) = ($src < $dest) ? $src : $dest;
+	    $f[7] = $min if ($mode == $MODE_MIN);
+	    $f[7] = $src if ($mode == $MODE_SRC);
+	    $f[7] = $dest if ($mode == $MODE_DEST);
+	} else {
+	    ($src, $dest) = @f[2,3];
+	    $min = ($src < $dest) ? $src : $dest;
+	    $f[6] = $min if ($mode == $MODE_MIN);
+	    $f[6] = $src if ($mode == $MODE_SRC);
+	    $f[6] = $dest if ($mode == $MODE_DEST);
+	}
+	print join(" ", @f), "\n";
+    };
+}
+
+exit 0;
+

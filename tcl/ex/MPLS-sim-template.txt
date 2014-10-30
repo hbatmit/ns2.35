@@ -1,0 +1,310 @@
+# NS tcl script template - tested on snapshot 18-09-00
+#
+# Jan-Rutger Schrader, KPN Research, the Netherlands
+# j.h.r.schrader@kpn.com
+# version 0.3
+# contributed by Schrader, J.H.R. <J.H.R.Schrader@kpn.com>
+# $Header: /cvsroot/nsnam/ns-2/tcl/ex/MPLS-sim-template.txt,v 1.4 2000/10/30 17:27:34 haoboy Exp $
+
+#
+# Create simulator object
+#
+set ns [new Simulator]
+
+#
+# Open files to write trace-data for NAM and Xgraph
+#
+set nf [open mpls.nam w]
+$ns namtrace-all $nf
+set f0 [open mpls.tr w]
+
+#
+# Finish procedure which closes the trace file and opens Xgraph and NAM
+#
+proc finish {} {
+	global ns nf f0
+	$ns flush-trace
+	close $nf
+	close $f0
+        exec nam mpls.nam &
+	exit 0
+}
+
+#
+# Set dynamic distance-vector routing protocol
+#
+$ns rtproto DV
+
+#
+# define nodes and MPLS LSRs (in case of a LSR, the [$ns node]
+# command has to be preceded by node-config -MPLS ON
+# and succeeded by node-config -MPLS OFF
+#
+set node0   [$ns node]
+$ns node-config -MPLS ON
+set LSR1   [$ns node]
+		:
+		:
+set LSR11  [$ns node]
+$ns node-config -MPLS OFF
+set node12  [$ns node]
+
+#
+# Define links, bandwidth 1 Mb, delay 10ms, queue managementDropTail 
+#
+$ns duplex-link $node0 $LSR4  1Mb  10ms DropTail 
+$ns duplex-link $LSR1  $LSR2  1Mb  10ms DropTail 
+		:
+		: 
+$ns duplex-link $LSR10 $LSR11 1Mb  10ms DropTail 
+$ns duplex-link $LSR11 $node12 1Mb 10ms DropTail
+
+#
+# Control layout of the network
+#
+$ns duplex-link-op $node0 $LSR4  orient right
+$ns duplex-link-op $LSR1  $LSR2  orient right
+$ns duplex-link-op $LSR1  $LSR4  orient left-down
+		:
+		:
+$ns duplex-link-op $LSR9  $LSR10 orient right-up
+$ns duplex-link-op $LSR10 $LSR11 orient right
+$ns duplex-link-op $LSR11 $node12 orient right
+
+#
+# The default value of a link cost (1) can be adjusted  
+# Notice that the procedure sets the cost along one direction only!  
+#
+$ns cost $LSR4 $LSR5 3
+$ns cost $LSR5 $LSR4 3 
+
+#
+# Install/configure LDP agents on all MPLS nodes,
+# and set path restoration function that reroutes traffic
+# around a link failure in a LSP to an alternative LSP.
+# There are 2 options as follows:
+# "new": create new alternative path if one doesn't exist
+# "drop": do not create any new alternative path
+#
+# Adjust loop length to address all LSRs (MPLS nodes).
+#
+for {set i 1} {$i < 12} {incr i} {
+	set a LSR$i
+	for {set j [expr $i+1]} {$j < 12} {incr j} {
+		set b LSR$j
+		eval $ns LDP-peer $$a $$b
+	}
+	set m [eval $$a get-module "MPLS"]
+	$m enable-reroute "new"
+}
+
+#
+# Set ldp-message color in NAM
+#
+$ns ldp-request-color       blue
+$ns ldp-mapping-color       red
+$ns ldp-withdraw-color      magenta
+$ns ldp-release-color       orange
+$ns ldp-notification-color  yellow
+
+# 
+# Define trigger strategy, Label Distribution Control Mode
+# and Label Allocation and Distribution Scheme
+#
+# when the following line is omitted, trigger strategy is
+# set to data-driven
+Classifier/Addr/MPLS set control_driven_ 1
+Classifier/Addr/MPLS enable-on-demand
+Classifier/Addr/MPLS enable-ordered-control
+
+#
+# Trigger strategy can also be defined per LSR
+#
+[$LSR4 get-module "MPLS"] enable-control-driven
+[$LSR3 get-module "MPLS"] enable-data-driven
+
+#
+# Turn on all traces to stdout
+#
+Agent/LDP set trace_ldp_ 1
+Classifier/Addr/MPLS set trace_mpls_ 1
+
+#
+# use 'List' scheduling of events
+#
+$ns use-scheduler List
+
+#
+# Define procedure to create a CBR traffic flow and connect it to a UDP agent
+#
+proc attach-expoo-traffic { node sink size burst idle rate } {
+	global ns
+		
+	set udp [new Agent/UDP]
+	$ns attach-agent $node $udp
+		
+	set traffic [new Application/Traffic/Exponential]
+	$traffic set packetSize_ $size
+	$traffic set burst_time_ $burst
+	$traffic set idle_time_ $idle
+	$traffic set rate_ $rate
+	$traffic attach-agent $udp
+
+	$ns connect $udp $sink
+	return $traffic
+}
+
+#
+# Create a traffic sink and attach it to the node node12
+#
+set sink0 [new Agent/LossMonitor]
+$ns attach-agent $node12  $sink0
+
+#
+# Create a traffic source
+#
+set src0 [attach-expoo-traffic $node0  $sink0 200 0 0 400k]
+
+#
+# Create a TCP agent and connect it to an application like FTP or Telnet, which
+# generates the data
+#
+set tcp [new Agent/TCP]
+$ns attach-agent $node0 $tcp
+set ftp [new Application/FTP]
+$tcp set packetSize_ 1024
+$ftp attach-agent $tcp
+
+set sink [new Agent/TCPSink]
+$ns attach-agent $node12 $sink 
+
+$ns connect $tcp $sink
+#
+# Procedure which dumps the nr of packets sent/received at the prompt
+# (in case of a TCP source)
+#
+proc monitor {} { 
+   global tcp 
+
+   $tcp instvar ndatapack_ 
+   puts "packets send: $ndatapack_" 
+   $tcp instvar nackpack_
+   puts "packets received: $nackpack_"
+} 
+
+#
+# Define a procedure which periodically records the bandwidth received by the
+# traffic sink sink0 and writes it to the file f0.
+#
+
+set totalpkt 0
+proc record {} {
+        global sink0 f0 totalpkt
+
+	set ns [Simulator instance]
+	
+	#Set the time after which the procedure should be called again
+        set time 0.005
+	
+	#How many bytes have been received by the traffic sink?
+        set bw0 [$sink0 set bytes_]
+	
+	#Get the current time
+        set now [$ns now]
+
+	#Calculate the bandwidth (in MBit/s) and write it to the file
+        puts $f0 "$now [expr $bw0/$time*8/1000000]"
+
+	#Reset the bytes_ values on the traffic sink
+        $sink0 set bytes_ 0
+
+	#Re-schedule the procedure
+        $ns at [expr $now+$time] "record"
+        
+        set bw0 [expr $bw0 / 200]
+        set totalpkt [expr $totalpkt + $bw0]
+}
+
+#
+# Procedure to dump the number of received packets calculated by the procedure
+# record at the command prompt
+#
+proc recv-pkts {} {
+     global totalpkt
+     flush stdout
+     puts "The Number of Total received packet is $totalpkt"
+}
+
+#
+# From here on the simulation events are defined
+#
+
+# Start procedure "record"
+#
+$ns at 0.0   "record"
+
+#
+# Source start
+#
+$ns at 0.1   "$src0 start"
+
+#
+# Example of defining protection paths according to Haskin's model
+#
+$ns at 0.1 "[$LSR4 get-module MPLS] make-explicit-route 11  1_2_3_10_11  1000  -1"
+$ns at 0.2 "[$LSR11 get-module MPLS] make-explicit-route 11 11_10_9_8_7_4_1000 1005 -1"
+#
+# Reroute option used to simulate Haskin's model
+#
+$ns at 0.3   "[$LSR9 get-module MPLS] reroute-binding   12   -1   1005"
+
+#
+# Define link failures
+#
+$ns rtmodel-at 0.3 down $LSR5 $LSR6
+$ns rtmodel-at 0.3 down $LSR6 $LSR3
+		:
+$ns rtmodel-at 0.4 down $LSR9 $LSR10
+
+#
+# Define when the link have to be restored
+#
+$ns rtmodel-at 0.5 up   $LSR5 $LSR6
+$ns rtmodel-at 0.5 up   $LSR6 $LSR3
+		:
+$ns rtmodel-at 0.5 up   $LSR9 $LSR10
+
+#
+# Trace results (MPLS/LDP packets) at a given LSR are dumped at the prompt
+#
+$ns at 0.1 "[$LSR3 get-module MPLS] trace-mpls"
+$ns at 0.1 "[$LSR4 get-module MPLS] trace-LDP"
+
+#
+# Source stop
+#
+$ns at 0.6 "$src0 stop"
+
+#
+# Calls procedure "recv-pkts" (and dumps the nr of received packets at the 
+# command prompt
+#
+$ns at 0.7 "recv-pkts"
+
+#
+# Displays the erb/lib/pft-table of the given LSR at the command prompt
+#
+$ns at 0.7 "[$LSR1 get-module MPLS] erb-dump"
+$ns at 0.7 "[$LSR1 get-module MPLS] lib-dump"
+$ns at 0.7 "[$LSR1 get-module MPLS] pft-dump"
+
+#
+# Calls the procedure "finish"
+#
+$ns at 0.7 "finish"
+
+#
+# The last line finally starts the simulation
+#
+$ns run
+

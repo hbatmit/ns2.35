@@ -1,0 +1,41 @@
+dnl autoconf rules to find otcl
+dnl $Header: /cvsroot/nsnam/conf/configure.in.otcl,v 1.25 2011/10/31 04:33:25 tom_henderson Exp $ (LBL)
+
+AC_ARG_WITH(otcl,	--with-otcl=path	specify a pathname for otcl, d=$withval, d="")
+
+OTCL_VERS=1.14
+OTCL_ALT_VERS=1.0
+
+OTCL_H_PLACES_D="$d \
+		$d/include"
+OTCL_H_PLACES="../otcl \
+		/usr/src/local/otcl \
+		../otcl-$OTCL_VERS \
+		/import/otcl/include \
+		/usr/src/local/otcl-$OTCL_VERS \
+		/usr/src/local/otcl-$OTCL_ALT_VERS \
+		$prefix/include \
+		/usr/local/include \
+		/usr/contrib/include \
+		/usr/include"
+OTCL_LIB_PLACES_D="$d \
+		$d/lib \
+		"
+OTCL_LIB_PLACES="../otcl \
+		../otcl-$OTCL_VERS \
+		../otcl-$OTCL_ALT_VERS \
+		$prefix/lib \
+		$x_libraries \
+		/usr/contrib/lib \
+		/usr/local/lib \
+		/usr/lib \
+		/usr/src/local/otcl \
+		/usr/src/local/otcl-$OTCL_VERS \
+		/usr/src/local/otcl-$OTCL_ALT_VERS \
+		"
+
+NS_BEGIN_PACKAGE(otcl)
+NS_CHECK_HEADER_PATH(otcl.h,$OTCL_H_PLACES,$d,$OTCL_H_PLACES_D,V_INCLUDE_OTCL,otcl)
+NS_CHECK_LIB_PATH(otcl$OTCL_VERS,$OTCL_LIB_PLACES,$d,$OTCL_LIB_PLACES_D,V_LIB_OTCL,otcl)
+NS_END_PACKAGE(otcl,yes)
+

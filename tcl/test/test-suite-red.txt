@@ -1,0 +1,32 @@
+Four new tests illustrate and validate the new "gentle_" 
+parameter added to RED.  These tests can be run with the
+following commands:
+
+../../ns test-suite-red.tcl ungentle
+../../ns test-suite-red.tcl gentle
+../../ns test-suite-red.tcl ungentleBadParams
+../../ns test-suite-red.tcl gentleBadParams
+
+The "gentle_" parameter implements a suggestion from
+an October 1997 email on "Optimum functions for computing the drop
+probability" available from "http://www.aciri.org/floyd/REDfunc.txt".
+From the ns man page on "gentle_":
+
+ Set to true to increase the packet drop rate slowly from max_p to
+ 1 as the average queue size ranges from maxthresh to twice maxthresh.
+ The default is set to false, and max_p increases abruptly from
+ max_p to 1 when the average queue size exceeds maxthresh.
+
+The first two tests compare the behavior of RED with "gentle_"
+set to false, and to true, with the default RED parameters.
+There is very little difference between the two tests.
+The next two tests compare the behavior of RED with "gentle_"
+set to false, and to true, with a less-optimal setting of
+the RED parameters.  (E.g., with "max_p" set to 0.02 instead of
+to 0.1.)  These two tests show that with "gentle_" set to true,
+RED gives more robust performance with less-optimal settings of
+the RED parameters.
+
+
+I will try to add other proposed RED modifications to the
+NS distribution as my spare time permits...

@@ -1,0 +1,114 @@
+Here is the current state of validation tests in NS for FullTCP:
+Last updated: September 5, 2005.
+
+test-suite-simple.tcl, test-suite-simple-full.tcl
+  Tests in test-suite-simple.tcl that have not been added to 
+test-suite-simple-full.tcl: 
+tahoe1Bytes, tahoe1RED, tahoe1REDbytes, tahoe3RED, reno5_nobug,
+statsECN, stats1Bytes, stats1a, stats1aBytes, statsHeaders,
+stats2, stats3, stats4, statsTFRC
+
+test-suite-tcp-init-win.tcl:
+  There is a comparable validation test test-suite-tcp-init-win-full.tcl,
+but it is not included in "validate", and it has some tests
+commented out.  
+  The best way to check "test-suite-tcp-init-win-full.tcl" would
+  be
+to run "test-suite-tcp-init-win-full.tcl" and "test-suite-tcp-init-win.tcl"
+side by side, one test at a time, to see if the test results compare.
+
+test-suite-tcpOptions.tcl:
+  The following tests do not have comparable tests for Full-TCP:
+  Tests of maxburst: 
+maxburst_tahoe, maxburst_tahoe1, maxburst_reno, maxburst_reno1, 
+maxburst_newreno, maxburst_newreno1, maxburst_sack, maxburst_sack1
+  Tests of retransmit timeouts:
+timeouts_tahoe, timeouts_tahoe1, timeouts_tahoe2, timeouts_tahoe3,
+timeouts_reno, timeouts_reno_noexitFR, timeouts_reno1, timeouts_reno2,
+timeouts_reno3, timeouts_newreno, timeouts_newreno_noexitFR,
+timeouts_newreno1, timeouts_newreno2, timeouts_newreno3, timeouts_sack,
+timeouts_sack1, timeouts_sack2, timeouts_sack3, timeoutsA_tahoe,
+timeoutsA_tahoe1,
+  I [Sally] checked in two commented-out tests in 
+test-suite-tcpOptions.tcl, but the test "onedrop_sack_full" doesn't
+look perfect to me.  Does anyone know why the sender sends two
+packets for the Fast Retransmit, instead of just one, as in
+"onedrop_sack?
+
+test-suite-tcpReset.tcl:
+  There is no comparable validation test for FullTCP.
+
+test-suite-newreno.tcl:
+  There is no comparable validation test for FullTCP.
+
+test-suite-tcp.tcl: 
+  There is no comparable validation test for FullTCP.
+  This includes tests of ecn, retransmit timers, TCP after quiescent
+periods and underutilized periods.
+
+test-suite-ecn-ack.tcl 
+  There is no comparable validation test for FullTCP.
+  This contains only one validation test.
+
+test-suite-tcpVariants.tcl:
+  The following tests do not have comparable tests for Full-TCP:
+  Tests of multiple drops: 
+multiple_tahoe, multiple_reno, multiple_newreno, multiple_sack, 
+multiple_partial_ack_sack
+  Tests of multiple drops, scenario #2: 
+multiple2_tahoe, multiple2_reno, multiple2_newreno, multiple2_sack, 
+multiple2_partial_ack_sack
+
+test-all-sack, test-all-sack-full.
+  Tests in test-all-sack that have not been added to test-all-sack-full: 
+FalsePipe, FalsePipe1, sack_dupacks, sack_dupacks1
+  Tests commented out in both test-all-sack-full and test-all-sack:
+delayedSack, phaseSack, phaseSack2, phaseSack3, timersSack
+
+Functionality added to one-way TCP but not yet added to FullTCP
+inclused the following:
+Quick-Start: test-all-quickstart
+Limited Transmit (RFC 3042): test-all-LimTransmit
+HighSpeed TCP (RFC 3649): test-all-tcpHighspeed
+  Other validation tests for one-way TCP that don't have a
+comparable test for FullTCP include the following:
+aimd, greis, rfc793edu, rfc2581, rbp, frto, ack 
+
+test-suite-ecn.tcl, test-suite-ecn-full.tcl:
+  There are a number of tests in test-suite-ecn.tcl that are not
+in test-suite-ecn-full.tcl.
+
+test-suite-full.tcl:
+  This test suite has no equivalent for one-way TCP.
+  The following tests are commented out:
+twoway_bsdcompat, oneway_bsdcompat
+
+test-suite-testReno-full.tcl:
+  This test suite has no equivalent for one-way TCP.
+  The following tests are commented out:
+Tahoe_FullTCP_without_Fast_Retransmit,
+Sack_FullTCP, Tahoe_FullTCP2_without_Fast_Retransmit,
+Sack_FullTCP2
+
+-------------------------------------------------------------------
+### Tools for listing the tests in each validation test:  ###
+
+# Tool for comparing the tests in two different validation tests:
+set filename=tcp-init-win-full
+set filename1=tcp-init-win
+set filename=ecn-full
+set filename1=ecn
+grep 'Class Test' test-suite-$filename.tcl |\
+ awk '{if($1=="#"){print $1, $3;}else if($1=="#Class"){print "#", $2;}else{print $2}}'>t
+grep 'Class Test' test-suite-$filename1.tcl |\
+ awk '{if($1=="#"){print $1, $3;}else if($1=="#Class"){print "#", $2;}else{print $2}}'>t1
+diff t t1
+echo test-suite-$filename1.tcl, test-suite-$filename.tcl
+
+# Tool for listing the tests in a single validation test
+set filename=full
+grep 'Class Test' test-suite-$filename.tcl |\
+ awk '{if($1=="#"){print $1, $3;}else if($1=="#Class"){print "#", $2;}else{print $2}}'
+echo test-suite-$filename.tcl
+-------------------------------------------------------------------
+

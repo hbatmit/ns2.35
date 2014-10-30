@@ -1,0 +1,396 @@
+#!/usr/bin/perl -w
+
+#
+# Copyright (C) 2001 by USC/ISI
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms are permitted
+# provided that the above copyright notice and this paragraph are
+# duplicated in all such forms and that any documentation, advertising
+# materials, and other materials related to such distribution and use
+# acknowledge that the software was developed by the University of
+# Southern California, Information Sciences Institute.  The name of the
+# University may not be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+# An perl script takes a tcpdump trace as input and outputs 
+# statistics (total # of packetz and total size) of each type of traffic
+#
+# This work is supported by DARPA through SAMAN Project
+# (http://www.isi.edu/saman/), administered by the Space and Naval
+# Warfare System Center San Diego under Contract No. N66001-00-C-8066
+
+
+$total=0;
+$http=0;
+$nntp=0;
+$ftp=0;
+$domain=0;
+$ntp=0;
+$smtp=0;
+#$icmp=0;
+$realaudio=0;
+$pop3=0;
+$time=0;
+$webcache=0;
+$ssh=0;
+$squid=0;
+$telnet=0;
+$cvs=0;
+$h323=0;
+$datametric=0;
+$x11=0;
+$phonebook=0;
+$snmp=0;
+$syslog=0;
+$gopher=0;
+$bgp=0;
+$auth=0;
+$rtsp=0;
+#$gris=0;
+
+$other=0;
+$totals=0;
+$https=0;
+$nntps=0;
+$ftps=0;
+$domains=0;
+$ntps=0;
+$smtps=0;
+$realaudios=0;
+$others=0;
+$pop3s=0;
+$times=0;
+$webcaches=0;
+$sshs=0;
+$squids=0;
+$telnets=0;
+$cvss=0;
+$h323s=0;
+$datametrics=0;
+$x11s=0;
+$phonebooks=0;
+$snmps=0;
+$syslogs=0;
+$gophers=0;
+$bgps=0;
+$auths=0;
+$rtsps=0;
+#$griss=0;
+
+$httpP=		"80";
+$httpsP=         "443";
+$sshP=           "22";
+$squidP=         "3128";
+$datametricsP=   "1645";
+$phonebookP=     "767";
+$x11P=           "6000";
+$telnetP=        "23";
+$webcacheP=      "8080";
+$cvspserverP=    "2401";
+$domainP=        "53";
+$nntpP=          "119";
+$ntpP=           "123";
+$h323gatediscP=  "1718";
+$h323gatestatP=  "1719";
+$h323hostcallP=  "1720";
+$pop3P=          "110";
+$timeP=          "37";
+$ftpdataP=       "20";
+$ftpP=           "21";
+$smtpP=          "25";
+$snmpP=          "161";
+$gopherP=        "70";
+$authP=          "11";
+$rtspP=          "554";
+$bgpP=           "179";
+$syslogP=        "514";
+
+while (<>) {
+       	($time1,$time2,$ip11,$ip12,$ip13,$ip14,$srcPort,$dummy2,$ip21,$ip22,$ip23,$ip24,$dstPort,$dummy3,$proto,$size) = split(/[.: ]/,$_);
+#print join("#",split(/[.: ]/,$_));
+
+	$time1="";
+	$time2="";
+#	$dummy1="";
+	$dummy2="";
+	$dummy3="";
+	$ip11="";
+	$ip12="";
+	$ip13="";
+	$ip14="";
+	$ip21="";
+	$ip22="";
+	$ip23="";
+	$ip24="";
+
+
+	if (defined($proto) && defined($size)) {
+		if (($proto eq "udp") || ($proto eq "tcp")) {
+			if (defined($srcPort) && defined($dstPort) && ($size < 1500)) {
+				if (($srcPort eq $httpP) || ($dstPort eq $httpP)) {
+		   			$https=$https+$size;
+				}
+				elsif (($srcPort eq $httpsP) || ($dstPort eq $httpsP)) {
+		   			$https=$https+$size;
+				}
+				elsif (($srcPort eq $sshP) || ($dstPort eq $sshP)) {
+		   			$sshs=$sshs+$size;
+				}
+				elsif (($srcPort eq $squidP) || ($dstPort eq $squidP)) {
+		   			$squids=$squids+$size;
+				}
+				elsif (($srcPort eq $datametricsP) || ($dstPort eq $datametricsP)) {
+		   			$datametrics=$datametrics+$size;
+				}
+				elsif (($srcPort eq $phonebookP) || ($dstPort eq $phonebookP)) {
+		   			$phonebooks=$phonebooks+$size;
+				}
+				elsif (($srcPort eq $x11P) || ($dstPort eq $x11P)) {
+		   			$x11s=$x11s+$size;
+				}
+				elsif (($srcPort eq $telnetP) || ($dstPort eq $telnetP)) {
+		   			$telnets=$telnets+$size;
+				}
+				elsif (($srcPort eq $webcacheP) || ($dstPort eq $webcacheP)) {
+		   			$webcaches=$webcaches+$size;
+				}
+				elsif (($srcPort eq $cvspserverP) || ($dstPort eq $cvspserverP)) {
+		   			$cvss=$cvss+$size;
+				}
+				elsif (($srcPort eq $domainP) || ($dstPort eq $domainP)) {
+		   			$domains=$domains+$size;
+				}
+				elsif (($srcPort eq $ntpP) || ($dstPort eq $ntpP)) {
+		   			$ntps=$ntps+$size;
+				}
+				elsif (($srcPort eq $h323gatestatP) || ($dstPort eq $h323gatestatP)) {
+		   			$h323s=$h323s+$size;
+				}
+				elsif (($srcPort eq $h323hostcallP) || ($dstPort eq $h323hostcallP)) {
+		   			$h323s=$h323s+$size;
+				}
+				elsif (($srcPort eq $h323gatediscP) || ($dstPort eq $h323gatediscP)) {
+		   			$h323s=$h323s+$size;
+				}
+				elsif (($srcPort eq $pop3P) || ($dstPort eq $pop3P)) {
+		   			$pop3s=$pop3s+$size;
+				}
+				elsif (($srcPort eq $timeP) || ($dstPort eq $timeP)) {
+		   			$times=$times+$size;
+				}
+				elsif (($srcPort eq $nntpP) || ($dstPort eq $nntpP)) {
+		   			$nntps=$nntps+$size;
+				}
+				elsif (($srcPort eq $ftpP) || ($dstPort eq $ftpP)) {
+		   			$ftps=$ftps+$size;
+				}
+				elsif (($srcPort eq $ftpdataP) || ($dstPort eq $ftpdataP)) {
+		   			$ftps=$ftps+$size;
+				}
+				elsif (($srcPort eq $smtpP) || ($dstPort eq $smtpP)) {
+		   			$smtps=$smtps+$size;
+				}
+				elsif (($srcPort eq $snmpP) || ($dstPort eq $snmpP)) {
+		   			$snmps=$snmps+$size;
+				}
+				elsif (($srcPort eq $gopherP) || ($dstPort eq $gopherP)) {
+		   			$gophers=$gophers+$size;
+				}
+				elsif (($srcPort eq $authP) || ($dstPort eq $authP)) {
+		   			$auths=$auths+$size;
+				}
+				elsif (($srcPort eq $rtspP) || ($dstPort eq $rtspP)) {
+		   			$rtsps=$rtsps+$size;
+				}
+				elsif (($srcPort eq $bgpP) || ($dstPort eq $bgpP)) {
+		   			$bgps=$bgps+$size;
+				}
+				elsif (($srcPort eq $syslogP) || ($dstPort eq $syslogP)) {
+		   			$syslogs=$syslogs+$size;
+				}
+				elsif (($srcPort eq "6970") || ($dstPort eq "6970")) {
+		   			$realaudios=$realaudios+$size;
+				}
+				else {
+					$others=$others+$size;
+				}
+   			$totals=$totals+$size;
+        		}
+		}
+	}
+	if (defined($srcPort) && defined($dstPort)) {
+		if (($srcPort eq $httpP) || ($dstPort eq $httpP)) {
+		   	$http=$http+1;
+		}
+		elsif (($srcPort eq $httpsP) || ($dstPort eq $httpsP)) {
+		   	$http=$http+1;
+		}
+		elsif (($srcPort eq $domainP) || ($dstPort eq $domainP)) {
+		   	$domain=$domain+1;
+		}
+		elsif (($srcPort eq $webcacheP) || ($dstPort eq $webcacheP)) {
+		   	$webcache=$webcache+1;
+		}
+		elsif (($srcPort eq $sshP) || ($dstPort eq $sshP)) {
+		   	$ssh=$ssh+1;
+		}
+		elsif (($srcPort eq $phonebookP) || ($dstPort eq $phonebookP)) {
+		   	$phonebook=$phonebook+1;
+		}
+		elsif (($srcPort eq $x11P) || ($dstPort eq $x11P)) {
+		   	$x11=$x11+1;
+		}
+		elsif (($srcPort eq $snmpP) || ($dstPort eq $snmpP)) {
+		   	$snmp=$snmp+1;
+		}
+		elsif (($srcPort eq $gopherP) || ($dstPort eq $gopherP)) {
+		   	$gopher=$gopher+1;
+		}
+		elsif (($srcPort eq $authP) || ($dstPort eq $authP)) {
+		   	$auth=$auth+1;
+		}
+		elsif (($srcPort eq $rtspP) || ($dstPort eq $rtspP)) {
+		   	$rtsp=$rtsp+1;
+		}
+		elsif (($srcPort eq $bgpP) || ($dstPort eq $bgpP)) {
+		   	$bgp=$bgp+1;
+		}
+#		elsif (($srcPort eq $grisP) || ($dstPort eq $grisP)) {
+#		   	$gris=$gris+1;
+#		}
+		elsif (($srcPort eq $syslogP) || ($dstPort eq $syslogP)) {
+		   	$syslog=$syslog+1;
+		}
+		elsif (($srcPort eq $datametricsP) || ($dstPort eq $datametricsP)) {
+		   	$datametric=$datametric+1;
+		}
+		elsif (($srcPort eq $squidP) || ($dstPort eq $squidP)) {
+		   	$squid=$squid+1;
+		}
+		elsif (($srcPort eq $cvspserverP) || ($dstPort eq $cvspserverP)) {
+		   	$cvs=$cvs+1;
+		}
+		elsif (($srcPort eq $telnetP) || ($dstPort eq $telnetP)) {
+		   	$telnet=$telnet+1;
+		}
+		elsif (($srcPort eq $ntpP) || ($dstPort eq $ntpP)) {
+		   	$ntp=$ntp+1;
+		}
+		elsif (($srcPort eq $pop3P) || ($dstPort eq $pop3P)) {
+		   	$pop3=$pop3+1;
+		}
+		elsif (($srcPort eq $timeP) || ($dstPort eq $timeP)) {
+		   	$time=$time+1;
+		}
+		elsif (($srcPort eq $nntpP) || ($dstPort eq $nntpP)) {
+		   	$nntp=$nntp+1;
+		}
+		elsif (($srcPort eq $ftpP) || ($dstPort eq $ftpP)) {
+		   	$ftp=$ftp+1;
+		}
+		elsif (($srcPort eq $ftpdataP) || ($dstPort eq $ftpdataP)) {
+		   	$ftp=$ftp+1;
+		}
+		elsif (($srcPort eq $smtpP) || ($dstPort eq $smtpP)) {
+		   	$smtp=$smtp+1;
+		}
+		elsif (($srcPort eq $h323gatestatP) || ($dstPort eq $h323gatestatP)) {
+		   	$h323=$h323+1;
+		}
+		elsif (($srcPort eq $h323hostcallP) || ($dstPort eq $h323hostcallP)) {
+		   	$h323=$h323+1;
+		}
+		elsif (($srcPort eq $h323gatediscP) || ($dstPort eq $h323gatediscP)) {
+		   	$h323=$h323+1;
+		}
+		elsif (($srcPort eq "6970") || ($dstPort eq "6970")) {
+		   	$realaudio=$realaudio+1;
+		}
+		else {
+			$other=$other+1;
+		}
+		$total=$total+1;
+        } 
+}
+print "[PROTO]  [# of PKT]  [% of TOTAL PKT]  [SIZE]  [% of TOTAL SIZE]\n";
+$httpp1=$http/$total;
+$httpp2=$https/$totals;
+print  "HTTP $http $httpp1 $https $httpp2\n";
+$nntpp1=$nntp/$total;
+$nntpp2=$nntps/$totals;
+print  "NNTP $nntp $nntpp1 $nntps $nntpp2\n";
+$ntpp1=$ntp/$total;
+$ntpp2=$ntps/$totals;
+print  "NTP $ntp $ntpp1 $ntps $ntpp2\n";
+$domainp1=$domain/$total;
+$domainp2=$domains/$totals;
+print  "DNS $domain $domainp1 $domains $domainp2\n";
+$smtpp1=$smtp/$total;
+$smtpp2=$smtps/$totals;
+print  "SMTP $smtp $smtpp1 $smtps $smtpp2\n";
+$ftpp1=$ftp/$total;
+$ftpp2=$ftps/$totals;
+print  "FTP $ftp $ftpp1 $ftps $ftpp2\n";
+$snmpp1=$snmp/$total;
+$snmpp2=$snmps/$totals;
+print  "SNMP $snmp $snmpp1 $snmps $snmpp2\n";
+$gopherp1=$gopher/$total;
+$gopherp2=$gophers/$totals;
+print  "GOPHER $gopher $gopherp1 $gophers $gopherp2\n";
+#$authp1=$auth/$total;
+#$authp2=$auths/$totals;
+#print  "AUTH $auth $authp1 $auths $authp2\n";
+$rtspp1=$rtsp/$total;
+$rtspp2=$rtsps/$totals;
+print  "RTSP $rtsp $rtspp1 $rtsps $rtspp2\n";
+#$grisp1=$gris/$total;
+#$grisp2=$griss/$totals;
+#print  "GRIS $gris $grisp1 $griss $grisp2\n";
+$syslogp1=$syslog/$total;
+$syslogp2=$syslogs/$totals;
+print  "SYSLOG $syslog $syslogp1 $syslogs $syslogp2\n";
+$bgpp1=$bgp/$total;
+$bgpp2=$bgps/$totals;
+print  "BGP $bgp $bgpp1 $bgps $bgpp2\n";
+$webcachep1=$webcache/$total;
+$webcachep2=$webcaches/$totals;
+print  "WEBCACHE $webcache $webcachep1 $webcaches $webcachep2\n";
+$pop3p1=$pop3/$total;
+$pop3p2=$pop3s/$totals;
+print  "POP3 $pop3 $pop3p1 $pop3s $pop3p2\n";
+$datametricp1=$datametric/$total;
+$datametricp2=$datametrics/$totals;
+print  "DATAMETRICS $datametric $datametricp1 $datametrics $datametricp2\n";
+$timep1=$time/$total;
+$timep2=$times/$totals;
+print  "TIME $time $timep1 $times $timep2\n";
+$sshp1=$ssh/$total;
+$sshp2=$sshs/$totals;
+print  "SSH $ssh $sshp1 $sshs $sshp2\n";
+$squidp1=$squid/$total;
+$squidp2=$squids/$totals;
+print  "SQUID $squid $squidp1 $squids $squidp2\n";
+$telnetp1=$telnet/$total;
+$telnetp2=$telnets/$totals;
+print  "TELNET $telnet $telnetp1 $telnets $telnetp2\n";
+$cvsp1=$cvs/$total;
+$cvsp2=$cvss/$totals;
+print  "CVS $cvs $cvsp1 $cvss $cvsp2\n";
+$h323p1=$h323/$total;
+$h323p2=$h323s/$totals;
+print  "H323 $h323 $h323p1 $h323s $h323p2\n";
+$phonebookp1=$phonebook/$total;
+$phonebookp2=$phonebooks/$totals;
+print  "PHONEBOOK $phonebook $phonebookp1 $phonebooks $phonebookp2\n";
+$x11p1=$x11/$total;
+$x11p2=$x11s/$totals;
+print  "X11 $x11 $x11p1 $x11s $x11p2\n";
+$otherp1=$other/$total;
+$otherp2=$others/$totals;
+print  "OTHER $other $otherp1 $others $otherp2\n";
+

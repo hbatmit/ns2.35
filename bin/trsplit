@@ -1,0 +1,126 @@
+eval 'exec perl -S $0 ${1+"$@"}'  # -*-Mode:Perl; perl-indent-level:8-*-
+    if 0;
+
+#require 5.003;
+
+#
+# Contributed by Giao Nguyen, http://daedalus.cs.berkeley.edu/~gnguyen
+#
+
+sub Usage
+{
+	$0 =~ s/.*\/([^\/]+)$/$1/;
+	print <<EOF;
+Split ns trace file into files for individual connection
+Usage:  $0 [options] files
+options: -c comment:  comment to print at the end along with total throughput
+	 -f	:  force new file for each connection
+	 -psize size of packet in bytes
+	 -tt	trace type
+	 -pt	packet type	(list)
+	 -fid   flow id 	(list)
+	 -ctt	trace type column
+	 -cpt	packet type column
+	 -ctime	time column
+	 -csrc	source address column
+	 -cdst	destination address column
+EOF
+	exit;
+}
+
+sub Getopt
+{
+	local($spec) = @_;
+	local($key);
+	&Usage if ($#ARGV < 0);
+	while ($_ = $ARGV[0], /^-(\w+)/) {
+		shift @ARGV;
+		$key = $1;
+		$opt{$key} = (index($spec, "$key:") >= 0) ? shift @ARGV : 1;
+		$_ = "\$$key";
+		if ($key =~ /^(tt|pt|fid)$/) {
+			# concat to get list of values for a field in the trace
+			eval "$_ = $_ . '$opt{$key} '";
+		} else {
+			eval "$_ = $opt{$key}";
+		}
+	}
+}
+
+
+# default information on the trace
+$psize = 1000;			# packet size in bytes
+# Column numbers for each field in the trace
+$ctt = 1;
+$ctime = 2;
+$cpt = 5;
+$cfid = 8;
+$csrc = 9;
+$cdst = 10;
+$cseq = 11;
+# the file descriptor number to started with
+$fdcount = 4;
+
+# Set a couple of defaults if not given at the command line
+&Getopt(":c:psize:tt:ctt:ctime:cpt:cfid:csrc:cdst:cseq:");
+$force = $opt{'f'};
+$tt = '-'	if (! $tt);
+$pt = 'tcp'	if (! $pt);
+$fid = 0	if (! $fid);
+
+
+shift @ARGV while ($#ARGV >= 0 && (! -r $ARGV[0]));
+
+# process the trace file
+while (<>)
+{
+	chop;
+	@col = ('', split);
+	$count{$col[$ctt]}++;
+	next if (index($tt, $col[1]) < 0);
+	next if (index($pt, $col[$cpt]) < 0);
+	next if (index($fid, $col[$cfid]) < 0);
+
+	$src = $col[$csrc];
+	$dst = $col[$cdst];
+	$key = "$col[1]_$col[$cpt]_$src_$dst";
+	$time{$key} = $col[$ctime];
+	$pktcnt{$key}++;
+	$seqno{$key} = $col[$cseq];
+
+	if ($force) {
+		$fd = $opened{$key};
+		if (! $fd) {
+			$opened{$key} = $fd = $fdcount++;
+			open($fd, ">${ARGV}_$key");
+		}
+		printf $fd "%0.6f\t%d\n", $col[$ctime], $col[$cseq];
+	}
+}
+
+
+# print the per-connection information to STDOUT
+@keys = sort (keys %time);
+foreach $key (@keys) {
+	$t = $time{$key};
+	$s = $seqno{$key};
+	if ($s > $pktcnt{$key}) {
+		$s = $pktcnt{$key};
+	}
+	$maxtime = $t  if ($t > $maxtime);
+	$maxpkt += $s;
+	printf("%s\t%0.6f\t%d\t%0.6f\t%0.6f\n",
+	       $key, $t, $s, $s/$t, 0.008 * $psize * $s/$t);
+}
+
+# print summary information to STDERR
+if ($maxtime > 0) {
+	printf STDERR " %d\t%0.6f\t%s\t",
+	$#keys+1, 0.008 * $psize * $maxpkt / $maxtime, $opt{'c'};
+
+	@keys = sort (keys %count);
+	foreach $key (@keys) {
+		print STDERR $key, $count{$key}, " ";
+	}
+	print STDERR "\n";
+}

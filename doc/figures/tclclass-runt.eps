@@ -1,0 +1,302 @@
+%!
+%%BoundingBox: -1 647 508 737
+%%Title: tclclass-runt
+%%CreationDate: Wed Sep  3 14:56:08 1997
+%%Creator: Tgif-2.16-p12 by William Chia-Wei Cheng (william@cs.UCLA.edu)
+
+/tgifdict 36 dict def
+tgifdict begin
+
+/tgifarrowtipdict 8 dict def
+tgifarrowtipdict /mtrx matrix put
+
+/tgifarrowtip
+ { tgifarrowtipdict begin
+      /dy exch def
+      /dx exch def
+      /h exch def
+      /w exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      dy dx atan rotate
+      0 0 moveto
+      w neg h lineto
+      w neg h neg lineto
+      savematrix setmatrix
+   end
+ } def
+
+/tgifpatdict 10 dict def
+
+/tgifpatbyte
+ { currentdict /retstr get exch
+   pat i cellsz mod get put
+ } def
+
+/tgifpatproc
+ { 0 1 widthlim {tgifpatbyte} for retstr
+   /i i 1 add def
+ } def
+
+/tgifpatfill
+ { tgifpatdict begin
+      /h exch def
+      /w exch def
+      /lty exch def
+      /ltx exch def
+      /cellsz exch def
+      /pat exch def
+
+      /widthlim w cellsz div cvi 1 sub def
+      /retstr widthlim 1 add string def
+      /i 0 def
+
+      ltx lty translate
+      w h true [1 0 0 1 0 0] {tgifpatproc} imagemask
+      ltx neg lty neg translate
+   end
+ } def
+
+/pat3 <8000000008000000> def
+/pat4 <8800000022000000> def
+/pat5 <8800220088002200> def
+/pat6 <8822882288228822> def
+/pat7 <aa55aa55aa55aa55> def
+/pat8 <77dd77dd77dd77dd> def
+/pat9 <77ffddff77ffddff> def
+/pat10 <77ffffff77ffffff> def
+/pat11 <7fffffff7fffffff> def
+/pat12 <8040200002040800> def
+/pat13 <40a00000040a0000> def
+/pat14 <ff888888ff888888> def
+/pat15 <ff808080ff080808> def
+/pat16 <f87422478f172271> def
+/pat17 <038448300c020101> def
+/pat18 <081c22c180010204> def
+/pat19 <8080413e080814e3> def
+/pat20 <8040201008040201> def
+/pat21 <8844221188442211> def
+/pat22 <77bbddee77bbddee> def
+/pat23 <c1e070381c0e0783> def
+/pat24 <7fbfdfeff7fbfdfe> def
+/pat25 <3e1f8fc7e3f1f87c> def
+/pat26 <0102040810204080> def
+/pat27 <1122448811224488> def
+/pat28 <eeddbb77eeddbb77> def
+/pat29 <83070e1c3870e0c1> def
+/pat30 <fefdfbf7efdfbf7f> def
+/pat31 <7cf8f1e3c78f1f3e> def
+
+end
+
+%%PageBoundingBox: -1 647 508 737
+tgifdict begin
+/tgifsavedpage save def
+
+1 setmiterlimit
+1 setlinewidth
+
+0 setgray
+
+72 0 mul 72 11.00 mul translate
+72 128 div 100 mul 100 div dup neg scale
+
+gsave
+
+% BOX
+0 setgray
+gsave
+   1.415 setmiterlimit
+   2 setlinewidth
+   newpath
+      0 100 moveto 200 100 lineto 200 251 lineto 0 251 lineto
+   closepath stroke
+   1 setlinewidth
+   1 setmiterlimit
+grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      42 159 moveto (Tcl_AppInit\(\)) show
+      42 182 moveto () show
+      42 205 moveto (invoke bind\(\)) show
+   grestore
+
+% RCBOX
+0 setgray
+gsave
+   2 setlinewidth
+   newpath
+      885 100 moveto
+      901 100 901 250 16 arcto 4 {pop} repeat
+      901 234 lineto
+      901 250 701 250 16 arcto 4 {pop} repeat
+      717 250 lineto
+      701 250 701 100 16 arcto 4 {pop} repeat
+      701 116 lineto
+      701 100 901 100 16 arcto 4 {pop} repeat
+   closepath stroke
+   1 setlinewidth
+grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      710 147 moveto (TclObject::register{}) show
+      710 170 moveto () show
+      710 193 moveto (construct class) show
+      710 216 moveto (hierarchy) show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   7 setlinewidth
+   newpath
+      200 200 moveto
+      280 200 lineto
+      280 120 lineto
+      0 70 atan dup cos 22 mul 350 exch sub
+      exch sin 22 mul 120 exch sub lineto
+   stroke
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      350 120 22 9 70 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      350 120 22 9 70 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   7 setlinewidth
+   newpath
+      550 180 moveto
+      630 180 lineto
+      630 140 lineto
+      0 70 atan dup cos 22 mul 700 exch sub
+      exch sin 22 mul 140 exch sub lineto
+   stroke
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      700 140 22 9 70 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      700 140 22 9 70 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   7 setlinewidth
+   newpath
+      700 230 moveto
+      0 -150 atan dup cos 22 mul 550 exch sub
+      exch sin 22 mul 230 exch sub lineto
+   1 setgray stroke
+   1 setlinewidth
+   0 setgray
+   7 setlinewidth
+   newpath
+      700 230 moveto
+      0 -150 atan dup cos 22 mul 550 exch sub
+      exch sin 22 mul 230 exch sub lineto
+   flattenpath strokepath clip newpath
+   pat8 8 544 216 160 24 tgifpatfill
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      550 230 22 9 -150 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      550 230 22 9 -150 0 tgifarrowtip
+   closepath eoclip newpath
+   pat8 8 544 216 32 24 tgifpatfill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   7 setlinewidth
+   newpath
+      350 230 moveto
+      0 -150 atan dup cos 22 mul 200 exch sub
+      exch sin 22 mul 230 exch sub lineto
+   1 setgray stroke
+   1 setlinewidth
+   0 setgray
+   7 setlinewidth
+   newpath
+      350 230 moveto
+      0 -150 atan dup cos 22 mul 200 exch sub
+      exch sin 22 mul 230 exch sub lineto
+   flattenpath strokepath clip newpath
+   pat8 8 192 216 168 24 tgifpatfill
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      200 230 22 9 -150 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      200 230 22 9 -150 0 tgifarrowtip
+   closepath eoclip newpath
+   pat8 8 200 216 24 24 tgifpatfill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   [4 12] 0 setdash
+   newpath
+      350 178 moveto
+      550 178 lineto
+   stroke
+   [] 0 setdash
+grestore
+
+% BOX
+0 setgray
+gsave
+   1.415 setmiterlimit
+   2 setlinewidth
+   newpath
+      350 103 moveto 550 103 lineto 550 254 lineto 350 254 lineto
+   closepath stroke
+   1 setlinewidth
+   1 setmiterlimit
+grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      353 127 moveto (TclClass::bind\(\)) show
+      353 150 moveto () show
+      353 173 moveto (invoke register{};) show
+      353 196 moveto (define) show
+      353 219 moveto (create-shadow{}) show
+      353 242 moveto (and delete-shadow{}) show
+   grestore
+
+grestore
+tgifsavedpage restore
+end
+%MatchingCreationDate: Wed Sep  3 14:56:08 1997

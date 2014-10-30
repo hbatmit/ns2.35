@@ -1,0 +1,84 @@
+
+Steps in doing an ns release:
+
+OTCL/TCLCL/NAM RELEASE
+If necessary, do a otcl,tclcl release. Following are things you need to do for a otcl, tclcl or nam release:
+
+0. get latest config.sub and config.guess from
+     ftp://ftp.gnu.org/pub/gnu/config/
+1. update configure (or conf/*) to show current versions of pkgs 
+1.1. re-autoconf if you have changed conf/*
+1.2. update the windows makefile with "make makefile.vc"
+	(if possible, test this by building under windows
+2. update CHANGES.html to show when release happens.
+3. make srctar.
+4. update CHANGES.html to add a new section for the next pending release.
+5. nam-- revise the version numbers for Nam and NamGraph in
+tcl/animator.tcl
+tcl/nam-default.tcl
+tcl/www.tcl
+6.  commit the changes
+7. tag the cvs archive; e.g.:
+   cd otcl; cvs tag OTCL_1_13
+   cd tclcl; cvs tag TCLCL_1_19
+   cd nam-1; cvs tag NAM_1_13
+
+NS RELEASE
+
+0.1. figure what the new version
+0.2. send out release announcement to ns-developers for approval
+    - describe what's new
+0.3. get latest config.sub and config.guess from
+        ftp://ftp.gnu.org/pub/gnu/config/
+0.4. Check to make sure conf/configure.in.{otcl,TclCL,tcl,tk}
+     refer to the current versions
+     (For example TclCL_VERS should match the most recent tclcl release,
+     etc.)
+     (re-autoconf ns if you change things in conf/*).
+
+1.1. make sure test suites all pass
+1.2. make sure that FILES is up-to-date
+	diff "bin/gen-files" aginst FILES
+	Edit FILES:  remove files that are no longer needed and add the
+        new ones; don't add files which are auto-generated
+2.1.  update CHANGES.html to show when the release happens
+    (like the last time it was released)
+2.2. make sure makefile.vc(WINDOWS) is up to date. If not, do 
+	make makefile.vc
+2.3. "make srctar"
+4.1. test on new system
+    (build, run test scripts)
+4.2. Run the same test on a machine other than those of ISI's or even
+     Mash's.
+5. put the tar in /nfs/web/isi.edu/htdocs/nsnam/dist
+5. Make a hard link to ~ftp/dist/vint. (For people accessing 
+    things via ftp.)
+5. Put binaries for platforms supported under 
+   /nfs/web/isi.edu/htdocs/nsnam/dist/binary
+5.1. commit all your changes
+5.2. tag the cvs archive
+    (cd ~ns; cvs tag NS_2_1B6; )
+6.1. update the web page(s), e.g., "Building NS".
+6.2. Create a seperate "NS-Problems" section for the new version.
+7. send out the release announcement (ns-users, ns-announce)
+   (also send to end2end if it's a non-{alpha,beta} release)
+8. update the VERSION and the BASE-VERSION files to the next version
+8.1.  update CHANGES.html to add a section for the next pending release
+8.2 commit your changes to the VERSION, BASE-VERSION and CHANGES.html for the next release
+
+
+NS_ALLINONE RELEASE
+
+If making a ns-allinone release,
+1. check if all pkgs (tk,tcl, otcl,tclcl,ns, nam etc) are same as the
+   current available version and change version num in install 
+   accordingly
+2. follow steps as above.
+3. update install in the cvs under ~ns/allinone
+
+WEB PAGE UPDATES:
+
+Update these web pages, or contact someone who has permissions to do so:
+http://www.isi.edu/nsnam/ns/ns-build.html
+http://www.isi.edu/nsnam/ns/ns-cygwin.html
+http://nsnam.isi.edu/nsnam/index.php/Main_Page (News)

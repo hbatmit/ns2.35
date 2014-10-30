@@ -1,0 +1,25 @@
+#
+# 0 connecting to 2 at time 127.93667922166023
+#
+set udp_(0) [new Agent/UDP]
+$ns_ attach-agent $node_(0) $udp_(0)
+set null_(0) [new Agent/Null]
+$ns_ attach-agent $node_(2) $null_(0)
+set cbr_(0) [new Application/Traffic/CBR]
+$cbr_(0) set packetSize_ 512
+$cbr_(0) set interval_ 4.0
+$cbr_(0) set random_ 1
+$cbr_(0) set maxpkts_ 10000
+$cbr_(0) attach-agent $udp_(0)
+$ns_ connect $udp_(0) $null_(0)
+$ns_ at 127.93667922166023 "$cbr_(0) start"
+
+set tcp [new Agent/TCP]
+$tcp set class_ 2
+set sink [new Agent/TCPSink]
+$ns_ attach-agent $node_(1) $tcp
+$ns_ attach-agent $node_(2) $sink
+$ns_ connect $tcp $sink
+set ftp [new Application/FTP]
+$ftp attach-agent $tcp
+$ns_ at 150.00000000000000 "$ftp start"

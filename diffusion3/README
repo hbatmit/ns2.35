@@ -1,0 +1,140 @@
+Release Notes for Diffusion 3.2.0
+---------------------------------
+
+1. Compiling Diffusion
+
+Starting with Diffusion 3.1, we use autoconf/automake to configure
+diffusion.
+
+There are several options that can be used with configure (for a
+complete list, please type ./configure --help). Relevant command line
+options for configure are:
+
+--with-ethernet  // Enables wired Ethernet support in diffusion
+--with-wins2     // Enables support for the Sensoria WINSNG 2.0 radios
+--host=sh4-linux // Enables support for using the sh4 cross compiler
+		 // It assumes that the sh4 cross-compiler provided by
+		 // Sensoria is already installed and on the user's path.
+		 // The configure script will default to gcc/g++ if
+		 // sh4-linux-gcc and sh4-linux-g++ cannot be found.
+
+--prefix=destination_path
+		 // Enables the user to specify where the binaries will
+		 // be installed (default is the test directory inside
+		 // the distribution)
+
+So, compiling diffusion for the Sensoria nodes, should be as simple as:
+
+bash# ./configure --with-wins2 --host=sh4-linux
+bash# make
+bash# make install
+
+On the other hand, compiling for wired Ethernet on an x86 machine is:
+
+bash$ ./configure --with-ethernet
+bash$ make
+bash$ make install
+
+Please remember to remove the config.cache file when compiling for a
+different environment, as the file is not always deleted and may
+contain misleading information for the configure script.
+
+We tested compiling diffusion on Red Hat Linux versions 7.2, 7.3, 8.0,
+and 9.0. It also compiles and runs on other versions of Unix.
+
+2. Before Running Diffusion (Sensoria Hardware)
+
+In order to use diffusion on the Sensoria nodes, you will have to have
+streamd running on your system.  We assume streamd will export the
+device files /dev/rf/0/flink and /dev/rf/1/flink. Diffusion will not
+start if these files are not present.
+
+Starting with Sensoria software version 2.0, streamd is started
+automatically when nodes boot, so there is no need to start it
+manually for the two radios.
+
+In addition, diffusion expects the radios to be configured as
+base/remotes and clusters to be configured before it starts. Use
+/dev/rf/*/command to manually configure each radio with the desired
+topology (or use clusterd to set up a cluster automatically if a
+specific topology is not important).
+
+3. Setting up Node Ids
+
+Diffusion uses a random ID for the each node. This behavior can be
+overridden by setting the 'node_addr' environment variable to the
+desired ID. Under bash, this can be done with:
+
+bash$ export node_addr=2
+
+When diffusion is compiled to run on emsim (with the --with-emsim
+configure flag), it can get its node id directly from emsim's
+environment variables. Gear will also be able to get node location
+from emsim automatically.
+
+4. Configuration File (Wired Ethernet Environment)
+
+Note that in the wired case, the file 'config.txt' (or an alternate
+configuration file, specified with the -f flag) should be present and
+contain a list of all directly connected nodes, one node in each
+line. If connected nodes are running on a port other than the default
+diffusion port (done by using the '-p' flag), this must be indicated
+in the configuration file as well. When diffusion initializes, it will
+display the list of connected nodes. Also, the configuration file can
+include the link quality to each neighbor.  It's an integer from 0 to
+100 and will indicate the probability of a message sent by your node
+to reach this neighbor. A sample configuration file is:
+
+10.0.0.1 - 3400 - 100
+10.2.4.1 - 30
+10.3.12.4 - 85
+
+In this case, we have three neighbors (10.0.0.1, 10.2.4.1 and
+10.3.12.4), to which the probability of a packet getting lost is 0,
+70% and 15% respectively. Note that the first neighbor (10.0.0.1) is
+running on the port 3400 (instead of the default diffusion port, 2000).
+Since the link quality is an integer from 0 to 100, and the port number
+has to be above 1024, diffusion can correctly guess the second argument's
+meaning if there are just 2 arguments in a config line.
+
+5. Running Diffusion
+
+To run diffusion, simply start the 'filter_core' main process followed
+by the applications/filters desired.  Please allow a few seconds for
+the filter_core to initialize before starting applications and
+filters. Be sure to at least start the two_phase_pull filter (where
+the two-phase pull and one-phase push algorithms are implemented). For
+debugging, the log filter can be used to print all messages arriving
+at the node.
+
+To test if things are working, start filter_core, two_phase_pull and
+ping_sender in a node. Then start filter_core, two_phase_pull and
+ping_receiver in another node. ping_receiver should receive
+ping_sender's messages after a few seconds. For example:
+
+bash$ filter_core &
+bash$ two_phase_pull &
+bash$ ping_receiver
+
+To increase the amount of debug messages, you can use the '-d
+debug_level' flag. A debug_level 10 will generate a lot of output. The
+default value is 1.
+
+Please note that if filter_core is run with the '-p port' flag, all
+other applications will also need it (i.e. two_phase_pull -p port,
+agent1 -p port, etc...).
+
+Also, for using the GEAR protocol, you will need to start gear as
+well, So, the list of processes to start is:
+
+bash$ filter_core &
+bash$ two_phase_pull &
+bash$ gear &
+
+bash$ your_application &
+
+
+---------------------------------
+Fabio Silva
+Information Sciences Institute
+University of Southern California

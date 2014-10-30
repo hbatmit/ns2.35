@@ -1,0 +1,331 @@
+
+%----------------------------------------------------------------------------
+\chapter{Radio Propagation Models}
+\label{chap:propagation}
+
+This chapter describes the radio propagation models implemented in \ns.
+These models are used to predict the received signal power of
+each packet. At the physical layer of each wireless node, there is a receiving
+threshold. When a packet is received, if its signal power is below the receiving
+threshold, it is marked as error and dropped by the MAC layer.
+
+Up to now there are three propagation models in \ns, which are the free
+space model\footnote{Based on the code contributed to \ns~from the CMU Monarch
+project.}, two-ray ground reflection model\footnote{Contributed to \ns~from the
+CMU Monarch project.} and the shadowing model\footnote{Implemented in \ns~by
+Wei Ye at USC/ISI}. Their implementation can be found in \nsf{propagation.\{cc,h\}},
+\nsf{tworayground.\{cc,h\}} and \nsf{shadowing.\{cc,h\}}. This documentation
+reflects the APIs in ns-2.1b7.
+
+%----------------------------------------------------------------------------
+\section{Free space model}
+\label{sec:freespace}
+
+The free space propagation model assumes the ideal propagation condition
+that there is only one clear line-of-sight path between the transmitter and
+receiver. H. T. Friis presented the following equation to
+calculate the received signal power in free space at distance $d$ from the
+transmitter \cite{Friis46}.
+
+\begin{equation}
+  P_r (d) = \frac{P_t G_t G_r \lambda^2}{(4\pi)^2 d^2 L}
+  \label{eqn:freespace}
+\end{equation}
+
+where $P_t$ is the transmitted signal power. $G_t$ and $G_r$ are the antenna
+gains of the transmitter and the receiver respectively. $L (L\ge1)$ is the
+system loss, and $\lambda$ is the wavelength. It is common to select
+$G_t = G_r = 1$ and $L = 1$ in \ns~ simulations.
+
+The free space model basically represents the communication range as a circle
+around the transmitter. If a receiver is within the circle, it receives all
+packets. Otherwise, it loses all packets
+
+The OTcl interface for utilizing a propagation model is the \code{node-config}
+command. One way to use it here is
+
+\begin{program}
+$ns_ node-config -propType Propagation/FreeSpace
+\end{program}
+
+Another way is
+
+\begin{program}
+set prop [new Propagation/FreeSpace]
+$ns_ node-config -propInstance $prop
+\end{program}
+
+%----------------------------------------------------------------------------
+\section{Two-ray ground reflection model}
+\label{sec:tworay}
+
+A single line-of-sight path between two mobile nodes is seldom the only means
+of propation. The two-ray ground reflection model considers both the direct
+path and a ground reflection path. It is shown \cite{Rappaport96} that this
+model gives more accurate prediction at a long distance than the free space
+model. The received power at distance $d$ is predicted by
+
+\begin{equation}
+  P_r (d) = \frac{P_t G_t G_r {h_t}^2 {h_r}^2}{d^4 L}
+  \label{eqn:tworay}
+\end{equation}
+
+where $h_t$ and $h_r$ are the heights of the transmit and receive antennas
+respectively. Note that the original equation in \cite{Rappaport96} assumes
+$L = 1$. To be consistent with the free space model, $L$ is added here.
+
+The above equation shows a faster power loss than Eqn. (\ref{eqn:freespace})
+as distance increases. However, The two-ray model does not give a good result
+for a short distance due to the oscillation caused by the constructive and
+destructive combination of the two rays. Instead, the free space model is
+still used when $d$ is small.
+
+Therefore, a cross-over distance $d_c$ is calculated in this model. When
+$d < d_c$, Eqn. (\ref{eqn:freespace}) is used. When $d > d_c$, Eqn.
+(\ref{eqn:tworay}) is used. At the cross-over distance, Eqns. (\ref{eqn:freespace})
+and (\ref{eqn:tworay}) give the same result. So $d_c$ can be calculated as
+
+\begin{equation}
+%  d_c = \frac{4\pi h_t h_r}{\lambda}
+  d_c = \left( 4\pi h_t h_r \right) / \lambda
+  \label{eqn:crossover}
+\end{equation}
+
+Similarly, the OTcl interface for utilizing the two-ray ground reflection model
+is as follows.
+
+\begin{program}
+$ns_ node-config -propType Propagation/TwoRayGround
+\end{program}
+
+Alternatively, the user can use
+
+\begin{program}
+set prop [new Propagation/TwoRayGround]
+$ns_ node-config -propInstance $prop
+\end{program}
+
+
+%----------------------------------------------------------------------------
+\section{Shadowing model}
+\label{sec:shadowing}
+
+\subsection{Backgroud}
+
+The free space model and the two-ray model predict the received power
+as a deterministic function of distance. They both represent the communication
+range as an ideal circle. In reality, the received power at certain distance
+is a random variable due to multipath propagation effects, which is also
+known as fading effects. In fact, the above two models predicts the mean
+received power at distance $d$. A more general and widely-used model is
+called the shadowing model~\cite{Rappaport96}.
+
+The shadowing model consists of two parts. The first one is known as path
+loss model, which also predicts the mean received power at distance $d$,
+denoted by $\overline{P_r(d)}$. It uses a close-in distance $d_0$ as
+a reference. $\overline{P_r(d)}$ is computed relative to $P_r(d_0)$
+as follows.
+
+\begin{equation}
+  \frac{P_r(d_0)}{\overline{P_r(d)}} = {\left( \frac{d}{d_0} \right)}^\beta
+  \label{eqn:pathloss}
+\end{equation}
+
+$\beta$ is called the path loss exponent, and is usually empirically
+determined by field measurement. From Eqn. (\ref{eqn:freespace}) we
+know that $\beta = 2$ for free space propagation. Table~\ref{tab:pathlossexp}
+gives some typical values of $\beta$.
+Larger values correspond to more obstructions and hence faster
+decrease in average received power as distance becomes larger. $P_r(d_0)$
+can be computed from Eqn. (\ref{eqn:freespace}).
+
+\begin{table}
+\begin{center}
+  \centering \small
+  \begin{tabular}{|l|l|c|}
+  \hline \multicolumn{2}{|c|}{\bf{Environment}} & $\beta$ \\
+  \hline Outdoor & Free space & 2 \\
+  \cline{2 - 3}  & Shadowed urban area & 2.7 to 5 \\
+  \hline In building & Line-of-sight & 1.6 to 1.8 \\
+  \cline{2 - 3}  & Obstructed & 4 to 6 \\ \hline
+  \end{tabular}
+  \caption{Some typical values of path loss exponent $\beta$}
+  \label{tab:pathlossexp}
+\end{center}
+\end{table}
+\begin{table}
+\begin{center}
+  \centering \small
+  \begin{tabular}{|l|c|}
+  \hline \bf{Environment} & $\sigma_{dB}$ (dB) \\
+  \hline Outdoor & 4 to 12 \\
+  \hline Office, hard partition & 7 \\
+  \hline Office, soft partition & 9.6 \\
+  \hline Factory, line-of-sight & 3 to 6 \\
+  \hline Factory, obstructed & 6.8 \\ \hline
+  \end{tabular}
+  \caption{Some typical values of shadowing deviation $\sigma_{dB}$}
+  \label{tab:stddb}
+\end{center}
+\end{table}
+
+The path loss is usually measured in dB. So from Eqn. (\ref{eqn:pathloss})
+we have
+
+\begin{equation}
+  {\left[ \frac{\overline{P_r(d)}}{P_r(d_0)} \right]}_{dB} =
+    -10 \beta \log \left( \frac{d}{d_0} \right)
+  \label{eqn:pathlossdb}
+\end{equation}
+
+The second part of the shadowing model reflects the variation of the
+received power at certain distance. It is a log-normal random variable,
+that is, it is of Gaussian distribution if measured in dB. The overall
+shadowing model is represented by
+
+\begin{equation}
+{\left[ \frac{P_r(d)}{P_r(d_0)} \right]}_{dB} =
+    -10 \beta \log \left( \frac{d}{d_0} \right) + X_{dB}
+  \label{eqn:shadowing}
+\end{equation}
+
+where $X_{dB}$ is a Gaussian random variable with zero mean and
+standard deviation $\sigma_{dB}$. $\sigma_{dB}$ is called the
+shadowing deviation, and is also obtained by measurement. Table
+~\ref{tab:stddb} shows some typical values of $\sigma_{dB}$. Eqn.
+(\ref{eqn:shadowing}) is also known as a log-normal shadowing model.
+
+The shadowing model extends the ideal circle model to a richer
+statistic model: nodes can only probabilistically communicate when
+near the edge of the communication range.
+
+
+\subsection{Using shadowing model}
+
+Before using the model, the user should select the values of the path
+loss exponent $\beta$ and the shadowing deviation $\sigma_{dB}$
+according to the simulated environment.
+
+The OTcl interface is still the \code{node-config} command. One way to
+use it is as follows, and the values for these parameters are just examples.
+
+\begin{program}
+# first set values of shadowing model
+Propagation/Shadowing set pathlossExp_ 2.0  ;# path loss exponent
+Propagation/Shadowing set std_db_ 4.0       ;# shadowing deviation (dB)
+Propagation/Shadowing set dist0_ 1.0        ;# reference distance (m)
+Propagation/Shadowing set seed_ 0           ;# seed for RNG
+
+$ns_ node-config -propType Propagation/Shadowing
+\end{program}
+
+The shadowing model creates a random number generator (RNG) object. The RNG has
+three types of seeds: raw seed, pre-defined seed (a set of known good seeds)
+and the huristic seed (details in Section~\ref{sec:random}). The
+above API only uses the pre-defined seed. If a user want different seeding
+method, the following API can be used.
+
+\begin{program}
+set prop [new Propagation/Shadowing]
+$prop set pathlossExp_ 2.0
+$prop set std_db_ 4.0
+$prop set dist0_ 1.0
+$prop seed <seed-type> 0              ;# user can specify seeding method
+
+$ns_ node-config -propInstance $prop
+\end{program}
+
+The \code{<seed-type>} above can be \code{raw}, \code{predef} or \code{heuristic}.
+
+%--------------------------------------------------------------------------------
+
+\section{Communication range}
+\label{sec:commrange}
+
+In some applications, a user may want to specify the communication range of
+wireless nodes. This can be done by set an appropriate value of the receiving
+threshold in the network interface, \ie,
+
+\begin{program}
+Phy/WirelessPhy set RXThresh_ <value>
+\end{program}
+
+A separate C program is provided at \nsf{indep-utils/propagation/threshold.cc}
+to compute the receiving threshold. It can be used for all the
+propagation models discussed in this chapter. Assume you have compiled it and get
+the excutable named as \code{threshold}. You can use it to compute the threshold
+as follows
+
+\begin{program}
+threshold -m <propagation-model> [other-options] distance
+\end{program}
+
+where \code{<propagation-model>} is either \code{FreeSpace}, \code{TwoRayGround}
+or \code{Shadowing}, and the \code{distance} is the communication range in meter.
+
+\code{[other-options]} are used to specify parameters other than their
+default values. For the shadowing model there is a necessary parameter,
+\code{-r <receive-rate>}, which specifies the rate of correct reception at the
+\code{distance}. Because the communication range in the shadowing model is not
+an ideal circle, an inverse Q-function \cite{Rappaport96} is used to calculate the
+receiving threshold. For example, if you want 95\% of packets can be correctly
+received at the distance of 50m, you can compute the threshold by
+
+\begin{program}
+threshold -m Shadowing -r 0.95 50
+\end{program}
+
+Other available values of \code{[other-options]} are shown below
+
+\begin{program}
+-pl <path-loss-exponent> -std <shadowing-deviation> -Pt <transmit-power>
+-fr <frequency> -Gt <transmit-antenna-gain> -Gr <receive-antenna-gain>
+-L <system-loss> -ht <transmit-antenna-height> -hr <receive-antenna-height>
+-d0 <reference-distance>
+\end{program}
+
+%-------------------------------------------------------------------------------
+
+\section{Commands at a glance}
+\label{sec:propcommand}
+
+Following is a list of commands for propagation models.
+
+\begin{flushleft}
+\code{$ns_ node-config -propType <propagation-model>}\\
+This command selects \code{<propagation-model>} in the simulation. the
+\code{<propagation model>} can be \code{Propagation/FreeSpace},
+\code{Propagation/TwoRayGround} or \code{Propagation/Shadowing}
+
+\code{$ns_ node-config -propInstance $prop}\\
+This command is another way to utilize a propagation model. \code{$prop} is
+an instance of the \code{<propagation-model>}.
+
+\code{$sprop_ seed <seed-type> <value>}\\
+This command seeds the RNG. \code{$sprop_} is an instance of the shadowing model.
+
+\code{threshold -m <propagation-model> [other-options] distance}\\
+This is a separate program at \nsf{indep-utils/propagation/threshold.cc}, which
+is used to compute the receiving threshold for a specified communication range.
+
+\end{flushleft}
+
+\endinput
+%------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,42 @@
+#! /bin/sh
+
+NS=../../ns
+ALLSCHEDULERS="List Calendar Heap Splay Map"
+
+tlist=""
+quiet=""
+while test $# -ge 1
+do
+	case $1 in
+	quiet|QUIET) quiet=QUIET;;
+	*) tlist="$tlist $1";;
+	esac
+	shift
+done
+
+if test "$tlist" = ""; then
+    tlist=$ALLSCHEDULERS
+fi
+
+echo Tests: $tlist
+some_failed=false
+for sched in $tlist; do
+    echo Running test $sched:
+    echo $NS test-suite-simultaneous.tcl $sched $quiet
+    if $NS test-suite-simultaneous.tcl $sched $quiet; then
+	echo Test output agrees with reference output
+    else
+	some_failed=true
+	echo Test output differs from reference output
+	echo "See URL \"http://www.isi.edu/nsnam/ns/ns-problems.html\"."
+    fi
+done
+
+if test "$some_failed" = true ; then
+	echo Some test failed.
+	exit 1
+else
+	echo All test output agrees with reference output.
+	exit 0
+fi
+    

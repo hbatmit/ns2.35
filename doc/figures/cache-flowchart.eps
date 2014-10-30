@@ -1,0 +1,305 @@
+%!
+%%BoundingBox: 2 708 411 789
+%%Title: cache-flowchart
+%%CreationDate: Mon Aug 24 18:00:53 1998
+%%Creator: Tgif-3.0-p9 by William Chia-Wei Cheng (william@cs.UCLA.edu)
+
+/tgifdict 4 dict def
+tgifdict begin
+
+/tgifarrowtipdict 8 dict def
+tgifarrowtipdict /mtrx matrix put
+
+/tgifarrowtip
+ { tgifarrowtipdict begin
+      /dy exch def
+      /dx exch def
+      /h exch def
+      /w exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      dy dx atan rotate
+      0 0 moveto
+      w neg h lineto
+      w neg h neg lineto
+      savematrix setmatrix
+   end
+ } def
+
+end
+
+%%PageBoundingBox: 2 708 411 789
+tgifdict begin
+/tgifsavedpage save def
+
+1 setmiterlimit
+1 setlinewidth
+
+0 setgray
+
+72 0 mul 72 11.00 mul translate
+72 128 div 100.000 mul 100 div dup neg scale
+
+gsave
+
+/tgiforigctm matrix currentmatrix def
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      8 99 moveto (get-request\(\)) show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      100 95 moveto
+      -42 44 atan dup cos 8.000 mul 144 exch sub
+      exch sin 8.000 mul 53 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      144 53 8.000 3.000 44 -42 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      144 53 8.000 3.000 44 -42 tgifarrowtip
+   closepath fill
+grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      149 59 moveto (cache-hit\(\)) show
+   grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      149 141 moveto (cache-miss\(\)) show
+   grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      431 18 moveto (send cached page) show
+   grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      432 99 moveto (refetch-pending\(\)) show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      232 55 moveto
+      0 38 atan dup cos 8.000 mul 270 exch sub
+      exch sin 8.000 mul 55 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      270 55 8.000 3.000 38 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      270 55 8.000 3.000 38 0 tgifarrowtip
+   closepath fill
+grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      275 58 moveto (is-consistent\(\)) show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      101 96 moveto
+      42 44 atan dup cos 8.000 mul 145 exch sub
+      exch sin 8.000 mul 138 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      145 138 8.000 3.000 44 42 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      145 138 8.000 3.000 44 42 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      381 55 moveto
+      -42 44 atan dup cos 8.000 mul 425 exch sub
+      exch sin 8.000 mul 13 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      425 13 8.000 3.000 44 -42 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      425 13 8.000 3.000 44 -42 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      382 56 moveto
+      42 44 atan dup cos 8.000 mul 426 exch sub
+      exch sin 8.000 mul 98 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      426 98 8.000 3.000 44 42 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      426 98 8.000 3.000 44 42 tgifarrowtip
+   closepath fill
+grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      386 40 moveto (Y) show
+   grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      387 85 moveto (N) show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      236 138 moveto
+      0 36 atan dup cos 8.000 mul 272 exch sub
+      exch sin 8.000 mul 138 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      272 138 8.000 3.000 36 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      272 138 8.000 3.000 36 0 tgifarrowtip
+   closepath fill
+grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      278 141 moveto (send-request\(\)) show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      553 96 moveto
+      -42 44 atan dup cos 8.000 mul 597 exch sub
+      exch sin 8.000 mul 54 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      597 54 8.000 3.000 44 -42 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      597 54 8.000 3.000 44 -42 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   newpath
+      554 97 moveto
+      42 44 atan dup cos 8.000 mul 598 exch sub
+      exch sin 8.000 mul 139 exch sub lineto
+   tgiforigctm setmatrix
+   1 setlinewidth
+   stroke
+grestore
+gsave
+   tgiforigctm setmatrix
+   newpath
+      598 139 8.000 3.000 44 42 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      598 139 8.000 3.000 44 42 tgifarrowtip
+   closepath fill
+grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      603 58 moveto (ignore the request) show
+   grestore
+
+% TEXT
+0 setgray
+/Courier findfont [12 0 0 -12 0 0] makefont setfont
+   gsave
+      604 142 moveto (refetch\(\)) show
+   grestore
+
+grestore
+tgifsavedpage restore
+end
+%MatchingCreationDate: Mon Aug 24 18:00:53 1998

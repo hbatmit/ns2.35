@@ -1,0 +1,84 @@
+\newcommand{\simname}{\em ns-2}
+\newcommand{\codelocation}{\tt mash.cs.berkeley.edu}
+\section Introduction
+This manual is intended to be a general reference document
+for people wishing to use or develop modules for the \simname
+simulator.
+The first section provides an overview of the development environment
+and how to be sure your changes are properly integrated into the
+source tree.
+The second section details the architecture of \simname,
+including how objects relate to one another, plus some examples.
+The first two sections are intended to be most useful for people
+developing new modules for \simname.
+The next section attempts to document some of the more confusing
+or complicated interactions between the various support libraries
+needed by \simname.
+The final section focuses on how to perform simulations and present
+simulation results.
+
+\subsection The environment
+
+The sources for \simname are located on the machine \codelocation,
+under control of CVS, a source code control system built on top of RCS.
+The machine is presently configured to only allow authenticated
+remote login using Kerberos.
+In particular, encrypted remote login sessions using {\tt telnet -x} is
+required.
+
+There are several mailing lists related to the project:
+\begin{itemize}
+	\item[{\sf ns-developers@mash.cs.berkeley.edu] - current developers
+	\item[{\sf ns-announce@mash.cs.berkeley.edu] - announcements of new releases
+	\item[{\sf ns-users@mash.cs.berkeley.edu] - user community discussions
+\end{itemize}
+To subscribe to the lists, send mail to {\tt majordomo@mash.cs.berkeley.edu}.
+Send just the single line {\tt help} in your message if you are unfamiliar
+with the operation of the majordomo subscription service.
+
+There are also several web pages of interest:
+\begin{itemize}
+	\item[{\sf http://www-mash.cs.berkeley.edu/ns}] - status
+	\item[{\sf http://netweb.usc.edu/vint}] - description of VINT
+	\item[{\sf http://www-nrg.ee.lbl.gov/ns}] - version 1 of {\tt ns}
+\end{itemize}
+
+Here is a (nonexhaustive) list of people involved in the project:
+\begin{itemize}
+	\item USC/ISI
+	\begin{itemize}
+	\item[estrin@usc.edu] - Deborah Estrin
+	\item[dante@valhalla.internet-care.com] - Dante De Lucia
+	\item[kannan@catarina.usc.edu] - Kannan Varadhan
+	\item[ahelmy@catarina.usc.edu] - Ahmed A-G Helmy
+	\item[wlee@isi.edu] - WeeSan Lee
+	\item[daniel@isi.edu] - Danial Zappala
+	\item[mjh@isi.edu] - Mark Handley
+	\end{itemize}
+	\item Xerox PARC
+	\begin{itemize}
+	\item[shenker@parc.xerox.com] - Scott Shenker
+	\item[breslau@parc.xerox.com] - Lee Breslau
+	\item[bajaj@parc.xerox.com] - Sandeep Bajaj
+	\end{itemize}
+	\item LBNL
+	\begin{itemize}
+	\item[floyd@ee.lbl.gov] - Sally Floyd
+	\item[kfall@ee.lbl.gov] - Kevin Fall
+	\item[van@ee.lbl.gov] - Van Jacobson
+	\end{itemize}
+	\item UCB
+	\begin{itemize}
+	\item[mccanne@eecs.berkeley.edu] - Steven McCanne
+	\item[elan@mercenary.cs.berkeley.edu] - Elan Amir
+	\item[tomh@kayak.cs.berkeley.edu] - Tom Henderson
+	\end{itemize}
+\end{itemize}
+
+
+The normal procedure is to first set up a CVS environment (see below)
+before proceeding.
+
+
+\subsection CVS Basics
+\subsection Incorporating changes

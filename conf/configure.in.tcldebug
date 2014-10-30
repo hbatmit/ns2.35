@@ -1,0 +1,58 @@
+dnl autoconf rules to find tcldebug
+dnl $Header: /cvsroot/nsnam/conf/configure.in.tcldebug,v 1.9 2000/09/01 17:38:56 johnh Exp $ (USC/ISI)
+
+AC_ARG_WITH(tcldebug,	--with-tcldebug=path specify a pathname for the tcl debugger (path=no disables the debugger), d=$withval, d="")
+
+#xxx: Don't know anything about 1.8
+# 2.0 = tcl 8.3
+# 1.9 = tcl 7.5, 7.6, 8.0
+TCLDEBUG_VERS="2.0 1.9 1.8 1.7"
+pwd_vers=""
+local_vers=""
+for vers in $TCLDEBUG_VERS; do
+	 pwd_vers="$pwd_vers $PWD/../tcl-debug-$vers"
+	 local_vers="$local_vers /usr/src/local/otcl-debug-$vers"
+done
+TCLDEBUG_PATH="\
+		$PWD/../tcl-debug \
+		$pwd_vers
+		/usr/contrib/lib \
+		/usr/local/lib \
+		/usr/lib \
+		/usr/src/local/tcl-debug \
+		$local_vers \
+		"
+TCLDEBUG_PATH_D="$d \
+		$d/lib \
+		$d/../lib \
+		"
+
+NS_BEGIN_PACKAGE(tcldebug)
+
+NS_CHECK_LIB_PATH(tcldbg,$TCLDEBUG_PATH,$d,$TCLDEBUG_PATH_D,V_LIB_TCLDEBUG,tcldebug)
+#if $NS_PACKAGE_tcldebug_COMPLETE; then
+	# look for debugger entry point function
+	#tmpLIBS=$LIBS
+	#LIBS="$V_LIB_TCL $V_LIB_TCLDEBUG"
+
+	# the following two may be needed for linking during tcldbg CHECK_LIB
+	#AC_CHECK_LIB(m, main)
+        #AC_CHECK_LIB(dl, dlopen)
+
+	#notfound=false
+	#AC_CHECK_LIB(tcldbg, Dbg_Init, V_DEFINES="-DHAVE_Dbg_Init $V_DEFINES",notfound=true)
+	#if $notfound; then
+	#	notfound=false
+	#	AC_CHECK_LIB(tcldbg, Tcldbg_Init, V_DEFINES="-DHAVE_Tcldbg_Init $V_DEFINES",notfound=true)
+	#fi
+	#LIBS=$tmpLIBS
+	#if $notfound; then
+	#	echo "configure: warning: Tcl debugger init point is not found.  You \
+#will not be able to use Tcl debugger." 1>&2
+	#	NS_PACKAGE_tcldebug_COMPLETE=false
+	#fi
+#fi
+
+if $NS_PACKAGE_tcldebug_COMPLETE; then
+	NS_END_PACKAGE(tcldebug,no)
+fi

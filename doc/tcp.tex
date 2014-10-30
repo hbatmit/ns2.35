@@ -1,0 +1,636 @@
+\chapter{TCP Agents}
+\label{sec:tcpAgents}
+
+This section describes the operation of the TCP agents in \ns.
+There are two major types of TCP agents: one-way agents
+and a two-way agent.
+One-way agents are further subdivided into a set of TCP senders
+(which obey different congestion and error control techniques)
+and receivers (``sinks'').
+The two-way agent is symmetric in the sense that it represents
+both a sender and receiver.
+It is still under development.
+
+The files described in this section are too numerous to enumerate here.
+Basically it covers most files matching the regular expression
+\nsf{tcp*.\{cc, h\}}.
+
+The one-way TCP sending agents currently supported are:
+\begin{itemize}\itemsep0pt
+        \item Agent/TCP - a ``tahoe'' TCP sender
+        \item Agent/TCP/Reno - a ``Reno'' TCP sender
+        \item Agent/TCP/Newreno - Reno with a modification
+        \item Agent/TCP/Sack1 - TCP with selective repeat (follows RFC2018)
+        \item Agent/TCP/Vegas - TCP Vegas
+        \item Agent/TCP/Fack - Reno TCP with ``forward acknowledgment''
+	\item Agent/TCP/Linux - a TCP sender with SACK support that runs TCP congestion control modules from Linux kernel
+\end{itemize}
+The one-way TCP receiving agents currently supported are:
+\begin{itemize}\itemsep0pt
+        \item Agent/TCPSink - TCP sink with one ACK per packet
+        \item Agent/TCPSink/DelAck - TCP sink with configurable delay per ACK
+        \item Agent/TCPSink/Sack1 - selective ACK sink (follows RFC2018)
+        \item Agent/TCPSink/Sack1/DelAck - Sack1 with DelAck
+\end{itemize}
+The two-way experimental sender currently supports only a Reno form of TCP:
+\begin{itemize}
+        \item Agent/TCP/FullTcp
+\end{itemize}
+
+The section comprises three parts:
+the first part is a simple overview and example of configuring
+the base TCP send/sink agents (the sink requires no configuration).
+The second part describes the internals of the base send agent,
+and last part is a description of the extensions
+for the other types of agents that have been included in the
+simulator.
+
+\section{One-Way TCP Senders}
+\label{sec:oneWayTcp}
+
+The simulator supports several versions of an abstracted TCP sender.
+These objects attempt to capture the essence of the TCP congestion
+and error control behaviors, but are not intended to be faithful
+replicas of real-world TCP implementations.
+They do not contain a dynamic window advertisement, they do segment
+number and ACK number computations entirely in packet units,
+there is no SYN/FIN connection establishment/teardown, and no
+data is ever transferred (e.g. no checksums or urgent data).
+
+\subsection{The Base TCP Sender (Tahoe TCP)}
+\label{sec:tahoetcp}
+
+The ``Tahoe'' TCP agent \code{Agent/TCP} performs congestion
+control and round-trip-time estimation
+in a way similar to the version of TCP released with the
+4.3BSD ``Tahoe'' UN'X system release from UC Berkeley.
+The congestion window is increased by one packet per new ACK received
+during slow-start (when $cwnd\_ < ssthresh\_$) and is increased
+by $\frac{1}{cwnd\_}$ for each new ACK received during congestion avoidance
+(when $cwnd\_ \geq ssthresh\_$).
+
+\paragraph{Responses to Congestion}
+Tahoe TCP assumes a packet has been lost (due to congestion)
+when it observes {\tt NUMDUPACKS} (defined in \code{tcp.h}, currently 3)
+duplicate ACKs, or when a retransmission timer expires.
+In either case, Tahoe TCP reacts by setting {\tt ssthresh\_} to half
+of the current window size (the minimum of {\tt cwnd\_} and {\tt window\_})
+or 2, whichever is larger.
+It then initializes {\tt cwnd\_} back to the value of
+{\tt windowInit\_}.  This will typically cause the TCP to
+enter slow-start.
+
+\paragraph{Round-Trip Time Estimation and RTO Timeout Selection}
+Four variables are used to estimate the round-trip time and
+set the retransmission timer: {\tt rtt\_, srtt\_, rttvar\_, tcpTick\_,
+and backoff\_}.
+TCP initializes rttvar to $3/tcpTick\_$ and backoff to 1.
+When any future retransmission timer is set, it's timeout
+is set to the current time plus $\max(bt(a+4v+1), 64)$ seconds,
+where $b$ is the current backoff value, $t$ is the value of tcpTick,
+$a$ is the value of srtt, and $v$ is the value of rttvar.
+
+Round-trip time samples arrive with new ACKs.
+The RTT sample is computed as the difference between the current
+time and a ``time echo'' field in the ACK packet.
+When the first sample is taken, its value is used as the initial
+value for {\tt srtt\_}.  Half the first sample is used as the initial
+value for {\tt rttvar\_}.
+For subsequent samples, the values are updated as follows:
+
+\[ srtt = \frac{7}{8} \times srtt + \frac{1}{8} \times sample \]
+\[ rttvar = \frac{3}{4} \times rttvar + \frac{1}{4} \times |sample-srtt| \]
+
+\subsection{Configuration}
+\label{sec:tcp-config}
+
+Running an TCP simulation requires
+creating and configuring the agent,
+attaching an application-level data source (a traffic generator), and
+starting the agent and the traffic generator.
+
+\subsection{Simple Configuration}
+
+\paragraph{Creating the Agent}
+\begin{program}
+set ns [new Simulator]                  \; preamble initialization;
+set node1 [$ns node]                     \; agent to reside on this node;
+set node2 [$ns node]                     \; agent to reside on this node;
+
+{\bfseries{}set tcp1 [$ns create-connection TCP $node1 TCPSink $node2 42]}
+$tcp  set window_ 50                   \; configure the TCP agent;
+
+{\bfseries{}set ftp1 [new Application/FTP]}
+{\bfseries{}$ftp1 attach-agent $tcp1}
+
+$ns at 0.0 "$ftp start"
+\end{program}
+This example illustrates the use of the simulator built-in
+function {\tt create-connection}.
+The arguments to this function are: the source agent to create,
+the source node, the target agent to create, the target node, and
+the flow ID to be used on the connection.
+The function operates by creating the two agents, setting the
+flow ID fields in the agents, attaching the source and target agents
+to their respective nodes, and finally connecting the agents
+(i.e. setting appropriate source and destination addresses and ports).
+The return value of the function is the name of the source agent created.
+
+\paragraph{TCP Data Source}
+The TCP agent does not generate any application data on its own;
+instead, the simulation user can connect any traffic generation
+module to the TCP agent to generate data.
+Two applications are commonly used for TCP: FTP and Telnet.
+FTP represents a bulk data transfer of large size, and telnet chooses
+its transfer sizes randomly from tcplib (see the file
+\code{tcplib-telnet.cc}.
+Details on configuring these application source objects are in
+Section~\ref{sec:simapps}.
+
+\subsection{Other Configuration Parameters}
+\label{sec:other-tcp-config}
+
+In addition to the \code{window_} parameter listed above,
+the TCP agent supports additional configuration variables.
+Each of the variables described in this subsection is
+both a class variable and an instance variable.
+Changing the class variable changes the default value
+for all agents that are created subsequently.
+Changing the instance variable of a particular agent
+only affects the values used by that agent.
+For example,
+\begin{program}
+  Agent/TCP set window_ 100     \; Changes the class variable;
+  $tcp set window_ 2.0          \; Changes window_ for the $tcp object only;
+\end{program}
+
+The default parameters for each TCP agent are:
+\begin{program}
+Agent/TCP set window_   20              \; max bound on window size;
+Agent/TCP set windowInit_ 1             \; initial/reset value of cwnd;
+Agent/TCP set windowOption_ 1           \; cong avoid algorithm (1: standard);
+Agent/TCP set windowConstant_ 4         \; used only when windowOption != 1;
+Agent/TCP set windowThresh_ 0.002       \; used in computing averaged window;
+Agent/TCP set overhead_ 0               \; !=0 adds random time between sends;
+Agent/TCP set ecn_ 0                    \; TCP should react to ecn bit ;
+Agent/TCP set packetSize_ 1000          \; packet size used by sender (bytes);
+Agent/TCP set bugFix_ true              \; see explanation;
+Agent/TCP set slow_start_restart_ true  \; see explanation;
+Agent/TCP set tcpTick_ 0.1              \; timer granulatiry in sec (.1 is NONSTANDARD);
+Agent/TCP set maxrto_ 64                \; bound on RTO (seconds);
+Agent/TCP set dupacks_ 0                \; duplicate ACK counter;
+Agent/TCP set ack_ 0                    \; highest ACK received;
+Agent/TCP set cwnd_ 0                   \; congestion window (packets);
+Agent/TCP set awnd_ 0                   \; averaged cwnd (experimental);
+Agent/TCP set ssthresh_ 0               \; slow-stat threshold (packets);
+Agent/TCP set rtt_ 0                    \; rtt sample;
+Agent/TCP set srtt_ 0                   \; smoothed (averaged) rtt;
+Agent/TCP set rttvar_ 0                 \; mean deviation of rtt samples;
+Agent/TCP set backoff_ 0                \; current RTO backoff factor;
+Agent/TCP set maxseq_ 0                 \; max (packet) seq number sent;
+\end{program}
+
+For many simulations, few of the configuration parameters are likely
+to require modification.
+The more commonly modified parameters include: {\tt window\_} and
+{\tt packetSize\_}.
+The first of these bounds the window TCP uses, and is considered
+to play the role of the receiver's advertised window in real-world
+TCP (although it remains constant).
+The packet size essentially functions like the MSS size in real-world
+TCP.
+Changes to these parameters can have a profound effect on the behavior
+of TCP.
+Generally, those TCPs with larger packet sizes, bigger windows, and
+smaller round trip times (a result of the topology and congestion) are
+more agressive in acquiring network bandwidth.
+
+\subsection{Other One-Way TCP Senders}
+
+\paragraph{Reno TCP}
+The Reno TCP agent is very similar to the Tahoe TCP agent,
+except it also includes {\em fast recovery}, where the current
+congestion window is ``inflated'' by the number of duplicate ACKs
+the TCP sender has received before receiving a new ACK.
+A ``new ACK'' refers to any ACK with a value higher than the higest
+seen so far.
+In addition, the Reno TCP agent does not return to slow-start during
+a fast retransmit.
+Rather, it reduces sets the congestion window to half the current
+window and resets {\tt ssthresh\_} to match this value.
+
+\paragraph{Newreno TCP}
+This agent is based on the Reno TCP agent, but which modifies the
+action taken when receiving new ACKS.
+In order to exit fast recovery, the sender must receive an ACK for the
+highest sequence number sent.
+Thus, new ``partial ACKs'' (those which represent new ACKs but do not
+represent an ACK for all outstanding data) do not deflate the window
+(and possibly lead to a stall, characteristic of Reno).
+
+\paragraph{Vegas TCP}
+This agent implements ``Vegas'' TCP (\cite{Brak94:TCP,Brak94a:TCP}).
+It was contributed by Ted Kuo.
+
+\paragraph{Sack TCP}
+This agent implements selective repeat, based on selective ACKs provided
+by the receiver.
+It follows the ACK scheme described in \cite{rfc2018}, and was developed
+with Matt Mathis and Jamshid Mahdavi.
+
+\paragraph{Fack TCP}
+This agent implements ``forward ACK'' TCP, a modification of Sack
+TCP described in \cite{Math96:Forward}.
+
+\paragraph{Linux TCP}
+This agent runs TCP congestion control modules imported from Linux kernel.
+The agent generates simulation results that are consistent, in congestion window trajectory level, with the behavior of Linux hosts.
+
+Simulation users can update or import new congestion control modules from Linux kernel source code for this agent.
+The Linux congestion control modules are compiled into the NS-2 binary. Users can select different congestion control algorithms, different
+congestion control module parameters, and different Linux TCP parameters for different instances of this agent.
+This agent supports SACK. A receiver that supports SACK is recommended to work with this agent.
+There is a tutorial for using this agent in \cite{Wei07NSLinuxTutorial}.
+
+The implementation of this agent loosely follows the Linux TCP packet processing routine and calls the congestion control source
+codes from Linux kernel to change congestion control related parameters (e.g. congestion window, slow start threshold and etc).
+The design and implementation details are described in \cite{WeiCao06NSLinuxTCP}.
+
+To achieve simulation results close to Linux performance, this agent changes the default values of the following parameters
+according to the Linux parameters: 
+\begin{program}
+Agent/TCP/Linux set maxrto_ 120
+Agent/TCP/Linux set ts_resetRTO_ true
+Agent/TCP/Linux set delay_growth_ false
+\end{program}
+
+\section{TCP Receivers (sinks)}
+
+The TCP senders described above represent one-way data senders.
+They must peer with a ``TCP sink'' object.
+
+\subsection{The Base TCP Sink}
+
+The base TCP sink object ({\tt Agent/TCPSink})
+is responsible for returning ACKs to
+a peer TCP source object.
+It generates one ACK per packet received.
+The size of the ACKs may be configured.
+The creation and configuration of the TCP sink object
+is generally performed automatically by a library
+call (see {\tt create-connection} above).
+
+\paragraph{configuration parameters}
+\begin{program}
+        Agent/TCPSink set packetSize_ 40
+\end{program}
+
+\subsection{Delayed-ACK TCP Sink}
+
+A delayed-ACK sink object ({\tt Agent/Agent/TCPSink/DelAck}) is available
+for simulating a TCP receiver that ACKs less than once per packet received.
+This object contains a bound variable {\tt interval\_} which gives the
+number of seconds to wait between ACKs.
+The delayed ACK sink implements an agressive ACK policy whereby
+only ACKs for in-order packets are delayed.
+Out-of-order packets cause immediate ACK generation.
+
+\paragraph{configuration parameters}
+\begin{program}
+        Agent/TCPSink/DelAck set interval_ 100ms
+\end{program}
+
+\subsection{Sack TCP Sink}
+
+The selective-acknowledgment TCP sink ({\tt Agent/TCPSink/Sack1}) implements
+SACK generation modeled after the description of SACK in RFC 2018.
+This object includes a bound variable {\tt maxSackBlocks\_} which gives
+the maximum number of blocks of information in an ACK available for
+holding SACK information.
+The default value for this variable is 3, in accordance with the expected
+use of SACK with RTTM (see RFC 2018, section 3).
+Delayed and selective ACKs together are implemented by
+an object of type {\tt Agent/TCPSink/Sack1/DelAck}.
+
+\paragraph{configuration parameters}
+\begin{program}
+        Agent/TCPSink set maxSackBlocks_ 3
+\end{program}
+
+\section{Two-Way TCP Agents (FullTcp)}
+\label{sec:fulltcp}
+
+The {\tt Agent/TCP/FullTcp} object is a new addition to the suite of
+TCP agents supported in the simulator and is still under development.
+It is different from (and incompatible with) the other agents, but
+does use some of the same architecture.
+It differs from these agents in the following ways:
+following ways:
+\begin{itemize}\itemsep0pt
+\item connections may be establised and town down
+(SYN/FIN packets are exchanged)
+\item bidirectional data transfer is supported
+\item sequence numbers are in bytes rather than packets
+\end{itemize}
+
+The generation of SYN packets (and their ACKs) can be
+of critical importance in trying to model real-world behavior
+when using many very short data transfers.
+This version of TCP currently defaults to sending
+data on the 3rd segment of an initial 3-way handshake, a behavior
+somewhat different than common real-world TCP implementations.
+A ``typical'' TCP connection proceeds with an active opener
+sending a SYN, the passive opener responding with a SYN+ACK,
+the active opener responding with an ACK, and then some time later
+sending the first segment with data (corresponding to the first
+application write).
+Thus, this version of TCP sends data at a time somewhat earlier
+than typical implementations.
+This TCP can also be configured to send data on the initial SYN
+segment.
+Future changes to FullTCP may include a modification to send the
+first data segment later, and possibly to implement T/TCP functionality.
+
+Currently FullTCP is only implemented with Reno congestion control,
+but ultimately it should be available with the full range of
+congestion control algorithms (e.g., Tahoe, SACK, Vegas, etc.).
+
+
+\subsection{Simple Configuration}
+\label{sec:simpleconfig}
+Running an Full TCP simulation requires
+creating and configuring the agent,
+attaching an application-level data source (a traffic generator), and
+starting the agent and the traffic generator.
+
+\paragraph{Creating the Agent}
+\begin{program}
+# {\cf set up connection (do not use "create-connection" method because }
+# {\cf we need a handle on the sink object)}
+set src [new Agent/TCP/FullTcp] \; create agent;
+set sink [new Agent/TCP/FullTcp] \; create agent;
+$ns_ attach-agent $node_(s1) $src \; bind src to node;
+$ns_ attach-agent $node_(k1) $sink \; bind sink to node;
+$src set fid_ 0   \; set flow ID field;
+$sink set fid_ 0  \; set flow ID field;
+$ns_ connect $src $sink \; active connection src to sink;
+
+# {\cf set up TCP-level connections}
+$sink listen \; will figure out who its peer is;
+$src set window_ 100;
+\end{program}
+
+The creation of the FullTcp agent is similar to the other agents,
+but the sink is placed in a listening state by the {\tt listen} method.
+Because a handle to the receiving side is required in order to make
+this call, the {\tt create-connection} call used above cannot be used.
+
+\paragraph{Configuration Parameters}
+The following configuration parameters are available through Tcl
+for the FullTcp agent:
+\begin{program}
+Agent/TCP/FullTcp set segsperack_ 1 \; segs received before generating ACK;
+Agent/TCP/FullTcp set segsize_ 536  \; segment size (MSS size for bulk xfers);
+Agent/TCP/FullTcp set tcprexmtthresh_ 3 \; dupACKs thresh to trigger fast rexmt;
+Agent/TCP/FullTcp set iss_ 0 \; initial send sequence number;
+Agent/TCP/FullTcp set nodelay_ false \; disable sender-side Nagle algorithm;
+Agent/TCP/FullTcp set data_on_syn_ false \; send data on initial SYN?;
+Agent/TCP/FullTcp set dupseg_fix_ true \; avoid fast rxt due to dup segs+acks;
+Agent/TCP/FullTcp set dupack_reset_ false \; reset dupACK ctr on !0 len data segs containing dup ACKs;
+Agent/TCP/FullTcp set interval_ 0.1 \; as in TCP above, (100ms is non-std);
+\end{program}
+
+
+\subsection{BayFullTcp}
+\label{sec:bayfulltcp}
+
+A different implementation of two-way TCP has been ported into ns from Kathy Nicholes/Van Jacobson's group. It is called BayFullTcp. The basic difference between BayFullTcp and FullTcp (the two-way tcp version already present in ns) are as follows:
+\begin{itemize}
+\item BayTcp supports a client-server application model while FullTcp makes no assumption about its application layer.
+\item The tcp-application interface is different for both;
+\item FullTcp supports partial ack (BayTcp doesn't).
+\item FullTcp supports different flavors of tcp (tahoe, reno etc) which is not the case for baytcp.
+\item Both implementations have different set of API's .
+\end{itemize}
+There might be other finer differences between the two as well.
+One of our future plans is to redefine the APIs to allow fulltcp to use
+baytcp's client-server model.
+
+
+
+\section{Architecture and Internals}
+\label{sec:tcparchitecture}
+
+The base TCP agent (class {\tt Agent/TCP}) is constructed
+as a collection of routines for sending packets, processing ACKs,
+managing the send window, and handling timeouts.
+Generally, each of these routines may be over-ridden by a
+function with the same name in a derived class (this is how
+many of the TCP sender variants are implemented).
+
+\paragraph{The TCP header}
+The TCP header is defined by the {\tt hdr\_tcp} structure
+in the file \nsf{tcp.h}.
+The base agent only makes use of the following subset of the fields:
+\begin{program}
+ts_     \* current time packet was sent from source */
+ts_echo_ \* for ACKs: timestamp field from packet associated with this ACK */
+seqno_ \* sequence number for this data segment or ACK (Note: overloading!) */
+reason_ \* set by sender when (re)transmitting to trace reason for send */
+\end{program}
+
+\paragraph{Functions for Sending Data}
+Note that generally the sending TCP never actually sends
+data (it only sets the packet size).
+
+{\bf send\_much(force, reason, maxburst)} - this function
+attempts to send as many packets as the current sent window allows.
+It also keeps track of how many packets it has sent, and limits to the
+total to {\em maxburst}. \\
+The function {\tt output(seqno, reason)} sends one packet
+with the given sequence number and updates the maximum sent sequence
+number variable ({\tt maxseq\_}) to hold the given sequence number if
+it is the greatest sent so far.
+This function also assigns the various fields in the TCP
+header (sequence number, timestamp, reason for transmission).
+This function also sets a retransmission timer if one is not already
+pending.
+
+\paragraph{Functions for Window Management}
+
+The usable send window at any time is given by the function {\bf window()}.
+It returns the minimum of the congestion window and the variable {\tt wnd\_},
+which represents the receiver's advertised window.
+
+{\bf opencwnd()} - this function opens the congestion window.  It is invoked
+when a new ACK arrives.
+When in slow-start, the function merely increments {\tt cwnd\_} by each
+ACK received.
+When in congestion avoidance, the standard configuration increments {\tt cwnd\_}
+by its reciprocal.
+Other window growth options are supported during congestion avoidance,
+but they are experimental (and not documented; contact Sally Floyd for
+details).
+
+{\bf closecwnd(int how)} - this function reduces the congestion window. It
+may be invoked in several ways: when entering fast retransmit, due to
+a timer expiration, or due to a congestion notification (ECN bit set).
+Its argument {\tt how} indicates how the congestion window should
+be reduced.  The value {\bf 0} is used for retransmission timeouts and
+fast retransmit in Tahoe TCP.  It typically causes the TCP to enter
+slow-start and reduce {\tt ssthresh\_} to half the current window.
+The value {\bf 1} is used by Reno TCP for implementing fast recovery
+(which avoids returning to slow-start).
+The value {\bf 2} is used for reducing the window due to an ECN indication.
+It resets the congestion window to its initial value (usually causing
+slow-start), but does not alter {\tt ssthresh\_}.
+
+\paragraph{Functions for Processing ACKs}
+
+{\bf recv()} - this function is the main reception path for ACKs.
+Note that because only one direction of data flow is in use, this function
+should only ever be invoked with a pure ACK packet (i.e. no data).
+The function stores the timestamp from the ACK in {\tt ts\_peer\_}, and
+checks for the presence of the ECN bit (reducing the send window if
+appropriate).
+If the ACK is a new ACK, it calls {\bf newack()}, and otherwise
+checks to see if it is a duplicate of the last ACK seen.
+If so, it enters fast retransmit by closing the window, resetting the
+retransmission timer, and sending a packet by calling {\tt send\_much}.
+
+{\bf newack()} - this function processes a ``new'' ACK (one that contains
+an ACK number higher than any seen so far).
+The function sets a new retransmission timer by calling {\bf newtimer()},
+updates the RTT estimation by calling {\bf rtt\_update}, and updates
+the highest and last ACK variables.
+
+\paragraph{Functions for Managing the Retransmission Timer}
+
+These functions serve two purposes: estimating the round-trip time
+and setting the actual retransmission timer.
+{\bf rtt\_init} - this function initializes {\tt srtt\_} and {\tt rtt\_}
+to zero, sets {\tt rttvar\_} to $3/tcp\_tick\_$, and sets the backoff
+multiplier to one.
+
+{\bf rtt\_timeout} - this function gives the timeout value in seconds that
+should be used to schedule the next retransmission timer.
+It computes this based on the current estimates of the mean and deviation
+of the round-trip time.  In addition, it implements Karn's
+exponential timer backoff for multiple consecutive retransmission timeouts.
+
+{\bf rtt\_update} - this function takes as argument the measured RTT
+and averages it in to the running mean and deviation estimators
+according to the description above.
+Note that {\tt t\_srtt\_} and {\tt t\_rttvar} are both
+stored in fixed-point (integers).
+They have 3 and 2 bits, respectively, to the right of the binary
+point.
+
+{\bf reset\_rtx\_timer} -  This function is invoked during fast retransmit
+or during a timeout.
+It sets a retransmission timer
+by calling {\tt set\_rtx\_timer} and if invoked by a timeout also calls
+{\tt rtt\_backoff}.
+
+{\bf rtt\_backoff} - this function backs off the retransmission timer
+(by doubling it).
+
+{\bf newtimer} - this function called only when a new ACK arrives.
+If the sender's left window edge is beyond the ACK, then
+{\tt set\_rtx\_timer} is called, otherwise if a retransmission timer
+is pending it is cancelled.
+
+\section{Tracing TCP Dynamics}
+\label{sec:traceTcpdyn}
+
+The behavior of TCP is often observed by constructing a
+sequence number-vs-time plot.
+Typically, a trace is performed by enabling tracing on a link
+over which the TCP packets will pass.
+Two trace methods are supported: the default one (used for tracing
+TCP agents), and an extension used only for FullTcP.
+
+\section{One-Way TCP Trace Dynamics}
+\label{sec:trace1WayTcpdyn}
+
+TCP packets generated by one of the one-way TCP agents and destined for
+a TCP sink agent
+passing over a traced link (see section~\ref{chap:trace})
+will generate a trace file lines of the form:
+\begin{verbatim}
++ 0.94176 2 3 tcp 1000 ------ 0 0.0 3.0 25 40
++ 0.94276 2 3 tcp 1000 ------ 0 0.0 3.0 26 41
+d 0.94276 2 3 tcp 1000 ------ 0 0.0 3.0 26 41
++ 0.95072 2 0 ack 40 ------ 0 3.0 0.0 14 29
+- 0.95072 2 0 ack 40 ------ 0 3.0 0.0 14 29
+- 0.95176 2 3 tcp 1000 ------ 0 0.0 3.0 21 36
++ 0.95176 2 3 tcp 1000 ------ 0 0.0 3.0 27 42
+\end{verbatim}
+The exact format of this trace file is given in section~\ref{sec:traceformat}.
+When tracing TCP, packets of type {\sf tcp} or {\sf ack} are relevant.
+Their type, size, sequence number (ack number for ack packets),
+and arrival/depart/drop time are given by field positions
+5, 6, 11, and 2, respectively.
+The {\sf +} indicates a packet arrival, {\sf d} a drop, and {\sf -} a
+departure.
+A number of scripts process this file to produce graphical output or
+statistical summaries (see,  for example, \nsf{test-suite.tcl}, the
+{\tt finish} procedure.
+
+\section{Two-Way TCP Trace Dynamics}
+\label{sec:tcpdyn}
+
+TCP packets generated by FullTcp and
+passing over a traced link contain additional information not displayed
+by default using the regular trace object.
+By enabling the flag {\tt show\_tcphdr\_} on the trace object
+(see section~ref{sec:traceformat}), three additional header fields are
+written to the trace file: ack number, tcp-specific flags, and header length.
+
+
+\section{Commands at a glance}
+\label{sec:tcpcommand}
+
+The following is a list of commands used to setup/manipulate TCP flows
+for simulations:
+\begin{flushleft}
+\code{set tcp0 [new Agent/TCP]}\\
+This creates an instance of a TCP agent. There are several flavors of
+TCP-sender and TCP-receiver (or sink) agent currently implemented in ns.
+TCP-senders currently available are:
+Agent/TCP, Agent/TCP/Reno, Agent/TCP/Newreno, Agent/TCP/Sack1, Agent/TCP/Vegas,
+Agent/TCP/Fack. \\
+TCP-receivers currently available are:
+Agent/TCPSink, Agent/TCPSink/DelAck, Agent/TCPSink/Sack1,
+Agent/TCPSink/Sack1/DelAck.\\
+There is also a two-way implementation of tcp called Agent/TCP/FullTcp. For
+details on the different TCP flavors see earlier sections of this chapter.
+
+
+Configuration parameters for TCP flows maybe set as follows:\\
+\code{$tcp set window_ <wnd-size>}\\
+For all possible configuration parameters available for TCP see section
+\ref{sec:other-tcp-config}. The default configuration values can also be
+found in \ns/tcl/lib/ns-default.tcl.
+
+
+Following is an example of a simple TCP connection setup:
+\begin{program}
+set tcp [new Agent/TCP] \; create tcp agent;
+$ns_ attach-agent $node_(s1) $tcp \; bind src to node;
+$tcp set fid_ 0   \; set flow ID field;
+set ftp [new Application/FTP]   \; create ftp traffic;
+$ftp attach-agent $tcp  \; bind ftp traffic to tcp agent;
+set sink [new Agent/TCPSink] \; create tcpsink agent;
+$ns_ attach-agent $node_(k1) $sink \; bind sink to node;
+$sink set fid_ 0  \; set flow ID field;
+$ns_ connect $ftp $sink \; active connection src to sink;
+$ns_ at $start-time "$ftp start"  \; start ftp flow;
+\end{program}
+
+For an example of setting up a full-tcp connection see section
+\ref{sec:simpleconfig}.
+
+\end{flushleft}
+
+\endinput

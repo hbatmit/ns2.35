@@ -1,0 +1,292 @@
+\chapter{Debugging ns}
+\label{sec:debug}
+
+\ns is a simulator engine built in C++ and has an OTcl (Object-oriented
+Tcl) interface that is used for configuration and commands. Thus in order
+to debug \ns we will have to deal with debugging issues involving
+both OTcl and C++. This chapter gives debugging tips at Tcl and C++
+level and shows how to move to-fro the Tcl and C++ boundaries. It also
+briefly covers memory debugging and memory conservation in \ns.
+
+
+\section{Tcl-level Debugging}
+\label{sec:tcldebug}
+
+Ns supports Don Libs' Tcl debugger ( see its Postscript documentation at
+http://expect.nist.gov/tcl-debug/tcl-debug.ps.Z and its source code at
+http://expect.nist.gov/tcl-debug/tcl-debug.tar.gz ).
+Install the program or leave the source code in a directory
+parallel to ns-2 and it will be built. Unlike expect, described in the
+tcl-debug documentation, we do not support the -D flag. To enter the
+debugger, add the lines "debug 1" to your script at the appropriate
+location. In order to build ns with the debugging flag turned on,
+configure ns with configuration option "--enable-debug"
+and incase the Tcl debugger has been installed in a directory not parallel
+to ns-2, provide the path with configuration option 
+"--with-tcldebug=<give/your/path/to/tcl-debug/library>".
+
+An useful debugging command is \code{$ns_ gen-map} which may be used to 
+list all OTcl objects in a raw form. This is useful to correlate the
+position and function of an object given its name. The name of the object
+is the OTcl handle, usually of the form \code{_o###}. For TclObjects, this
+is also available in a C++ debugger, such as gdb, as \code{this->name_}. 
+
+
+\section{C++-Level Debugging}
+\label{sec:cdebug}
+
+Debugging at C++ level can be done using any standard debugger. The
+following macro for gdb makes it easier to see what happens in Tcl-based
+subroutines: 
+\begin{program}
+## for Tcl code
+define pargvc
+set $i=0
+while $i < argc
+  p argv[$i]
+  set $i=$i+1
+  end
+end
+document pargvc
+Print out argc argv[i]'s common in Tcl code.
+(presumes that argc and argv are defined)
+end
+\end{program}
+
+
+\section{Mixing Tcl and C debugging}
+\label{sec:mixdebug}
+
+It is a painful reality that when looking at the Tcl code and debugging
+Tcl level stuff, one wants to get at the C-level classes, and vice versa.
+This is a smallish hint on how one can make that task easier. If you are
+running ns through gdb, then the following incantation (shown below) gets
+you access to the Tcl 
+debugger. Notes on how you can then use this debugger and what you can do
+with it are documented earlier in this chapter and at this URL
+(http://expect.nist.gov/tcl-debug/tcl-debug.ps.Z).
+\begin{program} 
+(gdb) run
+Starting program: /nfs/prot/kannan/PhD/simulators/ns/ns-2/ns 
+...
+
+Breakpoint 1, AddressClassifier::AddressClassifier (this=0x12fbd8)
+    at classifier-addr.cc:47
+(gdb) p this->name_
+$1 = 0x2711e8 "_o73"
+(gdb) call Tcl::instance().eval("debug 1")
+15: lappend auto_path $dbg_library
+dbg15.3> w
+*0: application
+ 15: lappend auto_path /usr/local/lib/dbg
+dbg15.4> Simulator info instances
+_o1
+dbg15.5> _o1 now
+0
+dbg15.6> # and other fun stuff
+dbg15.7> _o73 info class
+Classifier/Addr
+dbg15.8> _o73 info vars
+slots_ shift_ off_ip_ offset_ off_flags_ mask_ off_cmn_
+dbg15.9> c
+(gdb) w
+Ambiguous command "w": while, whatis, where, watch.
+(gdb) where
+#0  AddressClassifier::AddressClassifier (this=0x12fbd8)
+    at classifier-addr.cc:47
+#1  0x5c68 in AddressClassifierClass::create (this=0x10d6c8, argc=4, 
+    argv=0xefffcdc0) at classifier-addr.cc:63
+...
+(gdb)
+\end{program}
+
+In a like manner, if you have started ns through gdb, then you can always
+get gdb's attention by sending an interrupt, usually a \code{<Ctrl-c>}
+on
+berkeloidrones. However, note that these do tamper with the stack frame, and on occasion,
+may (sometimes can (and rarely, does)) screw up the stack so that, you may
+not be in a position to resume execution. To its credit, gdb appears to be
+smart enough to warn you about such instances when you should tread
+softly, and carry a big stick. 
+
+
+\section{Memory Debugging}
+\label{sec:memdebug}
+
+The first thing to do if you run out of memory is to make sure you can use
+all the memory on your system. Some systems by default limit the memory
+available for individual programs to something less than all available
+memory. To relax this, use the limit or ulimit command. These are shell
+functions---see the manual page for your shell for details. Limit is for
+csh, ulimit is for sh/bash. 
+
+Simulations of large networks can consume a lot of memory. Ns-2.0b17
+supports Gray Watson's dmalloc library (see its web documentation at
+http://www.letters.com/dmalloc/ and get the source code from
+ftp://ftp.letters.com/src/dmalloc/dmalloc.tar.gz ).
+To add it, install it on your system or leave its source in
+a directory parallel to ns-2 and specify --with-dmalloc when configuring
+ns. Then build all components of ns for which you want memory information
+with debugging symbols (this should include at least ns-2, possibly tclcl
+and otcl and maybe also tcl). 
+
+
+\subsection{Using dmalloc}
+\label{sec:usedmalloc}
+
+In order to use dmalloc do the following:
+\begin{itemize}
+\item Define an alias 
+\begin{verbatim}
+for csh: alias dmalloc 'eval `\dmalloc -C \!*`', 
+for bash: function dmalloc { eval `command dmalloc -b $*` }%$
+\end{verbatim}
+\item Next turn debugging on by typing \code{dmalloc -l logfile low }
+\item Run your program (which was configured and built with dmalloc as
+described above). 
+\item Interpret logfile by running \code{dmalloc_summarize ns <logfile}.
+(You need to download \code{dmalloc_summarize} separately.) 
+\end{itemize}
+
+On some platforms you may need to link things statically to get dmalloc to
+work. On Solaris this is done by linking with these options:
+\code{"-Xlinker -B -Xlinker -static {libraries} -Xlinker -B -Xlinker -dynamic -ldl -lX11 -lXext"}.
+(You'll need to change Makefile. Thanks to
+Haobo Yu and Doug Smith for working this out.) 
+
+We can interpret a sample summary produced from this process on
+ns-2/tcl/ex/newmcast/cmcast-100.tcl with an exit statement after the
+200'th duplex-link-of-interefaces statement: 
+
+Ns allocates ~6MB of memory. \\
+~1MB is due to TclObject::bind \\
+~900KB is StringCreate, all in 32-byte chunks \\
+~700KB is NewVar, mostly in 24-byte chunks \\
+Dmalloc\_summarize must map function names to and from their addresses. It
+often can't resolve addresses for shared libraries, so if you see lots of
+memory allocated by things beginning with ``ra='', that's what it is. The
+best way to avoid this problem is to build ns statically (if not all, then
+as much as possible). 
+
+Dmalloc's memory allocation scheme is somewhat expensive, plus there's
+bookkeeping costs. Programs linked against dmalloc will consume more
+memory than against most standard mallocs. 
+
+Dmalloc can also diagnose other memory errors (duplicate frees, buffer
+overruns, etc.). See its documentation for details. 
+
+
+\subsection{Memory Conservation Tips}
+\label{sec:memconserve}
+
+Some tips to saving memory (some of these use examples from the 
+cmcast-100.tcl script): 
+If you have many links or nodes: 
+\begin{description}
+\item[Avoid \code{trace-all} :]
+\code{$ns trace-all $f} causes trace objects to be pushed on all links. If 
+you only want to trace one link, there's no need for this overhead. Saving
+is about 14 KB/link. 
+
+\item[Use arrays for sequences of variables :]
+Each variable, say \code{n$i} in \code{set n$i [$ns node]}, has a certain
+overhead. If a sequence of nodes are created as an array, i.e.
+\code{n($i)}, then only one variable is created, consuming much less
+memory. Saving is about 40+ Byte/variable. 
+
+\item[Avoid unnecessary variables :]
+If an object will not be referred to later on, avoid naming the object.
+E.g.
+\code{set cmcast(1) [new CtrMcast $ns $n(1) $ctrmcastcomp [list 1 1]]}
+would be better if replaced by
+\code{new CtrMcast $ns $n(1) $ctrmcastcomp [list 1 1]}.
+Saving is about 80 Byte/variable. 
+
+\item[Run on top of FreeBSD :]
+malloc() overhead on FreeBSD is less than on some other systems. We will
+eventually port that allocator to other platofrms. 
+
+\item[Dynamic binding :]
+Using bind() in C++ consumes memory for each object you create. This
+approach can be very expensive if you create many identical objects.
+Changing \code{bind()} to \code{delay_bind()} changes this memory
+requirement to per-class. See \ns/object.cc for an example of how to do
+binding, either way.
+
+\item[Disabling packet headers :]
+For packet-intensive simulations, disabling all packet headers that
+you will not use in your simulation may significantly reduce memory
+usage. See Section~\ref{sec:ppackethdr} for detail.
+ 
+\end{description}
+
+
+\subsection{Some statistics collected by dmalloc}
+\label{sec:statdmalloc}
+
+A memory consumption problem occured in recent simulations 
+(cmcast-[150,200,250].tcl), so we decided to take a closer look at scaling
+issue. See page http://www-mash.cs.berkeley.edu/ns/ns-scaling.html
+which demostrates the efforts in finding the bottlneck. 
+ 
+The following table summarises the results of investigating the
+bottleneck:\\
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|}\hline  
+{\em KBytes} &{\em cmcast-50.tcl(217 Links)} &{\em cmcast-100.tcl(950 
+Links)}\\\hline 
+trace-all &8,084 &28,541\\\hline
+turn off trace-all &5,095 &15,465 \\\hline
+use array &5,091 &15,459\\\hline 
+remove unnecessay variables &5,087 &15,451 \\\hline
+on SunOS &5,105 &15,484\\\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
+\section{Memory Leaks}
+\label{memleak}
+
+This section deals with memory leak problems in \ns, both in Tcl as well
+as C/C++.
+
+
+\subsection{OTcl}
+\label{leakTcl}
+OTcl, especially TclCL, provides a way to allocate new objects. However,
+it does not accordingly provide a garbage collection mechanism for these
+allocated objects. This can easily lead to unintentional memory leaks.
+Important: tools such as dmalloc and purify are unable to detect this kind
+of memory leaks. For example, consider this simple piece of OTcl script: 
+\begin{program}
+set ns [new Simulator]
+for {set i 0} {$i < 500} {incr i} {
+        set a [new RandomVariable/Constant]
+}
+\end{program}
+One would expect that the memory usage should stay the same after the
+first RandomVariable is allocated. However, because OTcl does not have
+garbage collection, when the second RandomVariable is allocated, the
+previous one is not freed and hence results in memory leak. Unfortunately,
+there is no easy fix for this, because garbage collection of allocated
+objects is essentially incompatible with the spirit of Tcl. The only way
+to fix this now is to always explicitly free every allocated OTcl object
+in your script, in the same way that you take care of malloc-ed object in
+C/C++. 
+
+
+\subsection{C/C++}
+\label{leakC}
+
+Another source of memory leak is in C/C++. This is much easier to track
+given tools that are specifically designed for this task, e.g., dmalloc
+and purify. \ns  has a special target ns-pure to build purified ns
+executable. First make sure that the macro PURIFY in the ns Makefile
+contains the right -collector for your linker (check purify man page if
+you don't know what this is). Then simply type \code{make ns-pure}. See
+earlier sections in this chapter on how to use ns with libdmalloc. 
+
+
+

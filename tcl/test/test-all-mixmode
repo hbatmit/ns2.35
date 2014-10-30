@@ -1,0 +1,6 @@
+#! /bin/sh
+
+file="test-suite-mixmode.tcl"
+directory="test-output-mixmode"
+version="v2"
+./test-all-template1 $file $directory $version $@

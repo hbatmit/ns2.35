@@ -1,0 +1,109 @@
+n -t * -s 0  -x 200 -y 30 -Z 0 -z 30  -v circle -c black
+n -t * -s 1  -x 330 -y 150 -Z 0 -z 30  -v circle -c black
+n -t * -s 2  -x 460 -y 30 -Z 0 -z 30  -v circle -c black
+V -t * -v 1.0a5 -a 0
+W -t * -x 1000 -y 200
+A -t * -n 1 -p 0 -o 0xffffffff -c 31 -a 1
+A -t * -h 1 -m 2147483647 -s 0
+c -t * -i 8 -n red
+c -t * -i 1 -n black
+c -t * -i 7 -n purple
+c -t * -i 3 -n green
+v -t 0.000 -e sim_annotation 0.0 1 COLOR LEGEND : 
+v -t 0.003 -e sim_annotation 0.003 2 Nodes turn red when there is a collision 
+v -t 0.10000000 -e set_rate_ext 0.300ms 1
+v -t 0.155 -e sim_annotation 0.155 3 CASE 1a : EQUIDISTANT : SEPARATE TIMES : SUCCESSFUL RECEPTION
+v -t 0.1554 -e sim_annotation 0.1554 4 Node 0 and Node 2 are in range of each other, and are equidistant from Node 1, so when they both send packets at 
+v -t 0.1558 -e sim_annotation 0.1558 5 different times, the signal of these packets , at the receiver, is the same, and packets from both senders are recd.
++ -t 0.16515 -s 2 -d 1 -p message -e 2500 -a 1 
+- -t 0.16515 -s 2 -d 1 -p message -e 2500 -a 1 
+h -t 0.16515 -s 2 -d 1 -p message -e 2500 -a 1 
+r -t 0.16515 -s 2 -d 1 -p message -e 2500 -a 1 
++ -t 0.17515 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.17515 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.17515 -s 0 -d 1 -p message -e 2500 -a 1 
+r -t 0.17515 -s 0 -d 1 -p message -e 2500 -a 1 
+v -t 0.18515 -e sim_annotation 0.18515 6 CASE 1b : EQUIDISTANT - SAME TIME : COLLISION 
+v -t 0.1854 -e sim_annotation 0.1854 7 Node 0 and Node 2 want to send packets at the same time, since they are the same distance from the receiver, the packets
+v -t 0.1858 -e sim_annotation 0.1858 8 received are the same signal strength and hence they interfere with each other at the receiver resulting in collision.
++ -t 0.1953 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.1953 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.1953 -s 0 -d 1 -p message -e 2500 -a 1 
++ -t 0.1953 -s 2 -d 1 -p message -e 2500 -a 1 
+- -t 0.1953 -s 2 -d 1 -p message -e 2500 -a 1 
+h -t 0.1953 -s 2 -d 1 -p message -e 2500 -a 1 
+n -t 0.2053 -s 1 -S COLOR -c red -o black -i red -I black 
+n -t 0.2053 -s 1 -S DLABEL -l "Collision " -L ""
+d -t 0.2053 -s 1 -d 2 -p message -e 5000 -a 8 
+n -t 0.2153 -s 1 -S COLOR -c black -o red -i black -I red 
+n -t 0.2153 -s 1 -S DLABEL -l "" -L ""
+n -t 0.25000 -s 2 -x 460.00 -y 30.00 -U 10000.00 -V 0.00 -T 0.044
+v -t 0.25000 -e sim_annotation 0.25000 9 NODE 2 MOVES 
+v -t 0.25005 -e sim_annotation 0.25005 10 Node 2 is out of range of Node 1
+v -t 0.32005 -e sim_annotation 0.32005 11 CASE 2a : OUT OF RANGE , NODES SENDING PACKETS SEPARATELY 
+v -t 0.3201 -e sim_annotation 0.3201 12 Node 0 sends data packets to Node 1, which are successfully received by Node 1
++ -t 0.32015 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.32015 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.32015 -s 0 -d 1 -p message -e 2500 -a 1 
+v -t 0.3502 -e sim_annotation 0.3502 13 Node 2 sends data packets to Node 1
+v -t 0.35025 -e sim_annotation 0.35025 14	but they are not recd. by Node 1, since Node 2 is out of range of Node 1  
++ -t 0.3503 -s 2 -d -1 -p message -e 2500 -a 8 
+- -t 0.3503 -s 2 -d -1 -p message -e 2500 -a 8 
+h -t 0.3503 -s 2 -d -1 -p message -e 2500 -a 8 
+v -t 0.3603 -e sim_annotation 0.3603 15 CASE 2b : OUT OF RANGE , NODES SENDING PACKETS AT THE SAME TIME 
+v -t 0.36035 -e sim_annotation 0.36035 16 Node 0 sends data packets to Node 1 which are successfully recd. by Node 1 and Node 2 sends packets to Node 1
+v -t 0.36045 -e sim_annotation 0.36045 17 which are not received, because Node 2 is out of range of Node 1
++ -t 0.3605 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.3605 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.3605 -s 0 -d 1 -p message -e 2500 -a 1 
++ -t 0.3605 -s 2 -d -1 -p message -e 2500 -a 8 
+- -t 0.3605 -s 2 -d -1 -p message -e 2500 -a 8 
+h -t 0.3605 -s 2 -d -1 -p message -e 2500 -a 8 
+n -t 0.40000 -s 2 -x 900.00 -y 30.00 -U -10000.00 -V 0.00 -T 0.02
+v -t 0.40000 -e sim_annotation 0.40000 18 NODE 2 MOVES 
+v -t 0.40005 -e sim_annotation 0.40005 19 Node 2 is at the border range of Node 1
+v -t 0.49005 -e sim_annotation 0.49005 20 CASE 3a : NODE 2 BARELY IN RANGE OF NODE 1 , NODES SENDING PACKETS SEPARATELY 
+v -t 0.4901 -e sim_annotation 0.4901 21 Node 0 sends data packets to Node 1, which are successfully received by Node 1
++ -t 0.49015 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.49015 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.49015 -s 0 -d 1 -p message -e 2500 -a 1 
+v -t 0.5002 -e sim_annotation 0.5002 22 Node 2 sends data packets to Node 1 which are received successfully by Node 1 
++ -t 0.50025 -s 2 -d 1 -p message -e 2500 -a 1 
+- -t 0.50025 -s 2 -d 1 -p message -e 2500 -a 1 
+h -t 0.50025 -s 2 -d 1 -p message -e 2500 -a 1 
+v -t 0.51025 -e sim_annotation 0.51025 23 CASE 3b : CHANNEL CAPTURE : NODE 2 BARELY IN RANGE OF NODE 1, NODES SENDING PACKETS AT THE SAME TIME 
+v -t 0.5103 -e sim_annotation 0.5103 24 Node 0 sends data packets to Node 1, which are successfully received by Node 1 but packets from Node 2 are dropped because signal strength of Node 0 packets
+v -t 0.51035 -e sim_annotation 0.51035 25 is higher than that of Node 2, since Node 0 is closer to Node 1, thus resulting in channel capture by Node 0.
++ -t 0.51045 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.51045 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.51045 -s 0 -d 1 -p message -e 2500 -a 1 
++ -t 0.51045 -s 2 -d -1 -p message -e 2500 -a 8 
+- -t 0.51045 -s 2 -d -1 -p message -e 2500 -a 8 
+h -t 0.51045 -s 2 -d -1 -p message -e 2500 -a 8 
+n -t 0.65000 -s 2 -x 700.00 -y 30.00 -U -10000.00 -V 0.00 -T 0.01
+v -t 0.65000 -e sim_annotation 0.65000 25 NODE 2 MOVES 
+v -t 0.65005 -e sim_annotation 0.65005 26 Node 2 is in range of Node 1, close enough to
+v -t 0.6501 -e sim_annotation 0.6501 27 interfere with Node 0 but not the same distance as Node 0 from Node 1
+v -t 0.7401 -e sim_annotation 0.7401 28 CASE 4a : NODE 2 IN RANGE OF NODE 1 , NODES SENDING PACKETS SEPARATELY 
+v -t 0.74015 -e sim_annotation 0.74015 29 Node 0 sends data packets to Node 1, which are successfully received by Node 1
++ -t 0.7402 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.7402 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.7402 -s 0 -d 1 -p message -e 2500 -a 1 
+v -t 0.75025 -e sim_annotation 0.75025 30 Node 2 sends data packets to Node 1 and they are received successfully by Node 1
++ -t 0.7503 -s 2 -d 1 -p message -e 2500 -a 1 
+- -t 0.7503 -s 2 -d 1 -p message -e 2500 -a 1 
+h -t 0.7503 -s 2 -d 1 -p message -e 2500 -a 1 
+v -t 0.7603 -e sim_annotation 0.7603 31 CASE 4b : COLLISION : NODE 2 IN RANGE OF NODE 1 , NODES SENDING PACKETS AT THE SAME TIME 
+v -t 0.76035 -e sim_annotation 0.76035 32 Node 0 sends data packets to Node 1 the same time that Node 2 sends packets to Node 1, and hence they collide at the
+v -t 0.7604 -e sim_annotation 0.7604 33 reciever since their packets interfere with each other
++ -t 0.7605 -s 0 -d 1 -p message -e 2500 -a 1 
+- -t 0.7605 -s 0 -d 1 -p message -e 2500 -a 1 
+h -t 0.7605 -s 0 -d 1 -p message -e 2500 -a 1 
++ -t 0.7605 -s 2 -d 1 -p message -e 2500 -a 1 
+- -t 0.7605 -s 2 -d 1 -p message -e 2500 -a 1 
+h -t 0.7605 -s 2 -d 1 -p message -e 2500 -a 1 
+n -t 0.7705 -s 1 -S COLOR -c red -o black -i red -I black 
+n -t 0.7705 -s 1 -S DLABEL -l "Collision " -L ""
+d -t 0.7705 -s 1 -d 2 -p message -e 5000 -a 8 
+n -t 0.7805 -s 1 -S COLOR -c black -o red -i black -I red 
+n -t 0.7805 -s 1 -S DLABEL -l "" -L ""

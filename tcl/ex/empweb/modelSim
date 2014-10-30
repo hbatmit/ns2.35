@@ -1,0 +1,56 @@
+#! /bin/sh
+
+# usage to run this program
+#         ./modelSim
+#
+#
+#The file isiweb.tcl is a ns script that demonstrates how to use
+#the output of ModelGen (the set of CDF files in ./cdf) to simulate 
+#the traffic collected at ISI/USC gateway link. To execute it,
+#assuming you already have ns installed in your system, type
+#"ns isiweb.tcl" from the command line. It takes ~1 hour on a
+#Red Hat Linux 7.0 Pentium II Xeon 450 MHz PC with 1GB physical
+#memory.
+#
+
+ns isigen.tcl > sim.log
+
+#
+# the set of tcl/awk/perl scripts are used to
+# compute the time series of traffic size for
+# both inbound and outbound ISI traffic from
+# the output of ns. The resulted time series
+# isi.time (inbound traffic) and www.time 
+# (outbound traffic) can further be used to perform
+# wavelet scaling analysis
+#
+
+awk -f filter.awk < isi.in > in.time
+awk -f filter.awk < isi.out > out.time
+filter.tcl www.in > www.in.time
+filter.tcl www.out > www.out.time
+cat in.time out.time | sort -n > isi.merge
+cat www.in.time www.out.time | sort -n > www.merge
+cat isi.merge | time-series.pl > isi.time
+cat www.merge | time-series.pl > www.time
+
+#
+# modelCDF is a perl script that are used to
+# generate, in a CDF format, the following 
+# user-level statistics for further validation of 
+# the model
+# (a) session inter-arrival
+# (b) number of pages per session
+# (c) page inter-arrival
+# (d) page size
+# (e) request size
+# (f) server popularity
+# The CDF flie is in 3-column format (take pagesize.dat.cdf for example)
+# 1st column: page size (in KB)
+# 2nd column: accumulated number of samples
+# 3rd column: accumulated probability
+#
+
+sort -n +2 +5 sim.log > sim.log.sorted
+modelCDF sim.log.sorted
+

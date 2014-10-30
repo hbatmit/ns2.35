@@ -1,0 +1,30 @@
+v 0.10000000000000001 eval {set sim_annotation {0 sending message 1}}
+E -t 0.100025 SENSING_CARRIER 0 -1
+v 0.10100000000000001 eval {set sim_annotation {2 sending message 2}}
+E -t 0.101025 SENSING_CARRIER 2 -1
+E -t 0.102025 BACKING_OFF 2
+s 0.103625000 _0_ MAC  --- 0 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.103725000 _2_ MAC  --- 1 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+D 0.107725985 _1_ MAC  COL 1 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+v 0.20000000000000001 eval {set sim_annotation {0 sending message 11}}
+v 0.20000000000000001 eval {set sim_annotation {2 sending message 12}}
+E -t 0.200025 SENSING_CARRIER 0 -1
+E -t 0.200025 SENSING_CARRIER 2 -1
+s 0.203525000 _2_ MAC  --- 3 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+s 0.203625000 _0_ MAC  --- 2 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+D 0.207625590 _1_ MAC  COL 2 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+M 0.25000 2 (60.00, 30.00, 0.00), (500.00, 30.00), 10000.00
+v 0.34999999999999998 eval {set sim_annotation {0 sending message 3}}
+E -t 0.350025 SENSING_CARRIER 0 -1
+v 0.35099999999999998 eval {set sim_annotation {2 sending message 4}}
+E -t 0.351025 SENSING_CARRIER 2 -1
+s 0.352325000 _0_ MAC  --- 4 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.353825000 _2_ MAC  --- 5 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+D 0.357825694 _1_ MAC  COL 5 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+v 0.45000000000000001 eval {set sim_annotation {0 sending message 13}}
+v 0.45000000000000001 eval {set sim_annotation {2 sending message 14}}
+E -t 0.450025 SENSING_CARRIER 0 -1
+E -t 0.450025 SENSING_CARRIER 2 -1
+s 0.450725000 _0_ MAC  --- 6 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.450925000 _2_ MAC  --- 7 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+D 0.454925694 _1_ MAC  COL 7 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 

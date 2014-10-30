@@ -1,0 +1,357 @@
+\section{Queue/JoBS}
+\label{sec:jobsx}
+
+\emph{JoBS is developed and contributed by Nicolas Christin <nicolas@cs.virginia.edu>}
+
+This chapter describes the implementation of the Joint Buffer Management 
+and Scheduling (JoBS) algorithm in {\em ns}. This chapter is in three parts. 
+The first part summarizes the objectives of the JoBS algorithm. The second 
+part explains how to configure a JoBS queue in {\em ns}. The third part 
+focuses on the tracing mechanisms implemented for JoBS. 
+
+The procedures and functions described in this chapter can be found in 
+\ns/jobs.\{cc, h\}, 
+\ns/marker.\{cc, h\}, 
+\ns/demarker.\{cc, h\}. 
+Example scripts can be found 
+in \ns/tcl/ex/jobs-\{lossdel, cn2002\}.tcl. 
+
+\noindent Additional information 
+can be found at http://qosbox.cs.virginia.edu.
+
+\subsection{The JoBS algorithm}
+This section gives an overview of the objectives the JoBS algorithm
+aims at achieving, and of the mechanisms employed to reach these
+objectives. The original JoBS algorithm, as described in
+\cite{LiCh01}, was using the solution to a non-linear optimization
+problem. This {\em ns-2} implementation uses the feedback-control
+based heuristic described in \cite{ChLiAb02a}.
+
+\noindent{\em Important Note:} 
+This {\em ns-2} implementation results from the 
+merge between old code for {\em ns-2.1b5}, and code derived from the 
+BSD kernel-level 
+implementation of the JoBS algorithm. {\bf It is still considered experimental.}
+Due to the absence of binding facilities for arrays 
+between Tcl and C++ in {\em tclcl} at the moment, {\em the number of 
+traffic classes is 
+statically set to 4 and cannot be changed without modifying the C++ code.}
+
+\subsubsection{Objective}
+The objective of the JoBS algorithm is to provide absolute and
+relative (proportional) loss and delay differentiation independently
+at each node for {\em classes} of traffic. JoBS therefore provides
+service guarantees on a {\em per-hop} basis.  The set of performance
+requirements are specified to the algorithm as a set of per-class
+Qualtiy of Service (QoS) constraints.  As an example, for three
+classes, the QoS constraints could be of the form:
+\begin{itemize}
+\item{$\mbox{Class-1 Delay} \approx 2 \cdot  \mbox{Class-2 Delay}$}, 
+\item{$\mbox{Class-2 Loss Rate}  \approx 10^{-1} \cdot\mbox{Class-3 Loss Rate}$, or} 
+\item{$\mbox{Class-3 Delay} \leq 5~ms$.} 
+\end{itemize}
+Here, the first two constraints are relative constraints and the last 
+one is an absolute constraint. The set of constraints can be 
+any mix of relative and absolute constraints. 
+More specifically, JoBS supports the five following types of constraints:
+\begin{itemize}
+\item{{\bf Relative delay constraints (RDC)} specify a proportional 
+delay differentiation between classes. As an example, for two classes $1$ and $2$, the RDC enforces a relationship
+\[
+\frac{\mbox{Delay of Class 2}}{\mbox{Delay of Class 1}}\approx \mbox{constant}\ .\nonumber
+\]
+}
+\item{{\bf Absolute delay constraints (ADC)}: An ADC on class~$i$ requires that the delays of class~$i$ satisfy a worst-case bound $d_i$.}
+\item{{\bf Relative loss constraints (RLC)} specify a proportional 
+loss differentiation between classes.}
+\item{{\bf Absolute loss constraints (ALC)}: An ALC on class~$i$ requires that the loss rate of class~$i$ be bounded by an upper bound $L_i$.}
+\item{{\bf Absolute rate constraints (ARC)}: An ARC on class~$i$ means that the throughput of class~$i$ is bounded by a lower bound $\mu_i$.}
+\end{itemize}
+
+JoBS does not rely on admission control or traffic policing, nor does it 
+make any assumption on traffic arrivals. 
+Therefore, a system of constraints may become infeasible, and 
+some constraints may need to be relaxed. 
+QoS constraints are prioritized in the following order.
+\[ 
+\mbox{ALC} > \mbox{ADC, ARC} > \mbox{Relative Constraints} \ .
+\]
+That is, if JoBS is unable to satisfy both absolute and relative constraints, 
+it will give preference to the absolute constraints.
+
+\subsubsection{Mechanisms}
+JoBS performs scheduling and buffer management in a 
+single pass. JoBS dynamically allocates service rates to 
+classes in order to satisfy the delay constraints. The service rates needed 
+for enforcing absolute delay constraints 
+are allocated upon each packet arrival, 
+while service rates derived from 
+relative delay constraints are computed only 
+every $N$ packet arrivals. If no feasible 
+service rate allocation exists\footnote{For instance, 
+if the sum of the service 
+rates needed is greater than the output link capacity.}, 
+or if the packet buffer overflows, 
+packets are dropped according to the loss constraints. 
+
+The service rates are translated into packet scheduling decisions by 
+an algorithm resembling Deficit Round Robin. That is, the scheduler 
+tries to achieve the desired service rates by keeping track of the 
+difference between the actual transmission rate for each class and the 
+desired service rate for each class. Scheduling in JoBS is work-conserving.
+
+\subsection{Configuration}
+Running a JoBS simulation requires to create and configure the JoBS 
+``link(s)'', to create and configure the Markers and Demarkers in charge 
+of marking/demarking the traffic, to attach an application-level data 
+source (traffic generator), and to start the traffic generator.
+
+\subsubsection{Initial Setup}
+\begin{program}
+set ns [new Simulator] \; preamble initialization;
+
+{\bfseries{}Queue/JoBS set drop_front_ false} \; use drop-tail;
+{\bfseries{}Queue/JoBS set trace_hop_ true} \; enable statistic traces;
+{\bfseries{}Queue/JoBS set adc_resolution_type_ 0} \; see ``commands at a glance'';
+{\bfseries{}Queue/JoBS set shared_buffer_ 1} \; all classes share a common buffer;
+{\bfseries{}Queue/JoBS set mean_pkt_size_ 4000}\; we expect to receive 500-Byte pkts;
+{\bfseries{}Queue/Demarker set demarker_arrvs1_ 0}\; reset arrivals everywhere;
+{\bfseries{}Queue/Demarker set demarker_arrvs2_ 0}
+{\bfseries{}Queue/Demarker set demarker_arrvs3_ 0}
+{\bfseries{}Queue/Demarker set demarker_arrvs4_ 0}
+{\bfseries{}Queue/Marker set marker_arrvs1_ 0}
+{\bfseries{}Queue/Marker set marker_arrvs2_ 0}
+{\bfseries{}Queue/Marker set marker_arrvs3_ 0}
+{\bfseries{}Queue/Marker set marker_arrvs4_ 0}
+
+set router(1) [$ns node] \; set first router;
+set router(2) [$ns node] \; set second router;
+set source [$ns node] \; set source;
+set sink [$ns node] \; set traffic sink;
+set bw 10000000 \; 10 Mbps;
+set delay 0.001 \; 1 ms;
+set buff 500 \; 500 packets;
+\end{program}
+\subsubsection{Creating the JoBS links}
+\begin{program}
+{\bfseries{}$ns duplex-link $router(1) $router(2) $bw $delay JoBS} \; Creates the JoBS link;
+$ns_ queue-limit $router(1) $router(2) $buff
+set l [$ns_ get-link $router(1) $router(2)]
+set q [$l queue]
+{\bfseries{}$q init-rdcs -1 2 2 2} \; Classes 2, 3 and 4 are bound by proportional delay differentiation with a factor of 2;
+{\bfseries{}$q init-rlcs -1 2 2 2} \; Classes 2, 3 and 4 are bound by proportional loss differentiation with a factor of 2;
+{\bfseries{}$q init-alcs 0.01 -1 -1 -1} \; Class 1 is provided with a loss rate bound of 1\%;
+{\bfseries{}$q init-adcs 0.005 -1 -1 -1} \; Class 1 is provided with a delay bound of 5 ms;
+{\bfseries{}$q init-arcs -1 -1 -1 500000} \; Class 4 is provided with a minimumthroughput of 500 Kbps;
+{\bfseries{}$q link [$l link]} \; The link is attached to the queue (required);
+{\bfseries{}$q trace-file jobstrace} \; Trace per-hop, per-class metrics to the file jobstrace;
+{\bfseries{}$q sampling-period 1} \; Reevaluate rate allocation upon each arrival;
+{\bfseries{}$q id 1}\; Assigns an ID of 1 to the JoBS queue;
+{\bfseries{}$q initialize}\; Proceed with the initialization;
+\end{program}
+
+\subsubsection{Marking the traffic}
+Marking the traffic is handled by Marker objects. Markers are FIFO queues that 
+set the class index of each packet. To ensure accuracy of the simulations, 
+it is best to configure these queues to have a very large buffer, so that no 
+packets are dropped in the Marker. Demarkers are used to gather end-to-end 
+delay statistics.
+\begin{program}
+{\bfseries{}$ns_ simplex-link $source $router(1) $bw $delay Marker} \; set-up marker;
+$ns_ queue-limit $source $router(1) [expr $buff*10] \; Select huge buffers for markers;
+$ns_ queue-limit $router(1) $source [expr $buff*10] \; to avoid traffic drops; 
+set q [$ns_ get-queue $source $router(1)] \;in the marker;
+{\bfseries{}$q marker_type 2} \; Statistical marker;
+{\bfseries{}$q marker_frc 0.1 0.2 0.3 0.4} \; 10\% Class 1, 20\% Class 2, 30\% Class 3, 40\% Class 4.;
+{\bfseries{}$ns_ simplex-link $router(2) $sink $bw $delay Demarker} \; set-up demarker;
+$ns_ queue-limit $router(2) $sink [expr $buff*10] 
+{\bfseries{}$q trace-file e2e} \; trace end-to-end delays to file e2e;
+\end{program}
+The remaining steps (attaching agents and traffic generators or applications 
+to the nodes) are explained in 
+Chapters~\ref{sec:agents} and \ref{chap:applications}, and are handled as 
+usual. We refer to these chapters and the example scripts provided with your 
+{\em ns} distribution. 
+
+\subsection{Tracing}
+Tracing in JoBS is handled internally, by the scheduler. 
+Each JoBS queue can generate a 
+trace file containing the following information.  
+Each line of the tracefile consists of 17 columns. The first column is the 
+simulation time, columns 2 to 5 represent the loss rates over the current busy 
+period for classes 1 to 4, columns 6 to 9 represent the delays for each class 
+(average over a 0.5 seconds sliding window), columns 10 to 13 represent the 
+average service rates allocated to each class over the last 0.5 seconds, and 
+columns 14 to 17 represent the instantaneous queue length in packets. 
+Additionally, Demarkers can be used to trace end-to-end delays.
+
+\subsection{Variables}
+This section summarizes the variables that are used by JoBS, Marker and Demarker objects.
+\subsubsection{JoBS objects}
+\begin{description}
+\item[trace\_hop\_] Can be true or false. If set to true, per-hop, per-class metrics will be traced. (Trace files have then to be specified, using \code{<JoBS object> trace-file <filename>}.) Defaults to false.
+\item[drop\_front\_] Can be true or false. If set to true, traffic will be dropped from the front of the queue. Defaults to false (drop-tail).
+\item[adc\_resolution\_type\_] Can be 0 or 1. 
+If set to 0, traffic will be dropped from classes that have an ADC if the ADC 
+cannot be met by adjusting the service rates. If set to 1, traffic will be 
+dropped from all classes. A resolution mode set to 
+1 is therefore fairer, in the sense that the pain is shared by all classes, 
+but can lead to more deadline violations. Defaults to 0.
+\item[shared\_buffer\_] Can be 0 or 1. If set to 0, all classes use a separate 
+per-class 
+buffer (which is required if only rate guarantees are to provided). All 
+per-class buffers have the same size. 
+If set to 
+1, all classes share the same buffer (which is required if loss differentiation
+is to be provided). Defaults to 1.
+\item[mean\_pkt\_size\_] 
+Used to set the expected mean packet size of packets arriving at a JoBS link. 
+Setting this variable is required to ensure proper delay differentiation.
+\end{description}
+\subsubsection{Marker objects}
+\begin{description}
+\item[marker\_arrvs1\_] 
+Number of Class-1 packets to have entered a Marker link.
+\item[marker\_arrvs2\_] 
+Number of Class-2 packets to have entered a Marker link.
+\item[marker\_arrvs3\_] 
+Number of Class-3 packets to have entered a Marker link.
+\item[marker\_arrvs4\_] 
+Number of Class-4 packets to have entered a Marker link.
+\end{description}
+\subsubsection{Demarker objects}
+\begin{description}
+\item[demarker\_arrvs1\_] 
+Number of Class-1 packets to have entered a Demarker link.
+\item[demarker\_arrvs2\_] 
+Number of Class-2 packets to have entered a Demarker link.
+\item[demarker\_arrvs3\_] 
+Number of Class-3 packets to have entered a Demarker link.
+\item[demarker\_arrvs4\_] 
+Number of Class-4 packets to have entered a Demarker link.
+\end{description}
+
+\subsection{Commands at a glance}
+The following is a list of commands used to configure the JoBS, Marker and 
+Demarker objects.
+
+\subsubsection{JoBS objects}
+\begin{flushleft}
+\code{set q [new Queue/JoBS]}\\
+This creates an instance of the JoBS queue. 
+
+\code{$q init-rdcs <k1> <k2> <k3> <k4>}\\
+This assigns the RDCs for the four JoBS classes. For instance, using a value 
+of 4 for k2 means that Class-3 delays will be roughly equal to four times 
+Class-2 delays. A value of -1 indicates that 
+the class is not concerned by RDCs. 
+
+\noindent{\em Important Note:} Since RDCs bound two classes, one would 
+expect only three parameters to be passed (k1, k2, and k3, since k4 
+theoretically binds Classes 4 and 5, and Class~5 does not exist). 
+However, in this prototype implementation, it is imperative to specify a value 
+different from 0 and -1 to k4 if Class~4 is to be concerned by RDCs. 
+
+\noindent{\em Examples:} \code{$q init-rdcs -1 2 1 -1} specifies that classes~2 and 3 
+are bound by a delay differentiation factor of 2, \code{$q init-rdcs 4 4 4 4} 
+specifies that all classes are bound by a delay differentiation factor of 4 and
+is equivalent to \code{$q init-rdcs 4 4 4 1}, since the last coefficient is 
+only used to specify that Class~4 is to be bound by proportional 
+differentiation.
+
+\code{$q init-rlcs <k'1> <k'2> <k'3> <k'4>}\\
+This assigns the RLCs for the four JoBS classes. 
+For instance, using a value 
+of 3 for k1 means that Class-2 loss rates will be roughly equal to four times 
+Class-2 loss rates.
+A value of -1 indicates that 
+the class is not concerned by RLCs. As with RDCs, each RLC binds two classes, 
+thus, one would 
+expect only three parameters to be passed (k'1, k'2, and k'3, since k'4 
+theoretically bounds Classes 4 and 5, and Class~5 does not exist). 
+As explained above, it is imperative to specify a value 
+different from 0 and -1 to k'4 if Class~4 is to be concerned by RLCs.
+
+\code{$q init-alcs <L1> <L2> <L3> <L4>}\\
+This assigns the absolute loss guarantees (ALCs) to all four classes. L1 to L4 
+are given in fraction of 1. For instance, setting L1 to 0.05 means that Class-1
+loss rate will be guarantees to be less than 5\%. A value of -1 indicates that 
+the corresponding class is not subject to an ALC.
+
+\code{$q init-adcs <D1> <D2> <D3> <D4>}\\
+This assigns the absolute loss guarantees (ADCs) to all four classes. D1 to D4 
+are given in milliseconds. A value of -1 indicates that 
+the corresponding class is not subject to an ADC.
+
+\code{$q trace-file <filename>}\\
+This specifies the trace file for all per-hop metrics. JoBS uses an internal 
+module to trace
+loss and delays, service rates, and per-class queue lengths in packets. 
+If filename is set to {\bf null}, no trace will be provided.
+
+\code{$q link [<link-object> link]}\\
+This command is required to bind a link to a JoBS queue. Note that JoBS needs
+to know the capacity of the link. Thus, 
+this command {\bf has to} be issued before 
+the simulation is started.
+
+\code{$q sampling-period <sampling-interval>}\\
+This command specifies the sampling interval (in packets) at which the service 
+rate adjustments for proportional differentiation will be performed. The 
+default is a sampling interval of 1 packet, meaning that the rate allocation 
+is reevaluated upon each packet arrival. Larger sampling intervals speed up 
+the simulations, but typically result in poorer proportional differentiation.
+
+\code{$q id <num_id>}\\
+This command affects a numerical ID to the JoBS queue. 
+
+\code{$q initialize}\\
+This command is required, and should be run after all configuration operations 
+have been performed. 
+This command will perform the final checks and configuration of the JoBS queue.
+
+\code{$q copyright-info}\\ 
+Displays authors and copyright information.
+
+A simple example script (with nam output), fully annotated and commented 
+can be found in \ns/tcl/ex/jobs-lossdel.tcl. 
+A more realistic example of a simulation with JoBS queues can be found in 
+\ns/tcl/ex/jobs-cn2002.tcl. This script is very similar to what was used in 
+a simulation presented in \cite{LiCh02}. 
+Associated tracefiles and {\em gnuplot} scripts for visualization (in case you 
+favor {\em gnuplot} over {\em xgraph}
+can be found in \ns/tcl/ex/jobs-lossdel, and \ns/tcl/ex/jobs-cn2002.
+
+
+\end{flushleft}
+
+\subsubsection{Marker objects}
+\code{$q marker_type <1|2>}\\
+Selects the type of marker. 1 is DETERMINISTIC, 2 is STATISTICAL. 
+
+\code{$q marker_class <1|2|3|4>}\\
+For a deterministic marker, selects which class packets should be marked with.
+
+\code{$q marker_frc <f1> <f2> <f3> <f4>}\\
+For a statistical marker, gives the fraction of packets that should be marked 
+from each class. For instance, using 0.1 for f1 means that 10 percent of the 
+traffic coming to the Marker link will be marked as Class 1.
+
+\subsubsection{Demarker objects}
+\code{$q trace-file <filename>}\\
+This command specifies the trace file used for the demarker object. 
+filename.1 will contain the end-to-end 
+delays of each Class-1 packet to have reached the 
+Demarker link, filename.2 will contain the end-to-end 
+delays of each Class-2 packet to have reached the 
+Demarker link, and so forth. (There will of course be 4 trace files, one 
+for each class.)
+
+\endinput
+
+### Local Variables:
+### mode: latex
+### comment-column: 60
+### backup-by-copying-when-linked: t
+### file-precious-flag: nil
+### End:

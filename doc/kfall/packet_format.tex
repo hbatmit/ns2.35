@@ -1,0 +1,468 @@
+%
+% personal commentary:
+%        DRAFT DRAFT DRAFT
+%        - KFALL
+%
+\section{\shdr{Packet Headers and Formats}{packet.h}{sec:pformat}}
+
+Objects of the class \code{Packet} are the fundamental unit of
+exchange between objects in the simulation.
+The \code{Packet} class provides enough information to
+link a packet on to a list (i.e. in a \code{PacketQueue} or on a free
+list of packets), refer to a buffer containing packet headers
+which are defined on a per-protocol basis, and to refer to a buffer
+of packet data.
+New protocols may define their own packet headers or may extend
+existing headers with additional fields.
+
+New packet headers are introduced into the simulator
+by defining a C++ structure with the needed
+fields, defining a static class to provide
+OTcl linkage, and then modifying some of the simulator initialization
+code to assign a byte offset in each packet where the new header
+is to be located relative to others.
+
+When the simulator is initialized through OTcl,
+a user may choose to enable
+only a subset of the compiled-in packet formats, resulting in
+a modest savings of memory during the execution of the simulation.
+Presently, all configured-in packet formats are enabled.
+The management of which packet formats are currently enabled
+in a simulation is handled by a special packet header manager
+object described below.
+This object supports an OTcl method used to specify
+which packet headers will be used in a simulation.
+If an object in the simulator makes use of a field in a header
+which has not been enabled, a run-time fatal program abort occurs.
+
+\subsection{\shdr{A Protocol-Specific Packet Header}{rtp.h}{sec:ppackethdr}}
+
+Protocol developers
+will often wish to provide a specific header type to be used in packets.
+Doing so allows a new protocol implementation
+to avoid overloading already-existing header fields.
+We consider a simplified version of RTP as an example.
+The RTP header will require a sequence number fields and a source
+identifier field.
+The following classes create the needed header
+(see \code{rtp.h} and \code{rtp.cc}):
+\begin{small}
+\begin{verbatim}
+From rtp.h:
+	/* rtp packet.  For now, just have srcid + seqno. */
+	struct hdr_rtp { 
+		u_int32_t srcid_;
+		int seqno_;
+		/* per-field member functions */
+		u_int32_t& srcid() { return (srcid_); }
+		int& seqno() { return (seqno_); }
+	};   
+
+
+From rtp.cc:
+	class RTPAgent: public CBR_Agent {
+	...
+		int off_rtp_;
+	};
+
+	class RTPHeaderClass : public PacketHeaderClass {
+	public: 
+		RTPHeaderClass() : PacketHeaderClass("PacketHeader/RTP",
+						     sizeof(hdr_rtp)) {}
+	} class_rtphdr;
+
+	void RTPAgent::sendpkt()
+	{
+		Packet* p = allocpkt();
+		hdr_rtp *rh = (hdr_rtp*)p->access(off_rtp_);
+		lastpkttime_ = Scheduler::instance().clock();
+
+		/* Fill in srcid_ and seqno */
+		rh->seqno() = seqno_++;
+		rh->srcid() = session_->srcid();
+		target_->recv(p, 0);
+	}
+
+	RTPAgent::RTPAgent()
+		: session_(0), lastpkttime_(-1e6)
+	{
+		type_ = PT_RTP;
+		bind("seqno_", &seqno_);
+		bind("off_rtp_", &off_rtp_);
+	}
+
+
+\end{verbatim}
+\end{small}
+The first structure defines the layout (in terms of words and their
+placement): which fields are needed and how big they are.
+This structure definition is only used by the
+compiler to compute byte offsets of fields;
+no objects of this structure type are ever directly allocated.
+The structure also provides member functions
+which in turn
+provide a layer of data hiding for objects wishing to read
+or modify header fields of packets.
+Note that the variable \code{off_rtp_} is used
+to find the byte offset at which the rtp header is located
+in an arbitrary packet.
+To access any packet header other than the ``common'' header
+(see below, section\ref{sec:commonhdr}), the accessing code
+must obtain the appropriate header offset.
+This is accomplished by declaring and binding
+the integer variable \code{off_<hdrname>_}
+where \code{<hdrname>} refers to a shorthand name
+of the header of interest which must match the
+name assigned in \code{tcl/lib/ns-packet.tcl}.
+This is performed above by the RTPAgent's constructor.
+Generally, one header object for each type of header
+in the simulation is instantiated at simulator run-time.
+A particular header is enabled via OTcl in the simulation during
+simulator configuration time (see \ref{sec:configpacket}).
+
+The static object \code{class_rtphdr} of class \code{RTPHeaderClass}
+is used to provide linkage to OTcl when the RTP header is
+enabled at configuration time.
+When the simulator executes, this static object calls
+the \code{PacketHeaderClass} constructor with arguments
+\code{"PacketHeader/RTP"} and \code{sizeof(hdr_rtp}.
+This causes the size of the RTP header to be stored
+and made available to the packet header manager
+at configuration time (see below, section\ref{sec:packethdrmgr}).
+
+The sample member function \code{sendpkt()}
+of \code{RTPAgent} creates a new packet
+to send by calling \code{allocpkt()}, which handles assignment
+of all the network-layer packet header fields (in this case, IP).
+Headers other than IP are handled separately.
+In this case, the agent uses the \code{RTPHeader} defined above.
+The \code{Packet::access()} member function returns the address
+of the first byte in a buffer used to hold header information (see below).
+Its return value is cast as a pointer to the header of interest,
+after which member functions of the \code{RTPHeader}
+object are used to access individual fields.
+
+\subsubsection{adding a new packet header type}
+
+Assuming we wish to create a new header called \code{newhdr}
+the following steps are performed:
+\begin{enumerate}
+        \item create a new structure defining the raw fields (called \code{hdr_newhdr})
+        \item define member functions for needed fields
+	\item create a static class to perform OTcl linkage (defines \code{PacketHeader/Newhdr})
+        \item edit \code{tcl/lib/ns-packet.tcl} to enable new packet format (see \ref{sec:configpacket})
+\end{enumerate}
+
+\subsection{\shdr{Packet Classes}{packet.h}{sec:packetclasses}}
+
+There are three C++ classes relevant to the handling of packets
+and packet headers in general: \code{Packet},
+\code{PacketHeader}, and \code{PacketHeaderManager}.
+The \code{Packet} class defines the type for all packets in the
+simulation; it is a subclass of \code{Event} so that packets may
+be scheduled (e.g.~for later arrival at some queue).
+The \code{PacketHeader} class provides a base class for
+any packet header configured into the simulation.
+It essentially provides 
+enough internal state to locate any particular packet
+header in the collection of packet headers present in any given packet.
+The \code{PacketHeaderManager} defines a class used to collect
+and manage currently-configured headers.
+It is invoked by a method available to OTcl at simulation configuration
+time to enable some subset of the compiled-in packet headers.
+
+\begin{figure}[h]
+\centerline{\psfig{figure=packet.eps,width=4in}}
+\caption{\label{pic:packet}A Packet Object}
+\end{figure}
+
+\subsubsection{\shdr{the Packet class}{packet.h}{sec:packetclass}}
+
+The \code{Packet} class defines the structure of a
+packet and provides member functions to handle a
+free list for objects of this type.
+It is illustrated in Figure~\ref{pic:packet} and
+defined as follows in \code{packet.h}:
+\begin{small}
+\begin{verbatim}
+	class Packet : public Event {
+	private:
+		friend class PacketQueue;
+		u_char* bits_;  
+		u_char* data_;  // variable size buffer for 'data'
+		u_int datalen_; // length of variable size buffer
+	protected:
+		static Packet* free_;
+	public: 
+		Packet* next_;  // for queues and the free list
+		static int hdrlen_;
+		Packet() : bits_(0), datalen_(0), next_(0) { }
+		u_char* const bits() { return (bits_); }
+		Packet* copy() const;
+		static Packet* alloc();
+		static Packet* alloc(int);
+		inline void allocdata(int);
+		static void free(Packet*);
+		inline u_char* access(int off) { if (off < 0) abort(); return (&bits_[of
+	f]); }  
+		inline u_char* accessdata() {return data_;}
+	};
+
+\end{verbatim}
+\end{small}
+This class holds a pointer to a generic array of unsigned
+characters (commonly called the ``bag of bits'' or BOB for short)
+where packet header fields are stored.
+It also holds a pointer to packet ``data'' (which is often not used in
+simulations).
+The \code{bits_} variable contains the address of
+the first byte of the BOB.
+Effectively BOB is (currently implemented as) a concatenation
+of all the structures defined for each packet header (by convention,
+the structures with names beginning \code{hdr_<something>}) that have
+been configured in.
+BOB generally remains a fixed size throughout a simulation, and
+the size is recorded in the \code{Packet::hdrlen_} member
+variable.
+This size is updated during simulator configuration by
+OTcl.\footnote{It is not intended to be updated after configuration
+time.  Doing so {\em should} be possible, but is currently untested.}
+
+The other methods of the \code{Packet} class are for creating new
+packets and storing old (unused) ones on a private free list.
+Such allocation and deallocation is performed by the
+following code (in \code{packet.h}):
+\begin{small}
+\begin{verbatim}
+        inline Packet* Packet::alloc()
+        {
+                Packet* p = free_;
+                if (p != 0)
+                        free_ = p->next_;
+                else {
+                        p = new Packet;
+                        p->bits_ = new u_char[hdrsize_];
+                        if (p == 0 || p->bits_ == 0)
+                                abort();
+                }
+                return (p);
+        }
+	/* allocate a packet with an n byte data buffer */
+
+	inline Packet* Packet::alloc(int n)
+	{
+		Packet* p = alloc();
+		if (n > 0)
+		       p->allocdata(n);
+		return (p);
+	}
+		
+	/* allocate an n byte data buffer to an existing packet */
+		
+	inline void Packet::allocdata(int n)
+	{       
+		datalen_ = n; 
+		data_ = new u_char[n];
+		if (data_ == 0)
+			abort();
+	 
+	}       
+	inline void Packet::free(Packet* p)
+	{
+		p->next_ = free_;
+		free_ = p;
+		if (p->datalen_) {
+			delete p->data_;
+			p->datalen_ = 0;
+		}
+	}       
+	 
+	inline Packet* Packet::copy() const
+	{               
+		Packet* p = alloc();
+		memcpy(p->bits(), bits_, hdrlen_);  
+		if (datalen_) { 
+			p->datalen_ = datalen_;
+			p->data_ = new u_char[datalen_];
+			memcpy(p->data_, data_, datalen_);
+		}
+		return (p);
+	}
+
+\end{verbatim}
+\end{small}
+The \code{alloc} method is a support function commonly
+used to create new packets.
+It is most often called by the \code{Agent::allocpkt()} method on
+behalf of agents and is thus not normally invoked directly by most objects.
+It first attempts to locate an old packet on the free list and
+if this fails allocates a new one using the C++ \code{new} operator.
+Note that \code{Packet} class objects and BOBs are
+allocated separately.
+The \code{free} method frees a packet by returning it to the free
+list.
+Note that {\bf packets are never returned to the system's memory
+allocator}.
+Instead, they are stored on a free list when \code{Packet::free} is called.
+The \code{copy} member creates a new, identical copy of a packet
+with the exception of the \code{uid} field, which is unique.
+This function is used by \code{Replicator} objects to support
+multicast distribution and LANs.
+
+\subsubsection{\shdr{the hdr\_cmn class}{packet.h}{sec:commonhdr}}
+
+Each packet in the simulator has a ``common''
+header which is defined in \code{packet.h} as follows:
+\begin{small}
+\begin{verbatim}
+	struct hdr_cmn {
+		double  ts_;            // timestamp: for q-delay measurement
+		int     ptype_;         // packet type (see above)
+		int     uid_;           // unique id 
+		int     size_;          // simulated packet size
+		int     iface_;         // receiving interface (label)
+	 
+		/* per-field member functions */
+		int& ptype() { return (ptype_); }
+		int& uid() { return (uid_); }
+		int& size() { return (size_); }
+		int& iface() { return (iface_); }
+		double& timestamp() { return (ts_); }
+	}; 
+\end{verbatim}
+\end{small}
+This structure primarily defines fields used for tracing
+the flow of packets or measuring other quantities.
+The time stamp field is used to measure queueing delay
+at switch nodes.
+The \code{ptype_} field is used to identify the
+type of packets, which makes reading traces simpler.
+The \code{uid_} field is used by the scheduler in scheduling
+packet arrivals.
+The \code{size_} field is of general use and gives the
+simulated packet's size.
+Note that the actual number of bytes consumed in the simulation
+may not relate to the value of this field.
+Rather, it is used most often in computing the time required for a packet
+to be delivered along a network link.
+The \code{iface_} field is used by the simulator when performing
+multicast distribution tree computations.
+It is a label indicating (typically) on which link a packet was received.
+
+\subsubsection{\shdr{the PacketHeaderManager class}{packet.cc}{sec:packethdrmgr}}
+
+An object of the class \code{PacketHeaderManager} is used
+to manage the set of currently-active packet header types and
+assign each of them unique offsets in the BOB.
+It is defined in both the C++ and OTcl code:
+\begin{small}
+\begin{verbatim}
+From tcl/lib/ns-packet.h:
+
+	PacketHeaderManager set hdrlen_ 0
+
+	#XXX could potentially get rid of this by searching having a more
+	# uniform offset concept...
+	foreach pair {
+			{ Common off_cmn_ }
+			{ Mac off_mac_ }
+			{ LL off_ll_ }
+			{ Snoop off_snoop_ }
+			{ IP off_ip_ }
+			{ TCP off_tcp_ }
+			{ TCPA off_tcpasym_ }
+			{ Flags off_flags_ }
+			{ RTP off_rtp_ }
+			{ Message off_msg_ }
+			{ IVS off_ivs_ }
+			{ rtProtoDV off_DV_ }
+			{ CtrMcast off_CtrMcast_ }
+			{ Prune off_prune_ }
+			{ Tap off_tap_ }
+			{ aSRM off_asrm_ }
+			{ SRM off_srm_ }} {
+		set cl [lindex $pair 0]
+		set var [lindex $pair 1]
+		PacketHeaderManager set vartab_($cl) $var
+	}    
+
+	Simulator instproc create_packetformat { } {
+		set pm [new PacketHeaderManager]
+		foreach oclass [PacketHeader info subclass] {
+			set L [split $oclass /]
+			set cl [lindex $L 1]
+			set var [PacketHeaderManager set vartab_($cl)]
+			set off [$pm allochdr $cl]
+			TclObject set $var $off
+		}       
+		$self set packetManager_ $pm
+	}    
+	PacketHeaderManager instproc allochdr cl {
+		set size [PacketHeader/$cl set hdrlen_]
+	     
+		$self instvar hdrlen_ 
+		set NS_ALIGN 8
+		# round up to nearest NS_ALIGN bytes
+		set incr [expr ($size + ($NS_ALIGN-1)) & ~($NS_ALIGN-1)]
+		set base $hdrlen_
+		incr hdrlen_ $incr
+
+		return $base
+	}
+
+From packet.cc:
+
+	/* manages active packet header types */
+	class PacketHeaderManager : public TclObject {
+	public:
+		PacketHeaderManager() {
+			bind("hdrlen_", &Packet::hdrlen_);
+		}
+	};
+
+\end{verbatim}
+\end{small}
+The code in \code{ns-packet.tcl} is executed when the
+simulator initializes.
+Thus, the {\tt foreach} statement is executed before the
+simulation begins, and initializes the OTcl class array
+\code{vartab_} to contain the mapping between class
+the name and the name of the variable used to contain
+that class's header in a packet (which is initialized later).
+For example, the value of \code{vartab_(IP)} is set to
+\code{off_ip_}.
+
+The \code{create_packetformat} instance procedure is part of the
+basic Simulator class and is called one time during simulator
+configuration.
+It first creates a single \code{PacketHeaderManager} object.
+The C++ constructor links the OTcl instance
+variable \code{hdrlen_} (of class \code{PacketHeaderManager})
+to the C++ variable \code{Packet::hdrlen_} (a static
+member of the \code{Packet} class).
+This has the effect of setting \code{Packet::hdrlen_} to
+zero.
+Note that binding across class types in this fashion is
+unusual.
+
+\label{sec:configpacket}
+After creating the packet manager, the \code{foreach}
+loop enables each of the packet headers of interest.
+This loop iterates through the list of defined
+packet headers of the form
+$(h_i, o_i)$ where $h_i$ is the name of the  $i$th header
+and $o_i$ is the name of the variable containing the
+location of the $h_i$ header in BOB.
+The placement of headers is performed by the \code{allochdr}
+instproc of the \code{PacketHeaderManager} OTcl class.
+The procedure keeps a running variable \code{hdrlen_} with
+the current length of BOB as new packet headers are enabled.
+It also arranges for 8-byte alignment for any newly-enabled packet
+header.
+This is needed to ensure that when double-world length quantities
+are used in packet headers on machines where double-word alignment
+is required, access faults are not produced.\footnote{In
+some processer architectures, including the
+Sparc and HP-PA, double-word access must be performed on a double-word
+boundary (i.e. addresses ending in 0 mod 8).  Attempting to perform
+unaligned accesses result in an abnormal program termination.}.

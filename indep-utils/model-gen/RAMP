@@ -1,0 +1,421 @@
+#! /bin/sh
+
+#!/usr/bin/tclsh
+
+#
+# Copyright (C) 2002 by USC/ISI
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms are permitted
+# provided that the above copyright notice and this paragraph are
+# duplicated in all such forms and that any documentation, advertising
+# materials, and other materials related to such distribution and use
+# acknowledge that the software was developed by the University of
+# Southern California, Information Sciences Institute.  The name of the
+# University may not be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+# RAMP is a set of scripts that take tcpdump trace as input and
+# output a set of CDF files that model Web traffic, FTP traffic
+# and the underlying topology information including RTT and
+# bottleneck bandwidth. It also outputs a time series of 
+# traffic size (in 1ms block) for further wavelet scaling analysis
+# for detailed explanation of RAMP, please see 
+# http://www.isi.edu/~kclan/paper/ramp.pdf 
+#
+#             usage:
+#                  ./RAMP [-c] <tcpdump) trace> <threshold> <network prefix>
+#
+#                  [-f]            : generate multiple traffic models
+#                                    based on filter specified in model.conf
+#                  [-c]            : convert trace file from CoralReef to
+#                                    tcpdump format
+#                  <tcpdump trace> : tcpdump trace file generated using
+#                                     tcpdump -w option
+#                  <threshold>     : the threshold time value (in millisecond)
+#                                    that distinguishes idle periods in order 
+#                                    to infer user "think" times between 
+#                                    requests for new top-level pages.
+#                  <network prefix>: network prefix used to distinguish
+#                                    inbound vs. outbound traffic
+#
+#             example: ./RAMP tracefile 1000 128.9.0.0/255.255.0.0
+#
+# Currently it's only tested on Linux system
+#
+# Here is the version of tcpdump we used for testing
+# tcpdump version 3.6.3
+# libpcap version 0.6
+#
+# We assume the output of tcpdump with the following format for
+# TCP packets
+#
+# timestamp src > dst: flags data‐seqno ack window urgent options
+#
+# Note that some version of tcpdump might output with an extra "<"
+# i.e.
+# timestamp < src > dst: flags data‐seqno ack window urgent options
+# 
+# which is not compatible with our codes
+# One simple workaround is to use the provided remove.pl script
+# to remove the extra "<" in the tcpdump output
+#
+# This work is supported by DARPA through SAMAN Project
+# (http://www.isi.edu/saman/), administered by the Space and Naval
+# Warfare System Center San Diego under Contract No. N66001-00-C-8066
+#
+#
+#
+
+echo -e
+
+crl=no
+if test $1 = -c
+then
+   if [ -x ./crl_to_pcap ] ; then   
+   	mv $2 $2.crl
+   	./crl_to_pcap -o $2 $2.crl
+	f=$2
+	t=$3
+	p=$4
+   else
+   	echo "CoralReef to Tcpdump converter does not exist!!"
+	exit 0
+   fi
+elif test $1 = -f
+then
+   if [ -e ./model.conf ] ; then
+        f=$2
+        t=$3
+        p=$4
+        filter=yes
+   else
+        echo "model.conf does not exist!!"
+        exit 0
+   fi
+else
+	f=$1
+	t=$2
+	p=$3
+
+fi
+
+TCPDUMP=/usr/sbin/tcpdump
+
+
+#preprocessing the trace file
+date
+echo "***  parsing $tcpdump file  ***"
+echo "***  parsing .all  ***"
+$TCPDUMP -nn -tt -q -r $f  > $f.all
+$TCPDUMP -nn -tt tcp -r $f  > $f.tcp
+date
+echo "***  parsing .www  ***"
+$TCPDUMP -nn -tt -r $f tcp port 80 > $f.www
+
+
+
+#extrace FTP data connections from the trace
+date
+echo "***  parsing .ftp  ***"
+$TCPDUMP -nn -tt -r $f port ftp  > $f.ftp1
+
+cat $f.ftp1 | getftpnode.pl
+
+#find the IP address of FTP clients
+cat $f.ftp1 | getFTPclient.pl  > $f.ftp2
+
+cat  $f.tcp | getFTP.pl -r $f.ftp2 > $f.ftp
+
+
+
+
+#extract tcp flows from Web server
+date
+echo "***  parsing .http-srv  ***"
+$TCPDUMP -nn -tt -r $f tcp src port 80 > $f.http-srv
+
+
+
+
+#date
+#echo "***  analyze traffic mix  ***"
+#cat $f.all | io.pl -s $p  -w $f.all
+#cat $f.all.inbound | traffic-classify > $f.traffic.cnt.inbound
+#cat $f.all.outbound | traffic-classify > $f.traffic.cnt.outbound
+
+#date
+#echo "***  analyze flow statistics  ***"
+#awk -f flow.awk < $f.all.outbound > $f.all.outbound.flow
+#awk -f flow.awk < $f.all.inbound > $f.all.inbound.flow
+#sort -s -o $f.all.outbound.flow.sort -T /tmp $f.all.outbound.flow
+#sort -s -o $f.all.inbound.flow.sort -T /tmp $f.all.inbound.flow
+#cat $f.all.outbound.flow.sort | flow.pl -w $f.outbound.flow
+#cat $f.all.inbound.flow.sort | flow.pl -w $f.inbound.flow
+#sort -s -o $f.inbound.flow.start.sort $f.inbound.flow.start
+#sort -s -o $f.outbound.flow.start.sort $f.outbound.flow.start
+#awk -f arrive2inter.awk < $f.outbound.flow.start.sort > $f.outbound.flow.arrival
+#awk -f arrive2inter.awk < $f.inbound.flow.start.sort > $f.inbound.flow.arrival
+#dat2cdf -e 1024 -i 1024 -d 1024 -t $f.outbound.flow.size
+#dat2cdf -e 1024 -i 1024 -d 1024 -t $f.inbound.flow.size
+#dat2cdf -e 0 -i 1 -d 1 -t $f.outbound.flow.dur
+#dat2cdf -e 0 -i 1 -d 1 -t $f.inbound.flow.dur
+#dat2cdf -e 0 -i 0.001 -d 1 -t $f.outbound.flow.arrival
+#dat2cdf -e 0 -i 0.001 -d 1 -t $f.inbound.flow.arrival
+
+
+
+#seperate inbound and outbound flows in web traffic
+date
+echo "WWW"
+cat $f.www | io.www.pl -s $p  -w $f.www
+cat $f.http-srv | io.www.pl -s $p  -w $f.http-srv
+
+
+
+#seperate inbound and outbound flows in FTP traffic
+date
+echo "FTP"
+cat $f.ftp | io.pl -s $p  -w $f.ftp
+
+
+if test "$filter" = yes; then
+        cat model.conf | wmodel.pl -r $f.http-srv.inbound -t $t
+        cat model.conf | fmodel.pl -r $f.ftp
+        getftpserver.pl
+        exit 0
+fi
+
+################################################################
+
+#please read output_format.pdf and trace_processing.pdf included in
+# this package for detailed explanation of the follwing commands
+
+/bin/rm -rf *.time-series
+/bin/rm -rf *connect.time*
+
+
+date
+echo "***  Analyze Inbound traffic  ***"
+
+#output the summary of http connections
+echo "run http_connect"
+sort -s -o $f.in.http-srv-sort +1 -2 +3 -4 +0 -1 -T /tmp $f.http-srv.inbound
+http_connect -r $f.in.http-srv-sort -w $f.in.http-srv.connect
+grep "ACT" $f.in.http-srv.connect > $f.in.http-srv.connect.time
+sort $f.in.http-srv.connect.time > $f.in.http-srv.connect.time.sort
+
+#output the summary of http client request and server response 
+date
+echo "run http_active"
+sort -s -o $f.in.http-srv.connect.sort +1 -2 +0 -1 -T /tmp $f.in.http-srv.connect
+http_active -r $f.in.http-srv.connect.sort -w $f.in.http-srv.active -I $t
+
+#output statistical distribution of web traffic
+#in particular the distributions of the following parameters
+#(a) session inter-arrival
+#(b) number of pages per session
+#(c) page inter-arrival
+#(d) page size
+#(e) object inter-arrival
+#(f) object size
+#(g) request size
+#(h) ratio between persistent and non-persistent connection
+#(i) server popularity        
+date
+echo "compute CDF statistics"
+cat $f.in.http-srv.active.activity | outputCDF -e inbound
+
+#output the time series of web traffic usage in 1ms block 
+#for later use of wavelet scaling analysis
+date
+echo "compute time series (1ms block)"
+bw.tcl $f.http-srv.inbound
+cat $f.http-srv.inbound.bw | time-series.pl > $f.in.time-series
+
+
+
+date
+echo "***  Analyze Outbound traffic  ***"
+
+#output the summary of http connections
+echo "run http_connect"
+sort -s -o $f.out.http-srv-sort +1 -2 +3 -4 +0 -1 -T /tmp $f.http-srv.outbound
+http_connect -r $f.out.http-srv-sort -w $f.out.http-srv.connect
+grep "ACT" $f.out.http-srv.connect > $f.out.http-srv.connect.time
+sort $f.out.http-srv.connect.time > $f.out.http-srv.connect.time.sort
+
+#output the summary of http client request and server response 
+date
+echo "run http_active"
+sort -s -o $f.out.http-srv.connect.sort +1 -2 +0 -1 -T /tmp $f.out.http-srv.connect
+http_active -r $f.out.http-srv.connect.sort -w $f.out.http-srv.active -I $t
+
+date
+echo "compute CDF statistics of web traffic"
+cat $f.out.http-srv.active.activity | outputCDF -e outbound
+
+#output the time series of web traffic usage in 1ms block 
+#for later use of wavelet scaling analysis
+date
+echo "compute time series (1ms block)"
+bw.tcl $f.http-srv.outbound
+cat $f.http-srv.outbound.bw | time-series.pl > $f.out.time-series
+
+#################################################################
+
+echo "***  Delay and Bandwidth estimation  ***"
+
+echo "Estimate delay and bottleneck bandwidth for WWW traffic"
+
+date
+echo "pre-processing: output traffic between web servers and clients"
+cat $f.www | BW-seq.pl -s $p -p 80 
+sort inbound.seq -o inbound.seq.sorted
+sort outbound.seq -o outbound.seq.sorted
+
+date
+echo "search for DATA/ACK packets which have the same seqence number for outboun
+d traffic"
+cat outbound.seq.sorted | BW-pair.pl > $f.outbound.pair
+
+date
+echo "estimate the bandwidth for inbound/outbound traffic"
+cat $f.outbound.pair | BW.out.pl -w $f.www
+cat inbound.seq.sorted | BW.in.pl -w $f.www
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.www.outbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.www.inbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.www.outbound.delay
+
+date
+echo "compute packet size distribution"
+sort -o inbound.pkt.size.sort inbound.pkt.size
+sort -o outbound.pkt.size.sort outbound.pkt.size
+awk -f pkt.awk < inbound.pkt.size.sort > $f.www.inbound.pktsize
+awk -f pkt.awk < outbound.pkt.size.sort > $f.www.outbound.pktsize
+dat2cdf -e 0 -i 1 -d 1 -t $f.www.inbound.pktsize
+dat2cdf -e 0 -i 1 -d 1 -t $f.www.outbound.pktsize
+
+date
+echo "Locate SYN connection"
+cat $f.www | delay.pl -p 80 > $f.www.sync
+sort -s -o $f.www.sync.sorted -T /tmp $f.www.sync
+
+date
+echo "compute delay for each SYN connection pair between servers and clients"
+pair.tcl $f.www.sync.sorted $p >  $f.www.sync.delay
+sort -s -o $f.www.sync.delay.sorted -T /tmp $f.www.sync.delay
+awk -f delay.awk < $f.www.sync.delay.sorted > $f.www.inbound.delay
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.www.inbound.delay
+
+##########################################################
+
+
+echo "Estimate delay and bottleneck bandwidth for FTP traffic"
+
+date
+echo "pre-processing: output traffic between ftp servers and clients"
+cat  $f.ftp | BW-seq-ftp.pl -r $f.ftp2 -s $p
+sort inbound.seq -o inbound.seq.sorted
+sort outbound.seq -o outbound.seq.sorted
+
+date
+echo "search for DATA/ACK packets which have the same seqence number for outboun
+d traffic"
+cat outbound.seq.sorted | BW-pair.pl > $f.outbound.pair
+
+date
+echo "estimate the bandwidth for inbound/outbound traffic"
+cat $f.outbound.pair | BW.out.pl -w $f.ftp
+cat inbound.seq.sorted | BW.in.pl -w $f.ftp
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.ftp.outbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.ftp.inbound.BW
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.ftp.outbound.delay
+
+date
+echo "Locate SYN connection"
+cat $f.ftp | delay.pl -p 21 > $f.sync
+sort -s -o $f.sync.sorted -T /tmp $f.sync
+
+date
+echo "compute delay for each SYN connection pair between servers and clients"
+pair.tcl $f.sync.sorted $p >  $f.sync.delay
+sort -s -o $f.sync.delay.sorted -T /tmp $f.sync.delay
+awk -f delay.awk < $f.sync.delay.sorted > $f.ftp.inbound.delay
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.ftp.inbound.delay
+
+###########################################################
+
+
+
+#compuate statistical distribution of FTP trafic
+#specifically the follwoing parameters in FTP model
+# (1) ftp file arrival
+# (2) number of files per ftp session
+# (3) flie size
+echo "Output flow statistics for FTP traffic"
+date
+
+echo "estimate file distribution of outbound FTP traffic"
+cat $f.ftp.outbound | awk -f ftp.awk | sort > $f.ftp.outbound.flow.sort
+cat $f.ftp.outbound.flow.sort | ftp.pl -w $f.ftp.outbound
+sort -o $f.ftp.outbound.arrive.sort $f.ftp.outbound.arrive
+awk -f ftp.arrive.awk < $f.ftp.outbound.arrive.sort > $f.ftp.outbound.file.inter
+
+echo "estimate file distribution of inbound FTP traffic"
+cat $f.ftp.inbound | awk -f ftp.awk | sort > $f.ftp.inbound.flow.sort
+cat $f.ftp.inbound.flow.sort | ftp.pl -w $f.ftp.inbound
+sort -o $f.ftp.inbound.arrive.sort $f.ftp.inbound.arrive
+awk -f ftp.arrive.awk < $f.ftp.inbound.arrive.sort > $f.ftp.inbound.file.inter
+
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.ftp.outbound.file.inter 
+dat2cdf -e 0 -i 1000 -d 1000 -t $f.ftp.outbound.size
+dat2cdf -e 0 -i 1 -d 1 -t $f.ftp.outbound.fileno
+dat2cdf -e 0 -i 0.001 -d 1 -t $f.ftp.inbound.file.inter
+dat2cdf -e 0 -i 1000 -d 1000 -t $f.ftp.inbound.size
+dat2cdf -e 0 -i 1 -d 1 -t $f.ftp.inbound.fileno       
+
+
+######################################
+echo "Output TCP window size"
+date
+
+echo "WWW"
+grep " S " $f.www.outbound | grep ".80 >" > $f.www.outbound.svr.win
+grep " S " $f.www.inbound | grep ".80 >" > $f.www.inbound.svr.win
+grep " S " $f.www.outbound | grep ".80:" > $f.www.outbound.clnt.win
+grep " S " $f.www.inbound | grep ".80:" > $f.www.inbound.clnt.win
+awk -f win.awk < $f.www.outbound.svr.win > $f.www.outbound.wins
+awk -f win.awk < $f.www.inbound.svr.win > $f.www.inbound.wins
+awk -f win.awk < $f.www.outbound.clnt.win > $f.www.outbound.winc
+awk -f win.awk < $f.www.inbound.clnt.win > $f.www.inbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.www.outbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.www.outbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.www.inbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.www.inbound.winc
+
+echo "FTP"
+grep " S " $f.ftp.outbound | grep ".20 >" > $f.ftp.outbound.svr.win
+grep " S " $f.ftp.inbound | grep ".20 >" > $f.ftp.inbound.svr.win
+grep " S " $f.ftp.outbound | grep ".20:" > $f.ftp.outbound.clnt.win
+grep " S " $f.ftp.inbound | grep ".20:" > $f.ftp.inbound.clnt.win
+awk -f win.awk < $f.ftp.outbound.svr.win > $f.ftp.outbound.wins
+awk -f win.awk < $f.ftp.inbound.svr.win > $f.ftp.inbound.wins
+awk -f win.awk < $f.ftp.outbound.clnt.win > $f.ftp.outbound.winc
+awk -f win.awk < $f.ftp.inbound.clnt.win > $f.ftp.inbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.ftp.outbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.ftp.outbound.winc
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.ftp.inbound.wins
+dat2cdf -e 1024 -i 1024 -d 1024 -t $f.ftp.inbound.winc
+
+
+date
+echo "execution complete"

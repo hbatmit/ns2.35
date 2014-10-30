@@ -1,0 +1,67 @@
+v 0.10000000000000001 eval {set sim_annotation {0 sending message 1}}
+E -t 0.100025 SENSING_CARRIER 0 -1
+v 0.10100000000000001 eval {set sim_annotation {2 sending message 2}}
+E -t 0.101025 SENSING_CARRIER 2 -1
+E -t 0.102025 BACKING_OFF 2
+s 0.103625000 _0_ MAC  --- 0 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.103725000 _2_ MAC  --- 1 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+D 0.107725590 _1_ MAC  COL 1 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+v 0.20000000000000001 eval {set sim_annotation {0 sending message 11}}
+v 0.20000000000000001 eval {set sim_annotation {2 sending message 12}}
+E -t 0.200025 SENSING_CARRIER 0 -1
+E -t 0.200025 SENSING_CARRIER 2 -1
+s 0.203525000 _2_ MAC  --- 3 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+s 0.203625000 _0_ MAC  --- 2 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+D 0.207625590 _1_ MAC  COL 2 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+M 0.25000 2 (460.00, 30.00, 0.00), (900.00, 30.00), 10000.00
+v 0.34999999999999998 eval {set sim_annotation {0 sending message 3}}
+E -t 0.350025 SENSING_CARRIER 0 -1
+v 0.35099999999999998 eval {set sim_annotation {2 sending message 4}}
+E -t 0.351025 SENSING_CARRIER 2 -1
+s 0.352325000 _0_ MAC  --- 4 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.353825000 _2_ MAC  --- 5 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+r 0.356325590 _1_ MAC  --- 4 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+v 0.35635058972686712 eval {set sim_annotation {1 received {3:third_message} from 0}}
+v 0.35635058972686712 eval {set sim_annotation {1 sending message 3}}
+E -t 0.356376 SENSING_CARRIER 1 -1
+s 0.357075590 _1_ MAC  --- 6 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 
+r 0.361076179 _0_ MAC  --- 6 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 
+v 0.36110117945373421 eval {set sim_annotation {0 received redundant message 3 from 1}}
+M 0.40000 2 (900.00, 30.00, 0.00), (700.00, 30.00), 10000.00
+v 0.45000000000000001 eval {set sim_annotation {0 sending message 13}}
+v 0.45000000000000001 eval {set sim_annotation {2 sending message 14}}
+E -t 0.450025 SENSING_CARRIER 0 -1
+E -t 0.450025 SENSING_CARRIER 2 -1
+s 0.450925000 _0_ MAC  --- 7 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.452525000 _2_ MAC  --- 8 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+r 0.454925590 _1_ MAC  --- 7 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+v 0.45495058972686714 eval {set sim_annotation {1 received {13:thirteenth_message} from 0}}
+v 0.45495058972686714 eval {set sim_annotation {1 sending message 13}}
+E -t 0.454976 SENSING_CARRIER 1 -1
+s 0.455775590 _1_ MAC  --- 9 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 
+D 0.459776179 _0_ MAC  COL 9 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 
+v 0.55000000000000004 eval {set sim_annotation {0 sending message 15}}
+v 0.55000000000000004 eval {set sim_annotation {2 sending message 16}}
+E -t 0.550025 SENSING_CARRIER 0 -1
+E -t 0.550025 SENSING_CARRIER 2 -1
+s 0.552225000 _0_ MAC  --- 10 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.553925000 _2_ MAC  --- 11 message 500 [0 3000000 ffff0008 0] ------- [2:42 -1:42 32 0] 
+r 0.556225590 _1_ MAC  --- 10 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+v 0.55625058972686725 eval {set sim_annotation {1 received {15:fifth_message} from 0}}
+v 0.55625058972686725 eval {set sim_annotation {1 sending message 15}}
+E -t 0.556276 SENSING_CARRIER 1 -1
+s 0.557875590 _1_ MAC  --- 12 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 
+D 0.561876179 _0_ MAC  COL 12 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 
+M 0.65000 2 (700.00, 30.00, 0.00), (600.00, 30.00), 10000.00
+v 0.75 eval {set sim_annotation {0 sending message 21}}
+v 0.75 eval {set sim_annotation {0 sending message 22}}
+E -t 0.750025 SENSING_CARRIER 0 -1
+s 0.751225000 _0_ MAC  --- 13 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+E -t 0.755225 SENSING_CARRIER 0 -1
+r 0.755225590 _1_ MAC  --- 13 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+v 0.75525058972686721 eval {set sim_annotation {1 received {21:tenth_message} from 0}}
+v 0.75525058972686721 eval {set sim_annotation {1 sending message 21}}
+E -t 0.755276 SENSING_CARRIER 1 -1
+s 0.758325000 _0_ MAC  --- 14 message 500 [0 1000000 ffff0008 0] ------- [0:42 -1:42 32 0] 
+s 0.758475590 _1_ MAC  --- 15 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 
+D 0.762476575 _2_ MAC  COL 15 message 500 [0 2000000 ffff0008 0] ------- [1:42 -1:42 32 0] 

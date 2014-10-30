@@ -1,0 +1,82 @@
+This is a brief description of the tests in the file
+test-suite-tcp.tcl.  These tests can be run with the
+command "./test-all-tcp".
+
+ECN:
+The "ecn" test shows two TCPs, where one is ECN-capable and the
+other is not.
+
+TIMERS:
+The "timers" test is the first of a series of tests that test the
+behavior of TCP's retransmit timers.  This test shows the retransmit
+timeout value when the first packet of a connection is dropped,
+and the backoff of the retransmit timer as a subsequent packet is
+dropped.  This test also shows that once the retransmit timer is
+backed off, it is later un-backed.
+
+For the connection in the top row, the first packet sent by the
+connection is dropped, and the retransmitted packet is itself
+dropped.  The connection has a maximum window of three packets, so
+the TCP sender has to wait for a retransmit timer to recover from
+any packet drop.  When another packet from the top connection is
+dropped at time 21, the test shows that the retransmit timer is no
+longer backed off.  Further, by this time the estimated average
+roundtrip time is close to its true value, and the retransmit timer
+expires relatively quickly.
+
+The bottom connection has an intermittent demand, constructed to
+give the desired behavior for the top connection.  The bottom
+connection has a maximum window of five packets, and generally
+recovers from a packet drop with a Fast Retransmit.
+
+The reported statistics show the values of the
+retransmit timer variables "srtt_", "rttvar_", and "backoff_" 
+for the top connection. 
+
+TIMERSA:
+The "timersA" test shows the retransmit timer when the third packet
+of the top connection is dropped.  Because the top connection has
+a maximum window of three packets, the TCP sender always has to
+wait for a retransmit timer to recover from a packet drop.
+
+The behavior of the "backoff_" variable in this test requires some
+explanation.  After packet 2 of the top connection is dropped, the
+first retransmit timer expires, packet 2 is retransmitted, and
+the value for "backoff_" is increased to 2.  When the ACK for the
+retransmitted packet 2 is received, Karn's algorithm is invoked,
+and that ACK is not used in updating the retransmit timer variables.
+When packet 5 is sent, "backoff_" is increased to 2, and a large
+value is used in setting the retransmit timer.  When the ACK for
+packet 5 is received, "backoff_" is reset to 1, so the retransmit
+timer is no longer backed off.  When the outstanding retransmit
+timer expires (because packet 6 is outstanding), packet 6 is
+transmitted, "backoff_" is again increased to 2, and a backed-off
+retransmit timer is again set.
+
+TIMERS1, TIMERS2, and TIMERS3:
+The test "timers1" uses the default value in the simulator of 0.1
+seconds for "tcpTick_", the TCP clock granularity.  "Timers2" uses
+"tcpTick_" set to 0.5 seconds, and "timers3" uses "tcpTick_" set
+to 0.001 seconds.  These tests use Reno TCP, and in each test the
+second packet dropped has to wait for a retransmit timer to expire
+before it is retransmitted.
+
+TIMERS4 and TIMERS5:
+This test shows that the estimated round-trip time for the retransmit
+timers is updated once a roundtrip time, and not once for every
+arriving ACK packet.
+
+There are no packets dropped in either of these two tests.  The
+two connection differ only in their maximum window.  The reported
+values for "srtt_" show that the value for "srtt_" converges at a
+similar fashion for the two connections, even though the rate of
+arriving ACK packets is very different in the two connections.
+
+STATS1:
+This test shows some of the available statistics.
+At time 10.0, for each connection the statistics show 
+the number of packets sent by the sender (in packets and in 
+bytes), the number of ACK packets received by the sender,
+the number of retransmitted packets (in packets and in 
+bytes), and the number of retransmit timeouts.
+

@@ -1,0 +1,130 @@
+eval 'exec perl -I ./bin -S $0 ${1+"$@"}'		#-*-Perl-*-
+	if 0;
+
+require 5.001;
+
+($progname) = ($0 =~ m!([^/]+)$!);
+sub usage {
+    die <<END;
+usage: $progname [options] [trace files...]
+
+options:
+    -a		plot acks
+    -s SCALE    scale TCP sequence numbers by SCALE
+    -m MODULUS  treat TCP sequence numbers as mod MODULUS
+    -g		use gnuplot
+    -q		show queueing delay by connecting lines (only for xgraph)
+#    -l		show packet length
+
+Traditional ``wrapping'' ns plots (as called from the test scripts)
+can be generated with -s 0.01 -m 90.
+END
+};
+
+require 'getopts.pl';
+&Getopts('ags:m:ql') || usage;
+
+# calculate offsets.  Do we need this?
+# $offset = int($modulus / 10 + 1) * 10;
+# $offset = 1;
+
+# Default options args
+$modulus = defined($opt_m) ? $opt_m : 2 ** 31;
+$scale = defined($opt_s) ? $opt_s : 1;
+$plot_acks = defined($opt_a);
+
+# XXXXXX
+# XXX This is going to break because we have to set @INC correctly
+# XXX We need a clean way to set this for all scripts.
+# XXXXXX
+require 'dynamics.pl';
+if (defined($opt_g)) {
+    require 'gnuplot.pl';
+    if (defined($opt_q)) {
+        warn 'ouch';
+        undef $opt_q;
+    }
+} else {
+    require 'xgraph.pl';
+}
+
+$maxY = 0;
+@p = @a = @d = ();		# @p:  list of "$x $y" pairs for data packets
+				# @a:  list of "$x $y" pairs for acks
+				# @d:  .. drops
+%q_time_seg = ();
+
+
+$file = $acks = '';
+
+sub translate_point {
+    my($time, $seq, $flow) = @_;
+    return ($time, $flow + ($seq % $modulus) * $scale);
+}
+
+($minY, $maxY) = (9999999, -9999999);
+while (<>) {
+    $dfile = $ARGV;
+    next if /rtProto/;
+    @F = split;
+    /testName/ && do {
+	$file = $F[2];
+	$file =~ s/_/-/g;
+	next;
+    };
+    /^[\+-] / && do {
+	$maxY = $F[7] if ($maxY < $F[7]);
+	$is_ack = ($F[4] eq 'ack');
+	next if ($is_ack && !$plot_acks);
+
+	($x, $y) = translate_point(@F[1, 10, 7]);
+	if (defined($opt_q)) {	# XXX intense xgraph-ism here
+	    if (/^\+/) {
+		$statement = undef;
+		$q_time_seg{$is_ack,$y} = $x;
+	    };
+	    $statement = "move $q_time_seg{$is_ack,$y} $y\ndraw $x $y\n"
+		if (/^\-/);
+	} else {
+	    $statement = "$x $y\n";
+	};
+	if (defined($statement)) {
+	    if ($is_ack) { 
+		push(@a, $statement);
+	    } else {
+	        push(@p, $statement);
+	    };
+	};
+	$minY = $y if ($minY > $y);
+	$maxY = $y if ($maxY < $y);
+	next;
+    };
+    /^d / && do {
+	($x, $y) = translate_point(@F[1, 10, 7]);
+	push(@d, "$x $y\n");
+	$minY = $y if ($minY > $y);
+	$maxY = $y if ($maxY < $y);
+	next;
+    };
+    /^v / && (parseDynamics(@F), next);
+}	
+
+if ($file eq '') {
+	($file) = ($dfile =~ m!([^/]+)$!);
+}
+
+plotPreamble(STDOUT, $file, 'time', ($#p < $[ ? '0:2' : ''), 'packets', '');
+plot(STDOUT, 0, 'packets', 'w points 1 5', @p);
+
+if ($opt_g) {
+    plot(STDOUT, 0, 'acks',    'w dots', @a);
+} else {
+    # for xgraphs, insert dummy data sets so we get X's for marks in data-set 4
+    plot(STDOUT, 0, 'acks',	'plot 2', "0 1\n", @a);
+}
+
+plot(STDOUT, 0, 'drops',   'w points 1 4', @d);
+plotDynamics(STDOUT, $minY, $maxY);
+plotPostamble(STDOUT);
+
+exit;

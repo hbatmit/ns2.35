@@ -1,0 +1,44 @@
+dnl autoconf rules to find z
+
+AC_ARG_WITH(zlib,	--with-zlib=path	specify a pathname for zlib, d=$withval, d="")
+AC_ARG_WITH(zlib-ver, --with-zlib-ver=VER specify the version number of zlib, ZLIB_VER=$withval, ZLIB_VER=1.2.3)
+
+ZLIB_H_PLACES_D="$d \
+		$d/include"
+ZLIB_H_PLACES="../zlib \
+		/usr/src/local/zlib \
+		../zlib-$ZLIB_VER \
+		/import/zlib/include \
+		/usr/src/local/zlib-$ZLIB_VER \
+		/usr/src/local/zlib-$ZLIB_ALT_VER \
+		$prefix/include \
+		/usr/local/include \
+		/usr/contrib/include \
+		/usr/include"
+ZLIB_LIB_PLACES_D="$d \
+		$d/lib \
+		"
+ZLIB_LIB_PLACES="../zlib \
+		../zlib-$ZLIB_VER \
+		../zlib-$ZLIB_ALT_VERS \
+		$prefix/lib \
+		$x_libraries \
+		/usr/contrib/lib \
+		/usr/local/lib \
+		/usr/lib64 \
+		/usr/lib \
+		/usr/src/local/zlib \
+		/usr/src/local/zlib-$ZLIB_VER \
+		/usr/src/local/zlib-$ZLIB_ALT_VERS \
+		"
+
+NS_BEGIN_PACKAGE(zlib)
+NS_CHECK_HEADER_PATH(zlib.h,$ZLIB_H_PLACES,$d,$ZLIB_H_PLACES_D,V_INCLUDE_ZLIB,zlib)
+NS_CHECK_LIB_PATH(z$ZLIB_VER,$ZLIB_LIB_PLACES,$d,$ZLIB_LIB_PLACES_D,V_LIB_ZLIB,zlib)
+
+
+if $NS_PACKAGE_zlib_COMPLETE; then
+        NS_END_PACKAGE(zlib,no)
+fi
+
+

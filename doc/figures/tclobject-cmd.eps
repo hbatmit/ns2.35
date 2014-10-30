@@ -1,0 +1,547 @@
+%!
+%%BoundingBox: 15 554 614 793
+%%Title: tclobject-cmd
+%%CreationDate: Tue Sep  9 17:38:46 1997
+%%Creator: Tgif-2.16-p12 by William Chia-Wei Cheng (william@cs.UCLA.edu)
+
+/tgifdict 37 dict def
+tgifdict begin
+
+/tgifarrowtipdict 8 dict def
+tgifarrowtipdict /mtrx matrix put
+
+/tgifarrowtip
+ { tgifarrowtipdict begin
+      /dy exch def
+      /dx exch def
+      /h exch def
+      /w exch def
+      /y exch def
+      /x exch def
+      /savematrix mtrx currentmatrix def
+      x y translate
+      dy dx atan rotate
+      0 0 moveto
+      w neg h lineto
+      w neg h neg lineto
+      savematrix setmatrix
+   end
+ } def
+
+/tgifpatdict 10 dict def
+
+/tgifpatbyte
+ { currentdict /retstr get exch
+   pat i cellsz mod get put
+ } def
+
+/tgifpatproc
+ { 0 1 widthlim {tgifpatbyte} for retstr
+   /i i 1 add def
+ } def
+
+/tgifpatfill
+ { tgifpatdict begin
+      /h exch def
+      /w exch def
+      /lty exch def
+      /ltx exch def
+      /cellsz exch def
+      /pat exch def
+
+      /widthlim w cellsz div cvi 1 sub def
+      /retstr widthlim 1 add string def
+      /i 0 def
+
+      ltx lty translate
+      w h true [1 0 0 1 0 0] {tgifpatproc} imagemask
+      ltx neg lty neg translate
+   end
+ } def
+
+/pat3 <8000000008000000> def
+/pat4 <8800000022000000> def
+/pat5 <8800220088002200> def
+/pat6 <8822882288228822> def
+/pat7 <aa55aa55aa55aa55> def
+/pat8 <77dd77dd77dd77dd> def
+/pat9 <77ffddff77ffddff> def
+/pat10 <77ffffff77ffffff> def
+/pat11 <7fffffff7fffffff> def
+/pat12 <8040200002040800> def
+/pat13 <40a00000040a0000> def
+/pat14 <ff888888ff888888> def
+/pat15 <ff808080ff080808> def
+/pat16 <f87422478f172271> def
+/pat17 <038448300c020101> def
+/pat18 <081c22c180010204> def
+/pat19 <8080413e080814e3> def
+/pat20 <8040201008040201> def
+/pat21 <8844221188442211> def
+/pat22 <77bbddee77bbddee> def
+/pat23 <c1e070381c0e0783> def
+/pat24 <7fbfdfeff7fbfdfe> def
+/pat25 <3e1f8fc7e3f1f87c> def
+/pat26 <0102040810204080> def
+/pat27 <1122448811224488> def
+/pat28 <eeddbb77eeddbb77> def
+/pat29 <83070e1c3870e0c1> def
+/pat30 <fefdfbf7efdfbf7f> def
+/pat31 <7cf8f1e3c78f1f3e> def
+
+/tgifcentertext { dup stringwidth pop 2 div neg 0 rmoveto } def
+
+end
+
+%%PageBoundingBox: 15 554 614 793
+tgifdict begin
+/tgifsavedpage save def
+
+1 setmiterlimit
+1 setlinewidth
+
+0 setgray
+
+72 0 mul 72 11.00 mul translate
+72 128 div 100 mul 100 div dup neg scale
+
+gsave
+
+% POLYGON/CLOSED-SPLINE
+0.184 0.310 0.310 setrgbcolor
+newpath
+   690 180 moveto
+   690 0 lineto
+   890 0 lineto
+   890 180 lineto
+   1090 180 lineto
+   1090 410 lineto
+   490 410 lineto
+   490 180 lineto
+closepath
+gsave
+   1 setgray eofill
+grestore
+gsave
+   eoclip newpath
+   pat7 8 488 -8 608 424 tgifpatfill
+grestore
+gsave
+   1 setgray stroke 0 setgray
+grestore
+gsave
+   [2 2] 0 setdash
+   flattenpath strokepath clip newpath
+   pat7 8 488 -8 608 424 tgifpatfill
+grestore
+
+% POLYGON/CLOSED-SPLINE
+0 setgray
+newpath
+   680 190 moveto
+   680 10 lineto
+   880 10 lineto
+   880 190 lineto
+   1080 190 lineto
+   1080 420 lineto
+   480 420 lineto
+   480 190 lineto
+closepath
+gsave
+   1 setgray eofill
+grestore
+gsave
+   [2 2] 0 setdash
+   stroke
+grestore
+
+% BOX
+0.184 0.310 0.310 setrgbcolor
+gsave
+   newpath
+   710 40 moveto 860 40 lineto 860 140 lineto 710 140 lineto
+   closepath 1 setgray fill
+   0.184 0.310 0.310 setrgbcolor
+   newpath
+      710 40 moveto 860 40 lineto 860 140 lineto 710 140 lineto
+   closepath eoclip newpath
+   pat7 8 704 32 160 112 tgifpatfill
+grestore
+
+% BOX
+0 setgray
+newpath
+   700 50 moveto 850 50 lineto 850 150 lineto 700 150 lineto
+closepath 1 setgray fill
+   0 setgray
+gsave
+   1.415 setmiterlimit
+   3 setlinewidth
+   newpath
+      700 50 moveto 850 50 lineto 850 150 lineto 700 150 lineto
+   closepath stroke
+   1 setlinewidth
+   1 setmiterlimit
+grestore
+
+% BOX
+0.184 0.310 0.310 setrgbcolor
+gsave
+   newpath
+   910 290 moveto 1060 290 lineto 1060 390 lineto 910 390 lineto
+   closepath 1 setgray fill
+   0.184 0.310 0.310 setrgbcolor
+   newpath
+      910 290 moveto 1060 290 lineto 1060 390 lineto 910 390 lineto
+   closepath eoclip newpath
+   pat7 8 904 288 160 104 tgifpatfill
+grestore
+
+% BOX
+0 setgray
+newpath
+   900 300 moveto 1050 300 lineto 1050 400 lineto 900 400 lineto
+closepath 1 setgray fill
+   0 setgray
+gsave
+   1.415 setmiterlimit
+   3 setlinewidth
+   newpath
+      900 300 moveto 1050 300 lineto 1050 400 lineto 900 400 lineto
+   closepath stroke
+   1 setlinewidth
+   1 setmiterlimit
+grestore
+
+% BOX
+0.184 0.310 0.310 setrgbcolor
+gsave
+   newpath
+   510 290 moveto 660 290 lineto 660 390 lineto 510 390 lineto
+   closepath 1 setgray fill
+   0.184 0.310 0.310 setrgbcolor
+   newpath
+      510 290 moveto 660 290 lineto 660 390 lineto 510 390 lineto
+   closepath eoclip newpath
+   pat7 8 504 288 160 104 tgifpatfill
+grestore
+
+% BOX
+0 setgray
+newpath
+   500 300 moveto 650 300 lineto 650 400 lineto 500 400 lineto
+closepath 1 setgray fill
+   0 setgray
+gsave
+   1.415 setmiterlimit
+   3 setlinewidth
+   newpath
+      500 300 moveto 650 300 lineto 650 400 lineto 500 400 lineto
+   closepath stroke
+   1 setlinewidth
+   1 setmiterlimit
+grestore
+
+% POLYGON/CLOSED-SPLINE
+0.184 0.310 0.310 setrgbcolor
+newpath
+   703 224 moveto
+   778 174 lineto
+   854 224 lineto
+   778 274 lineto
+closepath
+gsave
+   1 setgray eofill
+grestore
+gsave
+   eoclip newpath
+   pat7 8 696 168 160 112 tgifpatfill
+grestore
+
+% POLYGON/CLOSED-SPLINE
+0 setgray
+newpath
+   700 230 moveto
+   775 180 lineto
+   851 230 lineto
+   775 280 lineto
+closepath
+gsave
+   1 setgray eofill
+grestore
+gsave
+   3 setlinewidth
+   stroke
+grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      780 91 moveto (TclObject::         ) tgifcentertext show
+      780 114 moveto (      command\(\)) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      777 223 moveto (match) tgifcentertext show
+      777 246 moveto ("distance?") tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/NewCenturySchlbk-Bold findfont [24 0 0 -24 0 0] makefont setfont
+   gsave
+      691 223 moveto (Y) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/NewCenturySchlbk-Bold findfont [24 0 0 -24 0 0] makefont setfont
+   gsave
+      864 223 moveto (N) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      575 346 moveto (process ) tgifcentertext show
+      575 369 moveto (and return) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      975 335 moveto (invoke parent's) tgifcentertext show
+      975 358 moveto (command\(\)) tgifcentertext show
+      975 381 moveto (method) tgifcentertext show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   3 setlinewidth
+   newpath
+      775 150 moveto
+      31 0 atan dup cos 12 mul 775 exch sub
+      exch sin 12 mul 181 exch sub lineto
+   stroke
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      775 181 12 5 0 31 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      775 181 12 5 0 31 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   3 setlinewidth
+   newpath
+      700 230 moveto
+      575 230 lineto
+      69 0 atan dup cos 12 mul 575 exch sub
+      exch sin 12 mul 299 exch sub lineto
+   stroke
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      575 299 12 5 0 69 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      575 299 12 5 0 69 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   3 setlinewidth
+   newpath
+      850 230 moveto
+      975 230 lineto
+      69 0 atan dup cos 12 mul 975 exch sub
+      exch sin 12 mul 299 exch sub lineto
+   stroke
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      975 299 12 5 0 69 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      975 299 12 5 0 69 tgifarrowtip
+   closepath fill
+grestore
+
+% RCBOX
+0 setgray
+newpath
+   184 50 moveto
+   200 50 200 150 16 arcto 4 {pop} repeat
+   200 134 lineto
+   200 150 50 150 16 arcto 4 {pop} repeat
+   66 150 lineto
+   50 150 50 50 16 arcto 4 {pop} repeat
+   50 66 lineto
+   50 50 200 50 16 arcto 4 {pop} repeat
+closepath 1 setgray fill
+   0 setgray
+gsave
+   3 setlinewidth
+   newpath
+      184 50 moveto
+      200 50 200 150 16 arcto 4 {pop} repeat
+      200 134 lineto
+      200 150 50 150 16 arcto 4 {pop} repeat
+      66 150 lineto
+      50 150 50 50 16 arcto 4 {pop} repeat
+      50 66 lineto
+      50 50 200 50 16 arcto 4 {pop} repeat
+   closepath stroke
+   1 setlinewidth
+grestore
+
+% RCBOX
+0 setgray
+newpath
+   483 50 moveto
+   499 50 499 150 16 arcto 4 {pop} repeat
+   499 134 lineto
+   499 150 349 150 16 arcto 4 {pop} repeat
+   365 150 lineto
+   349 150 349 50 16 arcto 4 {pop} repeat
+   349 66 lineto
+   349 50 499 50 16 arcto 4 {pop} repeat
+closepath 1 setgray fill
+   0 setgray
+gsave
+   3 setlinewidth
+   newpath
+      483 50 moveto
+      499 50 499 150 16 arcto 4 {pop} repeat
+      499 134 lineto
+      499 150 349 150 16 arcto 4 {pop} repeat
+      365 150 lineto
+      349 150 349 50 16 arcto 4 {pop} repeat
+      349 66 lineto
+      349 50 499 50 16 arcto 4 {pop} repeat
+   closepath stroke
+   1 setlinewidth
+grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      125 107 moveto ($srm distance?) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      267 93 moveto (No such) tgifcentertext show
+      267 116 moveto (procedure) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica-Bold findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      424 75 moveto (TclObject::        ) tgifcentertext show
+      424 92 moveto (        unknown{}) tgifcentertext show
+      424 109 moveto () tgifcentertext show
+      424 126 moveto ($srm cmd        ) tgifcentertext show
+      424 143 moveto (         distance?) tgifcentertext show
+   grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   3 setlinewidth
+   newpath
+      201 100 moveto
+      0 147 atan dup cos 12 mul 348 exch sub
+      exch sin 12 mul 100 exch sub lineto
+   stroke
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      348 100 12 5 147 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      348 100 12 5 147 0 tgifarrowtip
+   closepath fill
+grestore
+
+% POLY/OPEN-SPLINE
+0 setgray
+gsave
+   3 setlinewidth
+   newpath
+      500 100 moveto
+      0 200 atan dup cos 12 mul 700 exch sub
+      exch sin 12 mul 100 exch sub lineto
+   stroke
+   1 setlinewidth
+grestore
+gsave
+   newpath
+      700 100 12 5 200 0 tgifarrowtip
+   1 setgray closepath fill
+   0 setgray
+   newpath
+      700 100 12 5 200 0 tgifarrowtip
+   closepath fill
+grestore
+
+% RCBOX
+0 setgray
+gsave
+   [2 2] 0 setdash
+   newpath
+      504 20 moveto
+      520 20 520 170 16 arcto 4 {pop} repeat
+      520 154 lineto
+      520 170 30 170 16 arcto 4 {pop} repeat
+      46 170 lineto
+      30 170 30 20 16 arcto 4 {pop} repeat
+      30 36 lineto
+      30 20 520 20 16 arcto 4 {pop} repeat
+   closepath stroke
+   [] 0 setdash
+grestore
+
+% TEXT
+0 setgray
+/Helvetica findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      738 30 moveto (C++ methods) tgifcentertext show
+   grestore
+
+% TEXT
+0 setgray
+/Helvetica findfont [20 0 0 -20 0 0] makefont setfont
+   gsave
+      144 40 moveto (OTcl instance procedures?) tgifcentertext show
+   grestore
+
+grestore
+tgifsavedpage restore
+end
+%MatchingCreationDate: Tue Sep  9 17:38:46 1997
