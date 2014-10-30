@@ -134,7 +134,7 @@ public:
 		return ib.second ? ib.first : baseMap::end();
 	}
 
-	void eraseAll() { erase(baseMap::begin(), baseMap::end()); }
+	void eraseAll() { this->erase(baseMap::begin(), baseMap::end()); }
 	T* findPtr(Key key) {
 		iterator it = baseMap::find(key);
 		return (it == baseMap::end()) ? (T *)NULL : &((*it).second);
