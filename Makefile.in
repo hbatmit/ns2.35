@@ -317,6 +317,7 @@ OBJ_CC = \
 	pushback/logging-data-struct.o \
 	pushback/rate-estimator.o \
 	pushback/pushback-queue.o pushback/pushback.o \
+	pause/pause_header.o \
 	common/parentnode.o trace/basetrace.o \
 	common/simulator.o asim/asim.o \
 	common/scheduler-map.o common/splay-scheduler.o \
