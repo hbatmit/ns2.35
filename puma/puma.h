@@ -185,6 +185,7 @@ class RoutingEvent : public Event {
 public:
 		RoutingEvent();
 		virtual EventType get_type() = 0;
+		virtual ~RoutingEvent();
 };
 
 class SendNextMAEvent : public RoutingEvent {

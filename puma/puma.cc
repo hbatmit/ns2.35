@@ -318,6 +318,8 @@ AckTable::get_empty_slot() {
 RoutingEvent::RoutingEvent() : Event() {
 }
 
+RoutingEvent::~RoutingEvent() {}
+
 /*
  * Send Next MA Event
  */

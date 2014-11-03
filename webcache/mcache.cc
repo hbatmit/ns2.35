@@ -1357,7 +1357,8 @@ int MediaServer::command(int argc, const char*const* argv)
 			PageID pageId (app, id);
 			int length = strlen (app->name()) + strlen (argv[4]) + 2;
 			char* buf = new char[length];
-			memset(buf, 0, sizeof(buf));
+			memset(buf, 0, length);
+			assert(buf != NULL);
 			sprintf(buf, "%s:%-d", app->name(), id);
 			Tcl_HashEntry *he = 
 				Tcl_FindHashEntry(pref_, buf);
@@ -1462,7 +1463,8 @@ int MediaServer::command(int argc, const char*const* argv)
 			int newEntry = 1;
 			int length = strlen (app->name()) + strlen (argv[3]) + 2;
 			char* buf = new char[length];
-			memset(buf, 0, sizeof(buf));
+			memset(buf, 0, length);
+			assert(buf != NULL);
 			sprintf(buf, "%s:%-d", app->name(), id);
 			Tcl_HashEntry *he = Tcl_CreateHashEntry(pref_, 
 					buf, &newEntry);
