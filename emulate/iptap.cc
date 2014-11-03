@@ -132,10 +132,8 @@ IPTapAgent::processpkt(Packet *p, const struct timeval &)
 {
   struct ip *ipheader;
   //struct tcphdr *tcpheader;
-  unsigned char *buf;
   
   /* Ip header information from the grabbed packet. */
-  int iphlen;  
   unsigned short datagramlen;
   unsigned char ttl;
   
@@ -150,8 +148,6 @@ IPTapAgent::processpkt(Packet *p, const struct timeval &)
   */
 
   ipheader = (struct ip *) p->accessdata();
-  buf = p->accessdata();
-  iphlen = ipheader->ip_hl * 4;
   ttl = ipheader->ip_ttl;
   if (!(--ttl)) {
     fprintf(stderr,
