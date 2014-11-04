@@ -22,9 +22,9 @@ struct hdr_pause {
   hdr_pause();
 
   /* Fill in fields */
-  void fill_in(Packet* p,
-               const std::vector<uint16_t> & s_class_pause_durations,
-               const std::vector<bool> & s_class_enable_vector);
+  static void fill_in(Packet* p,
+                      const std::vector<uint16_t> & s_class_pause_durations,
+                      const std::vector<bool> & s_class_enable_vector);
 };
   
 #endif

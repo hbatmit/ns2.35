@@ -33,7 +33,7 @@ void hdr_pause::fill_in(Packet* p,
 
   /* Fill in 802.1Qbb ON/OFF durations for each of the 8 priorities */
   for (uint8_t i = 0; i < NUM_ETH_CLASS; i++) {
-      class_pause_durations_.at(i) = s_class_pause_durations.at(i);
-      class_enable_vector_.at(i) = s_class_enable_vector.at(i);
+      hdr_pause::access(p)->class_pause_durations_.at(i) = s_class_pause_durations.at(i);
+      hdr_pause::access(p)->class_enable_vector_.at(i) = s_class_enable_vector.at(i);
   }
 }
