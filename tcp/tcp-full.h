@@ -120,9 +120,9 @@ public:
         	last_send_time_(-1.0), infinite_send_(FALSE), irs_(-1),
         	delack_timer_(this), flags_(0),
         	state_(TCPS_CLOSED), recent_ce_(FALSE),
-        	last_state_(TCPS_CLOSED), rq_(rcv_nxt_), last_ack_sent_(-1),
+        	last_state_(TCPS_CLOSED), rq_(rcv_nxt_),
 	        dctcp_total(0), dctcp_marked(0), dctcp_alpha_update_seq(0), 
-	        dctcp_maxseq(0), ce_transition(0) { }
+	        dctcp_maxseq(0), ce_transition(0), last_ack_sent_(-1) { }
 
 	~FullTcpAgent() { cancel_timers(); rq_.clear(); }
 	virtual void recv(Packet *pkt, Handler*);
