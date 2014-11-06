@@ -207,7 +207,7 @@ CMUTrace::format_mac_common(Packet *p, const char *why, int offset)
 		if (op == FWRD) op = 'h';
 
 		sprintf(pt_->buffer() + offset,
-			"%c "TIME_FORMAT" -s %d -d %d -p %s -k %3s -i %d "
+			"%c " TIME_FORMAT " -s %d -d %d -p %s -k %3s -i %d "
 			"-N:loc {%.2f %.2f %.2f} -N:en %f ",
 			
 			op,				// event type

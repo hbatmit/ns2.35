@@ -2203,7 +2203,7 @@ void TcpAgent::trace_event(char *eventtype)
 	char *nwrk = et_->nbuffer();
 	if (wrk != 0)
 		sprintf(wrk,
-			"E "TIME_FORMAT" %d %d TCP %s %d %d %d",
+			"E " TIME_FORMAT " %d %d TCP %s %d %d %d",
 			et_->round(Scheduler::instance().clock()),   // time
 			addr(),                       // owner (src) node id
 			daddr(),                      // dst node id
@@ -2215,7 +2215,7 @@ void TcpAgent::trace_event(char *eventtype)
 	
 	if (nwrk != 0)
 		sprintf(nwrk,
-			"E -t "TIME_FORMAT" -o TCP -e %s -s %d.%d -d %d.%d",
+			"E -t " TIME_FORMAT " -o TCP -e %s -s %d.%d -d %d.%d",
 			et_->round(Scheduler::instance().clock()),   // time
 			eventtype,                    // event type
 			addr(),                       // owner (src) node id

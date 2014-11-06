@@ -353,7 +353,7 @@ void PgmReceiver::trace_event(char *evType, double evTime) {
   char *nwrk = et_->nbuffer();
 
   if (wrk != NULL) {
-    sprintf(wrk, "E "TIME_FORMAT" %d %d PGM %s "TIME_FORMAT, 
+    sprintf(wrk, "E " TIME_FORMAT " %d %d PGM %s " TIME_FORMAT, 
             et_->round(Scheduler::instance().clock()),   
             addr(),                    
             0,                   
@@ -361,7 +361,7 @@ void PgmReceiver::trace_event(char *evType, double evTime) {
 			evTime);	
   if (nwrk != 0)
     sprintf(nwrk,
-			"E -t "TIME_FORMAT" -o PGM -e %s -s %d.%d -d %d.%d",
+			"E -t " TIME_FORMAT " -o PGM -e %s -s %d.%d -d %d.%d",
 			et_->round(Scheduler::instance().clock()),   // time
 			evType,                    // event type
 			addr(),                       // owner (src) node id

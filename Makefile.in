@@ -83,7 +83,7 @@ LIB	= \
 #	-L@libdir@ \
 
 CFLAGS	+= $(CCOPT) $(DEFINE) 
-
+CXXFLAGS = -std=c++11
 # Explicitly define compilation rules since SunOS 4's make doesn't like gcc.
 # Also, gcc does not remove the .o before forking 'as', which can be a
 # problem if you don't own the file but can write to the directory.
@@ -91,7 +91,7 @@ CFLAGS	+= $(CCOPT) $(DEFINE)
 
 .cc.o:
 	@rm -f $@
-	$(CPP) -c $(CFLAGS) $(INCLUDES) -o $@ $*.cc
+	$(CPP) -c $(CFLAGS) $(CXXFLAGS) $(INCLUDES) -o $@ $*.cc
 
 .c.o:
 	@rm -f $@
