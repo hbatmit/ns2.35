@@ -12,8 +12,12 @@ set packetSize 1460
 Agent/TCP set packetSize_ $packetSize
 Agent/TCP/FullTcp set segsize_ $packetSize
 
+### Turn on all tracing ###
+set allchan [open all.tr w]
+$ns trace-all $allchan
+
 ## Turn on DCTCP ##
-set sourceAlg DropTail
+set sourceAlg RED
 source configs/dctcp-defaults.tcl
 
 ##### Topology ###########
@@ -42,7 +46,10 @@ for {set i 0} {$i < $N} {incr i} {
 
     $ns attach-agent $n($i) $tcp($i)
     $ns attach-agent $nclient $sink($i)
-    
+
+    $tcp($i) set fid_ [expr $i]
+    $sink($i) set fid_ [expr $i]
+
     $ns connect $tcp($i) $sink($i)
 }
 
@@ -59,4 +66,12 @@ for {set i 0} {$i < $N} {incr i} {
     $ns at [expr $simulationTime] "$ftp($i) stop"
 }
 
+proc finish {} {
+        global ns allchan
+        $ns flush-trace
+        close $allchan
+	exit 0
+}
+
+$ns at $simulationTime "finish"
 $ns run
