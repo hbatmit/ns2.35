@@ -1026,6 +1026,10 @@ Agent/TCP set control_increase_ 0
 
 Agent/TCP set SetCWRonRetransmit_ true ; # added on 2005/06/19.
 				 	 # default changed on 2008/06/05. 
+# DCTCP
+Agent/TCP set dctcp_ false;
+Agent/TCP set dctcp_alpha_ 0.0;
+Agent/TCP set dctcp_g_ 0.0625;
 
 # XXX Generate nam trace or plain old text trace for variables. 
 # When it's true, generate nam trace.

@@ -871,6 +871,11 @@ FullTcpAgent::sendpacket(int seqno, int ackno, int pflags, int datalen, int reas
 		/* Set ect() to 0.  -M. Weigle 1/19/05 */
 		fh->ect() = 0;
 	}
+
+	// For DCTCP, ect should be set on all packets
+	if (dctcp_)
+		fh->ect() = ect_;
+
 	if (ecn_ && ect_ && recent_ce_ ) { 
 		// This is needed here for the ACK in a SYN, SYN/ACK, ACK
 		// sequence.
@@ -960,9 +965,12 @@ FullTcpAgent::foutput(int seqno, int reason)
 	// Q: how can this happen?
 
 	if (maxseg_ == 0) 
-	   	maxseg_ = size_ - headersize();
+	   	maxseg_ = size_; // Mohammad: changed from size_ - headersize();
+	/* Mohammad: This else condition is unnecessary and conflates 
+	 * with tcp.cc
 	else
 		size_ =  maxseg_ + headersize();
+	*/
 
 	int is_retransmit = (seqno < maxseq_);
 	int quiet = (highest_ack_ == maxseq_);
@@ -1156,6 +1164,8 @@ send:
          */      
 	flags_ &= ~(TF_ACKNOW|TF_DELACK);
 
+	delack_timer_.force_cancel();
+
 	/*
 	 * if we have reacted to congestion recently, the
 	 * slowdown() procedure will have set cong_action_ and
@@ -1178,6 +1188,8 @@ send:
 	//	and adjusted for SYNs and FINs which use up one number
 
 	int highest = seqno + reliable;
+	if (highest > dctcp_maxseq) 
+		dctcp_maxseq = highest;
 	if (highest > maxseq_) {
 		maxseq_ = highest;
 		//
@@ -1415,7 +1427,6 @@ FullTcpAgent::fast_retransmit(int seq)
 {
 	// we are now going to fast-retransmit and willtrace that event
 	trace_event("FAST_RETX");
-	
 	recover_ = maxseq_;	// recovery target
 	last_cwnd_action_ = CWND_ACTION_DUPACK;
 	return(foutput(seq, REASON_DUPACK));	// send one pkt
@@ -1564,11 +1575,19 @@ FullTcpAgent::recv(Packet *pkt, Handler*)
 	 * at time t0 = (0.0 + k * interval_) for some k such
 	 * that t0 > now
 	 */
+	/* 
+	 * Mohammad: commented this out for more efficient 
+	 * delayed ack generation.
+	 *
 	if (delack_interval_ > 0.0 &&
 	    (delack_timer_.status() != TIMER_PENDING)) {
 		int last = int(now() / delack_interval_);
 		delack_timer_.resched(delack_interval_ * (last + 1.0) - now());
 	}
+	*/
+
+	if (dctcp_) 
+		update_dctcp_alpha(pkt);
 
 	/*
 	 * Try header prediction: in seq data or in seq pure ACK
@@ -1597,6 +1616,25 @@ FullTcpAgent::recv(Packet *pkt, Handler*)
 		//
 
 	    	if (ecn_) {
+			if (dctcp_) { // DCTCP	       
+				if (fh->ce() && fh->ect()) {
+					// no CWR from peer yet... arrange to
+					// keep sending ECNECHO
+					if (recent_ce_ == FALSE) {
+						ce_transition = 1;
+						recent_ce_ = TRUE;
+					} else {
+						ce_transition = 0;
+					}
+				} else if (datalen > 0 && !fh->ce() && fh->ect()){
+					if (recent_ce_ == TRUE) {
+						ce_transition = 1;
+						recent_ce_ = FALSE;
+					} else {
+						ce_transition = 0;
+					}
+				}  
+			} else {
 	    		if (fh->ce() && fh->ect()) {
 	    			// no CWR from peer yet... arrange to
 	    			// keep sending ECNECHO
@@ -1606,6 +1644,7 @@ FullTcpAgent::recv(Packet *pkt, Handler*)
 	    			// sending ECNECHO bits
 	    			recent_ce_ = FALSE;
 	    		}
+	    	}
 	    	}
 
 		// Header predication basically looks to see
@@ -1638,8 +1677,21 @@ FullTcpAgent::recv(Packet *pkt, Handler*)
 			//	this routine scans all tcpcb's looking for
 			//	DELACK segments and when it finds them
 			//	changes DELACK to ACKNOW and calls tcp_output()
+			
+			/* DCTCP receiver state machine */
+		        if (dctcp_ && ce_transition && ((rcv_nxt_ - last_ack_sent_) > 0)) {
+				// Must send an immediate ACK with with previous ECN state 
+				// before transitioning to new state
+				flags_ |= TF_ACKNOW;
+				recent_ce_ = !recent_ce_;		
+				send_much(1, REASON_NORMAL, maxburst_);
+				recent_ce_ = !recent_ce_;			  
+			}
+			
 			rcv_nxt_ += datalen;
 			flags_ |= TF_DELACK;
+			// Mohammad
+			delack_timer_.resched(delack_interval_);
 			recvBytes(datalen); // notify application of "delivery"
 			//
 			// special code here to simulate the operation
@@ -1816,6 +1868,8 @@ if (t_rtt_) {
 			 */
 			if (datalen > 0) {
 				flags_ |= TF_DELACK;	// data there: wait
+				// Mohammad
+				delack_timer_.resched(delack_interval_);
 			} else {
 				flags_ |= TF_ACKNOW;	// ACK peer's SYN
 			}
@@ -2131,10 +2185,31 @@ trimthenstep6:
                 // cong_action bit
                 // 
                 if (ecn_) {
-                        if (fh->ce() && fh->ect())
+			if (dctcp_) { // Mohammad		       
+				if (fh->ce() && fh->ect()) {
+					// no CWR from peer yet... arrange to
+					// keep sending ECNECHO
+					if (recent_ce_ == FALSE) {
+						ce_transition = 1;
                                 recent_ce_ = TRUE;
-                        else if (fh->cwr()) 
+					} else {
+						ce_transition = 0;
+					}
+				} else if (datalen > 0 && !fh->ce() && fh->ect()){
+					if (recent_ce_ == TRUE) {
+						ce_transition = 1;
                                 recent_ce_ = FALSE;
+					} else {
+						ce_transition = 0;
+					}
+				}		
+			} else {
+				if (fh->ce() && fh->ect()) {
+					recent_ce_ = TRUE;
+				} else if (fh->cwr()) { 
+					recent_ce_ = FALSE;
+				}		    
+			}
                 }
 
 		//
@@ -2297,11 +2372,19 @@ process_ACK:
 		if ((!delay_growth_ || (rcv_nxt_ > 0)) &&
 		    last_state_ == TCPS_ESTABLISHED) {
 			if (!partial || open_cwnd_on_pack_) {
-                           if (!ect_ || !hdr_flags::access(pkt)->ecnecho())
+                           if (!ect_ || !hdr_flags::access(pkt)->ecnecho() || ecn_burst_)
 				opencwnd();
                         }
 		}
 
+		// Mohammad: Detect bursts of ECN marks
+		if (ect_) {
+			if (!ecn_burst_ && hdr_flags::access(pkt)->ecnecho())
+				ecn_burst_ = TRUE;
+			else if (ecn_burst_ && ! hdr_flags::access(pkt)->ecnecho())
+				ecn_burst_ = FALSE;
+		}
+		
 		if ((state_ >= TCPS_FIN_WAIT_1) && (ackno == maxseq_)) {
 			ourfinisacked = TRUE;
 		}
@@ -2395,7 +2478,21 @@ step6:
 			// don't really have a process anyhow, just
 			// accept the data here as-is (i.e. don't
 			// require being in ESTABLISHED state)
+			
+			/* Mohammad: For DCTCP state machine */
+		        if (dctcp_ && ce_transition && ((rcv_nxt_ - last_ack_sent_) > 0)) {
+				// Must send an immediate ACK with with previous ECN state 
+				// before transitioning to new state
+				flags_ |= TF_ACKNOW;
+				recent_ce_ = !recent_ce_;
+				send_much(1, REASON_NORMAL, maxburst_);
+				recent_ce_ = !recent_ce_;			  
+                        }
+			
 			flags_ |= TF_DELACK;
+			// Mohammad
+			delack_timer_.resched(delack_interval_);
+
 			rcv_nxt_ += datalen;
 			tiflags = tcph->flags() & TH_FIN;
 
@@ -2412,6 +2509,10 @@ step6:
 			// segments or hole-fills.  Also,
 			// send an ACK (or SACK) to the other side right now.
 			// Note that we may have just a FIN here (datalen = 0)
+
+			/* Note: The DCTCP receiver conveys the ECN-CE 
+			   received on each out-of-order data packet */
+
 			int rcv_nxt_old_ = rcv_nxt_; // notify app. if changes
 			tiflags = reass(pkt);
 			if (rcv_nxt_ > rcv_nxt_old_) {
@@ -2608,9 +2709,47 @@ FullTcpAgent::timeout_action()
 	}
 	reset_rtx_timer(1);
 	t_seqno_ = (highest_ack_ < 0) ? iss_ : int(highest_ack_);
+	dctcp_alpha_update_seq = t_seqno_;
+	dctcp_maxseq = dctcp_alpha_update_seq;
 	fastrecov_ = FALSE;
 	dupacks_ = 0;
 }
+
+/*
+ * Update dctcp alpha based on the ecn bit in the received packet.
+ * This procedure is called only when dctcp_ is 1.
+ */
+void FullTcpAgent::update_dctcp_alpha(Packet *pkt)
+{
+	int ecnbit = hdr_flags::access(pkt)->ecnecho();
+	int ackno = hdr_tcp::access(pkt)->ackno();
+	int acked_bytes = ackno - highest_ack_; 
+
+	if (acked_bytes <= 0) 
+		acked_bytes = size_;	
+	dctcp_total += acked_bytes;
+	if (ecnbit) {
+		dctcp_marked += acked_bytes;
+	}
+
+	/* Check for barrier indicating its time to recalculate alpha.
+	 * This code basically updated alpha roughly once per RTT.
+	 */
+	if (ackno > dctcp_alpha_update_seq) {
+		double temp_alpha;
+		dctcp_alpha_update_seq = dctcp_maxseq;
+		if (dctcp_total > 0) 
+			temp_alpha = ((double) dctcp_marked) / dctcp_total;
+		else 
+			temp_alpha = 0.0;
+
+		dctcp_alpha_ = (1 - dctcp_g_) * dctcp_alpha_ + dctcp_g_ * temp_alpha;
+		dctcp_marked = 0;
+		dctcp_total = 0;
+	}
+}
+
+
 /*
  * deal with timers going off.
  * 2 types for now:
@@ -2662,7 +2801,8 @@ FullTcpAgent::timeout(int tno)
                         flags_ |= TF_ACKNOW;
                         send_much(1, REASON_NORMAL, 0);
                 }
-                delack_timer_.resched(delack_interval_);
+		// Mohammad
+                // delack_timer_.resched(delack_interval_);
 		break;
 	default:
 		fprintf(stderr, "%f: FullTcpAgent(%s) Unknown Timeout type %d\n",
@@ -2874,6 +3014,9 @@ SackFullTcpAgent::dupack_action()
 		 * packet.   -M. Weigle  6/19/02
 		 */
 		last_cwnd_action_ = CWND_ACTION_DUPACK;
+		/* Mohammad: cut window by half when we have 3 dup ack */
+		if (dctcp_) 
+			slowdown(CLOSE_SSTHRESH_HALF|CLOSE_CWND_HALF); 
 		cancel_rtx_timer();
 		rtt_active_ = FALSE;
 		int amt = fast_retransmit(highest_ack_);

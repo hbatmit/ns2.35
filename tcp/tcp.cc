@@ -101,6 +101,9 @@ TcpAgent::TcpAgent()
         bind("necnresponses_", &necnresponses_);
         bind("ncwndcuts_", &ncwndcuts_);
 	bind("ncwndcuts1_", &ncwndcuts1_);
+	bind("dctcp_", &dctcp_);
+	bind("dctcp_alpha_", &dctcp_alpha_);
+	bind("dctcp_g_", &dctcp_g_);
 #endif /* TCP_DELAY_BIND_ALL */
 
 }
@@ -123,6 +126,11 @@ TcpAgent::delay_bind_init_all()
         delay_bind_init_one("overhead_");
         delay_bind_init_one("tcpTick_");
         delay_bind_init_one("ecn_");
+	// DCTCP
+	delay_bind_init_one("dctcp_"); 
+	delay_bind_init_one("dctcp_alpha_");
+	delay_bind_init_one("dctcp_g_");
+
         delay_bind_init_one("SetCWRonRetransmit_");
         delay_bind_init_one("old_ecn_");
         delay_bind_init_one("bugfix_ss_");
@@ -234,6 +242,10 @@ TcpAgent::delay_bind_dispatch(const char *varName, const char *localName, TclObj
         if (delay_bind(varName, localName, "overhead_", &overhead_, tracer)) return TCL_OK;
         if (delay_bind(varName, localName, "tcpTick_", &tcp_tick_, tracer)) return TCL_OK;
         if (delay_bind_bool(varName, localName, "ecn_", &ecn_, tracer)) return TCL_OK;
+	// Mohammad
+        if (delay_bind_bool(varName, localName, "dctcp_", &dctcp_, tracer)) return TCL_OK; 
+	if (delay_bind(varName, localName, "dctcp_alpha_", &dctcp_alpha_ , tracer)) return TCL_OK;
+	if (delay_bind(varName, localName, "dctcp_g_", &dctcp_g_ , tracer)) return TCL_OK;
         if (delay_bind_bool(varName, localName, "SetCWRonRetransmit_", &SetCWRonRetransmit_, tracer)) return TCL_OK;
         if (delay_bind_bool(varName, localName, "old_ecn_", &old_ecn_ , tracer)) return TCL_OK;
         if (delay_bind_bool(varName, localName, "bugfix_ss_", &bugfix_ss_ , tracer)) return TCL_OK;
@@ -1297,6 +1309,8 @@ TcpAgent::slowdown(int how)
 		} else {
 			ssthresh_ = (int) decreasewin;
 		}
+	else if (how & CLOSE_SSTHRESH_DCTCP) 
+		ssthresh_ = (int) ((1 - dctcp_alpha_/2.0) * windowd());
         else if (how & THREE_QUARTER_SSTHRESH)
 		if (ssthresh_ < 3*cwnd_/4)
 			ssthresh_  = (int)(3*cwnd_/4);
@@ -1306,6 +1320,8 @@ TcpAgent::slowdown(int how)
 		if (first_decrease_ == 1 || slowstart || decrease_num_ == 0.5) {
 			cwnd_ = halfwin;
 		} else cwnd_ = decreasewin;
+	else if (how & CLOSE_CWND_DCTCP)
+		cwnd_ = (1 - dctcp_alpha_/2.0) * windowd();
         else if (how & CWND_HALF_WITH_MIN) {
 		// We have not thought about how non-standard TCPs, with
 		// non-standard values of decrease_num_, should respond
@@ -1328,7 +1344,9 @@ TcpAgent::slowdown(int how)
 	}
 	if (ssthresh_ < 2)
 		ssthresh_ = 2;
-	if (how & (CLOSE_CWND_HALF|CLOSE_CWND_RESTART|CLOSE_CWND_INIT|CLOSE_CWND_ONE))
+	if (cwnd_ < 1)
+		cwnd_ = 1;
+	if (how & (CLOSE_CWND_HALF|CLOSE_CWND_RESTART|CLOSE_CWND_INIT|CLOSE_CWND_ONE|CLOSE_CWND_DCTCP))
 		cong_action_ = TRUE;
 
 	fcnt_ = count_ = 0;
@@ -1429,6 +1447,9 @@ void TcpAgent::ecn(int seqno)
 				rtt_backoff();
 			else ecn_backoff_ = 1;
 		} else ecn_backoff_ = 0;
+		if (dctcp_)  
+			slowdown(CLOSE_CWND_DCTCP|CLOSE_SSTHRESH_DCTCP);
+		else
 		slowdown(CLOSE_CWND_HALF|CLOSE_SSTHRESH_HALF);
 		++necnresponses_ ;
 		// added by sylvia to count number of ecn responses 
