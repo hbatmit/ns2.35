@@ -24,6 +24,10 @@ set enableNAM 0
 
 set ns [new Simulator]
 
+### Turn on all tracing ###
+set allchan [open all.tr w]
+$ns trace-all $allchan
+
 Agent/TCP set ecn_ 1
 Agent/TCP set old_ecn_ 1
 Agent/TCP set packetSize_ $packetSize
