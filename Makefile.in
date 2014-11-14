@@ -71,7 +71,7 @@ INCLUDES = \
 	-I./diffusion3/lib/main -I./diffusion3/lib \
 	-I./diffusion3/lib/nr -I./diffusion3/ns \
 	-I./diffusion3/filter_core -I./asim/ -I./qs \
-	-I./diffserv -I./satellite \
+	-I./diffserv -I./satellite -I./pause \
 	-I./wpan
 
 
