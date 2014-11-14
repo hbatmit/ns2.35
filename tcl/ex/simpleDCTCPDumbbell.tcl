@@ -1,7 +1,7 @@
 set ns [new Simulator]
 
 set N 8
-set B 250
+set B 2500000
 set K 65
 set RTT 0.0001
 
