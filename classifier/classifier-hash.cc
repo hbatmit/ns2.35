@@ -62,6 +62,39 @@ extern "C" {
 #include "queue.h"
 
 /****************** HashClassifier Methods ************/
+void DestHashClassifier::deque_callback(Packet* p) {
+	if (p != nullptr) {
+		if (hdr_cmn::access(p)->ptype() == PT_PAUSE) {
+			// If this is a pause packet, don't account for it
+			assert(hdr_ip::access(p)->saddr() == node_id_);
+			hdr_cmn::access(p)->input_port() = node_id_;
+		} else {
+			const int32_t input_port = hdr_cmn::access(p)->input_port();
+			assert(input_counters_.at(input_port) > 0);
+			input_counters_.at(input_port)--;
+
+			/* Resume logic */
+			if (input_counters_.at(input_port) < 5 and
+			    is_paused(input_port)) {
+				auto unpause_pkt = generate_pause_pkt(input_port, 0);
+				if (input_port != -1) {
+					/* No point sending a pause to an agent */
+					int slot = lookup(unpause_pkt);
+					slot_[slot]->recv(unpause_pkt);
+					printf("unpausing at %f from %d to %d\n",
+						Scheduler::instance().clock(),
+						node_id_,
+						input_port);
+					paused_.at(input_port) = false;
+				}
+			}
+
+			/* change input_port() and forward onward */
+			hdr_cmn::access(p)->input_port() = node_id_;
+		}
+	}
+}
+
 bool DestHashClassifier::is_paused(const int32_t port) {
 	if (paused_.find(port) == paused_.end()) {
 		return false;
@@ -89,6 +122,73 @@ NsObject* DestHashClassifier::find_dst(const int32_t dst) {
 	auto ret = find(fake_pkt);
 	Packet::free(fake_pkt);
 	return ret;
+}
+
+void DestHashClassifier::recv(Packet* p, Handler*h) {
+	NsObject* node = find(p);
+	assert(node != NULL);
+
+	if (hdr_cmn::access(p)->ptype() == PT_PAUSE) {
+		if (hdr_pause::access(p)->class_pause_durations_[0] == 0) {
+			/* If you are receiving a resume */
+			const auto src_addr = hdr_ip::access(p)->saddr();
+			assert(src_addr != node_id_);
+
+			/* Unblock queue */
+			auto queue_to_unblock = find_node_type<Queue>(find_dst(src_addr));
+			assert(queue_to_unblock->blocked() == 1);
+			queue_to_unblock->unblock();
+
+			/* The pause packet's work is done, free it */
+			Packet::free(p);
+			return;
+		}
+
+		else {
+			/* If you are receiving a pause */
+			const auto src_addr = hdr_ip::access(p)->saddr();
+			assert(src_addr != node_id_);
+
+			/* Find the LinkDelay class */
+			/* Cancel timer that fires after existing packet delivery event */
+			auto link_to_pause = find_node_type<LinkDelay>(find_dst(src_addr));
+			Scheduler::instance().cancel(&link_to_pause->intr());
+
+			/* Set queue to blocked */
+			auto queue_to_block = find_node_type<Queue>(find_dst(src_addr));
+			queue_to_block->block();
+
+			/* The pause packet's work is done, free it */
+			Packet::free(p);
+			return;
+		}
+	}
+
+	if (dynamic_cast<PortClassifier*>(node) != nullptr) {
+		/* If "node" points to an agent, do nothing, we have reached destination */
+		auto agent_target = dynamic_cast<Agent*>(dynamic_cast<PortClassifier*>(node)->find(p));
+		assert(agent_target != nullptr);
+	} else {
+		/* Input accounting for pause */
+		const int32_t input_port = hdr_cmn::access(p)->input_port();
+		input_counters_[input_port]++;
+		if (input_counters_[input_port] > 1000 and
+		    (not is_paused(input_port))) {
+			auto pause_pkt = generate_pause_pkt(input_port);
+			if (hdr_cmn::access(p)->input_port() != -1) {
+				/* No point sending a pause to an agent */
+				printf("Pausing at %f from %d to %d\n",
+					Scheduler::instance().clock(),
+					node_id_,
+					input_port);
+				int slot = lookup(pause_pkt);
+				slot_[slot]->recv(pause_pkt);
+				paused_[input_port] = true;
+			}
+		}
+	}
+	/* Either way send it to node */
+	node->recv(p,h);
 }
 
 int HashClassifier::classify(Packet * p) {

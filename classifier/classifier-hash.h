@@ -177,7 +177,11 @@ public:
 	virtual int command(int argc, const char*const* argv);
 	int classify(Packet *p);
 	virtual void do_install(char *dst, NsObject *target);
+	void recv(Packet* p, Handler* h) override;
+	void deque_callback(Packet* p);
+
 protected:
+	std::map<int32_t, uint64_t> input_counters_;
 	std::map<int32_t, bool> paused_;
 	const char* hashkey(nsaddr_t, nsaddr_t dst, int) {
 		long key = mshift(dst);
