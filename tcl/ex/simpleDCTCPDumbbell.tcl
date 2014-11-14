@@ -17,7 +17,7 @@ set allchan [open all.tr w]
 $ns trace-all $allchan
 
 ## Turn on DCTCP ##
-set sourceAlg RED
+set sourceAlg DropTail
 source configs/dctcp-defaults.tcl
 
 # Procedure to attach classifier to queues
