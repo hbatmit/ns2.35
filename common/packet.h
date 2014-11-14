@@ -606,6 +606,7 @@ struct hdr_cmn {
 	int	error_;		// error flag
 	int     errbitcnt_;     // # of corrupted bits jahn
 	int     fecsize_;
+	int32_t input_port_;    // Anirudh: for shared-memory switches, which port did it come in on?
 	double	ts_;		// timestamp: for q-delay measurement
 	int	iface_;		// receiving interface (label)
 	dir_t	direction_;	// direction: 0=none, 1=up, -1=down
@@ -658,6 +659,7 @@ struct hdr_cmn {
 	inline int& error() { return error_; }
 	inline int& errbitcnt() {return errbitcnt_; }
 	inline int& fecsize() {return fecsize_; }
+	inline int32_t& input_port() { return (input_port_); }
 	inline double& timestamp() { return (ts_); }
 	inline int& iface() { return (iface_); }
 	inline dir_t& direction() { return (direction_); }
