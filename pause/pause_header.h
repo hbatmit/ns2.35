@@ -8,8 +8,8 @@ struct hdr_pause {
   static const int ETH_CTRL_FRAME_SIZE = 64;
   static const size_t NUM_ETH_CLASS = 8;
 
-  std::vector<uint16_t> class_pause_durations_;
-  std::vector<bool> class_enable_vector_;
+  uint16_t class_pause_durations_[NUM_ETH_CLASS];
+  bool class_enable_vector_[NUM_ETH_CLASS];
 
   /* Packet header access functions */
   static int offset_;
@@ -19,7 +19,7 @@ struct hdr_pause {
   }
 
   /* Default ctor */
-  hdr_pause();
+  hdr_pause() = delete;
 
   /* Fill in fields */
   static void fill_in(Packet* p,
