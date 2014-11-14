@@ -20,6 +20,16 @@ $ns trace-all $allchan
 set sourceAlg RED
 source configs/dctcp-defaults.tcl
 
+# Procedure to attach classifier to queues
+# for nodes n1 and n2
+proc attach-classifiers {ns n1 n2} {
+    set fwd_queue [[$ns link $n1 $n2] queue]
+    $fwd_queue attach-classifier [$n1 entry]
+
+    set bwd_queue [[$ns link $n2 $n1] queue]
+    $bwd_queue attach-classifier [$n2 entry]
+}
+
 ##### Topology ###########
 set lineRate 10Gb
 set inputLineRate 11Gb
@@ -33,10 +43,13 @@ set nclient [$ns node]
 
 for {set i 0} {$i < $N} {incr i} {
     $ns duplex-link $n($i) $nqueue $inputLineRate [expr $RTT/4] DropTail
+    attach-classifiers $ns $n($i) $nqueue
 }
 
 $ns simplex-link $nqueue $nclient $lineRate [expr $RTT/4] $sourceAlg
 $ns simplex-link $nclient $nqueue $lineRate [expr $RTT/4] DropTail
+attach-classifiers $ns $nqueue $nclient
+
 $ns queue-limit $nqueue $nclient $B
 
 for {set i 0} {$i < $N} {incr i} {
