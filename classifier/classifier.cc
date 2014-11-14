@@ -52,13 +52,14 @@ public:
 
 
 Classifier::Classifier() : 
-	slot_(0), nslot_(0), maxslot_(-1), shift_(0), mask_(0xffffffff), nsize_(0)
+	slot_(0), nslot_(0), maxslot_(-1), shift_(0), mask_(0xffffffff), node_id_(-1), nsize_(0)
 {
 	default_target_ = 0;
 
 	bind("offset_", &offset_);
 	bind("shift_", &shift_);
 	bind("mask_", &mask_);
+	bind("node_id_", &node_id_);
 }
 
 int Classifier::classify(Packet *p)

@@ -375,6 +375,7 @@ Filter/Field set match_  -1
 Classifier set offset_ 0
 Classifier set shift_ 0
 Classifier set mask_ 0xffffffff
+Classifier set node_id_ -1
 Classifier set debug_ false
 
 Classifier/Hash set default_ -1; # none

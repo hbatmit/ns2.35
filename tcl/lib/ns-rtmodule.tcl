@@ -140,6 +140,8 @@ RtModule/Base instproc register { node } {
 	set classifier_ [new Classifier/Hash/Dest 32]
 	$classifier_ set mask_ [AddrParams NodeMask 1]
 	$classifier_ set shift_ [AddrParams NodeShift 1]
+	$classifier_ set node_id_ [$node id]
+
 	# XXX Base should ALWAYS be the first module to be installed.
 
 	$node install-entry $self $classifier_
