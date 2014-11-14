@@ -38,6 +38,7 @@ static const char rcsid[] =
 #endif
 
 #include "drop-tail.h"
+#include "classifier-hash.h"
 
 static class DropTailClass : public TclClass {
  public:
@@ -130,7 +131,9 @@ Packet* DropTail::deque()
         if (summarystats && &Scheduler::instance() != NULL) {
                 Queue::updateStats(qib_?q_->byteLength():q_->length());
         }
-	return q_->deque();
+	auto ret = q_->deque();
+	classifier_->deque_callback(ret);
+	return ret;
 }
 
 void DropTail::print_summarystats()
