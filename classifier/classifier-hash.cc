@@ -55,8 +55,41 @@ extern "C" {
 #include "ip.h"
 #include "classifier.h"
 #include "classifier-hash.h"
+#include "classifier-port.h"
+#include "agent.h"
+#include "pause_header.h"
+#include "delay.h"
+#include "queue.h"
 
 /****************** HashClassifier Methods ************/
+bool DestHashClassifier::is_paused(const int32_t port) {
+	if (paused_.find(port) == paused_.end()) {
+		return false;
+	} else {
+		return paused_.at(port);
+	}
+}
+
+Packet* DestHashClassifier::generate_pause_pkt(const int32_t port_to_pause, const uint16_t pause = 1) {
+	Packet* pause_pkt = Packet::alloc();
+	hdr_pause::fill_in(pause_pkt, {pause, pause, pause, pause, pause, pause, pause, pause},
+			  {true, true, true, true, true, true, true, true});
+	hdr_ip::access(pause_pkt)->saddr() = node_id_;
+	hdr_ip::access(pause_pkt)->daddr() = port_to_pause;
+	assert(hdr_ip::access(pause_pkt)->saddr() != hdr_ip::access(pause_pkt)->daddr());
+	hdr_ip::access(pause_pkt)->ttl() = 32;
+	return pause_pkt;
+}
+
+NsObject* DestHashClassifier::find_dst(const int32_t dst) {
+	/* Create a fake packet to lookup destination */
+	Packet *fake_pkt = Packet::alloc();
+	hdr_ip::access(fake_pkt)->saddr() = node_id_;
+	hdr_ip::access(fake_pkt)->daddr() = dst;
+	auto ret = find(fake_pkt);
+	Packet::free(fake_pkt);
+	return ret;
+}
 
 int HashClassifier::classify(Packet * p) {
 	int slot= lookup(p);

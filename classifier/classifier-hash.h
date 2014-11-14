@@ -34,6 +34,9 @@
  * $Header: /cvsroot/nsnam/ns-2/classifier/classifier-hash.h,v 1.10 2010/03/08 05:54:49 tom_henderson Exp $
  */
 
+#include <map>
+#include <cstdint>
+#include "connector.h"
 #include "classifier.h"
 #include "ip.h"
 
@@ -175,9 +178,28 @@ public:
 	int classify(Packet *p);
 	virtual void do_install(char *dst, NsObject *target);
 protected:
+	std::map<int32_t, bool> paused_;
 	const char* hashkey(nsaddr_t, nsaddr_t dst, int) {
 		long key = mshift(dst);
 		return (const char*) key;
 	}
+	template <class NodeType>
+	NodeType* find_node_type(NsObject* node) {
+		if (dynamic_cast<NodeType*>(node) != NULL) {
+			/* Either this is the NodeType */
+			return dynamic_cast<NodeType*>(node);
+		} else if (dynamic_cast<Connector*>(node) != NULL) {
+			/* Or chase pointers until you find a NodeType */
+			return find_node_type<NodeType>(dynamic_cast<Connector*>(node)->target());
+		} else {
+			/* But without a Connector, you are out of luck */
+			return NULL;
+		}
+	}
+
+private:
+	Packet* generate_pause_pkt(const int32_t port_to_pause, const uint16_t);
+	NsObject* find_dst(const int32_t dst);
+	bool is_paused(const int32_t port);
 };
 
