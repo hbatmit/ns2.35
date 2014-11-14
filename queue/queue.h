@@ -40,6 +40,9 @@
 #include "connector.h"
 #include "packet.h"
 #include "ip.h"
+
+class DestHashClassifier;
+
 class Packet;
 
 class PacketQueue : public TclObject {
@@ -155,7 +158,7 @@ protected:
 	double true_ave_;	/* true long-term average queue size */
 	double total_time_;	/* total time average queue size compute for */
 
-
+	int command(int argc, const char*const* argv) override;
 	void utilUpdate(double int_begin, double int_end, int link_state);
 	double last_change_;  /* time at which state changed/utilization measured */
 	double old_util_;     /* current utilization */ 
@@ -170,6 +173,7 @@ protected:
 	int util_records_;	/* Number of recent utilization measurements
 				   stored in memory. One slot in buffer holds
 				   period of util_check_intv_ seconds. */
+	DestHashClassifier *classifier_; /* for callbacks on deque */
 	// measuring #drops
 	
 };

@@ -40,6 +40,7 @@ static const char rcsid[] =
 #include "queue.h"
 #include <math.h>
 #include <stdio.h>
+#include "classifier-hash.h"
 
 void PacketQueue::remove(Packet* target)
 {
@@ -205,6 +206,23 @@ void Queue::updateStats(int queuesize)
                 true_ave_ = (oldtime * oldave + newtime * queuesize) /now;
                 total_time_ = now;
         }
+}
+
+int Queue::command(int argc, const char*const* argv) {
+	Tcl& tcl = Tcl::instance();
+	/*XXX*/
+	if (argc == 3) {
+		if (strcmp(argv[1], "attach-classifier") == 0) {
+			classifier_ = dynamic_cast<DestHashClassifier*>
+	                              (TclObject::lookup(argv[2]));
+			if (classifier_ == nullptr) {
+				tcl.resultf("no such object %s", argv[2]);
+				return (TCL_ERROR);
+			}
+			return (TCL_OK);
+		}
+	}
+	return Connector::command(argc, argv);
 }
 
 void Queue::resume()
