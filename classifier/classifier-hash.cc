@@ -76,7 +76,7 @@ void DestHashClassifier::deque_callback(Packet* p) {
 			/* Resume logic */
 			if (input_counters_.at(input_port) < 5 and
 			    is_paused(input_port)) {
-				auto unpause_pkt = generate_pause_pkt(input_port, 0);
+				auto unpause_pkt = generate_pause_pkt(input_port, PauseAction::RESUME);
 				if (input_port != -1) {
 					/* No point sending a pause to an agent */
 					int slot = lookup(unpause_pkt);
@@ -103,8 +103,9 @@ bool DestHashClassifier::is_paused(const int32_t port) {
 	}
 }
 
-Packet* DestHashClassifier::generate_pause_pkt(const int32_t port_to_pause, const uint16_t pause = 1) {
+Packet* DestHashClassifier::generate_pause_pkt(const int32_t port_to_pause, const PauseAction action) {
 	Packet* pause_pkt = Packet::alloc();
+        uint16_t pause = (action == PauseAction::PAUSE) ? 1 : 0;
 	hdr_pause::fill_in(pause_pkt, {pause, pause, pause, pause, pause, pause, pause, pause},
 			  {true, true, true, true, true, true, true, true});
 	hdr_ip::access(pause_pkt)->saddr() = node_id_;
@@ -174,7 +175,7 @@ void DestHashClassifier::recv(Packet* p, Handler*h) {
 		input_counters_[input_port]++;
 		if (input_counters_[input_port] > 1000 and
 		    (not is_paused(input_port))) {
-			auto pause_pkt = generate_pause_pkt(input_port);
+			auto pause_pkt = generate_pause_pkt(input_port, PauseAction::PAUSE);
 			if (hdr_cmn::access(p)->input_port() != -1) {
 				/* No point sending a pause to an agent */
 				printf("Pausing at %f from %d to %d\n",
