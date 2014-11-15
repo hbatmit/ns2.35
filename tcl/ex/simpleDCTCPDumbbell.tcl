@@ -12,10 +12,6 @@ set packetSize 1460
 Agent/TCP set packetSize_ $packetSize
 Agent/TCP/FullTcp set segsize_ $packetSize
 
-### Turn on all tracing ###
-set allchan [open all.tr w]
-$ns trace-all $allchan
-
 ## Turn on DCTCP ##
 set sourceAlg DropTail
 source configs/dctcp-defaults.tcl
@@ -51,6 +47,8 @@ $ns simplex-link $nclient $nqueue $lineRate [expr $RTT/4] DropTail
 attach-classifiers $ns $nqueue $nclient
 
 $ns queue-limit $nqueue $nclient $B
+set traceSamplingInterval 0.0001
+set queue_fh [open queue.tr w]
 
 for {set i 0} {$i < $N} {incr i} {
     set tcp($i) [new Agent/TCP/FullTcp/Sack]
@@ -80,11 +78,13 @@ for {set i 0} {$i < $N} {incr i} {
 }
 
 proc finish {} {
-        global ns allchan
+        global ns queue_fh
         $ns flush-trace
-        close $allchan
+	close $queue_fh
 	exit 0
 }
 
 $ns at $simulationTime "finish"
+set qfile [$ns monitor-queue $nqueue $nclient $queue_fh $traceSamplingInterval]
+$ns at 0 "[$ns link $nqueue $nclient] queue-sample-timeout"
 $ns run
