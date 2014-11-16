@@ -81,10 +81,10 @@ void DestHashClassifier::deque_callback(Packet* p) {
 					/* No point sending a pause to an agent */
 					int slot = lookup(unpause_pkt);
 					slot_[slot]->recv(unpause_pkt);
-					printf("unpausing at %f from %d to %d\n",
-						Scheduler::instance().clock(),
-						node_id_,
-						input_port);
+					//printf("unpausing at %f from %d to %d\n",
+					//	Scheduler::instance().clock(),
+					//	node_id_,
+					//	input_port);
 					paused_.at(input_port) = false;
 				}
 			}
@@ -178,10 +178,10 @@ void DestHashClassifier::recv(Packet* p, Handler*h) {
 			auto pause_pkt = generate_pause_pkt(input_port, PauseAction::PAUSE);
 			if (hdr_cmn::access(p)->input_port() != -1) {
 				/* No point sending a pause to an agent */
-				printf("Pausing at %f from %d to %d\n",
-					Scheduler::instance().clock(),
-					node_id_,
-					input_port);
+				//printf("Pausing at %f from %d to %d\n",
+				//	Scheduler::instance().clock(),
+				//	node_id_,
+				//	input_port);
 				int slot = lookup(pause_pkt);
 				slot_[slot]->recv(pause_pkt);
 				paused_[input_port] = true;
