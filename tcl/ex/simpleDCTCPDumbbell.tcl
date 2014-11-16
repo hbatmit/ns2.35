@@ -47,8 +47,6 @@ $ns simplex-link $nclient $nqueue $lineRate [expr $RTT/4] DropTail
 attach-classifiers $ns $nqueue $nclient
 
 $ns queue-limit $nqueue $nclient $B
-set traceSamplingInterval 0.0001
-set queue_fh [open queue.tr w]
 
 for {set i 0} {$i < $N} {incr i} {
     set tcp($i) [new Agent/TCP/FullTcp/Sack]
@@ -86,6 +84,8 @@ proc finish {} {
 }
 
 ### Measure throughput ###
+set traceSamplingInterval 0.0001
+set queue_fh [open queue.tr w]
 set qfile [$ns monitor-queue $nqueue $nclient $queue_fh $traceSamplingInterval]
 
 proc startMeasurement {} {
