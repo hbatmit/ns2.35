@@ -73,7 +73,7 @@ for {set i 0} {$i < $N} {incr i} {
 
 for {set i 0} {$i < $N} {incr i} {
     $ns at 0.0 "$ftp($i) send 10000"
-    $ns at [expr 0.1 + $simulationTime * $i / ($N + 0.0001)] "$ftp($i) start"
+    $ns at 0.0 "$ftp($i) start"
     $ns at [expr $simulationTime] "$ftp($i) stop"
 }
 
