@@ -77,6 +77,7 @@ for {set i 0} {$i < $N} {incr i} {
     $ns at [expr $simulationTime] "$ftp($i) stop"
 }
 
+### Cleanup procedure ###
 proc finish {} {
         global ns queue_fh
         $ns flush-trace
@@ -84,7 +85,21 @@ proc finish {} {
 	exit 0
 }
 
-$ns at $simulationTime "finish"
+### Measure throughput ###
 set qfile [$ns monitor-queue $nqueue $nclient $queue_fh $traceSamplingInterval]
-$ns at 0 "[$ns link $nqueue $nclient] queue-sample-timeout"
+
+proc startMeasurement {} {
+  global qfile startPacketCount
+  set startPacketCount [$qfile set pdepartures_]
+}
+
+proc stopMeasurement {} {
+  global qfile simulationTime startPacketCount packetSize
+  set stopPacketCount [$qfile set pdepartures_]
+  puts "Throughput = [expr ($stopPacketCount-$startPacketCount)/(1024.0*1024*($simulationTime))*$packetSize*8] Mbps"
+}
+
+$ns at 0 "startMeasurement"
+$ns at $simulationTime "stopMeasurement"
+$ns at $simulationTime "finish"
 $ns run
