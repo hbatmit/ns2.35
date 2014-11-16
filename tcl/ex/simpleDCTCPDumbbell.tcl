@@ -62,6 +62,27 @@ for {set i 0} {$i < $N} {incr i} {
     $ns connect $tcp($i) $sink($i)
 }
 
+# Transit traffic to show pause's collateral damage
+# another node connected to nqueue
+set n_extra [$ns node]
+$ns duplex-link $n_extra $nqueue $inputLineRate [expr $RTT/4] DropTail
+attach-classifiers $ns $n_extra $nqueue
+
+# TCP agents
+set tcp_left_src [new Agent/TCP/FullTcp/Sack]
+set tcp_right_sink [new Agent/TCP/FullTcp/Sack]
+$tcp_right_sink listen
+$ns attach-agent $n(0) $tcp_left_src
+$ns attach-agent $n_extra $tcp_right_sink
+$ns connect $tcp_left_src $tcp_right_sink
+
+# FTP agents
+set ftp_extra [new Application/FTP]
+$ftp_extra attach-agent $tcp_left_src
+$ns at 0.0 "$ftp_extra send 10000"
+$ns at 0.0 "$ftp_extra start"
+$ns at $simulationTime "$ftp_extra stop"
+
 #### Application: long-running FTP #####
 
 for {set i 0} {$i < $N} {incr i} {
