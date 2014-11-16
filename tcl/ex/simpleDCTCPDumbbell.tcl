@@ -109,15 +109,21 @@ set traceSamplingInterval 0.0001
 set queue_fh [open queue.tr w]
 set qfile [$ns monitor-queue $nqueue $nclient $queue_fh $traceSamplingInterval]
 
+set transit_fh [open transit.tr w]
+set transit_monitor [$ns monitor-queue $nqueue $n_extra $transit_fh $traceSamplingInterval]
+
 proc startMeasurement {} {
-  global qfile startPacketCount
-  set startPacketCount [$qfile set pdepartures_]
+  global qfile transit_monitor startPacketCount_bneck startPacketCount_transit
+  set startPacketCount_bneck [$qfile set pdepartures_]
+  set startPacketCount_transit [$transit_monitor set pdepartures_]
 }
 
 proc stopMeasurement {} {
-  global qfile simulationTime startPacketCount packetSize
-  set stopPacketCount [$qfile set pdepartures_]
-  puts "Throughput = [expr ($stopPacketCount-$startPacketCount)/(1024.0*1024*($simulationTime))*$packetSize*8] Mbps"
+  global qfile transit_monitor simulationTime startPacketCount_bneck startPacketCount_transit packetSize
+  set stopPacketCount_bneck [$qfile set pdepartures_]
+  set stopPacketCount_transit [$transit_monitor set pdepartures_]
+  puts "Throughput (bneck) = [expr ($stopPacketCount_bneck -$startPacketCount_bneck)/(1024.0*1024*($simulationTime))*$packetSize*8] Mbps"
+  puts "Throughput (transit) = [expr ($stopPacketCount_transit-$startPacketCount_transit)/(1024.0*1024*($simulationTime))*$packetSize*8] Mbps"
 }
 
 $ns at 0 "startMeasurement"
