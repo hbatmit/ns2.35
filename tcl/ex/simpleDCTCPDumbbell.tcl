@@ -87,6 +87,7 @@ proc finish {} {
 set traceSamplingInterval 0.0001
 set queue_fh [open queue.tr w]
 set qfile [$ns monitor-queue $nqueue $nclient $queue_fh $traceSamplingInterval]
+$ns at 0 "[$ns link $nqueue $nclient] queue-sample-timeout"
 
 proc startMeasurement {} {
   global qfile startPacketCount
