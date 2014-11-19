@@ -27,52 +27,51 @@ proc attach-classifiers {ns n1 n2} {
 }
 
 ##### Topology ###########
-set lineRate 10Gb
-set inputLineRate 11Gb
+set inputLineRate 10Gb
 
 for {set i 0} {$i < $N} {incr i} {
     set n($i) [$ns node]
 }
 
-set nqueue [$ns node]
-set nclient [$ns node]
+set tor_node [$ns node]
 
+# pause instrumentation and queue monitors
 for {set i 0} {$i < $N} {incr i} {
-    $ns duplex-link $n($i) $nqueue $inputLineRate [expr $RTT/4] DropTail
-    attach-classifiers $ns $n($i) $nqueue
+    $ns duplex-link $n($i) $tor_node $inputLineRate [expr $RTT/4] DropTail
+    attach-classifiers $ns $n($i) $tor_node
+    set traceSamplingInterval 0.0001
+    set queue_fh [open "/dev/null" w]
+    set qmon($i) [$ns monitor-queue $tor_node $n($i) $queue_fh $traceSamplingInterval]
 }
 
-$ns simplex-link $nqueue $nclient $lineRate [expr $RTT/4] $sourceAlg
-$ns simplex-link $nclient $nqueue $lineRate [expr $RTT/4] DropTail
-attach-classifiers $ns $nqueue $nclient
-
-$ns queue-limit $nqueue $nclient $B
-
+## Full mesh of TCP connections
 for {set i 0} {$i < $N} {incr i} {
-    set tcp($i) [new Agent/TCP/FullTcp/Sack]
-    set sink($i) [new Agent/TCP/FullTcp/Sack]
-    $sink($i) listen
+  for {set j 0} {$j < $N} {incr j} {
+    if  {$i != $j} {
+      set tcp($i,$j) [new Agent/TCP/FullTcp/Sack]
+      set sink($i,$j) [new Agent/TCP/FullTcp/Sack]
+      $sink($i,$j) listen
 
-    $ns attach-agent $n($i) $tcp($i)
-    $ns attach-agent $nclient $sink($i)
+      $ns attach-agent $n($i) $tcp($i,$j)
+      $ns attach-agent $n($j) $sink($i,$j)
 
-    $tcp($i) set fid_ [expr $i]
-    $sink($i) set fid_ [expr $i]
-
-    $ns connect $tcp($i) $sink($i)
+      $ns connect $tcp($i,$j) $sink($i,$j)
+    }
+  }
 }
 
 #### Application: long-running FTP #####
 
 for {set i 0} {$i < $N} {incr i} {
-    set ftp($i) [new Application/FTP]
-    $ftp($i) attach-agent $tcp($i)
-}
-
-for {set i 0} {$i < $N} {incr i} {
-    $ns at 0.0 "$ftp($i) send 10000"
-    $ns at 0.0 "$ftp($i) start"
-    $ns at [expr $simulationTime] "$ftp($i) stop"
+  for {set j 0} {$j < $N} {incr j} {
+    if  {$i != $j} {
+      set ftp($i,$j) [new Application/FTP]
+      $ftp($i,$j) attach-agent $tcp($i,$j)
+      $ns at 0.0 "$ftp($i,$j) send 10000"
+      $ns at 0.0 "$ftp($i,$j) start"
+      $ns at [expr $simulationTime] "$ftp($i,$j) stop"
+    }
+  }
 }
 
 ### Cleanup procedure ###
@@ -84,20 +83,19 @@ proc finish {} {
 }
 
 ### Measure throughput ###
-set traceSamplingInterval 0.0001
-set queue_fh [open queue.tr w]
-set qfile [$ns monitor-queue $nqueue $nclient $queue_fh $traceSamplingInterval]
-$ns at 0 "[$ns link $nqueue $nclient] queue-sample-timeout"
-
 proc startMeasurement {} {
-  global qfile startPacketCount
-  set startPacketCount [$qfile set pdepartures_]
+  global qmon startByteCount N
+  for {set i 0} {$i < $N} {incr i} {
+    set startByteCount($i) [$qmon($i) set bdepartures_]
+  }
 }
 
 proc stopMeasurement {} {
-  global qfile simulationTime startPacketCount packetSize
-  set stopPacketCount [$qfile set pdepartures_]
-  puts "Throughput = [expr ($stopPacketCount-$startPacketCount)/(1024.0*1024*($simulationTime))*$packetSize*8] Mbps"
+  global qmon simulationTime startByteCount N
+  for {set i 0} {$i < $N} {incr i} {
+    set stopByteCount($i) [$qmon($i) set bdepartures_]
+    puts "Throughput($i) = [expr ($stopByteCount($i) - $startByteCount($i))/(1000000 * ($simulationTime))*8] Mbits/s"
+  }
 }
 
 $ns at 0 "startMeasurement"
