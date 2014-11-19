@@ -76,8 +76,8 @@ void DestHashClassifier::deque_callback(Packet* p) {
 			/* Resume logic */
 			if (input_counters_.at(input_port) < 5 and
 			    is_paused(input_port)) {
-				auto unpause_pkt = generate_pause_pkt(input_port, PauseAction::RESUME);
 				if (input_port != -1) {
+					auto unpause_pkt = generate_pause_pkt(input_port, PauseAction::RESUME);
 					/* No point sending a pause to an agent */
 					int slot = lookup(unpause_pkt);
 					slot_[slot]->recv(unpause_pkt);
@@ -175,8 +175,8 @@ void DestHashClassifier::recv(Packet* p, Handler*h) {
 		input_counters_[input_port]++;
 		if (input_counters_[input_port] > 1000 and
 		    (not is_paused(input_port))) {
-			auto pause_pkt = generate_pause_pkt(input_port, PauseAction::PAUSE);
-			if (hdr_cmn::access(p)->input_port() != -1) {
+			if (input_port != -1) {
+				auto pause_pkt = generate_pause_pkt(input_port, PauseAction::PAUSE);
 				/* No point sending a pause to an agent */
 				//printf("Pausing at %f from %d to %d\n",
 				//	Scheduler::instance().clock(),
