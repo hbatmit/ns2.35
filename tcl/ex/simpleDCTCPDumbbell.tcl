@@ -67,7 +67,6 @@ for {set i 0} {$i < $N} {incr i} {
     if  {$i != $j} {
       set ftp($i,$j) [new Application/FTP]
       $ftp($i,$j) attach-agent $tcp($i,$j)
-      $ns at 0.0 "$ftp($i,$j) send 10000"
       $ns at 0.0 "$ftp($i,$j) start"
       $ns at [expr $simulationTime] "$ftp($i,$j) stop"
     }
