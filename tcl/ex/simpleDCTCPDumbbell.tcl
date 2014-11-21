@@ -7,6 +7,9 @@ set RTT 0.0001
 
 set simulationTime 1.0
 
+assert [expr $simulationTime < 1.5]
+# Sequence number wraps around otherwise
+
 ##### Transport defaults, like packet size ######
 set packetSize 1460
 Agent/TCP set packetSize_ $packetSize
