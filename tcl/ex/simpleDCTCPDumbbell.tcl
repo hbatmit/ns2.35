@@ -42,8 +42,10 @@ set tor_node [$ns node]
 
 # pause instrumentation and queue monitors
 if {$enable_pause == 1} {
+    puts "Pause enabled"
     Queue set limit_ 10000000
 } else {
+    puts "Pause disabled"
     Queue set limit_ 1000
 }
 
