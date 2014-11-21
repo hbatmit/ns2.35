@@ -1,7 +1,7 @@
 set ns [new Simulator]
 
 set N 8
-set B 2500000
+set enable_pause 0
 set K 65
 set RTT 0.0001
 
@@ -38,9 +38,17 @@ for {set i 0} {$i < $N} {incr i} {
 set tor_node [$ns node]
 
 # pause instrumentation and queue monitors
+if {$enable_pause == 1} {
+    Queue set limit_ 10000000
+} else {
+    Queue set limit_ 1000
+}
+
 for {set i 0} {$i < $N} {incr i} {
     $ns duplex-link $n($i) $tor_node $inputLineRate [expr $RTT/4] DropTail
-    attach-classifiers $ns $n($i) $tor_node
+    if {$enable_pause == 1} {
+        attach-classifiers $ns $n($i) $tor_node
+    }
     set traceSamplingInterval 0.0001
     set queue_fh [open "/dev/null" w]
     set qmon($i) [$ns monitor-queue $tor_node $n($i) $queue_fh $traceSamplingInterval]

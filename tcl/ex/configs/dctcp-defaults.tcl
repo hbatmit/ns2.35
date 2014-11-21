@@ -16,7 +16,6 @@ Agent/TCP/FullTcp set segsperack_ $ackRatio;
 Agent/TCP/FullTcp set spa_thresh_ 3000;
 Agent/TCP/FullTcp set interval_ 0.04 ; #delayed ACK interval = 40ms
 
-Queue set limit_ 10000000
 
 Queue/RED set bytes_ false
 Queue/RED set queue_in_bytes_ true
