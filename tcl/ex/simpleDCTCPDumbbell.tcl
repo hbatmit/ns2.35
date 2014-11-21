@@ -21,9 +21,11 @@ source configs/dctcp-defaults.tcl
 proc attach-classifiers {ns n1 n2} {
     set fwd_queue [[$ns link $n1 $n2] queue]
     $fwd_queue attach-classifier [$n1 entry]
+    [$n1 entry] set enable_pause_ 1
 
     set bwd_queue [[$ns link $n2 $n1] queue]
     $bwd_queue attach-classifier [$n2 entry]
+    [$n2 entry] set enable_pause_ 1
 }
 
 ##### Topology ###########

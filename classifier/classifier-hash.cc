@@ -126,6 +126,10 @@ NsObject* DestHashClassifier::find_dst(const int32_t dst) {
 }
 
 void DestHashClassifier::recv(Packet* p, Handler*h) {
+	if (enable_pause_ == 0) {
+		return HashClassifier::recv(p, h); /* one level up the hierarchy */
+	}
+
 	NsObject* node = find(p);
 	assert(node != NULL);
 

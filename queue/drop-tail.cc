@@ -132,7 +132,7 @@ Packet* DropTail::deque()
                 Queue::updateStats(qib_?q_->byteLength():q_->length());
         }
 	auto ret = q_->deque();
-	classifier_->deque_callback(ret);
+	if (classifier_ != nullptr) classifier_->deque_callback(ret);
 	return ret;
 }
 

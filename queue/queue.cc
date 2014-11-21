@@ -93,7 +93,7 @@ Queue::Queue() : Connector(), blocked_(0), unblock_on_resume_(1), qh_(*this),
 		 pq_(0), 
 		 last_change_(0), /* temporarily NULL */
 		 old_util_(0), period_begin_(0), cur_util_(0), buf_slot_(0),
-		 util_buf_(NULL)
+		 util_buf_(NULL), classifier_(nullptr)
 {
 	bind("limit_", &qlim_);
 	bind("util_weight_", &util_weight_);

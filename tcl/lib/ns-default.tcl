@@ -379,6 +379,7 @@ Classifier set node_id_ -1
 Classifier set debug_ false
 
 Classifier/Hash set default_ -1; # none
+Classifier/Hash/Dest set enable_pause_ 0
 Classifier/Replicator set ignore_ 0
 
 # MPLS Classifier

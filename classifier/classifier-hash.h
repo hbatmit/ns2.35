@@ -173,7 +173,7 @@ protected:
 
 class DestHashClassifier : public HashClassifier {
 public:
-	DestHashClassifier() : HashClassifier(TCL_ONE_WORD_KEYS) {}
+	DestHashClassifier() : HashClassifier(TCL_ONE_WORD_KEYS), enable_pause_(0) { bind ("enable_pause_", &enable_pause_); }
 	virtual int command(int argc, const char*const* argv);
 	int classify(Packet *p);
 	virtual void do_install(char *dst, NsObject *target);
@@ -203,6 +203,7 @@ protected:
 	}
 
 private:
+	int enable_pause_;
 	Packet* generate_pause_pkt(const int32_t port_to_pause, const PauseAction action);
 	NsObject* find_dst(const int32_t dst);
 	bool is_paused(const int32_t port);
