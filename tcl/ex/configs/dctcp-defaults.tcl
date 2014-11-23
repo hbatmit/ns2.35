@@ -3,7 +3,7 @@ set ackRatio 1
  
 Agent/TCP set ecn_ 1
 Agent/TCP set old_ecn_ 1
-Agent/TCP set window_ 1256
+Agent/TCP set window_ 500
 Agent/TCP set slow_start_restart_ false
 Agent/TCP set tcpTick_ 0.01
 Agent/TCP set minrto_ 0.2 ; # minRTO = 200ms
