@@ -108,11 +108,11 @@ proc stopMeasurement {} {
   global qmon simulationTime startByteCount N
   for {set i 0} {$i < $N} {incr i} {
     set stopByteCount($i) [$qmon($i) set bdepartures_]
-    puts "Throughput($i) = [expr ($stopByteCount($i) - $startByteCount($i))/(1000000 * ($simulationTime))*8] Mbits/s"
+    puts "Throughput($i) = [expr ($stopByteCount($i) - $startByteCount($i))/(1000000 * ($simulationTime - 0.5))*8] Mbits/s"
   }
 }
 
-$ns at 0 "startMeasurement"
+$ns at 0.5 "startMeasurement"
 $ns at $simulationTime "stopMeasurement"
 $ns at $simulationTime "finish"
 $ns run
