@@ -5,9 +5,9 @@ set enable_pause 0
 set K 65
 set RTT 0.0001
 
-set simulationTime 1.0
+set simulationTime 10.0
 
-assert [expr $simulationTime < 1.5]
+# assert [expr $simulationTime < 1.5]
 # Sequence number wraps around otherwise
 
 ##### Transport defaults, like packet size ######
@@ -63,8 +63,8 @@ for {set i 0} {$i < $N} {incr i} {
 for {set i 0} {$i < $N} {incr i} {
   for {set j 0} {$j < $N} {incr j} {
     if  {$i != $j} {
-      set tcp($i,$j) [new Agent/TCP/FullTcp/Sack]
-      set sink($i,$j) [new Agent/TCP/FullTcp/Sack]
+      set tcp($i,$j) [new Agent/TCP/Sack1]
+      set sink($i,$j) [new Agent/TCPSink/Sack1]
       $sink($i,$j) listen
 
       $ns attach-agent $n($i) $tcp($i,$j)
