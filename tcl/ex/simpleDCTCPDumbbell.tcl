@@ -62,10 +62,10 @@ for {set i 0} {$i < $N} {incr i} {
     set qmon($i) [$ns monitor-queue $tor_node $n($i) $queue_fh $traceSamplingInterval]
 }
 
-## Full mesh of TCP connections
-for {set i 0} {$i < $N} {incr i} {
-  for {set j 0} {$j < $N} {incr j} {
-    if  {$i != $j} {
+## Complete bipartite graph of TCP connections between senders and receivers
+assert [expr $N % 2 == 0]
+for {set i 0} {$i < [expr $N / 2]} {incr i} {
+  for {set j [expr $N / 2]} {$j < $N} {incr j} {
       set tcp($i,$j) [new Agent/TCP/Sack1]
       set sink($i,$j) [new Agent/TCPSink/Sack1]
       $sink($i,$j) listen
@@ -74,20 +74,16 @@ for {set i 0} {$i < $N} {incr i} {
       $ns attach-agent $n($j) $sink($i,$j)
 
       $ns connect $tcp($i,$j) $sink($i,$j)
-    }
   }
 }
 
 #### Application: long-running FTP #####
-
-for {set i 0} {$i < $N} {incr i} {
-  for {set j 0} {$j < $N} {incr j} {
-    if  {$i != $j} {
+for {set i 0} {$i < [expr $N / 2]} {incr i} {
+  for {set j [expr $N / 2]} {$j < $N} {incr j} {
       set ftp($i,$j) [new Application/FTP]
       $ftp($i,$j) attach-agent $tcp($i,$j)
       $ns at 0.0 "$ftp($i,$j) start"
       $ns at [expr $simulationTime] "$ftp($i,$j) stop"
-    }
   }
 }
 
