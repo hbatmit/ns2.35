@@ -4,7 +4,8 @@ set N 8
 set enable_pause 0
 set K 65
 set RTT 0.0001
-
+set xon_thresh 5
+set xoff_thresh 1000
 set simulationTime 10.0
 
 # assert [expr $simulationTime < 1.5]
@@ -21,14 +22,16 @@ source configs/dctcp-defaults.tcl
 
 # Procedure to attach classifier to queues
 # for nodes n1 and n2
-proc attach-classifiers {ns n1 n2} {
+proc attach-classifiers {ns n1 n2 xon_thresh xoff_thresh} {
     set fwd_queue [[$ns link $n1 $n2] queue]
     $fwd_queue attach-classifier [$n1 entry]
     [$n1 entry] set enable_pause_ 1
+    [$n1 entry] set xon_thresh_ $xon_thresh
 
     set bwd_queue [[$ns link $n2 $n1] queue]
     $bwd_queue attach-classifier [$n2 entry]
     [$n2 entry] set enable_pause_ 1
+    [$n2 entry] set xoff_thresh_ $xoff_thresh
 }
 
 ##### Topology ###########
@@ -52,7 +55,7 @@ if {$enable_pause == 1} {
 for {set i 0} {$i < $N} {incr i} {
     $ns duplex-link $n($i) $tor_node $inputLineRate [expr $RTT/4] DropTail
     if {$enable_pause == 1} {
-        attach-classifiers $ns $n($i) $tor_node
+        attach-classifiers $ns $n($i) $tor_node $xon_thresh $xoff_thresh
     }
     set traceSamplingInterval 0.0001
     set queue_fh [open "/dev/null" w]

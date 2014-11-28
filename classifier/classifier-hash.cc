@@ -61,6 +61,17 @@ extern "C" {
 #include "delay.h"
 #include "queue.h"
 
+/* DestHashClassifier constructor */
+DestHashClassifier::DestHashClassifier()
+    : HashClassifier(TCL_ONE_WORD_KEYS),
+      enable_pause_(0),
+      xon_thresh_(5),
+      xoff_thresh_(1000) {
+  bind("enable_pause_", &enable_pause_);
+  bind("xon_thresh_", &xon_thresh_);
+  bind("xoff_thresh_", &xoff_thresh_);
+}
+
 /****************** HashClassifier Methods ************/
 void DestHashClassifier::deque_callback(Packet* p) {
 	if (p != nullptr) {
@@ -74,7 +85,7 @@ void DestHashClassifier::deque_callback(Packet* p) {
 			input_counters_.at(input_port)--;
 
 			/* Resume logic */
-			if (input_counters_.at(input_port) < 5 and
+			if (input_counters_.at(input_port) < xon_thresh_ and
 			    is_paused(input_port)) {
 				if (input_port != -1) {
 					auto unpause_pkt = generate_pause_pkt(input_port, PauseAction::RESUME);
@@ -177,7 +188,7 @@ void DestHashClassifier::recv(Packet* p, Handler*h) {
 		/* Input accounting for pause */
 		const int32_t input_port = hdr_cmn::access(p)->input_port();
 		input_counters_[input_port]++;
-		if (input_counters_[input_port] > 1000 and
+		if (input_counters_[input_port] > xoff_thresh_ and
 		    (not is_paused(input_port))) {
 			if (input_port != -1) {
 				auto pause_pkt = generate_pause_pkt(input_port, PauseAction::PAUSE);
