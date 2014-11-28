@@ -1,11 +1,16 @@
 set ns [new Simulator]
 
-set N 8
-set enable_pause 0
+if [expr [llength $argv] < 4] {
+    puts "Usage: ../../ns simpleDCTCPDumbbell.tcl N enable_pause xon_thresh xoff_thressh"
+    exit
+}
+
+set N [lindex $argv 0]
+set enable_pause [lindex $argv 1]
 set K 65
 set RTT 0.0001
-set xon_thresh 5
-set xoff_thresh 1000
+set xon_thresh [lindex $argv 2]
+set xoff_thresh [lindex $argv 3]
 set simulationTime 10.0
 
 # assert [expr $simulationTime < 1.5]
