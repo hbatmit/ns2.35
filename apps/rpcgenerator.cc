@@ -3,7 +3,8 @@
 #include "config.h"
 #include "rpcgenerator.hh"
 
-RpcGenerator::RpcGenerator() {}
+RpcGenerator::RpcGenerator()
+  : flow_size_dist_("", 1) {}
 
 static class RpcGeneratorClass : public TclClass {
  public:
