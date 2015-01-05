@@ -4,11 +4,23 @@
 #include "config.h"
 #include "rpcgenerator.hh"
 
+void FlowStartTimer::expire(Event *e) {
+  auto next_flow_size = rpc_generator_->next_flow_size();
+  rpc_generator_->map_to_connection(next_flow_size);
+  resched(rpc_generator_->next_flow_time());
+}
+
 RpcGenerator::RpcGenerator(const uint32_t & run,
                            const double & arrival_rate,
                            const std::string & cdf_file)
-    : flow_arrivals_(arrival_rate, run),
-      flow_size_dist_(cdf_file, run) {}
+    : connection_pool_(),
+      flow_arrivals_(arrival_rate, run),
+      flow_size_dist_(cdf_file, run),
+      flow_start_timer_(this) {
+  /* Determine time to schedule first flow */
+  assert(flow_arrivals_.last_event_time() == 0);
+  flow_start_timer_.sched(flow_arrivals_.next_event_time());
+}
 
 static class RpcGeneratorClass : public TclClass {
  public:
