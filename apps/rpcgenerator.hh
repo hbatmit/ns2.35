@@ -41,6 +41,7 @@ class RpcGenerator : public TclObject {
   int command(int argc, const char*const* argv) override;
   double next_flow_time(void) { return flow_arrivals_.next_event_time(); }
   double next_flow_size(void) { return flow_size_dist_.sample(); }
+  void map_to_connection(double next_flow_size);
  private:
   std::vector<std::pair<FullTcpAgent*, bool>> connection_pool_;
   PoissonProcess flow_arrivals_;

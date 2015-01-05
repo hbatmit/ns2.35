@@ -4,6 +4,8 @@
 #include "config.h"
 #include "rpcgenerator.hh"
 
+using namespace std;
+
 void FlowStartTimer::expire(Event *e) {
   auto next_flow_size = rpc_generator_->next_flow_size();
   rpc_generator_->map_to_connection(next_flow_size);
@@ -46,4 +48,28 @@ static class RpcGeneratorClass : public TclClass {
 
 int RpcGenerator::command(int argc, const char*const* argv) {
   return TclObject::command(argc, argv);
+}
+
+void RpcGenerator::map_to_connection(double next_flow_size) {
+  if (connection_pool_.empty()) {
+    connection_pool_.push_back(make_pair(new FullTcpAgent, true));
+    /* TODO, use this FullTcpAgent */
+  }
+
+  /* go through the pool now */
+  auto it = connection_pool_.begin();
+  for (it = connection_pool_.begin(); it != connection_pool_.end(); it++) {
+    if (it->second == false) {
+      /* TODO, do something with FullTcpAgent */
+      it->first;
+      it->second = true;
+      break;
+    }
+  }
+
+  /* No idle connections */
+  if (it == connection_pool_.end()) {
+    connection_pool_.push_back(make_pair(new FullTcpAgent, true));
+    /* TODO, use this FullTcpAgent */
+  }
 }
