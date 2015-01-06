@@ -65,12 +65,16 @@ int RpcGenerator::command(int argc, const char*const* argv) {
 FullTcpAgent* RpcGenerator::new_tcp_connection() {
    // Create agents in Tcl
    Tcl & tcl = Tcl::instance();
-   tcl.evalf("new Agent/TCP/FullTcp/Sack");
+
+   tcl.evalf("set sender_tcp [new Agent/TCP/FullTcp/Sack]");
    auto sender_tcp   = dynamic_cast<FullTcpAgent*>(tcl.lookup(tcl.result()));
    assert(sender_tcp != nullptr);
-   tcl.evalf("new Agent/TCP/FullTcp/Sack");
+   tcl.evalf("$sender_tcp set signal_on_empty_ true");
+
+   tcl.evalf("set receiver_tcp [new Agent/TCP/FullTcp/Sack]");
    auto receiver_tcp = dynamic_cast<FullTcpAgent*>(tcl.lookup(tcl.result()));
    assert(receiver_tcp != nullptr);
+   tcl.evalf("$receiver_tcp set signal_on_empty_ true");
 
    // Attach agents to nodes
    assert(sender_node_ != nullptr);
