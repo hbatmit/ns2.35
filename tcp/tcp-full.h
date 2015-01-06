@@ -37,6 +37,7 @@
 #ifndef ns_tcp_full_h
 #define ns_tcp_full_h
 
+#include <functional>
 #include "tcp.h"
 #include "rq.h"
 
@@ -135,10 +136,12 @@ public:
 	virtual int command(int argc, const char*const* argv);
        	virtual void reset();       		// reset to a known point
 	virtual int& signal_on_empty() { return signal_on_empty_;}
+	virtual void set_buffer_empty_callback(std::function<void(double)> callback) { buffer_empty_callback_ = callback; }
 
 protected:
 	virtual void delay_bind_init_all();
 	virtual int delay_bind_dispatch(const char *varName, const char *localName, TclObject *tracer);
+	std::function<void(double)> buffer_empty_callback_;
 	int closed_;
 	int ts_option_size_;	// header bytes in a ts option
 	int pipe_;		// estimate of pipe occupancy (for Sack)
