@@ -69,12 +69,10 @@ FullTcpAgent* RpcGenerator::new_tcp_connection() {
    tcl.evalf("set sender_tcp [new Agent/TCP/FullTcp/Sack]");
    auto sender_tcp   = dynamic_cast<FullTcpAgent*>(tcl.lookup(tcl.result()));
    assert(sender_tcp != nullptr);
-   tcl.evalf("$sender_tcp set signal_on_empty_ true");
 
    tcl.evalf("set receiver_tcp [new Agent/TCP/FullTcp/Sack]");
    auto receiver_tcp = dynamic_cast<FullTcpAgent*>(tcl.lookup(tcl.result()));
    assert(receiver_tcp != nullptr);
-   tcl.evalf("$receiver_tcp set signal_on_empty_ true");
 
    // Attach agents to nodes
    assert(sender_node_ != nullptr);
@@ -95,6 +93,7 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   if (connection_pool_.empty()) {
     auto new_connection = new_tcp_connection();
     connection_pool_.push_back(make_pair(new_connection, true));
+    new_connection->signal_on_empty() = TRUE;
     new_connection->advanceby(next_flow_size);
     return;
   }
@@ -103,6 +102,7 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   auto it = connection_pool_.begin();
   for (it = connection_pool_.begin(); it != connection_pool_.end(); it++) {
     if (it->second == false) {
+      it->first->signal_on_empty() = TRUE;
       it->first->advanceby(next_flow_size);
       it->second = true;
       break;
@@ -113,6 +113,7 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   if (it == connection_pool_.end()) {
     auto new_connection = new_tcp_connection();
     connection_pool_.push_back(make_pair(new_connection, true));
+    new_connection->signal_on_empty() = TRUE;
     new_connection->advanceby(next_flow_size);
   }
 }
