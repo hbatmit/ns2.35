@@ -22,7 +22,8 @@ RpcGenerator::RpcGenerator(const uint32_t & run,
       flow_size_dist_(cdf_file, run),
       flow_start_timer_(this),
       sender_node_(t_sender_node),
-      receiver_node_(t_receiver_node) {
+      receiver_node_(t_receiver_node),
+      flow_stats_() {
   /* Determine time to schedule first flow */
   assert(flow_arrivals_.last_event_time() == 0);
   flow_start_timer_.sched(flow_arrivals_.next_event_time());
@@ -86,15 +87,31 @@ FullTcpAgent* RpcGenerator::new_tcp_connection() {
               sender_tcp->name(),
               receiver_tcp->name());
 
+   // Create new entry in flow stats hash table
+   assert(flow_stats_.find(sender_tcp) == flow_stats_.end());
+   flow_stats_[sender_tcp] = std::vector<FlowStat>();
+
    return sender_tcp;
+}
+
+void RpcGenerator::pin_flow_to_connection(FullTcpAgent* connection,
+                                          const uint32_t & flow_size) {
+  connection->signal_on_empty() = TRUE;
+  connection->advanceby(flow_size);
+
+  /* Track flow to estimate FCT */
+  FlowStat current_flow;
+  current_flow.flow_start_time = Scheduler::instance().clock();
+  current_flow.flow_end_time = -1.0;
+  current_flow.flow_size = flow_size;
+  flow_stats_.at(connection).emplace_back(current_flow);
 }
 
 void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   if (connection_pool_.empty()) {
     auto new_connection = new_tcp_connection();
     connection_pool_.push_back(make_pair(new_connection, true));
-    new_connection->signal_on_empty() = TRUE;
-    new_connection->advanceby(next_flow_size);
+    pin_flow_to_connection(new_connection, next_flow_size);
     return;
   }
 
@@ -102,8 +119,7 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   auto it = connection_pool_.begin();
   for (it = connection_pool_.begin(); it != connection_pool_.end(); it++) {
     if (it->second == false) {
-      it->first->signal_on_empty() = TRUE;
-      it->first->advanceby(next_flow_size);
+      pin_flow_to_connection(it->first, next_flow_size);
       it->second = true;
       break;
     }
@@ -113,7 +129,6 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   if (it == connection_pool_.end()) {
     auto new_connection = new_tcp_connection();
     connection_pool_.push_back(make_pair(new_connection, true));
-    new_connection->signal_on_empty() = TRUE;
-    new_connection->advanceby(next_flow_size);
+    pin_flow_to_connection(new_connection, next_flow_size);
   }
 }

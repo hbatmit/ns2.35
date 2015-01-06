@@ -32,6 +32,13 @@ class PoissonProcess {
   double last_event_ {0.0};
 };
 
+struct FlowStat {
+ public:
+  double flow_start_time {-1.0};
+  double flow_end_time {-1.0};
+  uint32_t flow_size {0};
+};
+
 /* RPC Generator */
 class RpcGenerator : public TclObject {
  public:
@@ -45,14 +52,17 @@ class RpcGenerator : public TclObject {
   double next_flow_time(void) { return flow_arrivals_.next_event_time(); }
   uint32_t next_flow_size(void) { return flow_size_dist_.sample(); }
   void map_to_connection(const uint32_t & next_flow_size);
-  FullTcpAgent* new_tcp_connection();
  private:
+  FullTcpAgent* new_tcp_connection();
+  void pin_flow_to_connection(FullTcpAgent* connection,
+                              const uint32_t & flow_size);
   std::vector<std::pair<FullTcpAgent*, bool>> connection_pool_;
   PoissonProcess flow_arrivals_;
   EmpVariate flow_size_dist_;
   FlowStartTimer flow_start_timer_;
   Node* sender_node_;
   Node* receiver_node_;
+  std::map<const FullTcpAgent*, std::vector<FlowStat>> flow_stats_;
 };
 
 #endif // RPCGENERATOR_HH_
