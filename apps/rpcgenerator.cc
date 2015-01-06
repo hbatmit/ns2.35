@@ -50,9 +50,35 @@ int RpcGenerator::command(int argc, const char*const* argv) {
   return TclObject::command(argc, argv);
 }
 
+FullTcpAgent* RpcGenerator::new_tcp_connection(Node * sender_node,
+                                                   Node * receiver_node) {
+   // Create agents in Tcl
+   Tcl & tcl = Tcl::instance();
+   tcl.evalf("new Agent/TCP/FullTcp/Sack");
+   auto sender_tcp   = dynamic_cast<FullTcpAgent*>(tcl.lookup(tcl.result()));
+   assert(sender_tcp != nullptr);
+   tcl.evalf("new Agent/TCP/FullTcp/Sack");
+   auto receiver_tcp = dynamic_cast<FullTcpAgent*>(tcl.lookup(tcl.result()));
+   assert(receiver_tcp != nullptr);
+
+   // Attach agents to nodes
+   assert(sender_node != nullptr);
+   assert(receiver_node != nullptr);
+   tcl.evalf ("%s attach %s", sender_node->name(), sender_tcp->name());
+   tcl.evalf ("%s attach %s", receiver_node->name(), receiver_tcp->name());
+
+   // setup connection
+   tcl.evalf ("%s listen", receiver_tcp->name());
+   tcl.evalf ("[Simulator instance] connect %s %s",
+              sender_tcp->name(),
+              receiver_tcp->name());
+
+   return sender_tcp;
+}
+
 void RpcGenerator::map_to_connection(double next_flow_size) {
   if (connection_pool_.empty()) {
-    connection_pool_.push_back(make_pair(new FullTcpAgent, true));
+    connection_pool_.push_back(make_pair(new_tcp_connection(), true));
     /* TODO, use this FullTcpAgent */
   }
 
@@ -69,7 +95,7 @@ void RpcGenerator::map_to_connection(double next_flow_size) {
 
   /* No idle connections */
   if (it == connection_pool_.end()) {
-    connection_pool_.push_back(make_pair(new FullTcpAgent, true));
+    connection_pool_.push_back(make_pair(new_tcp_connection(), true));
     /* TODO, use this FullTcpAgent */
   }
 }

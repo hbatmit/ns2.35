@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <vector>
+#include "node.h"
 #include "tcp-full.h"
 #include "empvariate.hh"
 #include "expvariate.hh"
@@ -42,6 +43,8 @@ class RpcGenerator : public TclObject {
   double next_flow_time(void) { return flow_arrivals_.next_event_time(); }
   double next_flow_size(void) { return flow_size_dist_.sample(); }
   void map_to_connection(double next_flow_size);
+  FullTcpAgent* new_tcp_connection(Node * sender_node = nullptr,
+                                       Node * receiver_node = nullptr);
  private:
   std::vector<std::pair<FullTcpAgent*, bool>> connection_pool_;
   PoissonProcess flow_arrivals_;
