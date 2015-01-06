@@ -37,19 +37,22 @@ class RpcGenerator : public TclObject {
  public:
   RpcGenerator(const uint32_t & run,
                const double & arrival_rate,
-               const std::string & cdf_file);
+               const std::string & cdf_file,
+               Node* t_sender_node,
+               Node* t_receiver_node);
   RpcGenerator() = delete;
   int command(int argc, const char*const* argv) override;
   double next_flow_time(void) { return flow_arrivals_.next_event_time(); }
   double next_flow_size(void) { return flow_size_dist_.sample(); }
   void map_to_connection(double next_flow_size);
-  FullTcpAgent* new_tcp_connection(Node * sender_node = nullptr,
-                                       Node * receiver_node = nullptr);
+  FullTcpAgent* new_tcp_connection();
  private:
   std::vector<std::pair<FullTcpAgent*, bool>> connection_pool_;
   PoissonProcess flow_arrivals_;
   EmpVariate flow_size_dist_;
   FlowStartTimer flow_start_timer_;
+  Node* sender_node_;
+  Node* receiver_node_;
 };
 
 #endif // RPCGENERATOR_HH_

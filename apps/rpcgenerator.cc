@@ -14,11 +14,15 @@ void FlowStartTimer::expire(Event *e) {
 
 RpcGenerator::RpcGenerator(const uint32_t & run,
                            const double & arrival_rate,
-                           const std::string & cdf_file)
+                           const std::string & cdf_file,
+                           Node* t_sender_node,
+                           Node* t_receiver_node)
     : connection_pool_(),
       flow_arrivals_(arrival_rate, run),
       flow_size_dist_(cdf_file, run),
-      flow_start_timer_(this) {
+      flow_start_timer_(this),
+      sender_node_(t_sender_node),
+      receiver_node_(t_receiver_node) {
   /* Determine time to schedule first flow */
   assert(flow_arrivals_.last_event_time() == 0);
   flow_start_timer_.sched(flow_arrivals_.next_event_time());
@@ -28,7 +32,7 @@ static class RpcGeneratorClass : public TclClass {
  public:
   RpcGeneratorClass() : TclClass("RpcGenerator") {}
   TclObject* create(int argc, const char*const* argv) {
-    assert(argc == 7);
+    assert(argc == 9);
 
     /* Get arguments */
     uint32_t run = myatoi(argv[4]);
@@ -40,9 +44,17 @@ static class RpcGeneratorClass : public TclClass {
     std::string cdf_file = argv[6];
     assert(cdf_file != "");
 
+    Node* sender_node = dynamic_cast<Node*>(TclObject::lookup(argv[7]));
+    assert(sender_node != nullptr);
+
+    Node* receiver_node = dynamic_cast<Node*>(TclObject::lookup(argv[8]));
+    assert(receiver_node != nullptr);
+
     return new RpcGenerator(run,
                             flow_rate,
-                            cdf_file);
+                            cdf_file,
+                            sender_node,
+                            receiver_node);
   }
 } class_rpc_generator;
 
@@ -50,8 +62,7 @@ int RpcGenerator::command(int argc, const char*const* argv) {
   return TclObject::command(argc, argv);
 }
 
-FullTcpAgent* RpcGenerator::new_tcp_connection(Node * sender_node,
-                                                   Node * receiver_node) {
+FullTcpAgent* RpcGenerator::new_tcp_connection() {
    // Create agents in Tcl
    Tcl & tcl = Tcl::instance();
    tcl.evalf("new Agent/TCP/FullTcp/Sack");
@@ -62,10 +73,10 @@ FullTcpAgent* RpcGenerator::new_tcp_connection(Node * sender_node,
    assert(receiver_tcp != nullptr);
 
    // Attach agents to nodes
-   assert(sender_node != nullptr);
-   assert(receiver_node != nullptr);
-   tcl.evalf ("%s attach %s", sender_node->name(), sender_tcp->name());
-   tcl.evalf ("%s attach %s", receiver_node->name(), receiver_tcp->name());
+   assert(sender_node_ != nullptr);
+   assert(receiver_node_ != nullptr);
+   tcl.evalf ("%s attach %s", sender_node_->name(), sender_tcp->name());
+   tcl.evalf ("%s attach %s", receiver_node_->name(), receiver_tcp->name());
 
    // setup connection
    tcl.evalf ("%s listen", receiver_tcp->name());
