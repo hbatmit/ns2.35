@@ -16,6 +16,6 @@ EmpVariate::EmpVariate(std::string cdf_file, uint32_t t_run)
   }
 }
 
-double EmpVariate::sample(void) {
+uint32_t EmpVariate::sample(void) {
   return flow_array_.at(int(rng_->uniform(0, flow_array_.size() - 1)));
 }

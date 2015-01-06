@@ -87,8 +87,7 @@ FullTcpAgent* RpcGenerator::new_tcp_connection() {
    return sender_tcp;
 }
 
-void RpcGenerator::map_to_connection(double next_flow_size) {
-  /* If pool is empty, return */
+void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   if (connection_pool_.empty()) {
     auto new_connection = new_tcp_connection();
     connection_pool_.push_back(make_pair(new_connection, true));

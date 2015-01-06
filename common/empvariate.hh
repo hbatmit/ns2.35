@@ -14,7 +14,7 @@
 class EmpVariate {
  public:
   EmpVariate(std::string cdf_file, uint32_t t_run);
-  double sample(void);
+  uint32_t sample(void);
 
  private:
   const uint32_t run_;

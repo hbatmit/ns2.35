@@ -43,8 +43,8 @@ class RpcGenerator : public TclObject {
   RpcGenerator() = delete;
   int command(int argc, const char*const* argv) override;
   double next_flow_time(void) { return flow_arrivals_.next_event_time(); }
-  double next_flow_size(void) { return flow_size_dist_.sample(); }
-  void map_to_connection(double next_flow_size);
+  uint32_t next_flow_size(void) { return flow_size_dist_.sample(); }
+  void map_to_connection(const uint32_t & next_flow_size);
   FullTcpAgent* new_tcp_connection();
  private:
   std::vector<std::pair<FullTcpAgent*, bool>> connection_pool_;
