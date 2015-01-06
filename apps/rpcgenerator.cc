@@ -88,17 +88,19 @@ FullTcpAgent* RpcGenerator::new_tcp_connection() {
 }
 
 void RpcGenerator::map_to_connection(double next_flow_size) {
+  /* If pool is empty, return */
   if (connection_pool_.empty()) {
-    connection_pool_.push_back(make_pair(new_tcp_connection(), true));
-    /* TODO, use this FullTcpAgent */
+    auto new_connection = new_tcp_connection();
+    connection_pool_.push_back(make_pair(new_connection, true));
+    new_connection->advanceby(next_flow_size);
+    return;
   }
 
   /* go through the pool now */
   auto it = connection_pool_.begin();
   for (it = connection_pool_.begin(); it != connection_pool_.end(); it++) {
     if (it->second == false) {
-      /* TODO, do something with FullTcpAgent */
-      it->first;
+      it->first->advanceby(next_flow_size);
       it->second = true;
       break;
     }
@@ -106,7 +108,8 @@ void RpcGenerator::map_to_connection(double next_flow_size) {
 
   /* No idle connections */
   if (it == connection_pool_.end()) {
-    connection_pool_.push_back(make_pair(new_tcp_connection(), true));
-    /* TODO, use this FullTcpAgent */
+    auto new_connection = new_tcp_connection();
+    connection_pool_.push_back(make_pair(new_connection, true));
+    new_connection->advanceby(next_flow_size);
   }
 }
