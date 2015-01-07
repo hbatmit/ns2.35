@@ -136,6 +136,9 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
     auto new_connection = new_tcp_connection();
     assert(connection_pool_.find(new_connection) == connection_pool_.end());
     connection_pool_[new_connection] = true;
+    printf("@ %f, Creating new conn, pool size is %lu\n",
+           Scheduler::instance().clock(),
+           connection_pool_.size());
     pin_flow_to_connection(new_connection, next_flow_size);
   }
 }
