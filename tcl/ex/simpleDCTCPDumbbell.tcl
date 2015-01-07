@@ -59,31 +59,11 @@ for {set i 0} {$i < $N} {incr i} {
     set qmon($i) [$ns monitor-queue $tor_node $n($i) $queue_fh $traceSamplingInterval]
 }
 
-## Full mesh of TCP connections
+#### Application: RPC generator #####
 for {set i 0} {$i < $N} {incr i} {
   for {set j 0} {$j < $N} {incr j} {
     if  {$i != $j} {
-      set tcp($i,$j) [new Agent/TCP/FullTcp/Sack]
-      set sink($i,$j) [new Agent/TCP/FullTcp/Sack]
-      $sink($i,$j) listen
-
-      $ns attach-agent $n($i) $tcp($i,$j)
-      $ns attach-agent $n($j) $sink($i,$j)
-
-      $ns connect $tcp($i,$j) $sink($i,$j)
-    }
-  }
-}
-
-#### Application: long-running FTP #####
-
-for {set i 0} {$i < $N} {incr i} {
-  for {set j 0} {$j < $N} {incr j} {
-    if  {$i != $j} {
-      set ftp($i,$j) [new Application/FTP]
-      $ftp($i,$j) attach-agent $tcp($i,$j)
-      $ns at 0.0 "$ftp($i,$j) start"
-      $ns at [expr $simulationTime] "$ftp($i,$j) stop"
+      set rpc($i,$j) [new RpcGenerator 1 50.0 "cdf.txt" $n($i) $n($j)]
     }
   }
 }
