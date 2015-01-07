@@ -67,10 +67,17 @@ for {set i 0} {$i < $N} {incr i} {
 
 ### Cleanup procedure ###
 proc finish {} {
-        global ns queue_fh
-        $ns flush-trace
-	close $queue_fh
-	exit 0
+  global ns queue_fh rpc N
+  for {set i 0} {$i < $N} {incr i} {
+    for {set j 0} {$j < $N} {incr j} {
+      if  {$i != $j} {
+        $rpc($i,$j) dump_fcts
+      }
+    }
+  }
+  $ns flush-trace
+  close $queue_fh
+  exit 0
 }
 
 ### Measure throughput ###
