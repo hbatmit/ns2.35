@@ -56,7 +56,7 @@ class RpcGenerator : public TclObject {
   FullTcpAgent* new_tcp_connection();
   void pin_flow_to_connection(FullTcpAgent* connection,
                               const uint32_t & flow_size);
-  std::vector<std::pair<FullTcpAgent*, bool>> connection_pool_;
+  std::map<FullTcpAgent*, bool> connection_pool_;
   PoissonProcess flow_arrivals_;
   EmpVariate flow_size_dist_;
   FlowStartTimer flow_start_timer_;

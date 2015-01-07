@@ -110,7 +110,8 @@ void RpcGenerator::pin_flow_to_connection(FullTcpAgent* connection,
 void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   if (connection_pool_.empty()) {
     auto new_connection = new_tcp_connection();
-    connection_pool_.push_back(make_pair(new_connection, true));
+    assert(connection_pool_.find(new_connection) == connection_pool_.end());
+    connection_pool_[new_connection] = true;
     pin_flow_to_connection(new_connection, next_flow_size);
     return;
   }
@@ -128,7 +129,8 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
   /* No idle connections */
   if (it == connection_pool_.end()) {
     auto new_connection = new_tcp_connection();
-    connection_pool_.push_back(make_pair(new_connection, true));
+    assert(connection_pool_.find(new_connection) == connection_pool_.end());
+    connection_pool_[new_connection] = true;
     pin_flow_to_connection(new_connection, next_flow_size);
   }
 }
