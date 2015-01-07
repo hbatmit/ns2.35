@@ -5,10 +5,7 @@ set enable_pause 0
 set K 65
 set RTT 0.0001
 
-set simulationTime 1.0
-
-assert [expr $simulationTime < 1.5]
-# Sequence number wraps around otherwise
+set simulationTime 10.0
 
 ##### Transport defaults, like packet size ######
 set packetSize 1460
