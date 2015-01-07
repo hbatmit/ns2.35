@@ -60,6 +60,12 @@ static class RpcGeneratorClass : public TclClass {
 } class_rpc_generator;
 
 int RpcGenerator::command(int argc, const char*const* argv) {
+  if (argc == 2) {
+    if (strcmp(argv[1], "dump_fcts") == 0) {
+      dump_fcts();
+      return TCL_OK;
+    }
+  }
   return TclObject::command(argc, argv);
 }
 
@@ -140,5 +146,22 @@ void RpcGenerator::map_to_connection(const uint32_t & next_flow_size) {
            Scheduler::instance().clock(),
            connection_pool_.size());
     pin_flow_to_connection(new_connection, next_flow_size);
+  }
+}
+
+void RpcGenerator::dump_fcts() {
+  printf("RpcGenerator from %s to %s\n", sender_node_->name(), receiver_node_->name());
+  for (auto it = flow_stats_.begin(); it != flow_stats_.end(); it++) {
+    for (auto j = it->second.begin(); j != it->second.end(); j++) {
+      assert(j->flow_start_time != -1.0);
+      if (j->flow_end_time == -1.0) {
+        printf("Incomplete flow of size %u\n", j->flow_size);
+      } else {
+        assert(j->flow_end_time != -1.0);
+        printf("FCT for flow of size %u is %f\n",
+               j->flow_size,
+               j->flow_end_time - j->flow_start_time);
+      }
+    }
   }
 }
