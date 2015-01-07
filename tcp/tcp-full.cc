@@ -447,6 +447,7 @@ FullTcpAgent::bufferempty()
 {
    	signal_on_empty_=FALSE;
 	Tcl::instance().evalf("%s done_data", this->name());
+	buffer_empty_callback_(Scheduler::instance().clock(), this);
 }
 
 

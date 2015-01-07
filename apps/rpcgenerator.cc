@@ -75,6 +75,11 @@ FullTcpAgent* RpcGenerator::new_tcp_connection() {
    auto receiver_tcp = dynamic_cast<FullTcpAgent*>(tcl.lookup(tcl.result()));
    assert(receiver_tcp != nullptr);
 
+   // Create callback
+   sender_tcp->set_buffer_empty_callback([this] (const double & now, FullTcpAgent* connection)
+                                         {this->flow_stats_.at(connection).front().flow_end_time = now;
+                                          this->connection_pool_.at(connection) = false;});
+
    // Attach agents to nodes
    assert(sender_node_ != nullptr);
    assert(receiver_node_ != nullptr);
