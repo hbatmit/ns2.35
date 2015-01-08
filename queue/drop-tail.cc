@@ -101,6 +101,7 @@ void DropTail::enque(Packet* p)
 			drop(p);
 		}
 	} else {
+		printf("%p, Q length is %d\n", this, q_->length());
 		q_->enque(p);
 	}
 }
