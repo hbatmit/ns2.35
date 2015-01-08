@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <vector>
+#include <map>
 #include "node.h"
 #include "tcp-full.h"
 #include "empvariate.hh"
