@@ -13,7 +13,6 @@ Agent/TCP set packetSize_ $packetSize
 Agent/TCP/FullTcp set segsize_ $packetSize
 
 ## Turn on DCTCP ##
-set sourceAlg DropTail
 source configs/dctcp-defaults.tcl
 
 # Procedure to attach classifier to queues
@@ -42,8 +41,7 @@ for {set i 0} {$i < $N} {incr i} {
     attach-classifiers $ns $n($i) $nqueue
 }
 
-$ns simplex-link $nqueue $nclient $lineRate [expr $RTT/4] $sourceAlg
-$ns simplex-link $nclient $nqueue $lineRate [expr $RTT/4] DropTail
+$ns duplex-link $nclient $nqueue $lineRate [expr $RTT/4] DropTail
 attach-classifiers $ns $nqueue $nclient
 
 $ns queue-limit $nqueue $nclient $B
