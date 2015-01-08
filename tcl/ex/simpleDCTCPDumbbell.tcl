@@ -67,21 +67,26 @@ for {set i 0} {$i < $N} {incr i} {
 set n_extra [$ns node]
 $ns duplex-link $n_extra $nqueue $inputLineRate [expr $RTT/4] DropTail
 attach-classifiers $ns $n_extra $nqueue
+set M 10
 
-# TCP agents
-set tcp_left_src [new Agent/TCP/FullTcp/Sack]
-set tcp_right_sink [new Agent/TCP/FullTcp/Sack]
-$tcp_right_sink listen
-$ns attach-agent $n(0) $tcp_left_src
-$ns attach-agent $n_extra $tcp_right_sink
-$ns connect $tcp_left_src $tcp_right_sink
+# Transit TCP agents
+for {set j 0} {$j < $M} {incr j} {
+  set tcp_left_src($j) [new Agent/TCP/FullTcp/Sack]
+  set tcp_right_sink($j) [new Agent/TCP/FullTcp/Sack]
+  $tcp_right_sink($j) listen
+  $ns attach-agent $n(0) $tcp_left_src($j)
+  $ns attach-agent $n_extra $tcp_right_sink($j)
+  $ns connect $tcp_left_src($j) $tcp_right_sink($j)
+}
 
-# FTP agents
-set ftp_extra [new Application/FTP]
-$ftp_extra attach-agent $tcp_left_src
-$ns at 0.0 "$ftp_extra send 10000"
-$ns at 0.0 "$ftp_extra start"
-$ns at $simulationTime "$ftp_extra stop"
+# Transit FTP agents
+for {set j 0} {$j < $M} {incr j} {
+  set ftp_extra($j) [new Application/FTP]
+  $ftp_extra($j) attach-agent $tcp_left_src($j)
+  $ns at 0.0 "$ftp_extra($j) send 10000"
+  $ns at 0.0 "$ftp_extra($j) start"
+  $ns at $simulationTime "$ftp_extra($j) stop"
+}
 
 #### Application: long-running FTP #####
 
