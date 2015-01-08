@@ -28,7 +28,7 @@ proc attach-classifiers {ns n1 n2} {
 
 ##### Topology ###########
 set lineRate 10Gb
-set inputLineRate 11Gb
+set inputLineRate 10Gb
 
 for {set i 0} {$i < $N} {incr i} {
     set n($i) [$ns node]
