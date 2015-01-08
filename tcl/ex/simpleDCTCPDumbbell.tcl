@@ -49,8 +49,8 @@ attach-classifiers $ns $nqueue $nclient
 $ns queue-limit $nqueue $nclient $B
 
 for {set i 0} {$i < $N} {incr i} {
-    set tcp($i) [new Agent/TCP/FullTcp/Sack]
-    set sink($i) [new Agent/TCP/FullTcp/Sack]
+    set tcp($i) [new Agent/TCP/Sack1]
+    set sink($i) [new Agent/TCPSink/Sack1]
     $sink($i) listen
 
     $ns attach-agent $n($i) $tcp($i)
@@ -71,8 +71,8 @@ set M 10
 
 # Transit TCP agents
 for {set j 0} {$j < $M} {incr j} {
-  set tcp_left_src($j) [new Agent/TCP/FullTcp/Sack]
-  set tcp_right_sink($j) [new Agent/TCP/FullTcp/Sack]
+  set tcp_left_src($j) [new Agent/TCP/Sack1]
+  set tcp_right_sink($j) [new Agent/TCPSink/Sack1]
   $tcp_right_sink($j) listen
   $ns attach-agent $n(0) $tcp_left_src($j)
   $ns attach-agent $n_extra $tcp_right_sink($j)
