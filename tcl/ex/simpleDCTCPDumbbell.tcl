@@ -67,6 +67,11 @@ $ns duplex-link $n_extra $nqueue $inputLineRate [expr $RTT/4] DropTail
 attach-classifiers $ns $n_extra $nqueue
 set M 10
 
+# Monitor all flows on nqueue to nclient
+set flowmon [$ns makeflowmon Fid]
+$flowmon attach [open "flow.tr" "w"]
+$ns attach-fmon [$ns link $nqueue $nclient] $flowmon
+
 # Transit TCP agents
 for {set j 0} {$j < $M} {incr j} {
   set tcp_left_src($j) [new Agent/TCP/Sack1]
@@ -131,5 +136,6 @@ proc stopMeasurement {} {
 
 $ns at 0 "startMeasurement"
 $ns at $simulationTime "stopMeasurement"
+$ns at $simulationTime "$flowmon dump"
 $ns at $simulationTime "finish"
 $ns run
